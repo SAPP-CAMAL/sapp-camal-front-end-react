@@ -1,0 +1,56 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { HttpProvider } from "@/features/security/components/http.context";
+import { Providers } from "@/features/providers";
+import { Toaster } from "@/components/ui/sonner";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "CAMAL MUNICIPAL DE RIOBAMBA",
+  description: "CAMAL MUNICIPAL DE RIOBAMBA",
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)' },
+    { media: '(prefers-color-scheme: dark)' },
+  ],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <Providers>
+      <NuqsAdapter>
+        <HttpProvider>
+          <html lang="en">
+            <body
+              className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+            >
+              {children}
+              <Toaster />
+            </body>
+          </html>
+        </HttpProvider>
+      </NuqsAdapter>
+    </Providers>
+  );
+}

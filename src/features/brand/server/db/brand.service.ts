@@ -1,0 +1,13 @@
+import { http } from '@/lib/ky';
+import { BRANDS_BY_FILTER } from '@/features/brand/constants';
+import type { CommonHttpResponse } from '@/features/people/domain/index';
+import type { BrandByFilterResponse, BrandFilter } from '@/features/brand/domain';
+
+export const getBrandByFilter = (filters: Partial<BrandFilter>) => {
+	return http
+		.post('v1/1.0.0/brands/by-filter', {
+			json: filters,
+			next: { tags: [BRANDS_BY_FILTER] },
+		})
+		.json<CommonHttpResponse<BrandByFilterResponse>>();
+};

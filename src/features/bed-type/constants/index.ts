@@ -1,0 +1,1 @@
+export const BED_TYPE_LIST_TAG = 'BED_TYPE_LIST_TAG';

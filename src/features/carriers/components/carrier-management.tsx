@@ -1,0 +1,372 @@
+"use client";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { NewCarrier } from "./new-carrier.form";
+import { CarriersTable } from "./table-carriers";
+import { Badge } from "@/components/ui/badge";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { EditIcon, Ellipsis, PlusIcon, SearchIcon, Truck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { getCarriersByFilterService } from "../server/carriers.service";
+import { useSearchParams } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
+import { Button } from "@/components/ui/button";
+import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
+import { capitalizeText } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+
+export function CarriersManagement({}) {
+  const searchCarriersParams = useSearchParams();
+  const catalogueTransportsType = useCatalogue("TTR");
+
+  const [searchParams, setSearchParams] = useQueryStates(
+    {
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
+      identification: parseAsString.withDefault(""),
+      fullName: parseAsString.withDefault(""),
+      plate: parseAsString.withDefault(""),
+      transportType: parseAsInteger.withDefault(0),
+      shippingStatus: parseAsString.withDefault("*"),
+      vehicleStatus: parseAsString.withDefault("*"),
+    },
+    {
+      history: "push",
+    }
+  );
+  const query = useQuery({
+    queryKey: ["shipping", searchParams],
+    queryFn: () =>
+      getCarriersByFilterService({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        ...(searchParams.identification != "" && {
+          identification: searchParams.identification,
+        }),
+        ...(searchParams.fullName.length > 2 && {
+          fullName: searchParams.fullName,
+        }),
+        ...(searchParams.plate != "" && { plate: searchParams.plate }),
+        ...(searchParams.transportType != 0 && {
+          transportType: searchParams.transportType,
+        }),
+        ...(searchParams.shippingStatus === "true" && { shippingStatus: true }),
+        ...(searchParams.vehicleStatus === "true" && { vehicleStatus: true }),
+      }),
+  });
+
+  const debounceFullName = useDebouncedCallback(
+    (text: string) => setSearchParams({ fullName: text }),
+    500
+  );
+
+  const debounceIdentification = useDebouncedCallback(
+    (text: string) => setSearchParams({ identification: text }),
+    500
+  );
+
+  const debouncePlate = useDebouncedCallback(
+    (text: string) => setSearchParams({ plate: text }),
+    500
+  );
+
+  return (
+    <div>
+      <section className="mb-4 flex justify-between">
+        <div>
+          <h1 className="font-semibold text-xl">Transportistas</h1>
+          <p className="text-gray-600 text-sm mt-1">
+            Gestión de transportistas y vehículos registrados en el sistema
+          </p>
+        </div>
+        <div>
+          <NewCarrier
+            trigger={
+              <Button>
+                <PlusIcon className="h-4 w-4" />
+                Nuevo Transportista
+              </Button>
+            }
+          />
+        </div>
+      </section>
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle className="flex gap-2 items-center">
+            Filtros de Búsqueda
+          </CardTitle>
+          <CardDescription>
+            Filtre los transportistas por nombre, identificación, placa, tipo de
+            transporte o estado
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-x-4 justify-between">
+            <div className="flex flex-col w-1/5">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Buscar por nombre
+              </label>
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por nombres"
+                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                  defaultValue={searchCarriersParams.get("fullName") ?? ""}
+                  onChange={(e) => debounceFullName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col w-1/5">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Buscar por identificación
+              </label>
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="Ingrese Identificación"
+                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                  defaultValue={
+                    searchCarriersParams.get("identification") ?? ""
+                  }
+                  onChange={(e) => debounceIdentification(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col w-1/5">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Buscar por placa
+              </label>
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="Ingrese la placa"
+                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                  defaultValue={searchCarriersParams.get("plate") ?? ""}
+                  onChange={(e) => debouncePlate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col w-1/5">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Tipo de transporte
+              </label>
+              <Select
+                onValueChange={(value) => {
+                  setSearchParams({ transportType: Number(value) });
+                }}
+                defaultValue={"*"}
+              >
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Seleccione el tipo de transporte" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="*">Todos los estados</SelectItem>
+                  {catalogueTransportsType.data?.data.map(
+                    (transport, index) => (
+                      <SelectItem
+                        key={index}
+                        value={String(transport.catalogueId)}
+                      >
+                        {capitalizeText(transport.name)}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col w-1/5">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Estado Transportista
+              </label>
+              <Select
+                onValueChange={(value) => {
+                  setSearchParams({ shippingStatus: value });
+                }}
+                defaultValue={"*"}
+              >
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={"*"}>Todos los estados</SelectItem>
+                  <SelectItem value={"true"}>Activo</SelectItem>
+                  <SelectItem value={"false"}>Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col w-1/5">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Estado Vehículo
+              </label>
+              <Select
+                onValueChange={(value) => {
+                  setSearchParams({ vehicleStatus: value });
+                }}
+                defaultValue={"*"}
+              >
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={"*"}>Todos los estados</SelectItem>
+                  <SelectItem value={"true"}>Activo</SelectItem>
+                  <SelectItem value={"false"}>Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <CarriersTable
+        columns={[
+          {
+            accessorKey: "person.fullName",
+            header: "Transportista",
+          },
+          {
+            accessorKey: "person.identification",
+            header: "Identificación",
+          },
+          {
+            id: "vehicle",
+            header: "Vehículo",
+            accessorFn: (row) => row.vehicle,
+            cell: ({ row }) => {
+              const vehicle = row.original.vehicle;
+              return (
+                <div className="flex flex-col">
+                  <span className="font-medium">
+                    {vehicle.brand} {vehicle.model}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {vehicle.vehicleDetail?.vehicleType?.name} • {vehicle.color}{" "}
+                    • {vehicle.manufactureYear}
+                  </span>
+                </div>
+              );
+            },
+          },
+          {
+            accessorKey: "vehicle.plate",
+            header: "Placa",
+          },
+          {
+            id: "transportType",
+            header: "Tipo Transporte",
+            cell: ({ row }) => {
+              const type =
+                row.original.vehicle?.vehicleDetail?.transportType?.code;
+
+              if (!type) return null;
+
+              let label = type;
+              let colorVariant: "tertiary" | "quaterniary" | "destructive" =
+                "quaterniary";
+
+              if (type === "PRS") {
+                label = "Productos";
+                colorVariant = "tertiary";
+              } else if (type === "ANM") {
+                label = "Animales";
+                colorVariant = "quaterniary";
+              }
+
+              return (
+                <Badge
+                  variant={colorVariant}
+                  className="flex items-center gap-1"
+                >
+                  <Truck />
+                  {label}
+                </Badge>
+              );
+            },
+          },
+          {
+            accessorKey: "status",
+            header: "Estado Transportista",
+            cell: ({ row }) => (
+              <Badge>{row.original.status ? "Activo" : "Inactivo"}</Badge>
+            ),
+          },
+          {
+            accessorKey: "vehicle.status",
+            header: "Estado Vehículo",
+            cell: ({ row }) => (
+              <Badge>{row.original.status ? "Activo" : "Inactivo"}</Badge>
+            ),
+          },
+          {
+            header: "Acciones",
+            cell: ({ row }) => {
+              return (
+                <div className="flex items-center space-x-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Ellipsis className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem disabled>
+                        <EditIcon className="h-4 w-4 mr-2" />
+                        Editar Transportista (Próximamente)
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              );
+            },
+          },
+        ]}
+        data={query.data?.data.items ?? []}
+        meta={{
+          ...query.data?.data.meta,
+          onChangePage: (page) => {
+            setSearchParams({ page });
+          },
+          onNextPage: () => {
+            setSearchParams({ page: searchParams.page + 1 });
+          },
+          disabledNextPage:
+            searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
+          onPreviousPage: () => {
+            setSearchParams({ page: searchParams.page - 1 });
+          },
+          disabledPreviousPage: searchParams.page <= 1,
+          setSearchParams,
+        }}
+        isLoading={query.isLoading}
+      />
+    </div>
+  );
+}
