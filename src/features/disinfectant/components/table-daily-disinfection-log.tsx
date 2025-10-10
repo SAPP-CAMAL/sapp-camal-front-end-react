@@ -5,7 +5,6 @@ import { ColumnDef, flexRender, Row } from '@tanstack/react-table';
 import { ChevronLeft, ChevronRight, FileText, Info, Save } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
-import { formatDate } from '@/lib/formatDate';
 import { Button } from '@/components/ui/button';
 import { usePaginated } from '@/hooks/use-paginated';
 import { useGetRegisterVehicleByDate } from '@/features/vehicles/hooks';
