@@ -14,59 +14,39 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { createEmployeeService } from "@/features/employees/server/db/employees.services";
-import { NewPeopleFields } from "./person-form-fields";
-import { createPersonService } from "@/features/people/server/db/people.service";
+import { NewUserFields } from "./user-form-fields";
+import { createUserAction } from "../server/db/actions.users";
 
-export function NewPerson() {
+export function NewUser() {
   const queryClient = useQueryClient();
 
   const defaultValues = {
     open: false,
-    identificationType: "",
-    identification: "",
-    genderId: "",
-    mobileNumber: "",
-    firstName: "",
-    lastName: "",
-    slaughterhouse: false,
-    positions: [],
-    address: "",
+    personId: "",
+    email: "",
+    userName: "",
+    password: "",
+    roles: [],
   };
 
   const form = useForm({ defaultValues });
 
   const onSubmit = async (data: any) => {
     try {
-      const person = await createPersonService({
-        code: "",
-        identification: data.identification,
-        identificationTypeId: Number(data.identificationType),
-        genderId: Number(data.genderId),
-        mobileNumber: data.mobileNumber,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        address: data.address,
-        affiliationDate: new Date(),
-        fullName: data.lastName + " " + data.firstName,
-      });
+      console.log({ data });
 
-      const employeeMap = data?.positions.map((position: any) => {
-        return createEmployeeService({
-          personId: person.data.id,
-          positionId: Number(position.catalogueId),
-          suitable: position.suitable,
-          suitableLimitations: position.suitableLimitations,
-          suitableObservation: position.suitableObservation,
-        });
+      await createUserAction({
+        personId: Number(data.personId),
+        email: data.email,
+        userName: data.userName,
+        password: data.password,
+        roles: data.roles.map(Number),
       });
-
-      await Promise.all(employeeMap);
 
       form.reset(defaultValues);
 
       await queryClient.invalidateQueries({
-        queryKey: ["people"],
+        queryKey: ["users"],
       });
 
       toast.success("Persona creada exitosamente");
@@ -84,15 +64,15 @@ export function NewPerson() {
       <DialogTrigger asChild>
         <Button>
           <PlusIcon />
-          Nueva Persona
+          Nuevo Usuario
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-2xl">
+      <DialogContent className="min-w-4xl">
         <DialogHeader>
-          <DialogTitle>Nueva Persona</DialogTitle>
+          <DialogTitle>Nuevo Usuario</DialogTitle>
           <DialogDescription>
-            Complete la información de la persona. Los campos marcados con (*)
-            son obligatorios.
+            Complete la información del usuario. Los campos marcados con (*) son
+            obligatorios.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -100,7 +80,7 @@ export function NewPerson() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-8 grid grid-cols-2 gap-2"
           >
-            <NewPeopleFields />
+            <NewUserFields />
             <div className="flex justify-end col-span-2">
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Guardando..." : "Guardar"}

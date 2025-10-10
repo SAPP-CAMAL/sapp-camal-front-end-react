@@ -21,15 +21,9 @@ import {
   ChevronRight,
   CreditCardIcon,
   FilterIcon,
+  MailIcon,
   UserIcon,
 } from "lucide-react";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
@@ -77,6 +71,16 @@ export function UsersTable<TData, TValue>({
     ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) +
     (meta?.itemCount ?? 0);
 
+  const debounceEmail = useDebouncedCallback(
+    (text: string) => meta?.setSearchParams({ email: text }),
+    500
+  );
+
+  const debounceUserName = useDebouncedCallback(
+    (text: string) => meta?.setSearchParams({ userName: text }),
+    500
+  );
+
   const debounceFullName = useDebouncedCallback(
     (text: string) => meta?.setSearchParams({ fullName: text }),
     500
@@ -92,8 +96,10 @@ export function UsersTable<TData, TValue>({
       <div className="py-4 px-2 flex justify-between">
         <h2>Lista de Usuarios</h2>
         <div className="flex items-center gap-x-2">
-          <FilterIcon size={56} />
-          <Select
+          <div>
+            <FilterIcon size={24} />
+          </div>
+          {/* <Select
             onValueChange={(value) => {
               meta?.setSearchParams({
                 isEmployee: value === "true" ? "true" : "false",
@@ -109,8 +115,8 @@ export function UsersTable<TData, TValue>({
               <SelectItem value={"true"}>Personal Camal</SelectItem>
               <SelectItem value={"false"}>Otros</SelectItem>
             </SelectContent>
-          </Select>
-          <Select
+          </Select> */}
+          {/* <Select
             onValueChange={(value) => meta?.setSearchParams({ status: value })}
             defaultValue={"todos"}
           >
@@ -122,15 +128,25 @@ export function UsersTable<TData, TValue>({
               <SelectItem value={"activos"}>Activos</SelectItem>
               <SelectItem value={"inactivos"}>Inactivos</SelectItem>
             </SelectContent>
-          </Select>
-          <div className="relative h-8 w-full flex items-center ">
+          </Select> */}
+          <div className="relative h-8 w-full flex items-center">
             <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
             <Input
               type="text"
-              placeholder="Buscar por nombres"
+              placeholder="Nombre de usuario"
               className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
-              defaultValue={searhParams.get("fullName") ?? ""}
-              onChange={(e) => debounceFullName(e.target.value)}
+              defaultValue={searhParams.get("identification") ?? ""}
+              onChange={(e) => debounceEmail(e.target.value)}
+            />
+          </div>
+          <div className="relative h-8 w-full flex items-center">
+            <MailIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+            <Input
+              type="text"
+              placeholder="Buscar por email"
+              className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+              defaultValue={searhParams.get("identification") ?? ""}
+              onChange={(e) => debounceUserName(e.target.value)}
             />
           </div>
           <div className="relative h-8 w-full flex items-center ">
@@ -141,6 +157,16 @@ export function UsersTable<TData, TValue>({
               className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
               defaultValue={searhParams.get("identification") ?? ""}
               onChange={(e) => debounceIdentification(e.target.value)}
+            />
+          </div>
+          <div className="relative h-8 w-full flex items-center ">
+            <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+            <Input
+              type="text"
+              placeholder="Buscar Nombres"
+              className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+              defaultValue={searhParams.get("fullName") ?? ""}
+              onChange={(e) => debounceFullName(e.target.value)}
             />
           </div>
         </div>
@@ -198,7 +224,7 @@ export function UsersTable<TData, TValue>({
       </Table>
       <div className="h-10 flex items-end justify-between mt-4">
         <p className="text-sm text-gray-600">
-          Mostrando {start} a {end} de {meta?.totalItems} personas
+          Mostrando {start} a {end} de {meta?.totalItems} usuarios
         </p>
         <div className="flex items-center gap-x-2">
           <Button

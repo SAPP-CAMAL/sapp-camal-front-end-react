@@ -401,7 +401,6 @@ export function PersonSearch({
   onSelectPerson,
 }: PersonSearchProps) {
   if (!activeField) return null;
-  console.log("a", data.length);
 
   return (
     <Command className="rounded-lg border shadow-md w-full mt-2">
