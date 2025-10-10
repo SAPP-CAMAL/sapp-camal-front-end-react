@@ -87,14 +87,14 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 							<span className='font-medium'>Tipo de Corral:</span> {animalAdmissionItem?.animalAdmission?.corralType?.description}
 						</div>
 						<div>
-							<span className='font-medium'>Corral:</span> {animalAdmissionItem?.animalAdmission?.corral?.name || 'N/A'}
+							<span className='font-medium'>Corral:</span> {animalAdmissionItem?.animalAdmission?.corral?.name || ''}
 						</div>
 						<div>
-							<span className='font-medium'>Observación:</span> {animalAdmissionItem?.animalAdmission?.observations || 'N/A'}
+							<span className='font-medium'>Observación:</span> {animalAdmissionItem?.animalAdmission?.observations || ''}
 						</div>
 						<div>
-							{ animalAdmissionItem?.animalAdmission?.finishType?.name ? <span className='font-medium'>Tipo de acabado:</span> : null}
-							{animalAdmissionItem?.animalAdmission?.finishType?.name?<span>{animalAdmissionItem?.animalAdmission?.finishType?.name || 'N/A'}</span> : null}
+							{animalAdmissionItem?.animalAdmission?.finishType && <span className='font-medium'>Tipo de acabado: </span>}
+							{animalAdmissionItem?.animalAdmission?.finishType ? animalAdmissionItem?.animalAdmission?.finishType?.name || animalAdmissionItem?.animalAdmission?.corralGroup?.name : ''}
 						</div>
 					</div>
 				</div>

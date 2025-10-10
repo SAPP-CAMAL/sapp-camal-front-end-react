@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, EyeOff, Save, Check, Loader2, X, GripVertical } from "lucide-react";
+import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, EyeOff, Save, Check, Loader2, X, GripVertical, Venus, Mars, BringToFront } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { QuantitySelector } from "@/components/quantity-selector";
 import { format } from "date-fns";
@@ -18,7 +18,6 @@ import { es } from "date-fns/locale";
 import SignosClinicosModal from "./signos-clinicos-modal";
 import { ObservacionesModal } from "./observaciones-modal";
 import { AntemortemMobileCard } from "./antemortem-mobile-card";
-// Importación para cargar líneas y datos desde la nueva API
 import { getActiveLinesDataService, getAntemortemDataService, updateArgollasService } from "../server/db/antemortem.service";
 import { LineItem, mapLineItemToLineaType, getLineIdByType } from "../domain/line.types";
 
@@ -459,7 +458,7 @@ export function AntemortemManagement() {
           <span className="text-sm text-muted-foreground">MACHOS</span>
         </div>
         <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-          <User className="h-6 w-6 text-blue-600" />
+          <Venus className="h-6 w-6 text-blue-600" />
         </div>
         </CardHeader>
       </Card>
@@ -470,9 +469,7 @@ export function AntemortemManagement() {
           <span className="text-sm text-muted-foreground">HEMBRAS</span>
         </div>
         <div className="h-12 w-12 rounded-full bg-rose-100 flex items-center justify-center">
-          <svg className="h-6 w-6 text-rose-600" fill="currentColor" viewBox="0 0 24 24">
-              <User />
-          </svg>
+          <Mars className="h-6 w-6 text-rose-600" />
         </div>
         </CardHeader>
       </Card>
@@ -484,7 +481,7 @@ export function AntemortemManagement() {
             <span className="text-sm text-muted-foreground">ARGOLLAS</span>
           </div>
           <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
-            <Coins className="h-6 w-6 text-amber-600" />
+            <BringToFront  className="h-6 w-6 text-amber-600" />
           </div>
         </CardHeader>
         </Card>

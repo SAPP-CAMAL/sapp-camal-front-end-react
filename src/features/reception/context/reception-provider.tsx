@@ -40,7 +40,6 @@ export interface ReceptionState {
 	animalAdmissionList: AnimalAdmissionItem[];
 	selectedSpecie?: Specie;
 	isFromQR: boolean;
-
 	receptionDispatch: React.Dispatch<ReceptionAction>;
 }
 
@@ -48,8 +47,13 @@ export const ReceptionContext = createContext<ReceptionState | undefined>(undefi
 
 export const ReceptionProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, receptionDispatch] = useReducer(uiReducer, initialState);
+
+  // Reset state when component unmounts
   useEffect(() => {
-    receptionDispatch({ type: 'RESET_RECEPTION_STATE' });
+    return () => {
+      // Reset the state to initial values when the provider unmounts
+      receptionDispatch({ type: 'RESET_RECEPTION_STATE' });
+    };
   }, []);
 
   return (
