@@ -48,6 +48,26 @@ export function VideoUploadDialog({
 		setSelectedVideo(undefined);
 	};
 
+	const handleFiles = (files: FileList | null) => {
+		if (!canSaveItems || !files) return;
+
+		const existingNormalized = new Set(videoList.map(v => v.name));
+		let invalidFile: File | null = null;
+
+		for (const file of Array.from(files)) {
+			const newName = file.name.trim().replace(/\s+/g, '_');
+
+			if (!existingNormalized.has(newName)) continue;
+
+			invalidFile = file;
+			toast.error(`Ya se ha subido el video con el nombre "${newName}"`);
+		}
+
+		if (invalidFile) return;
+
+		onAddVideos(files);
+	};
+
 	const validItems = videoList.filter(v => v.valid.isValid);
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
@@ -67,7 +87,7 @@ export function VideoUploadDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				{videoList.length < limitVideosToUpload && !selectedVideo && <DragAndDropArea onAddVideos={onAddVideos} canSaveItems={canDeleteItems} />}
+				{videoList.length < limitVideosToUpload && !selectedVideo && <DragAndDropArea onAddVideos={handleFiles} canSaveItems={canDeleteItems} />}
 
 				{/* Play video */}
 				{selectedVideo && (
