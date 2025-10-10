@@ -17,6 +17,12 @@ export function createVehicleService(body: Omit<CreateVehicleRequest, "id" | "st
     }).json<ResponseCreateVehicle>()
 }
 
+export function updateVehicleService(vehicleId: number,body: Omit<CreateVehicleRequest, "id">): Promise<ResponseCreateVehicle> {
+  return http.patch(`v1/1.0.0/vehicle/${vehicleId}`,
+        { json: body }
+    ).json()
+}
+
 export function getVehicleByIdService(id: number): Promise<ResponseCreateVehicle> {
     return http.get("v1/1.0.0/vehicle", {
         searchParams: {
