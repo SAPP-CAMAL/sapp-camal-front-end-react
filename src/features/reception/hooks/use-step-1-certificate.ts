@@ -137,7 +137,6 @@ export const useStep1Certificate = () => {
 
 			handleSelectedCertificate(updatedCertificate);
 
-			// Fetch species from detail-register-vehicle API
 			try {
 				const detailResponse = await getDetailRegisterVehicleByIdShippingAndCertificateCodeService(
 					selectedShipper.id,
@@ -154,7 +153,6 @@ export const useStep1Certificate = () => {
 						certificateId: selectedCertificate.code
 					};
 					
-					// Set the species automatically
 					handleSetSelectedSpecie(specieData);
 					toast.success(`Especie seleccionada automáticamente: ${detailResponse.data.species.name}`);
 				}
@@ -222,7 +220,6 @@ export const useStep1Certificate = () => {
 		);
 
 	return {
-		// data
 		shippers,
 		certificate,
 		selectedShipper,
@@ -235,8 +232,6 @@ export const useStep1Certificate = () => {
 		certificateQuery,
 		successMsg,
 		isFromQR,
-
-		// actions - state
 		handleRemoveSelectedCertificate,
 		handleSetSelectedCertificate,
 		handleSetSelectedShipper,
