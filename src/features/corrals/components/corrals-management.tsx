@@ -25,7 +25,6 @@ import {
   Line,
   CorralGroup,
   ApiCorral,
-  getEspecialesGroupIdByLine,
   type StatusCorralByAdmission,
   type BrandDetail,
 } from "../domain";
@@ -34,7 +33,6 @@ import {
   getAllCorralGroupsService,
   getCorralesByGroupService,
   getStatusCorralsByAdmissionDateService,
-  getBrandDetailsByGroupService,
   getBrandDetailsByLineService,
   closeCorralByStatusIdService,
 } from "../server/db/corrals.service";
@@ -369,6 +367,41 @@ export function CorralsManagement() {
     resetMobileTransferModal();
   };
 
+const reloadStatusByDate = async () => {
+    try {
+      setIsLoadingStatusByDate(true);
+      const items = await getStatusCorralsByAdmissionDateService(selectedDate);
+      const map: Record<string, { quantity: number; status: boolean; statusRecordId?: number; closeCorral?: boolean; urlVideo:string[] }> = {};
+      for (const item of items as StatusCorralByAdmission[]) {
+        const key = String(item.idCorrals);
+        if (!map[key]) {
+          map[key] = { quantity: 0, status: true, statusRecordId: undefined, closeCorral: false, urlVideo: [] };
+        }
+        map[key].quantity += Number(item.quantity) || 0;
+        if (!Boolean(item.status)) map[key].status = false;
+        if ((item as any).id) map[key].statusRecordId = (item as any).id;
+        if (typeof (item as any).closeCorral === 'boolean') map[key].closeCorral = (item as any).closeCorral;
+        if (item.urlVideo) map[key].urlVideo = item.urlVideo;
+      }
+      setStatusByDateMap(map);
+    } catch (error) {
+      console.error('Error reloading status by date:', error);
+    } finally {
+      setIsLoadingStatusByDate(false);
+    }
+  };
+
+
+  const canUploadVideoForCorral = (corralId: string) => {
+    const status = statusByDateMap[corralId];
+    if (!status) return false;
+    const hasAnimalsInStatus = (status.quantity || 0) > 0;
+    const hasBrands = (brandDetailsMap[corralId]?.length || 0) > 0;
+    const hasVideos = (status.urlVideo?.length || 0) > 0;
+    return hasAnimalsInStatus || hasBrands || hasVideos;
+  }
+
+
   // Execute confirmed transfer
   const executeTransfer = async () => {
     if (isTransferring) {
@@ -511,6 +544,9 @@ export function CorralsManagement() {
       // Reload brand details from database to reflect actual state
       await reloadBrandDetails();
 
+      // await to refresh status overlay
+      await reloadStatusByDate();
+
       // Close confirmation modal
       resetConfirmationModal();
 
@@ -634,7 +670,7 @@ export function CorralsManagement() {
           .map(stage => {
             const transferredQuantity = confirmationModal.selectedQuantitiesByStage?.[stage.id] || 0;
             const originalQuantityForStage = mobileTransferModal.initialQuantitiesByStage?.[stage.id] || 0;
-            
+
             // Calculate remaining: original - transferred
             const remainingQuantity = Math.max(0, originalQuantityForStage - transferredQuantity);
 
@@ -1269,7 +1305,7 @@ export function CorralsManagement() {
         disponibles: liveDisponibles,
         ocupacion: liveTotal,
         ocupacionPorcentaje: liveOcupacionPorcentaje,
-        status: liveStatus,   
+        status: liveStatus,
         originalTotal: corral.total,
         originalDisponibles: corral.disponibles,
         originalOcupacion: corral.ocupacion,
@@ -1865,7 +1901,7 @@ export function CorralsManagement() {
                                   size="sm"
                                   className={`text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 flex items-center justify-center ${( !statusByDateMap[corral.id]) ? 'opacity-80 cursor-not-allowed' : 'shadow-sm hover:shadow-md hover:from-teal-50 hover:to-teal-100 hover:border-teal-300'}`}
                                   onClick={() =>  openVideoDialogForLinea(corral.id)}
-                                  disabled={ !statusByDateMap[corral.id] }
+                                  disabled={ !canUploadVideoForCorral(corral.id)}
                                 >
                                   <Video className="h-4 w-4 mr-1 flex-shrink-0" />
                                   <span className="truncate font-medium">Video</span>
@@ -2001,7 +2037,7 @@ export function CorralsManagement() {
                                 size="sm"
                                 className="text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 hover:border-teal-300 flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 shadow-sm hover:shadow-md"
                                 onClick={() => openVideoDialogForLinea(corral.id)}
-                                disabled={!statusByDateMap[corral.id]}
+                                disabled={!canUploadVideoForCorral(corral.id)}
                               >
                                 <Video className="h-4 w-4 mr-1 flex-shrink-0" />
                                 <span className="truncate font-medium">Video</span>

@@ -48,7 +48,6 @@ export const useRegisterDisinfectantData = () => {
 		handleRemoveSelectedFormData,
 	} = useDailyDisinfectionRegisterContext();
 
-
 	const form = useForm<DailyRegisterFormData>({ defaultValues });
 
 	const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams);
@@ -74,10 +73,9 @@ export const useRegisterDisinfectantData = () => {
 
 	useEffect(() => {
 		handleSearchFields('plate', dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '');
+		setSearchParams(prev => ({ ...prev, plate: dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '' }));
 
-		if (formData) {
-			return form.reset(formData);
-		}
+		if (formData) return form.reset(formData);
 
 		form.reset({
 			id: dailyDisinfectionRegister?.id,
@@ -196,7 +194,12 @@ export const useRegisterDisinfectantData = () => {
 		}
 	};
 
-	const isEditing = !!dailyDisinfectionRegister;
+	const handleRemoveSelected = () => {
+		handleRemoveSelectedFormData();
+		handleRemoveDailyDisinfectionRegister();
+	};
+
+	const isEditing = !!dailyDisinfectionRegister || !!formData;
 
 	let btnValue = !isEditing && form.formState.isSubmitting ? 'Guardando Registro...' : 'Guardar Registro';
 
@@ -227,6 +230,6 @@ export const useRegisterDisinfectantData = () => {
 		handleSearchFields,
 		handleRegisterDisinfectantData,
 		handleRemoveSelectedCertificate,
-		handleRemoveSelected: handleRemoveDailyDisinfectionRegister,
+		handleRemoveSelected,
 	};
 };
