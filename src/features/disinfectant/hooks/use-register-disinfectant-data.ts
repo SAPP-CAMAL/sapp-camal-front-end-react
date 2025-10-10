@@ -73,10 +73,9 @@ export const useRegisterDisinfectantData = () => {
 
 	useEffect(() => {
 		handleSearchFields('plate', dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '');
+		setSearchParams(prev => ({ ...prev, plate: dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '' }));
 
-		if (formData) {
-			return form.reset(formData);
-		}
+		if (formData) return form.reset(formData);
 
 		form.reset({
 			id: dailyDisinfectionRegister?.id,
