@@ -87,7 +87,10 @@ export const Step2Animals = () => {
 				<div className='flex justify-between items-center'>
 					<span />
 
-					<Button onClick={handleAddNewAnimalAdmission} disabled={isCompleted || !selectedSpecie}>
+					<Button
+						onClick={handleAddNewAnimalAdmission}
+						// disabled={isCompleted || !selectedSpecie}
+					>
 						<Plus />
 						Crear Nuevo
 					</Button>
@@ -106,7 +109,9 @@ export const Step2Animals = () => {
 				{/* Form cards */}
 				{animalAdmissionList.map(admission => (
 					<div key={admission.randomId + admission.animalAdmission.id} className='space-y-2'>
-						{admission.isOpen ? (
+						{!admission.isOpen ? (
+							<BasicAnimalAdmissionInfoCard animalAdmissionItem={admission} />
+						) : (
 							<CreateUpdateAnimalAdmissionForm
 								animalAdmissionData={admission.animalAdmission}
 								onSave={data => {
@@ -126,8 +131,6 @@ export const Step2Animals = () => {
 									else removeAnimalAdmission(admission.randomId);
 								}}
 							/>
-						) : (
-							<BasicAnimalAdmissionInfoCard animalAdmissionItem={admission} />
 						)}
 					</div>
 				))}

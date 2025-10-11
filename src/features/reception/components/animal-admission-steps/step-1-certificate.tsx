@@ -119,7 +119,7 @@ export const Step1Certificate = () => {
 									selectedCertificate.plateVehicle && `• ${selectedCertificate.plateVehicle}`
 								} • ${selectedCertificate.placeOrigin}`}
 								editButton={
-									!isFromQR ? (
+									!isFromQR && (
 										<CreateUpdateCertificateModal
 											certificate={selectedCertificate}
 											onSetCertificate={certificate => handleSetSelectedCertificate(certificate!)}
@@ -130,7 +130,7 @@ export const Step1Certificate = () => {
 												</Button>
 											}
 										/>
-									) : undefined
+									)
 								}
 								onRemove={!isFromQR ? handleRemoveSelectedCertificate : undefined}
 								isSelected
@@ -206,7 +206,7 @@ export const Step1Certificate = () => {
 							paragraph={`${selectedShipper.identification} • ${selectedShipper.plate} • ${toCapitalize(selectedShipper.vehicleType)}`}
 							onRemove={isFromQR ? undefined : handleRemoveSelectedShipper}
 							editButton={
-								!isFromQR ? (
+								!isFromQR && (
 									<ShipperModal
 										shipperData={selectedShipper}
 										onSetShipper={shipper => handleSetSelectedShipper(shipper!)}
@@ -217,7 +217,7 @@ export const Step1Certificate = () => {
 											</Button>
 										}
 									/>
-								) : undefined
+								)
 							}
 							isSelected
 						/>

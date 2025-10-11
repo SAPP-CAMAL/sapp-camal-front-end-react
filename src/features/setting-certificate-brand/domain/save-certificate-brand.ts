@@ -45,15 +45,16 @@ export interface SettingCertBrandByCertificateId {
 	id: number;
 	idBrands: number;
 	idCertificate: number;
-	codes: string;
+	codes?: string;
 	status: boolean;
 	commentary: string;
-	males: number;
-	females: null;
+	males?: number;
+	females?: number;
 	slaughterDate: string;
 	idSpecies: number;
 	idStatusCorrals: number;
-	idCorralType: null;
+	idCorralType?: number;
+	finishTypeId?: number;
 }
 
 export interface SettingCertBrandByID {

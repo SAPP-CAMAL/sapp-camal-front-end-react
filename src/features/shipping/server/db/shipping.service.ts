@@ -31,7 +31,7 @@ export const getShippersByIdService = (id: number | string) => {
 export const getDetailRegisterVehicleByIdShippingAndCertificateCodeService = (idShipping: number | string, certificateCode: string) => {
 	return http
 		.get(`v1/1.0.0/detail-register-vehicle/by-shipping-certificate`, {
-			next: { tags: ['detail-register-vehicle'] },
+			next: { tags: ['detail-register-vehicle-by-certificate'] },
 			searchParams: { idShipping, certificateCode },
 		})
 		.json<CreateOrUpdateHttpResponse<DetailRegisterVehicleResponseByCodeAndIdShipping>>();

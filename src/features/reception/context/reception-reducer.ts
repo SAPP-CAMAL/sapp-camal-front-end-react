@@ -52,7 +52,7 @@ export const uiReducer = (
 
 		// Animal admission list control
 		case 'ADD_ANIMAL_ADMISSION':
-			return { ...receptionState, animalAdmissionList: [...receptionState.animalAdmissionList, action.payload] };
+			return { ...receptionState, animalAdmissionList: [action.payload, ...receptionState.animalAdmissionList] };
 
 		case 'UPDATE_ANIMAL_ADMISSION':
 			return {

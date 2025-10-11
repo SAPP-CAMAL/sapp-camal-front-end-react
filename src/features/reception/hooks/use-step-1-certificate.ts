@@ -9,8 +9,9 @@ import { useReceptionContext } from './use-reception-context';
 import { useCertificateByCode } from '@/features/certificate/hooks';
 import { useAnimalAdmissionParams } from './use-animal-admission-params';
 import { updateCertificateService } from '@/features/certificate/server/db/certificate.service';
-import { readAnimalAdmissionsFromLocalStorage, readSpeciesFromLocalStorage } from '../utils';
-import { getShippersByIdService, getDetailRegisterVehicleByIdShippingAndCertificateCodeService } from '@/features/shipping/server/db/shipping.service';
+import { mapToAnimalAdmissions } from '../utils';
+import { getShippersByIdService } from '@/features/shipping/server/db/shipping.service';
+import { getCertBrandByCertificateId } from '@/features/setting-certificate-brand/server/db/setting-cert-brand.service';
 
 type state = 'enabled' | 'loading';
 interface Step1State {
@@ -116,9 +117,8 @@ export const useStep1Certificate = () => {
 
 		handleSetAccordionState({ name: 'step1Accordion', accordionState: { btnState: 'loading' } });
 
+		const { id, ...baseCertificateData } = selectedCertificate;
 		try {
-			const { id, ...baseCertificateData } = selectedCertificate;
-
 			const response = await updateCertificateService(id, {
 				code: baseCertificateData.code ?? '',
 				placeOrigin: baseCertificateData?.placeOrigin ?? '',
@@ -136,44 +136,30 @@ export const useStep1Certificate = () => {
 			const updatedCertificate = response.data;
 
 			handleSelectedCertificate(updatedCertificate);
+		} catch (error) {
+			toast.error('Error al guardar los datos. Inténtalo de nuevo.');
+		}
+		handleSetAccordionState({ name: 'step1Accordion', accordionState: { isOpen: false, state: 'completed', btnState: 'enabled' } });
+		handleSetAccordionState({ name: 'step2Accordion', accordionState: { isOpen: true, state: 'enabled' } });
+		handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: false, state: 'enabled' } });
 
-			try {
-				const detailResponse = await getDetailRegisterVehicleByIdShippingAndCertificateCodeService(
-					selectedShipper.id,
-					selectedCertificate.code
-				);
-				
-				if (detailResponse.data?.species) {
-					const specieData = {
-						id: detailResponse.data.species.id,
-						name: detailResponse.data.species.name,
-						description: '',
-						status: true,
-						finishType: [],
-						certificateId: selectedCertificate.code
-					};
-					
-					handleSetSelectedSpecie(specieData);
-					toast.success(`Especie seleccionada automáticamente: ${detailResponse.data.species.name}`);
-				}
-			} catch (speciesError) {
-				console.error('Error fetching species:', speciesError);
-				// If species fetch fails, try to load from localStorage as fallback
-				const selectedSpecie = readSpeciesFromLocalStorage().find(specie => specie.certificateId === selectedCertificate.code);
-				if (selectedSpecie) handleSetSelectedSpecie(selectedSpecie);
-			}
+		handleResetAnimalAdmission();
+		try {
+			const settingCertificateBrand = (await getCertBrandByCertificateId(id.toString()))?.data || [];
 
-			handleSetAccordionState({ name: 'step1Accordion', accordionState: { isOpen: false, state: 'completed', btnState: 'enabled' } });
-			handleSetAccordionState({ name: 'step2Accordion', accordionState: { isOpen: true, state: 'enabled' } });
-			handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: false, state: 'enabled' } });
+			const animalAdmissionMapped = mapToAnimalAdmissions(settingCertificateBrand);
+			console.log({ settingCertificateBrand });
 
-			const animalAdmissionsLocalStorage = readAnimalAdmissionsFromLocalStorage().filter(
-				admission => admission.certificateId === selectedCertificate.code
-			);
+			animalAdmissionMapped.forEach(handleAddAnimalAdmission);
 
-			handleResetAnimalAdmission();
+			// const animalAdmissionsLocalStorage = readAnimalAdmissionsFromLocalStorage().filter(
+			// 	admission => admission.certificateId === selectedCertificate.code
+			// );
+			// const selectedSpecie = readSpeciesFromLocalStorage().find(specie => specie.certificateId === selectedCertificate.code);
 
-			animalAdmissionsLocalStorage.forEach(handleAddAnimalAdmission);
+			// if (selectedSpecie) handleSetSelectedSpecie(selectedSpecie);
+
+			// animalAdmissionsLocalStorage.forEach(handleAddAnimalAdmission);
 
 			toast.success('Paso 1 completado correctamente');
 		} catch (error) {
