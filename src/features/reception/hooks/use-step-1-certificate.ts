@@ -10,7 +10,7 @@ import { useCertificateByCode } from '@/features/certificate/hooks';
 import { useAnimalAdmissionParams } from './use-animal-admission-params';
 import { updateCertificateService } from '@/features/certificate/server/db/certificate.service';
 import { readAnimalAdmissionsFromLocalStorage, readSpeciesFromLocalStorage } from '../utils';
-import { getShippersByIdService } from '@/features/shipping/server/db/shipping.service';
+import { getShippersByIdService, getDetailRegisterVehicleByIdShippingAndCertificateCodeService } from '@/features/shipping/server/db/shipping.service';
 
 type state = 'enabled' | 'loading';
 interface Step1State {
@@ -116,41 +116,71 @@ export const useStep1Certificate = () => {
 
 		handleSetAccordionState({ name: 'step1Accordion', accordionState: { btnState: 'loading' } });
 
-		const { id, ...baseCertificateData } = selectedCertificate;
+		try {
+			const { id, ...baseCertificateData } = selectedCertificate;
 
-		const response = await updateCertificateService(id, {
-			code: baseCertificateData.code ?? '',
-			placeOrigin: baseCertificateData?.placeOrigin ?? '',
-			issueDate: baseCertificateData.issueDate ?? '',
-			quantity: +(baseCertificateData.quantity ?? NaN),
-			plateVehicle: selectedShipper.plate ?? baseCertificateData.plateVehicle ?? '',
-			authorizedTo: baseCertificateData.authorizedTo ?? '',
-			originAreaCode: baseCertificateData.originAreaCode ?? '',
-			destinationAreaCode: baseCertificateData.destinationAreaCode ?? '',
-			shippingsId: selectedShipper.id,
-			idOrigin: selectedCertificate.idOrigin ?? 0,
-			status: true,
-		});
+			const response = await updateCertificateService(id, {
+				code: baseCertificateData.code ?? '',
+				placeOrigin: baseCertificateData?.placeOrigin ?? '',
+				issueDate: baseCertificateData.issueDate ?? '',
+				quantity: +(baseCertificateData.quantity ?? NaN),
+				plateVehicle: selectedShipper.plate ?? baseCertificateData.plateVehicle ?? '',
+				authorizedTo: baseCertificateData.authorizedTo ?? '',
+				originAreaCode: baseCertificateData.originAreaCode ?? '',
+				destinationAreaCode: baseCertificateData.destinationAreaCode ?? '',
+				shippingsId: selectedShipper.id,
+				idOrigin: selectedCertificate.idOrigin ?? 0,
+				status: true,
+			});
 
-		const updatedCertificate = response.data;
+			const updatedCertificate = response.data;
 
-		handleSelectedCertificate(updatedCertificate);
-		handleSetAccordionState({ name: 'step1Accordion', accordionState: { isOpen: false, state: 'completed', btnState: 'enabled' } });
-		handleSetAccordionState({ name: 'step2Accordion', accordionState: { isOpen: true, state: 'enabled' } });
-		handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: false, state: 'enabled' } });
+			handleSelectedCertificate(updatedCertificate);
 
-		const animalAdmissionsLocalStorage = readAnimalAdmissionsFromLocalStorage().filter(
-			admission => admission.certificateId === selectedCertificate.code
-		);
-		const selectedSpecie = readSpeciesFromLocalStorage().find(specie => specie.certificateId === selectedCertificate.code);
+			try {
+				const detailResponse = await getDetailRegisterVehicleByIdShippingAndCertificateCodeService(
+					selectedShipper.id,
+					selectedCertificate.code
+				);
+				
+				if (detailResponse.data?.species) {
+					const specieData = {
+						id: detailResponse.data.species.id,
+						name: detailResponse.data.species.name,
+						description: '',
+						status: true,
+						finishType: [],
+						certificateId: selectedCertificate.code
+					};
+					
+					handleSetSelectedSpecie(specieData);
+					toast.success(`Especie seleccionada automáticamente: ${detailResponse.data.species.name}`);
+				}
+			} catch (speciesError) {
+				console.error('Error fetching species:', speciesError);
+				// If species fetch fails, try to load from localStorage as fallback
+				const selectedSpecie = readSpeciesFromLocalStorage().find(specie => specie.certificateId === selectedCertificate.code);
+				if (selectedSpecie) handleSetSelectedSpecie(selectedSpecie);
+			}
 
-		handleResetAnimalAdmission();
+			handleSetAccordionState({ name: 'step1Accordion', accordionState: { isOpen: false, state: 'completed', btnState: 'enabled' } });
+			handleSetAccordionState({ name: 'step2Accordion', accordionState: { isOpen: true, state: 'enabled' } });
+			handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: false, state: 'enabled' } });
 
-		animalAdmissionsLocalStorage.forEach(handleAddAnimalAdmission);
+			const animalAdmissionsLocalStorage = readAnimalAdmissionsFromLocalStorage().filter(
+				admission => admission.certificateId === selectedCertificate.code
+			);
 
-		if (selectedSpecie) handleSetSelectedSpecie(selectedSpecie);
+			handleResetAnimalAdmission();
 
-		toast.success('Paso 1 completado correctamente');
+			animalAdmissionsLocalStorage.forEach(handleAddAnimalAdmission);
+
+			toast.success('Paso 1 completado correctamente');
+		} catch (error) {
+			console.error('Error in handleSaveAndContinue:', error);
+			toast.error('Error al guardar. Por favor, intente nuevamente.');
+			handleSetAccordionState({ name: 'step1Accordion', accordionState: { btnState: 'enabled' } });
+		}
 	};
 
 	const handleSetSelectedCertificate = (certificate: Certificate) => {
@@ -190,7 +220,6 @@ export const useStep1Certificate = () => {
 		);
 
 	return {
-		// data
 		shippers,
 		certificate,
 		selectedShipper,
@@ -203,8 +232,6 @@ export const useStep1Certificate = () => {
 		certificateQuery,
 		successMsg,
 		isFromQR,
-
-		// actions - state
 		handleRemoveSelectedCertificate,
 		handleSetSelectedCertificate,
 		handleSetSelectedShipper,

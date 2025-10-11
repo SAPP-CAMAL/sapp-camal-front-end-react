@@ -17,7 +17,7 @@ export const Step3Transport = () => {
 			{/*  Accordion header*/}
 			<BasicAnimalAdmissionAccordionHeader
 				stepNumber={3}
-				title='Condiciones de transporte (Opcional)'
+				title='Condiciones de transporte'
 				isDisabled={step3Accordion.state === 'disabled'}
 				isDisabledMessage='Debe completar el paso 1 para continuar'
 				onClick={handleChangeStep3}
