@@ -167,8 +167,6 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 
 			let response;
 
-			if (qrModalState.qrData.id) request.placeOrigin = qrModalState.selectedOrigin.description || 'N/A';
-
 			if (qrModalState.qrData.id) response = await updateCertificateService(qrModalState.qrData.id, request);
 			else response = await saveScannedCertificateService(request);
 

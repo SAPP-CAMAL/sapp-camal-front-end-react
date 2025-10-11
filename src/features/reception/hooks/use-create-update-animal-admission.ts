@@ -1,12 +1,12 @@
 import { add } from 'date-fns';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
+import { useDebouncedCallback } from 'use-debounce';
 import { CorralGroupBySpecieResponse } from '@/features/corral-group/domain';
 import { useAllSpecies } from '@/features/specie/hooks';
 import { useAnimalAdmissionParams } from './use-animal-admission-params';
 import { getCorralGroupBySpecieAndType } from '@/features/corral-group/server/db/corral-group.service';
 import { useBrandByFilter } from '@/features/brand/hooks/use-brand-by-filter';
-import { IntroducerByIDResponse } from '@/features/introducer/domain';
 import { useAllCorralType } from '@/features/corral/hooks';
 import { Corral, CorralType } from '@/features/corral/domain';
 import { getCorralsByTypeAndGroup } from '@/features/corral/server/db/corral.service';
@@ -22,12 +22,10 @@ import { FinishType } from '@/features/finish-type/domain';
 import { useFinishTypeBySpecies } from '@/features/finish-type/hooks';
 import { SPECIES_CODE } from '@/features/specie/constants';
 import { BrandByFilterMapped } from '@/features/brand/domain/get-brand-by-filter';
-import { useDebouncedCallback } from 'use-debounce';
 
 export type AnimalAdmissionForm = {
 	/** setting cert brand id */
 	id?: number;
-	// specie?: Specie;
 	corralGroup?: CorralGroupBySpecieResponse;
 	brand?: BrandByFilterMapped;
 	corralGroups?: CorralGroupBySpecieResponse[];

@@ -53,8 +53,50 @@ export interface SettingCertBrandByCertificateId {
 	slaughterDate: string;
 	idSpecies: number;
 	idStatusCorrals: number;
-	idCorralType?: number;
-	finishTypeId?: number;
+	idCorralType: number;
+	idFinishType?: number;
+	brand: {
+		id: number;
+		name: string;
+		introducer: {
+			id: number;
+			user: {
+				id: number;
+				person: {
+					id: number;
+					fullName: string;
+				};
+			};
+		};
+	};
+	certificate: {
+		id: number;
+		code: string;
+	};
+	species: {
+		id: number;
+		name: string;
+	};
+	statusCorrals: {
+		id: number;
+		corral: {
+			id: number;
+			name: string;
+		};
+	};
+	finishType?: {
+		id: number;
+		name: string;
+
+		idSpecie?: number;
+
+		status: boolean;
+	};
+
+	corralType: {
+		id: number;
+		description: string;
+	};
 }
 
 export interface SettingCertBrandByID {

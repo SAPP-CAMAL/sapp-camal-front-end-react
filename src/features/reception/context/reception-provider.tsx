@@ -1,10 +1,11 @@
-import { createContext, useEffect, useReducer } from 'react';
+import { createContext, useReducer } from 'react';
 import { Certificate } from '@/features/certificate/domain';
 import { ACCORDION_NAMES } from '../constants';
 import { Specie } from '@/features/specie/domain';
 import { ShipperBasicData } from '@/features/shipping/domain';
 import { ReceptionAction, uiReducer } from './reception-reducer';
 import { AnimalAdmissionForm } from '../hooks/use-create-update-animal-admission';
+import { AnimalTransportForm } from '../hooks/use-step-3-transport';
 
 export const initialState: Omit<ReceptionState, 'receptionDispatch'> = {
 	animalAdmissionList: [],
@@ -23,10 +24,17 @@ export interface AccordionState {
 	btnState: 'enabled' | 'loading' | 'error';
 }
 
+export interface RetrievedFromApi {
+	brand: { id: number; name: string };
+	certificate: { id: number; code: string };
+	species: { id: number; name: string };
+	statusCorrals: { id: number; corral: { id: number; name: string } };
+}
 export interface AnimalAdmissionItem {
 	/** Random id not belongs to Animal Admission */
 	randomId: string;
 	animalAdmission: Partial<AnimalAdmissionForm>;
+	retrievedFromApi?: RetrievedFromApi;
 	isOpen: boolean;
 	state: 'created' | 'updated' | 'deleting';
 }
@@ -39,6 +47,7 @@ export interface ReceptionState {
 	selectedCertificate?: Certificate;
 	animalAdmissionList: AnimalAdmissionItem[];
 	selectedSpecie?: Specie;
+	animalTransportData?: AnimalTransportForm;
 	isFromQR: boolean;
 	receptionDispatch: React.Dispatch<ReceptionAction>;
 }
@@ -46,19 +55,7 @@ export interface ReceptionState {
 export const ReceptionContext = createContext<ReceptionState | undefined>(undefined);
 
 export const ReceptionProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, receptionDispatch] = useReducer(uiReducer, initialState);
+	const [state, receptionDispatch] = useReducer(uiReducer, initialState);
 
-  // Reset state when component unmounts
-  useEffect(() => {
-    return () => {
-      // Reset the state to initial values when the provider unmounts
-      receptionDispatch({ type: 'RESET_RECEPTION_STATE' });
-    };
-  }, []);
-
-  return (
-    <ReceptionContext.Provider value={{ ...state, receptionDispatch }}>
-      {children}
-    </ReceptionContext.Provider>
-  );
+	return <ReceptionContext.Provider value={{ ...state, receptionDispatch }}>{children}</ReceptionContext.Provider>;
 };

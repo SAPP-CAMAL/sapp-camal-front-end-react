@@ -132,7 +132,8 @@ export const Step1Certificate = () => {
 										/>
 									)
 								}
-								onRemove={!isFromQR ? handleRemoveSelectedCertificate : undefined}
+								// onRemove={!isFromQR ? handleRemoveSelectedCertificate : undefined}
+								onRemove={handleRemoveSelectedCertificate}
 								isSelected
 							/>
 						) : (

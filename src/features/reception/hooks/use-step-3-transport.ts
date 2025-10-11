@@ -1,12 +1,11 @@
 import { toast } from 'sonner';
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useReceptionContext } from './use-reception-context';
 import { useAllBedType } from '@/features/bed-type/hooks';
-import { useForm } from 'react-hook-form';
 import { useAllArrivalConditions } from '@/features/arrival-conditions/hooks';
 import { ConditionTransportRequest } from '@/features/condition-transport/domain';
 import { saveConditionTransport, updateConditionTransport } from '@/features/condition-transport/server/db/condition-transport.service';
-import { readConditionTransportFromLocalStorage, saveConditionTransportInLocalStorage } from '../utils';
 import { useStep2Animals } from './use-step-2-animals';
 
 export type AnimalTransportForm = {
@@ -19,15 +18,14 @@ export type AnimalTransportForm = {
 const defaultValues: AnimalTransportForm = {};
 
 export const useStep3Transport = () => {
-	const { step3Accordion, selectedCertificate, handleSetAccordionState } = useReceptionContext();
-	const { isCompleted, handleResetPage } = useStep2Animals();
-	const form = useForm<AnimalTransportForm>({ defaultValues: { ...defaultValues } });
+	const { isCompleted } = useStep2Animals();
+	const { step3Accordion, animalTransportData, selectedCertificate, handleSetAccordionState, handleResetState } = useReceptionContext();
+
+	const form = useForm<AnimalTransportForm>({ defaultValues });
 
 	useEffect(() => {
-		const condition = readConditionTransportFromLocalStorage().find(transport => transport.certificateId === selectedCertificate?.code);
-
-		if (condition) form.reset(condition);
-	}, [selectedCertificate?.code, readConditionTransportFromLocalStorage, form]);
+		if (animalTransportData) form.reset(animalTransportData);
+	}, [animalTransportData]);
 
 	const bedTypeQuery = useAllBedType();
 	const arrivalConditionsQuery = useAllArrivalConditions();
@@ -52,12 +50,12 @@ export const useStep3Transport = () => {
 			if (id) await updateConditionTransport(id.toString(), request);
 			else id = (await saveConditionTransport(request)).data.id;
 
-			saveConditionTransportInLocalStorage({ ...data, id, certificateId: selectedCertificate.code });
-
 			handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: true, state: 'completed' } });
 
+			form.reset(defaultValues);
+
 			if (!isCompleted) toast.error('Debe completar el paso 2 para finalizar el ingreso.');
-			else handleResetPage();
+			else handleResetState();
 
 			toast.success('Información de transporte guardada');
 		} catch (error) {

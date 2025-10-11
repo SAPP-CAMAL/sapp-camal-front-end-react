@@ -27,14 +27,13 @@ export interface BrandByFilterResponse {
 export interface BrandByFilterMapped {
 	id: number;
 	name: string;
-	description: string;
+	description?: string;
 	introducerId: number;
 	status: boolean;
-	brandSpecies: BrandSpecie[];
 	introducer: {
 		id: number;
 		name: string;
-		identification: string;
+		identification?: string;
 	};
 }
 

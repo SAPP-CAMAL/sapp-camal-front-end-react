@@ -15,12 +15,42 @@ export const mapToAnimalAdmissions = (admissionList: SettingCertBrandByCertifica
 			isLoadingCorralGroups: false,
 			isLoadingCorrals: false,
 
-			finishType: {
-				id: admission.finishTypeId ?? 0,
-				name: '',
-				status: true,
-				idSpecie: admission.idSpecies,
-			},
+			...(admission.finishType && {
+				finishType: {
+					id: admission.finishType?.id ?? 0,
+					name: admission.finishType?.name ?? '',
+					status: !!admission.finishType?.status,
+					idSpecie: admission.finishType?.idSpecie,
+				},
+			}),
+
+			...(admission.brand && {
+				brand: {
+					id: admission.brand.id,
+					name: admission.brand.name,
+					introducerId: admission.brand.introducer.id,
+					status: !!admission.brand,
+					introducer: {
+						id: admission.brand.introducer.id,
+						name: admission.brand.introducer.user.person.fullName,
+					},
+				},
+			}),
+
+			...(admission.corralType && {
+				corralType: {
+					id: admission.corralType.id,
+					description: admission.corralType.description,
+					status: !!admission.corralType,
+				},
+			}),
+		},
+		// Save data retrieved from API
+		retrievedFromApi: {
+			brand: admission.brand,
+			certificate: admission.certificate,
+			species: admission.species,
+			statusCorrals: admission.statusCorrals,
 		},
 	}));
 };

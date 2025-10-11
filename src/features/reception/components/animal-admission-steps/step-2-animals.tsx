@@ -1,4 +1,4 @@
-import { Check, Info, Plus, Save, XIcon } from 'lucide-react';
+import { Info, Plus } from 'lucide-react';
 import { AccordionContent, AccordionItem } from '@/components/ui/accordion';
 import { BasicAnimalAdmissionAccordionHeader } from '../basic-animal-admission-accordion-header';
 import { Button } from '@/components/ui/button';
@@ -6,13 +6,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ACCORDION_NAMES } from '../../constants';
 import { CreateUpdateAnimalAdmissionForm } from '../create-update-animal-admission-form';
 import { BasicAnimalAdmissionInfoCard } from '../basic-animal-admission-info-card';
-import { saveNewAnimalAdmissionToLocalStorage, saveSpeciesInLocalStorage } from '../../utils';
 import { useStep2Animals } from '../../hooks/use-step-2-animals';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BasicResultsCard } from '../basic-results-card';
-import { ConfirmationDialog } from '@/components/confirmation-dialog';
 import { toCapitalize } from '@/lib/toCapitalize';
 
 export const Step2Animals = () => {
@@ -23,18 +19,15 @@ export const Step2Animals = () => {
 		totalAnimals,
 		isCompleted,
 		selectedSpecie,
-		species,
-		speciesQuery,
 
 		handleChangeStep2,
 		handleAddNewAnimalAdmission,
 		handleUpdateAnimalAdmission,
 		removeAnimalAdmission,
 		handleNextStep3,
-		handleSetSelectedSpecie,
-		handleResetPage,
 	} = useStep2Animals();
 
+	// console.log({selectedSpecie})
 	return (
 		<AccordionItem value={ACCORDION_NAMES.STEP_2} className='border rounded-lg'>
 			{/*  Accordion header*/}
@@ -50,55 +43,32 @@ export const Step2Animals = () => {
 
 			<AccordionContent className='p-4 space-y-4'>
 				{/* Select specie */}
-				<Label>
-					Especie
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Info className='w-4 h-4' />
-						</TooltipTrigger>
-						<TooltipContent side='top' align='center'>
-							Se muestran todas las especies.
-						</TooltipContent>
-					</Tooltip>
-				</Label>
-				<Select
-					name='specie'
-					value={selectedSpecie?.id.toString() || ''}
-					onValueChange={async value => {
-						const specie = species.find(s => s.id === +value);
-						if (!specie) return;
-						handleSetSelectedSpecie(specie);
-						saveSpeciesInLocalStorage({ ...specie, certificateId: selectedCertificate?.code || '' });
-					}}
-					disabled={animalAdmissionList.length > 0}
-				>
-					<SelectTrigger className='w-full bg-secondary'>
-						<SelectValue placeholder='Seleccione una especie' />
-					</SelectTrigger>
-					<SelectContent>
-						{species.map(specie => (
-							<SelectItem key={specie.id} value={String(specie.id)}>
-								{toCapitalize(specie.name)}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
+				<div className='bg-gray-50 p-4 rounded-lg border'>
+					<Label>
+						Especie: <span className='text-gray-600'>{selectedSpecie ? toCapitalize(selectedSpecie.name) : 'No hay especie seleccionada'}</span>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Info className='w-4 h-4' />
+							</TooltipTrigger>
+							<TooltipContent side='top' align='center'>
+								Se muestra la especie registrada.
+							</TooltipContent>
+						</Tooltip>
+					</Label>
+				</div>
 
 				<div className='flex justify-between items-center'>
 					<span />
 
-					<Button
-						onClick={handleAddNewAnimalAdmission}
-						// disabled={isCompleted || !selectedSpecie}
-					>
+					<Button onClick={handleAddNewAnimalAdmission} disabled={isCompleted || !selectedSpecie}>
 						<Plus />
 						Crear Nuevo
 					</Button>
 				</div>
 
-				{speciesQuery.isFetching && !selectedSpecie && (
+				{/* {speciesQuery.isFetching && !selectedSpecie && (
 					<BasicResultsCard leftBlockClass='flex items-center justify-start gap-2' title='Cargando especies...' />
-				)}
+				)} */}
 
 				{animalAdmissionList.length < 1 && (
 					<div className='text-center py-8 text-muted-foreground'>
@@ -123,8 +93,6 @@ export const Step2Animals = () => {
 									};
 
 									handleUpdateAnimalAdmission(admissionData);
-
-									saveNewAnimalAdmissionToLocalStorage({ ...admissionData, certificateId: selectedCertificate?.code || '' });
 								}}
 								onRemove={() => {
 									if (admission.animalAdmission.id) handleUpdateAnimalAdmission({ ...admission, isOpen: false });
