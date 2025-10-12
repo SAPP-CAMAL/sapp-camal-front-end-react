@@ -60,13 +60,15 @@ export const useStep2Animals = () => {
 			incompleteData.animalAdmission.corrals &&
 			incompleteData.animalAdmission.selectedProductiveStages;
 
-		if (isAlreadyComplete) return handleUpdateAnimalAdmission({ ...incompleteData, isOpen: true, isRetrieveFormData: true });
+		if (isAlreadyComplete) return handleUpdateAnimalAdmission({ ...incompleteData, isOpen: true, isRetrieveFormData: false });
 
 		const animalAdmission = incompleteData.animalAdmission;
 
 		const corralTypeId = animalAdmission.corralType?.id.toString() ?? '';
 		const corralGroupId = incompleteData.retrievedFromApi?.corralGroup.id.toString() ?? '';
 		const detailCertificateBrand = incompleteData.retrievedFromApi?.detailsCertificateBrand;
+
+		handleUpdateAnimalAdmission({ ...incompleteData, isOpen: false, isRetrieveFormData: true });
 
 		try {
 			// 1. Retrieve introducer identification if missing
