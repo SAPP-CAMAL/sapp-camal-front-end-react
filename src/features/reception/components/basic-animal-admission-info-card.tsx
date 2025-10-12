@@ -22,12 +22,13 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 						variant='outline'
 						size='sm'
 						onClick={() => handleReconstructAnimalAdmissionData(animalAdmissionItem)}
-						disabled={animalAdmissionItem?.animalAdmission?.corralType?.description
-							?.toLowerCase()
-							?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase())}
+						disabled={
+							animalAdmissionItem?.animalAdmission?.corralType?.description?.toLowerCase()?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase()) ||
+							animalAdmissionItem.isRetrieveFormData
+						}
 					>
 						<Edit className='h-4 w-4' />
-						Editar
+						{animalAdmissionItem.isRetrieveFormData ? 'Cargando...' : 'Editar'}
 					</Button>
 					<Button variant='outline' size='sm' className='bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white'>
 						<FileText className='h-4 w-4' />
@@ -94,9 +95,14 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 							<span className='font-medium'>Observación:</span> {animalAdmissionItem?.animalAdmission?.observations || 'N/A'}
 						</div>
 						<div>
-							{animalAdmissionItem?.animalAdmission?.finishType && <span className='font-medium'>Tipo de acabado: </span>}
-							{(animalAdmissionItem?.animalAdmission?.finishType && animalAdmissionItem?.animalAdmission?.finishType?.name) ||
-								animalAdmissionItem?.animalAdmission?.corralGroup?.name}
+							{animalAdmissionItem?.animalAdmission?.finishType?.name && (
+								<span className='font-medium'>
+									Tipo de acabado:
+									{toCapitalize(
+										animalAdmissionItem?.animalAdmission?.finishType?.name || animalAdmissionItem?.animalAdmission?.corralGroup?.name || ''
+									)}
+								</span>
+							)}
 						</div>
 					</div>
 				</div>

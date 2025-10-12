@@ -11,7 +11,7 @@ export type ReceptionAction =
 	// Selected certificate
 	| { type: 'SET_SELECTED_CERTIFICATE'; payload: Certificate }
 	| { type: 'REMOVE_SELECTED_CERTIFICATE' }
-	// QR flag
+	// Check if the certificate was retrieved from QR
 	| { type: 'SET_IS_FROM_QR'; payload: boolean }
 	// Accordion control
 	| { type: 'SET_ACCORDION_STATE'; payload: { name: AccordionStepKeys; accordionState: Partial<AccordionState> } }

@@ -6,6 +6,7 @@ export const mapToAnimalAdmissions = (admissionList: SettingCertBrandByCertifica
 		randomId: crypto.randomUUID(),
 		isOpen: false,
 		state: 'created',
+		isRetrieveFormData: false,
 		animalAdmission: {
 			id: admission.id,
 			date: admission.slaughterDate,
@@ -33,6 +34,7 @@ export const mapToAnimalAdmissions = (admissionList: SettingCertBrandByCertifica
 					introducer: {
 						id: admission.brand.introducer.id,
 						name: admission.brand.introducer.user.person.fullName,
+						identification: admission.brand.introducer.user.person.identification,
 					},
 				},
 			}),
@@ -51,6 +53,8 @@ export const mapToAnimalAdmissions = (admissionList: SettingCertBrandByCertifica
 			certificate: admission.certificate,
 			species: admission.species,
 			statusCorrals: admission.statusCorrals,
+			corralGroup: admission.corralGroup,
+			detailsCertificateBrand: admission.detailsCertificateBrand,
 		},
 	}));
 };

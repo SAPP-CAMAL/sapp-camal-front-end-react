@@ -6,6 +6,7 @@ import { ShipperBasicData } from '@/features/shipping/domain';
 import { ReceptionAction, uiReducer } from './reception-reducer';
 import { AnimalAdmissionForm } from '../hooks/use-create-update-animal-admission';
 import { AnimalTransportForm } from '../hooks/use-step-3-transport';
+import { DetailsCertificateBrand } from '@/features/setting-certificate-brand/domain';
 
 export const initialState: Omit<ReceptionState, 'receptionDispatch'> = {
 	animalAdmissionList: [],
@@ -29,6 +30,8 @@ export interface RetrievedFromApi {
 	certificate: { id: number; code: string };
 	species: { id: number; name: string };
 	statusCorrals: { id: number; corral: { id: number; name: string } };
+	corralGroup: { id: number; name: string };
+	detailsCertificateBrand: DetailsCertificateBrand[];
 }
 export interface AnimalAdmissionItem {
 	/** Random id not belongs to Animal Admission */
@@ -36,6 +39,7 @@ export interface AnimalAdmissionItem {
 	animalAdmission: Partial<AnimalAdmissionForm>;
 	retrievedFromApi?: RetrievedFromApi;
 	isOpen: boolean;
+	isRetrieveFormData: boolean;
 	state: 'created' | 'updated' | 'deleting';
 }
 

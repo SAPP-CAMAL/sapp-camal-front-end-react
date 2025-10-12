@@ -90,6 +90,7 @@ export const Step2Animals = () => {
 										animalAdmission: { ...admission.animalAdmission, ...data },
 										state: 'updated' as const,
 										isOpen: false,
+										isRetrieveFormData: false
 									};
 
 									handleUpdateAnimalAdmission(admissionData);

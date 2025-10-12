@@ -56,6 +56,7 @@ export const useReceptionContext = () => {
 				animalAdmission: {},
 				state: 'created',
 				isOpen: true,
+				isRetrieveFormData: false,
 			},
 		});
 	};

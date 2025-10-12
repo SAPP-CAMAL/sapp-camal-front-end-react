@@ -20,7 +20,6 @@ import { AnimalSexCodes } from '@/features/animal-sex/constants';
 import { ProductiveStage } from '@/features/productive-stage/domain';
 import { FinishType } from '@/features/finish-type/domain';
 import { useFinishTypeBySpecies } from '@/features/finish-type/hooks';
-import { SPECIES_CODE } from '@/features/specie/constants';
 import { BrandByFilterMapped } from '@/features/brand/domain/get-brand-by-filter';
 
 export type AnimalAdmissionForm = {
@@ -157,26 +156,6 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 		}
 	};
 
-	const getFinishTypeForNormalCorralType = () => {
-		const finishType = form.watch('finishType');
-
-		if (finishType) return finishType;
-
-		const specie = selectedSpecie;
-
-		if (!specie?.name.toLowerCase().startsWith(SPECIES_CODE.PORCINO.toLowerCase())) return;
-
-		const corralType = form.watch('corralType')?.description?.toLowerCase();
-		const isNormalCorral = corralType?.startsWith(corralTypesCode.NORMAL.toLowerCase());
-		const corralGroup = form.watch('corralGroup');
-
-		if (!corralType) return;
-		if (!corralGroup) return;
-		if (!isNormalCorral) return;
-
-		return finishTypes.find(type => type.name.toLowerCase().startsWith(corralGroup.description.toLowerCase()));
-	};
-
 	const handleSearchCorrals = async () => {
 		const corralTypeId = form.watch('corralType')?.id;
 		const groupId = form.watch('corralGroup')?.id;
@@ -253,6 +232,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 			slaughterDate: data.date,
 			idSpecies: selectedSpecie.id,
 			idCorralType: data.corralType?.id ?? NaN,
+			idCorralGroup: data.corralGroup?.id ?? NaN,
 			status: true,
 			...(idFinishType && { idFinishType }),
 		};
@@ -276,8 +256,6 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 				onSave?.({ ...data, id: response.data.id, males: quantityMale, females: quantityFemale });
 			}
 
-			// handleContinue();
-
 			toast.success('Ingreso de animales guardado con éxito');
 		} catch (error) {
 			toast.error('Ocurrió un error al guardar el ingreso de animales');
@@ -287,7 +265,6 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 	const handleSetDate = () => {
 		const corral = form.watch('corralType')?.description?.toLowerCase();
 
-		// if (corral?.startsWith(corralTypesCode.CUARENTENA.toLowerCase())) return form.setValue('date', undefined);
 		if (corral?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase())) return form.setValue('date', new Date().toISOString());
 
 		form.setValue('date', add(new Date(), { days: 1 }).toISOString());
