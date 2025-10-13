@@ -47,10 +47,10 @@ export function NewUser() {
         queryKey: ["users"],
       });
 
-      toast.success("Persona creada exitosamente");
+      toast.success("Usuario creado exitosamente");
     } catch (error: any) {
-      const { data } = await error.response.json();
-      toast.error(data);
+      const resp = await error.response.json();
+      toast.error(`Error: ${JSON.stringify(resp.errors)}`);
     }
   };
 
