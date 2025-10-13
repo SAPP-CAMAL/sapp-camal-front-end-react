@@ -51,7 +51,7 @@ export function LineTabsDate({ selectedTab, onTabChange, selectedDate, onDateCha
         return "Línea 3 (Ovinos-Caprinos)";
     }
   };
-  
+
   return (
     <>
       {/* Mobile layout */}
@@ -70,7 +70,7 @@ export function LineTabsDate({ selectedTab, onTabChange, selectedDate, onDateCha
             </SelectContent>
           </Select>
         </div>
-        
+
         {/* Date selector */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700">Fecha:</label>
@@ -99,12 +99,12 @@ export function LineTabsDate({ selectedTab, onTabChange, selectedDate, onDateCha
           </Button>
         </div>
       </div>
-      
+
       {/* Desktop layout */}
       <div className="hidden lg:flex items-center justify-center">
         <div className="flex items-center gap-6">
           <Tabs value={selectedTab} onValueChange={(value: string) => onTabChange(value as LineaType)}>
-            <TabsList className="grid w-fit grid-cols-3 h-17">
+            <TabsList className="grid w-fit grid-cols-3 h-14 gap-2">
               <TabsTrigger value="bovinos" className="px-2 py-1 text-gray-500 data-[state=active]:text-black">Línea 1 (Bovinos)</TabsTrigger>
               <TabsTrigger value="porcinos" className="px-2 py-1 text-sm text-gray-500 data-[state=active]:text-black">Línea 2 (Porcinos)</TabsTrigger>
               <TabsTrigger value="ovinos-caprinos" className="px-2 py-1 text-sm text-gray-500 data-[state=active]:text-black">Línea 3 (Ovinos-Caprinos)</TabsTrigger>
