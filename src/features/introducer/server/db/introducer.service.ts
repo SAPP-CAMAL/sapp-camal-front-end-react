@@ -19,3 +19,7 @@ export const getIntroducerById = (introducerId: string | number) => {
 		})
 		.json<CreateOrUpdateHttpResponse<IntroducerByIDResponse>>();
 };
+
+export const updateIntroducerStatus = (introducerId: string | number, status: boolean) => {
+	return http.patch(`v1/1.0.0/introducers/update-status/${introducerId.toString()}/${status}`);
+};

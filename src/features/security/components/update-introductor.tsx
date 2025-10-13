@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Introducer } from '../domain';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,9 +7,8 @@ import { Check, SquarePenIcon, ToggleLeftIcon, ToggleRightIcon } from 'lucide-re
 import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { updateUserService } from '../server/db/security.queries';
-import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { updateIntroducerStatus } from '@/features/introducer/server/db/introducer.service';
 
 type updateIntroductorProps = {
 	introductor: Introducer;
@@ -33,16 +33,18 @@ export function UpdateIntroductor({ introductor, onRefresh, introducerRolId }: u
 
 	const onSubmit = form.handleSubmit(async data => {
 		try {
-			await updateUserService(introductor.userId, {
-				email: data.email,
-				status: data.status === 'true' ? true : false,
-				roles: [
-					{
-						id: introducerRolId,
-						status: data.status === 'true' ? true : false,
-					},
-				],
-			});
+			// await updateUserService(introductor.userId, {
+			// 	email: data.email,
+			// 	status: data.status === 'true' ? true : false,
+			// 	roles: [
+			// 		{
+			// 			id: introducerRolId,
+			// 			status: data.status === 'true' ? true : false,
+			// 		},
+			// 	],
+			// });
+
+			await updateIntroducerStatus(introductor.id, isActive);
 
 			form.reset(form.formState.defaultValues);
 			toast.success('Introductor actualizado exitosamente');
@@ -120,6 +122,7 @@ export function UpdateIntroductor({ introductor, onRefresh, introducerRolId }: u
 						<FormField
 							control={form.control}
 							name='email'
+							disabled
 							render={({ field }) => (
 								<FormItem className='col-span-2'>
 									<label className='font-semibold text-sm'>Email del Usuario *</label>
@@ -129,6 +132,7 @@ export function UpdateIntroductor({ introductor, onRefresh, introducerRolId }: u
 											placeholder='usuario@correo.com'
 											defaultValue={introductor.email}
 											className='w-full border border-gray-300 rounded-md shadow-sm'
+											disabled
 											{...field}
 										/>
 									</FormControl>
@@ -157,7 +161,7 @@ export function UpdateIntroductor({ introductor, onRefresh, introducerRolId }: u
 									className='flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors w-full justify-between'
 								>
 									<span className={isActive ? 'font-bold' : 'text-gray-400'}>{isActive ? 'Activo' : 'Inactivo'}</span>
-									{isActive ? <ToggleRightIcon className='w-8 h-8 text-green-500' /> : <ToggleLeftIcon className='w-8 h-8 text-gray-500' />}
+									{isActive ? <ToggleRightIcon className='w-8 h-8 text-primary' /> : <ToggleLeftIcon className='w-8 h-8 text-gray-500' />}
 								</button>
 							</div>
 						</div>

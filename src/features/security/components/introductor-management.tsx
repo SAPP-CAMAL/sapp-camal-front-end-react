@@ -14,6 +14,7 @@ import { UpdateIntroductor } from './update-introductor';
 import { UpdateBrands } from './update-brands';
 import { getRolesService } from '@/features/roles/server/db/roles.service';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { toCapitalize } from '@/lib/toCapitalize';
 
 export function IntroductorManagement() {
 	const [species, setSpecies] = useState<Specie[]>([]);
@@ -126,7 +127,7 @@ export function IntroductorManagement() {
 									</AvatarFallback>
 								</Avatar>
 								<div>
-									<p className='font-semibold'>{row.original.fullName}</p>
+									<p className='font-semibold'>{toCapitalize(row.original.fullName, true)}</p>
 									<p className='text-gray-500'>{row.original.email}</p>
 								</div>
 							</div>
@@ -144,7 +145,7 @@ export function IntroductorManagement() {
 									return (
 										<div key={brand.id} className='flex gap-x-2 items-center'>
 											<span className='font-bold ml-2'>{brand.name}</span>
-											<div>[{brand.species.join(', ')}]</div>
+											<div>[{toCapitalize(brand.species.join(', '))}]</div>
 										</div>
 									);
 								})}
