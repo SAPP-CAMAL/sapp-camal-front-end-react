@@ -161,27 +161,9 @@ export function IntroductorManagement() {
 						cell: ({ row }) => {
 							return (
 								<div className='flex items-center gap-2'>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<div>
-												<UpdateIntroductor introductor={row.original} onRefresh={query.refetch} introducerRolId={introducerRolId} />
-											</div>
-										</TooltipTrigger>
-										<TooltipContent side='top' align='center'>
-											Editar Introductor
-										</TooltipContent>
-									</Tooltip>
+									<UpdateIntroductor introductor={row.original} onRefresh={query.refetch} introducerRolId={introducerRolId} />
 
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<div>
-												<UpdateBrands introductor={row.original} species={species} onRefresh={query.refetch} />
-											</div>
-										</TooltipTrigger>
-										<TooltipContent side='top' align='center'>
-											Editar Marcas
-										</TooltipContent>
-									</Tooltip>
+									<UpdateBrands introductor={row.original} species={species} onRefresh={query.refetch} />
 								</div>
 							);
 						},
