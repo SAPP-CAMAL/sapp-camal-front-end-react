@@ -10,13 +10,13 @@ export function getPeopleByFilterService(filters: FilterPeople = {}): Promise<Re
     }).json<ResponsePeopleByFilter>()
 }
 
-export function createPersonService(body: Omit<Person, "id" | "gender" | "identificationType" | "status">): Promise<ResponseCreatePerson> {
+export function createPersonService(body: Omit<Person, "id" | "gender" | "identificationType">): Promise<ResponseCreatePerson> {
     return http.post("v1/1.0.0/person", {
         json: body
     }).json<ResponseCreatePerson>()
 }
 
-export function updatePersonService(personId: number, body: Partial<Omit<Person, "id" | "gender" | "identificationType" | "status">>): Promise<ResponseCreatePerson> {
+export function updatePersonService(personId: number, body: Partial<Omit<Person, "id" | "gender" | "identificationType">>): Promise<ResponseCreatePerson> {
     return http.patch(`v1/1.0.0/person/${personId}`,
         { json: body }
     ).json()

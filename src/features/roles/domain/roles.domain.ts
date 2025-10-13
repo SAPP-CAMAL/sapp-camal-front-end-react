@@ -1,4 +1,4 @@
-import { CommonHttpResponsePagination } from "@/features/people/domain"
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain"
 
 export type CreateRoleBody = {
     name: string
@@ -23,3 +23,4 @@ export type Role = {
 
 
 export type ResponseRolesService = CommonHttpResponsePagination<Role>
+export type ResponseRolesServiceAll = CommonHttpResponseSingle<Role[]>

@@ -36,6 +36,7 @@ export function UpdatePerson({ person }: { person: any }) {
     slaughterhouse: false,
     address: person.address,
     positions: [],
+    status: person.status?.toString()
   };
   const form = useForm<any>({ defaultValues });
   const personId = person.id;
@@ -77,7 +78,8 @@ export function UpdatePerson({ person }: { person: any }) {
         form.formState.dirtyFields.mobileNumber ||
         form.formState.dirtyFields.firstName ||
         form.formState.dirtyFields.lastName ||
-        form.formState.dirtyFields.address;
+        form.formState.dirtyFields.address ||
+        form.formState.dirtyFields.status;
 
       if (shouldUpdatePerson) {
         await updatePersonService(person.id, {
@@ -102,6 +104,9 @@ export function UpdatePerson({ person }: { person: any }) {
           ...(form.formState.dirtyFields.address && {
             address: data.address,
           }),
+          ...(form.formState.dirtyFields.status && {
+            status: data.status === "true"
+          })
         });
       }
 
