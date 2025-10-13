@@ -89,7 +89,7 @@ export function SpeciesMenu({
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className={`justify-between w-full bg-muted hover:bg-muted text-left ${
+            className={`justify-between w-full hover:bg-muted text-left ${
               selectedSpecies === "PORCINO" ? 'border-primary/50 bg-primary/5' : ''
             }`}
           >

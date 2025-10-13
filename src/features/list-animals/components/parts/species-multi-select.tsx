@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronsUpDown, Check, X, ChevronRight } from "lucide-react";
 import { Species } from "../../domain";
@@ -14,7 +13,7 @@ interface Props {
   speciesList: Species[];
   placeholder?: string;
   className?: string;
-  hasSubItems?: boolean; // Nueva prop para indicar si tiene subitems
+  hasSubItems?: boolean; 
 }
 
 export function SpeciesMultiSelect({ 
