@@ -821,7 +821,6 @@ select:focus-visible {
   border-color: var(--primary);
 }
 
-/* Link hover effects */
 a {
   transition: color 0.2s ease;
 }
