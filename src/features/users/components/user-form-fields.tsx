@@ -20,6 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserRolesService } from "@/features/security/server/db/security.queries";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { getPersonByIdentificationOrFullNameService } from "@/features/people/server/db/people.service";
+import { getRolesService } from "@/features/roles/server/db/roles.service";
 
 export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
   const [selectedPerson, setSelectedPerson] = useState<UserPerson | null>(null);
@@ -41,7 +42,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
 
   const query = useQuery({
     queryKey: ["roles"],
-    queryFn: () => getUserRolesService(),
+    queryFn: () => getRolesService({ page: 1, limit: 100 }),
   });
 
   const form = useFormContext();
@@ -245,7 +246,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
               <MultiSelect
                 className="h-8"
                 options={
-                  query.data?.data?.map((role) => ({
+                  query.data?.data.items?.map((role) => ({
                     value: role.id.toString(),
                     label: role.name,
                   })) ?? []
