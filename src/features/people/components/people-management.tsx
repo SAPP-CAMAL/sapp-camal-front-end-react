@@ -7,6 +7,7 @@ import { NewPerson } from "./new-person.form";
 import { parseAsInteger, useQueryStates, parseAsString } from "nuqs";
 import { Badge } from "@/components/ui/badge";
 import { UpdatePerson } from "./update-person.form";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function PeopleManagement({}) {
   const [searchParams, setSearchParams] = useQueryStates(
@@ -66,8 +67,8 @@ export function PeopleManagement({}) {
             header: "Nombre Completo",
             cell: ({ row }) => (
               <div className="flex items-center gap-x-2">
-                <div>{row.original.firstName}</div>
-                <div>{row.original.lastName}</div>
+                <div>{toCapitalize(row.original.firstName, true)}</div>
+                <div>{toCapitalize(row.original.lastName, true)}</div>
               </div>
             ),
           },

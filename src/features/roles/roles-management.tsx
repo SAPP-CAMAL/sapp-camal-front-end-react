@@ -9,6 +9,7 @@ import { FileTextIcon, ShieldIcon, SquarePenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NewRol } from "./components/new-role";
 import { UpdateRol } from "./components/update-rol";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function RolesManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
@@ -71,13 +72,14 @@ export function RolesManagement() {
             cell: ({ row }) => (
               <div className="flex items-center gap-x-2">
                 <p className="bg-gray-900 h-2 w-2 rounded-full" />
-                {row.original.name}
+                {toCapitalize(row.original.name, true)}
               </div>
             ),
           },
           {
             accessorKey: "description",
             header: "Descripción",
+            cell: ({ row }) => <span>{toCapitalize(row.original.description ?? '')}</span>,
           },
           {
             accessorKey: "status",
