@@ -13,12 +13,12 @@ import { createRegisterVehicleService, updateRegisterVehicleService } from '@/fe
 import { DETAIL_REGISTER_VEHICLE_TAG } from '@/features/vehicles/constants';
 import { updateCertificateService } from '@/features/certificate/server/db/certificate.service';
 
-const defaultTimeStart = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const getCurrentTime = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
 const defaultValues = {
 	disinfectant: '',
 	dosage: '',
-	admissionApplicationTime: defaultTimeStart,
+	admissionApplicationTime: getCurrentTime(),
 	departureApplicationTime: '',
 	observations: '',
 	fullName: '',
@@ -48,7 +48,6 @@ export const useRegisterDisinfectantData = () => {
 		handleRemoveSelectedFormData,
 	} = useDailyDisinfectionRegisterContext();
 
-
 	const form = useForm<DailyRegisterFormData>({ defaultValues });
 
 	const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams);
@@ -74,16 +73,15 @@ export const useRegisterDisinfectantData = () => {
 
 	useEffect(() => {
 		handleSearchFields('plate', dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '');
+		setSearchParams(prev => ({ ...prev, plate: dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '' }));
 
-		if (formData) {
-			return form.reset(formData);
-		}
+		if (formData) return form.reset(formData);
 
-		form.reset({
+        form.reset({
 			id: dailyDisinfectionRegister?.id,
-			dosage: dailyDisinfectionRegister?.dosage ?? '',
+		dosage: dailyDisinfectionRegister?.dosage ?? '',
 			disinfectant: dailyDisinfectionRegister?.disinfectant.id.toString() ?? '',
-			admissionApplicationTime: dailyDisinfectionRegister?.timeStar ?? defaultTimeStart,
+		admissionApplicationTime: dailyDisinfectionRegister?.timeStar ?? getCurrentTime(),
 			departureApplicationTime: dailyDisinfectionRegister?.timeEnd ?? '',
 			observations: dailyDisinfectionRegister?.commentary ?? '',
 			transportedSpecie: dailyDisinfectionRegister?.species.id,
@@ -178,7 +176,7 @@ export const useRegisterDisinfectantData = () => {
 				toast.success('Registro creado exitosamente');
 			}
 
-			form.reset(defaultValues);
+			form.reset({ ...defaultValues, admissionApplicationTime: getCurrentTime() });
 			form.setValue('id', undefined);
 			form.clearErrors();
 
@@ -196,7 +194,12 @@ export const useRegisterDisinfectantData = () => {
 		}
 	};
 
-	const isEditing = !!dailyDisinfectionRegister;
+	const handleRemoveSelected = () => {
+		handleRemoveSelectedFormData();
+		handleRemoveDailyDisinfectionRegister();
+	};
+
+	const isEditing = !!dailyDisinfectionRegister || !!formData;
 
 	let btnValue = !isEditing && form.formState.isSubmitting ? 'Guardando Registro...' : 'Guardar Registro';
 
@@ -227,6 +230,6 @@ export const useRegisterDisinfectantData = () => {
 		handleSearchFields,
 		handleRegisterDisinfectantData,
 		handleRemoveSelectedCertificate,
-		handleRemoveSelected: handleRemoveDailyDisinfectionRegister,
+		handleRemoveSelected,
 	};
 };

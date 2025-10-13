@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { VideoValidationResult } from '@/lib/read-video-metadata';
-import { UploadCloud, CheckCircle2, X, Video as VideoIcon, Play, FilePlay, Pause } from 'lucide-react';
+import { UploadCloud, CheckCircle2, X, Video as VideoIcon, Play, FilePlay, Pause, XIcon, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { ConfirmationDialog } from '@/components/confirmation-dialog';
 
 export interface VideoItem extends VideoValidationResult {}
 
@@ -47,6 +48,26 @@ export function VideoUploadDialog({
 		setSelectedVideo(undefined);
 	};
 
+	const handleFiles = (files: FileList | null) => {
+		if (!canSaveItems || !files) return;
+
+		const existingNormalized = new Set(videoList.map(v => v.name));
+		let invalidFile: File | null = null;
+
+		for (const file of Array.from(files)) {
+			const newName = file.name.trim().replace(/\s+/g, '_');
+
+			if (!existingNormalized.has(newName)) continue;
+
+			invalidFile = file;
+			toast.error(`Ya se ha subido el video con el nombre "${newName}"`);
+		}
+
+		if (invalidFile) return;
+
+		onAddVideos(files);
+	};
+
 	const validItems = videoList.filter(v => v.valid.isValid);
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
@@ -66,7 +87,7 @@ export function VideoUploadDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				{videoList.length < limitVideosToUpload && !selectedVideo && <DragAndDropArea onAddVideos={onAddVideos} />}
+				{videoList.length < limitVideosToUpload && !selectedVideo && <DragAndDropArea onAddVideos={handleFiles} canSaveItems={canDeleteItems} />}
 
 				{/* Play video */}
 				{selectedVideo && (
@@ -117,11 +138,11 @@ export function VideoUploadDialog({
 	);
 }
 
-const DragAndDropArea = ({ onAddVideos }: Pick<Props, 'onAddVideos'>) => (
+const DragAndDropArea = ({ onAddVideos, canSaveItems }: Pick<Props, 'onAddVideos' | 'canSaveItems'>) => (
 	<div
 		onDrop={e => {
 			e.preventDefault();
-			e.dataTransfer.files && onAddVideos(e.dataTransfer.files);
+			if (canSaveItems) e.dataTransfer.files && onAddVideos(e.dataTransfer.files);
 		}}
 		onDragOver={e => e.preventDefault()}
 		className='mt-2 border-3 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 flex flex-col items-center justify-center text-center'
@@ -135,13 +156,14 @@ const DragAndDropArea = ({ onAddVideos }: Pick<Props, 'onAddVideos'>) => (
 			multiple
 			className='hidden'
 			id='video-file-input-shared'
-			onChange={e => e.target.files && onAddVideos(e.target.files)}
+			onChange={e => e.target.files && canSaveItems && onAddVideos(e.target.files)}
 		/>
 		<Button
 			variant='outline'
 			size='sm'
 			className='mt-3 text-teal-600 border-teal-600 bg-white hover:bg-teal-600 hover:text-white'
 			onClick={() => document.getElementById('video-file-input-shared')?.click()}
+			disabled={!canSaveItems}
 		>
 			<FilePlay className='h-4 w-4' />
 			Seleccionar Videos
@@ -165,18 +187,31 @@ const VideoLoaded = ({
 	onRemoveSelected: (videoItem: VideoItem) => void;
 }) => (
 	<div className={`relative rounded-lg border p-3 ${videoItem.valid ? 'border-emerald-200 bg-emerald-50/60' : 'border-red-200 bg-red-50/50'}`}>
-		{/* close X */}
-		<button
-			type='button'
-			onClick={() => {
+		<ConfirmationDialog
+			title='¿Está seguro que desea eliminar este video?'
+			description='Esta acción eliminará el video seleccionado y no se podrá recuperar.'
+			onConfirm={() => {
 				if (!canDeleteItems) return toast.error('No se pueden eliminar el video.');
 				onRemove(videoItem);
 			}}
-			className='absolute top-2 right-2 text-gray-500 hover:text-red-600'
-			aria-label='Eliminar'
-		>
-			<X className='h-4 w-4' />
-		</button>
+			triggerBtn={
+				<button type='button' className='absolute top-2 right-2 text-gray-500 hover:text-red-600' aria-label='Eliminar'>
+					<X className='h-4 w-4' />
+				</button>
+			}
+			cancelBtn={
+				<Button variant='outline' size='lg'>
+					<XIcon />
+					Cancelar
+				</Button>
+			}
+			confirmBtn={
+				<Button variant='ghost' className='bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white' size='lg'>
+					<Check />
+					Si
+				</Button>
+			}
+		/>
 
 		<div className='text-xs font-medium text-gray-800 pr-6 truncate' title={videoItem.name}>
 			{videoItem.name}

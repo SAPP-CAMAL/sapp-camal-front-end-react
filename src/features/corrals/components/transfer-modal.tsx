@@ -238,13 +238,13 @@ export function TransferModal({
                             <User className="h-3 w-3" />
                             Machos:
                           </h6>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                             {maleStages.map(stage => (
-                              <div key={stage.id} className="text-center p-2 bg-blue-50 rounded border">
-                                <p className="text-sm font-bold text-blue-800">
+                              <div key={stage.id} className="flex items-center justify-between p-2 bg-blue-50 rounded border border-blue-200">
+                                <p className="text-xs text-blue-600 truncate flex-1">{stage.name}</p>
+                                <p className="text-sm font-bold text-blue-800 ml-2 min-w-[2rem] text-right">
                                   {getInitialQuantityForStage(stage.id)}
                                 </p>
-                                <p className="text-xs text-blue-600">{stage.name}</p>
                               </div>
                             ))}
                           </div>
@@ -257,13 +257,13 @@ export function TransferModal({
                             <UserCheck className="h-3 w-3" />
                             Hembras:
                           </h6>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                             {femaleStages.map(stage => (
-                              <div key={stage.id} className="text-center p-2 bg-pink-50 rounded border">
-                                <p className="text-sm font-bold text-pink-800">
+                              <div key={stage.id} className="flex items-center justify-between p-2 bg-pink-50 rounded border border-pink-200">
+                                <p className="text-xs text-pink-600 truncate flex-1">{stage.name}</p>
+                                <p className="text-sm font-bold text-pink-800 ml-2 min-w-[2rem] text-right">
                                   {getInitialQuantityForStage(stage.id)}
                                 </p>
-                                <p className="text-xs text-pink-600">{stage.name}</p>
                               </div>
                             ))}
                           </div>
@@ -287,17 +287,37 @@ export function TransferModal({
                       {getTotalSelected()} animales
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <p className="font-medium text-blue-700 mb-1">Machos: {getMaleTotal()}</p>
-                        {maleStages.map(stage => (
-                          <p key={stage.id} className="text-xs text-blue-600">• {transferModal.selectedQuantitiesByStage[stage.id] || 0} {stage.name}</p>
-                        ))}
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="font-semibold text-blue-700 mb-2 text-center">Machos: {getMaleTotal()}</p>
+                        <div className="space-y-1">
+                          {maleStages.map(stage => {
+                            const qty = transferModal.selectedQuantitiesByStage[stage.id] || 0;
+                            if (qty === 0) return null;
+                            return (
+                              <div key={stage.id} className="flex items-center justify-between text-xs">
+                                <span className="text-blue-600 truncate flex-1">{stage.name}</span>
+                                <span className="font-bold text-blue-800 ml-2">{qty}</span>
+                              </div>
+                            );
+                          })}
+                          {getMaleTotal() === 0 && <p className="text-xs text-blue-400 text-center italic">Ninguno</p>}
+                        </div>
                       </div>
-                      <div className="text-center p-3 bg-pink-50 rounded-lg">
-                        <p className="font-medium text-pink-700 mb-1">Hembras: {getFemaleTotal()}</p>
-                        {femaleStages.map(stage => (
-                          <p key={stage.id} className="text-xs text-pink-600">• {transferModal.selectedQuantitiesByStage[stage.id] || 0} {stage.name}</p>
-                        ))}
+                      <div className="p-3 bg-pink-50 rounded-lg border border-pink-200">
+                        <p className="font-semibold text-pink-700 mb-2 text-center">Hembras: {getFemaleTotal()}</p>
+                        <div className="space-y-1">
+                          {femaleStages.map(stage => {
+                            const qty = transferModal.selectedQuantitiesByStage[stage.id] || 0;
+                            if (qty === 0) return null;
+                            return (
+                              <div key={stage.id} className="flex items-center justify-between text-xs">
+                                <span className="text-pink-600 truncate flex-1">{stage.name}</span>
+                                <span className="font-bold text-pink-800 ml-2">{qty}</span>
+                              </div>
+                            );
+                          })}
+                          {getFemaleTotal() === 0 && <p className="text-xs text-pink-400 text-center italic">Ninguna</p>}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -339,43 +359,43 @@ export function TransferModal({
                   <User className="h-5 w-5" />
                   Machos
                 </h6>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {maleStages.map(stage => (
-                    <div key={stage.id} className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-blue-100 rounded-full">
-                          <User className="h-3 w-3 text-blue-600" />
+                    <div key={stage.id} className="flex flex-col gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="p-1 bg-blue-100 rounded-full flex-shrink-0">
+                            <User className="h-3 w-3 text-blue-600" />
+                          </div>
+                          <Label htmlFor={`stage-${stage.id}`} className="text-xs font-medium text-blue-700 truncate">
+                            {stage.name}
+                          </Label>
                         </div>
-                        <Label htmlFor={`stage-${stage.id}`} className="text-sm font-medium text-blue-700">
-                          {stage.name}
-                        </Label>
-                      </div>
-                      <div className="relative">
-                        <Input
-                          id={`stage-${stage.id}`}
-                          type="number"
-                          min={0}
-                          max={getInitialQuantityForStage(stage.id)}
-                          value={transferModal.selectedQuantitiesByStage[stage.id] || 0}
-                          disabled={isSourceEmergency}
-                          onChange={(e) => {
-                            if (isSourceEmergency) return;
-                            const maxQuantity = getInitialQuantityForStage(stage.id);
-                            const value = Math.min(
-                              Math.max(0, parseInt(e.target.value) || 0),
-                              maxQuantity
-                            );
-                            updateStageQuantity(stage.id, value);
-                          }}
-                          className={`text-center text-sm font-medium border-blue-300 focus:border-blue-500 focus:ring-blue-500 h-12 ${
-                            isSourceEmergency ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''
-                          }`}
-                        />
-                        <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                          {getInitialQuantityForStage(stage.id)}
+                        <div className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-semibold">
+                          Max: {getInitialQuantityForStage(stage.id)}
                         </div>
                       </div>
-                      <p className="text-xs text-blue-600 text-center font-medium">Disponibles</p>
+                      <Input
+                        id={`stage-${stage.id}`}
+                        type="number"
+                        min={0}
+                        max={getInitialQuantityForStage(stage.id)}
+                        value={transferModal.selectedQuantitiesByStage[stage.id] || 0}
+                        disabled={isSourceEmergency}
+                        onChange={(e) => {
+                          if (isSourceEmergency) return;
+                          const maxQuantity = getInitialQuantityForStage(stage.id);
+                          const value = Math.min(
+                            Math.max(0, parseInt(e.target.value) || 0),
+                            maxQuantity
+                          );
+                          updateStageQuantity(stage.id, value);
+                        }}
+                        className={`text-center text-base font-semibold border-blue-300 focus:border-blue-500 focus:ring-blue-500 h-11 ${
+                          isSourceEmergency ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''
+                        }`}
+                        placeholder="0"
+                      />
                     </div>
                   ))}
                 </div>
@@ -388,43 +408,43 @@ export function TransferModal({
                   <UserCheck className="h-5 w-5" />
                   Hembras
                 </h6>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {femaleStages.map(stage => (
-                    <div key={stage.id} className="space-y-3 p-4 bg-pink-50 rounded-lg border border-pink-200">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-pink-100 rounded-full">
-                          <UserCheck className="h-3 w-3 text-pink-600" />
+                    <div key={stage.id} className="flex flex-col gap-2 p-3 bg-pink-50 rounded-lg border border-pink-200">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="p-1 bg-pink-100 rounded-full flex-shrink-0">
+                            <UserCheck className="h-3 w-3 text-pink-600" />
+                          </div>
+                          <Label htmlFor={`stage-${stage.id}`} className="text-xs font-medium text-pink-700 truncate">
+                            {stage.name}
+                          </Label>
                         </div>
-                        <Label htmlFor={`stage-${stage.id}`} className="text-sm font-medium text-pink-700">
-                          {stage.name}
-                        </Label>
-                      </div>
-                      <div className="relative">
-                        <Input
-                          id={`stage-${stage.id}`}
-                          type="number"
-                          min={0}
-                          max={getInitialQuantityForStage(stage.id)}
-                          value={transferModal.selectedQuantitiesByStage[stage.id] || 0}
-                          disabled={isSourceEmergency}
-                          onChange={(e) => {
-                            if (isSourceEmergency) return;
-                            const maxQuantity = getInitialQuantityForStage(stage.id);
-                            const value = Math.min(
-                              Math.max(0, parseInt(e.target.value) || 0),
-                              maxQuantity
-                            );
-                            updateStageQuantity(stage.id, value);
-                          }}
-                          className={`text-center text-sm font-medium border-pink-300 focus:border-pink-500 focus:ring-pink-500 h-12 ${
-                            isSourceEmergency ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''
-                          }`}
-                        />
-                        <div className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs px-2 py-1 rounded-full">
-                          {getInitialQuantityForStage(stage.id)}
+                        <div className="bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-semibold">
+                          Max: {getInitialQuantityForStage(stage.id)}
                         </div>
                       </div>
-                      <p className="text-xs text-pink-600 text-center font-medium">Disponibles</p>
+                      <Input
+                        id={`stage-${stage.id}`}
+                        type="number"
+                        min={0}
+                        max={getInitialQuantityForStage(stage.id)}
+                        value={transferModal.selectedQuantitiesByStage[stage.id] || 0}
+                        disabled={isSourceEmergency}
+                        onChange={(e) => {
+                          if (isSourceEmergency) return;
+                          const maxQuantity = getInitialQuantityForStage(stage.id);
+                          const value = Math.min(
+                            Math.max(0, parseInt(e.target.value) || 0),
+                            maxQuantity
+                          );
+                          updateStageQuantity(stage.id, value);
+                        }}
+                        className={`text-center text-base font-semibold border-pink-300 focus:border-pink-500 focus:ring-pink-500 h-11 ${
+                          isSourceEmergency ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''
+                        }`}
+                        placeholder="0"
+                      />
                     </div>
                   ))}
                 </div>

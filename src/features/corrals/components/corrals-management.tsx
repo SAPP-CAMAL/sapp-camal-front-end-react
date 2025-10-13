@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   Video,
-  Users,
   ChevronDown,
   ArrowDownUp,
   ChartColumn,
@@ -25,7 +24,6 @@ import {
   Line,
   CorralGroup,
   ApiCorral,
-  getEspecialesGroupIdByLine,
   type StatusCorralByAdmission,
   type BrandDetail,
 } from "../domain";
@@ -34,7 +32,6 @@ import {
   getAllCorralGroupsService,
   getCorralesByGroupService,
   getStatusCorralsByAdmissionDateService,
-  getBrandDetailsByGroupService,
   getBrandDetailsByLineService,
   closeCorralByStatusIdService,
 } from "../server/db/corrals.service";
@@ -164,6 +161,7 @@ export function CorralsManagement() {
     selectedMales: number;
     selectedFemales: number;
     selectedQuantitiesByStage?: Record<number, number>;
+    initialQuantitiesByStage?: Record<number, number>; // Add initial quantities
   }>({
     isOpen: false,
     brand: null,
@@ -172,7 +170,8 @@ export function CorralsManagement() {
     targetCorralName: null,
     selectedMales: 0,
     selectedFemales: 0,
-    selectedQuantitiesByStage: {}
+    selectedQuantitiesByStage: {},
+    initialQuantitiesByStage: {} // Initialize
   });
 
   // Prevent duplicate transfers
@@ -213,7 +212,8 @@ export function CorralsManagement() {
       targetCorralName: null,
       selectedMales: 0,
       selectedFemales: 0,
-      selectedQuantitiesByStage: {}
+      selectedQuantitiesByStage: {},
+      initialQuantitiesByStage: {} // Reset initial quantities
     });
   };
 
@@ -294,13 +294,30 @@ export function CorralsManagement() {
         initialQuantitiesByStage: { ...stageQuantityMap }, // Keep a copy of initial quantities
         targetCorralId: null
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error pre-loading certificate data:', error);
-      // Fallback to original behavior if pre-loading fails
+      
+      // Show detailed error message
+      const errorMessage = error?.response?.statusText || error?.message || 'Error desconocido';
+      toast.error(`Error al cargar datos del certificado (ID: ${brand.id}): ${errorMessage}`);
+      
+      // Fallback: Use brand's existing detailsCertificateBrand if available
       const initialQuantities: Record<number, number> = {};
+      const stageQuantityMap: Record<number, number> = {};
+      
+      // Try to use existing details from brand if available
+      if (brand.detailsCertificateBrand && Array.isArray(brand.detailsCertificateBrand)) {
+        brand.detailsCertificateBrand.forEach(detail => {
+          if (detail.status) {
+            stageQuantityMap[detail.idProductiveStage] = detail.quantity;
+          }
+        });
+      }
+      
+      // Set quantities for each productive stage
       productiveStages.forEach(stage => {
-        // Fallback: distribute totals evenly or use 0
-        initialQuantities[stage.id] = 0;
+        const specificQuantity = stageQuantityMap[stage.id];
+        initialQuantities[stage.id] = specificQuantity !== undefined ? specificQuantity : 0;
       });
 
       setMobileTransferModal({
@@ -308,7 +325,7 @@ export function CorralsManagement() {
         brand,
         sourceCorralId,
         selectedQuantitiesByStage: initialQuantities,
-        initialQuantitiesByStage: {},
+        initialQuantitiesByStage: { ...stageQuantityMap },
         targetCorralId: null
       });
     }
@@ -320,7 +337,7 @@ export function CorralsManagement() {
       return;
     }
 
-    const { brand: brandToMove, sourceCorralId, selectedQuantitiesByStage } = mobileTransferModal;
+    const { brand: brandToMove, sourceCorralId, selectedQuantitiesByStage, initialQuantitiesByStage } = mobileTransferModal;
 
     if (!brandToMove || !sourceCorralId) {
       return;
@@ -353,7 +370,7 @@ export function CorralsManagement() {
       .filter(stage => stage.idAnimalSex === 1) // Females
       .reduce((sum, stage) => sum + (selectedQuantitiesByStage[stage.id] || 0), 0);
 
-    // Open confirmation modal
+    // Open confirmation modal with both selected and initial quantities
     setConfirmationModal({
       isOpen: true,
       brand: brandToMove,
@@ -362,12 +379,48 @@ export function CorralsManagement() {
       targetCorralName: targetCorral.name,
       selectedMales,
       selectedFemales,
-      selectedQuantitiesByStage: selectedQuantitiesByStage
+      selectedQuantitiesByStage: selectedQuantitiesByStage,
+      initialQuantitiesByStage: initialQuantitiesByStage // Pass initial quantities
     });
 
     // Close the transfer modal
     resetMobileTransferModal();
   };
+
+const reloadStatusByDate = async () => {
+    try {
+      setIsLoadingStatusByDate(true);
+      const items = await getStatusCorralsByAdmissionDateService(selectedDate);
+      const map: Record<string, { quantity: number; status: boolean; statusRecordId?: number; closeCorral?: boolean; urlVideo:string[] }> = {};
+      for (const item of items as StatusCorralByAdmission[]) {
+        const key = String(item.idCorrals);
+        if (!map[key]) {
+          map[key] = { quantity: 0, status: true, statusRecordId: undefined, closeCorral: false, urlVideo: [] };
+        }
+        map[key].quantity += Number(item.quantity) || 0;
+        if (!Boolean(item.status)) map[key].status = false;
+        if ((item as any).id) map[key].statusRecordId = (item as any).id;
+        if (typeof (item as any).closeCorral === 'boolean') map[key].closeCorral = (item as any).closeCorral;
+        if (item.urlVideo) map[key].urlVideo = item.urlVideo;
+      }
+      setStatusByDateMap(map);
+    } catch (error) {
+      console.error('Error reloading status by date:', error);
+    } finally {
+      setIsLoadingStatusByDate(false);
+    }
+  };
+
+
+  const canUploadVideoForCorral = (corralId: string) => {
+    const status = statusByDateMap[corralId];
+    if (!status) return false;
+    const hasAnimalsInStatus = (status.quantity || 0) > 0;
+    const hasBrands = (brandDetailsMap[corralId]?.length || 0) > 0;
+    const hasVideos = (status.urlVideo?.length || 0) > 0;
+    return hasAnimalsInStatus || hasBrands || hasVideos;
+  }
+
 
   // Execute confirmed transfer
   const executeTransfer = async () => {
@@ -391,11 +444,11 @@ export function CorralsManagement() {
       // Get original quantities from initialQuantitiesByStage
       const originalMalesByStage = productiveStages
         .filter(stage => stage.idAnimalSex === 2) // Males
-        .reduce((sum, stage) => sum + (mobileTransferModal.initialQuantitiesByStage?.[stage.id] || 0), 0);
+        .reduce((sum, stage) => sum + (confirmationModal.initialQuantitiesByStage?.[stage.id] || 0), 0);
 
       const originalFemalesByStage = productiveStages
         .filter(stage => stage.idAnimalSex === 1) // Females
-        .reduce((sum, stage) => sum + (mobileTransferModal.initialQuantitiesByStage?.[stage.id] || 0), 0);
+        .reduce((sum, stage) => sum + (confirmationModal.initialQuantitiesByStage?.[stage.id] || 0), 0);
 
       const remainingMales = Math.max(0, originalMalesByStage - selectedMales);
       const remainingFemales = Math.max(0, originalFemalesByStage - selectedFemales);
@@ -420,7 +473,9 @@ export function CorralsManagement() {
         remainingMales,
         remainingFemales,
         isCompleteTransfer,
-        selectedDate
+        selectedDate,
+        selectedQuantitiesByStage: confirmationModal.selectedQuantitiesByStage || {},
+        initialQuantitiesByStage: confirmationModal.initialQuantitiesByStage || {}
       });
 
       // 2. Then update the UI state
@@ -511,6 +566,9 @@ export function CorralsManagement() {
       // Reload brand details from database to reflect actual state
       await reloadBrandDetails();
 
+      // await to refresh status overlay
+      await reloadStatusByDate();
+
       // Close confirmation modal
       resetConfirmationModal();
 
@@ -534,7 +592,9 @@ export function CorralsManagement() {
     remainingMales,
     remainingFemales,
     isCompleteTransfer,
-    selectedDate
+    selectedDate,
+    selectedQuantitiesByStage,
+    initialQuantitiesByStage
   }: {
     originalBrand: BrandDetail;
     targetCorralId: number;
@@ -544,6 +604,8 @@ export function CorralsManagement() {
     remainingFemales: number;
     isCompleteTransfer: boolean;
     selectedDate: Date;
+    selectedQuantitiesByStage: Record<number, number>;
+    initialQuantitiesByStage: Record<number, number>;
   }) => {
     try {
       // For bovinos use species ID 1, for porcinos use 2, for ovinos-caprinos use 3
@@ -559,17 +621,19 @@ export function CorralsManagement() {
 
       if (isCompleteTransfer) {
         // For complete transfer, UPDATE the existing record to change the corral
-        // Include ALL productive stages with their respective quantities
-        const detailsCertificateBrand = productiveStages.map(stage => {
-          const quantity = confirmationModal.selectedQuantitiesByStage?.[stage.id] || 0;
+        // Include ONLY productive stages with quantity > 0 to avoid creating zero records
+        const detailsCertificateBrand = productiveStages
+          .map(stage => {
+            const quantity = selectedQuantitiesByStage[stage.id] || 0;
 
-          return {
-            idSettingCertificateBrands: settingCertBrandId,
-            idProductiveStage: stage.id,
-            quantity: quantity,
-            status: true
-          };
-        });
+            return {
+              idSettingCertificateBrands: settingCertBrandId,
+              idProductiveStage: stage.id,
+              quantity: quantity,
+              status: true
+            };
+          })
+          .filter(detail => (detail.quantity || 0) > 0);
 
         const updateData = {
           idCorral: targetCorralId,
@@ -583,8 +647,6 @@ export function CorralsManagement() {
         await updateCertBrand(settingCertBrandId.toString(), updateData);
 
       } else {
-        // SOLUTION: For partial transfer, CREATE new record (POST) + UPDATE original (PATCH)
-        // Get certificate data for creating new record
         let certificateData;
 
         if (originalBrand.certificateData) {
@@ -598,9 +660,7 @@ export function CorralsManagement() {
             idBrands: fullData.idBrands
           };
         }
-
-        // 1. CREATE new record for transferred animals (destination)
-        const detailsCertificateBrand = Object.entries(confirmationModal.selectedQuantitiesByStage || {})
+        const detailsCertificateBrand = Object.entries(selectedQuantitiesByStage)
           .filter(([stageId, quantity]) => quantity > 0)
           .map(([stageId, quantity]) => {
             return {
@@ -625,16 +685,20 @@ export function CorralsManagement() {
         };
 
         const createResult = await saveCertBrand(transferData);
+        
+        // For partial transfer update: send ALL stages that originally had animals,
+        // with their NEW quantities (after subtracting transferred animals)
+        // This includes stages that now have 0 (all were transferred)
         const remainingDetailsCertificateBrand = productiveStages
           .filter(stage => {
-            // Solo incluir etapas que tengan animales transferidos
-            const transferredQuantity = confirmationModal.selectedQuantitiesByStage?.[stage.id] || 0;
-            return transferredQuantity > 0;
+            // Only include stages that ORIGINALLY had animals
+            const originalQuantityForStage = initialQuantitiesByStage[stage.id] || 0;
+            return originalQuantityForStage > 0;
           })
           .map(stage => {
-            const transferredQuantity = confirmationModal.selectedQuantitiesByStage?.[stage.id] || 0;
-            const originalQuantityForStage = mobileTransferModal.initialQuantitiesByStage?.[stage.id] || 0;
-            
+            const transferredQuantity = selectedQuantitiesByStage[stage.id] || 0;
+            const originalQuantityForStage = initialQuantitiesByStage[stage.id] || 0;
+
             // Calculate remaining: original - transferred
             const remainingQuantity = Math.max(0, originalQuantityForStage - transferredQuantity);
 
@@ -646,12 +710,11 @@ export function CorralsManagement() {
             };
           });
 
-        // Calculate correct remaining totals for males and females
         const remainingMalesTotal = Math.max(0, originalBrand.males - selectedMales);
         const remainingFemalesTotal = Math.max(0, originalBrand.females - selectedFemales);
 
         const updateData = {
-          idCorral: originalBrand.idCorral, // Keep the original corral
+          idCorral: originalBrand.idCorral,
           males: remainingMalesTotal,
           females: remainingFemalesTotal,
           slaughterDate: slaughterDate,
@@ -668,7 +731,6 @@ export function CorralsManagement() {
     }
   };
 
-  // Function to reload brand details (for use after transfers)
   const reloadBrandDetails = async () => {
     if (!currentLineData) {
       return;
@@ -676,13 +738,8 @@ export function CorralsManagement() {
 
     try {
       setIsLoadingBrandDetails(true);
-
-      // Use optimized single API call to get all brand details for the line
       const allBrandDetails = await getBrandDetailsByLineService(selectedDate, currentLineData.id);
-
-      // Organize brand details by corral ID for easier lookup
       const brandMap: Record<string, BrandDetail[]> = {};
-
       for (const detail of allBrandDetails) {
         const corralId = String(detail.idCorral);
         if (!brandMap[corralId]) {
@@ -690,9 +747,7 @@ export function CorralsManagement() {
         }
         brandMap[corralId].push(detail);
       }
-
       setBrandDetailsMap(brandMap);
-
     } catch (error) {
       console.error('Error reloading brand details:', error);
       setBrandDetailsMap({});
@@ -700,18 +755,13 @@ export function CorralsManagement() {
       setIsLoadingBrandDetails(false);
     }
   };
-
   const handleCorralToggle = (corralId: string) => {
     if (targetScope === "linea") {
-      // TODO: Here we would call an API to update the corral status
-      // For now, we'll just update local state to reflect the change
       setApiCorrales((prev) =>
         prev.map((corral) => {
-          // Add safety check for corral and its id property
           if (!corral || !corral.id) {
             return corral;
           }
-
           return corral.id.toString() === corralId
             ? { ...corral, status: !corral.status }
             : corral;
@@ -727,19 +777,14 @@ export function CorralsManagement() {
 
   const confirmCorralToggle = () => {
     if (!targetCorralId) return;
-
-    // Get corral info for the toast message with safety check
     let corralName = targetCorralId;
     if (targetScope === "linea") {
       const corral = currentCorrales.find((c) => c && c.id === targetCorralId);
       corralName = corral?.name || targetCorralId;
     }
-
-    // Perform the toggle action by calling the backend PATCH if we have a status record id
     const statusEntry = statusByDateMap[targetCorralId];
     const statusRecordId = statusEntry?.statusRecordId;
     const shouldClose = dialogAction === "cerrar";
-
     (async () => {
       let success = false;
       if (statusRecordId) {
@@ -749,14 +794,11 @@ export function CorralsManagement() {
           toast.error("No se pudo actualizar el estado del corral en el servidor");
         }
       } else {
-        // No status record available: fall back to local toggle and show neutral toast
         toast("Estado del corral no encontrado en el servidor, aplicando cambio localmente");
         success = true;
       }
 
       if (success) {
-        // Update local state to reflect the change
-        // Update statusByDateMap closeCorral flag
         setStatusByDateMap((prev) => {
           const copy = { ...prev };
           if (!copy[targetCorralId]) {
@@ -766,11 +808,7 @@ export function CorralsManagement() {
           }
           return copy;
         });
-
-        // Also update apiCorrales local status for immediate UI feedback
         setApiCorrales((prev) => prev.map((corral) => corral && corral.id.toString() === targetCorralId ? { ...corral, status: !shouldClose } : corral));
-
-        // Show toast notification based on the action
         if (shouldClose) {
           toast.success(`Corral ${corralName} cerrado exitosamente`, {
             description: "El corral ya no puede recibir más animales",
@@ -787,7 +825,6 @@ export function CorralsManagement() {
           });
         }
       }
-
       setDialogOpen(false);
     })();
   };
@@ -806,8 +843,6 @@ export function CorralsManagement() {
         // Load line data
         const response = await getLineByTypeService(selectedTab);
         setCurrentLineData(response.data);
-
-        // Load productive stages if we have species ID
         if (response.data?.idSpecie) {
           try {
             const stagesResponse = await getProductiveStagesBySpecie(response.data.idSpecie);
@@ -838,14 +873,10 @@ export function CorralsManagement() {
   const getCorralesWithCache = async (groupId: number): Promise<ApiCorral[]> => {
     const cacheKey = `group-${groupId}`;
     const now = Date.now();
-
-    // Check if we have cached data that's still valid
     const cached = corralesCache[cacheKey];
     if (cached && (now - cached.timestamp) < CACHE_DURATION) {
       return cached.data;
     }
-
-    // Fetch fresh data
     try {
       const response = await getCorralesByGroupService(groupId);
       const validCorrales = response.data?.filter(corral => corral !== null) || [];
@@ -869,11 +900,6 @@ export function CorralsManagement() {
   useEffect(() => {
     setCorralesCache({});
   }, [selectedTab]);
-
-  // -----------------------
-  // Calculate real filter counts based on loaded corrales
-  // -----------------------
-
   useEffect(() => {
     const calculateRealCounts = async () => {
       if (!currentLineData || !currentLineData.id || !allCorralGroups.length) {
@@ -885,12 +911,9 @@ export function CorralsManagement() {
         setIsLoadingCounts(true);
         const groupCounts: Record<number, number> = {};
 
-        // Get all groups for current line (no especiales injected)
         const currentGroups = getGroupsForCurrentLine();
-        // Create set to avoid duplicates
         const allGroupIds = new Set(currentGroups.map(g => g.id));
 
-        // Load and count corrales for each group using cache
         const promises = Array.from(allGroupIds).map(async (groupId) => {
           try {
             const validCorrales = await getCorralesWithCache(groupId);
@@ -916,15 +939,11 @@ export function CorralsManagement() {
     calculateRealCounts();
   }, [currentLineData, allCorralGroups, selectedTab]);
 
-  // -----------------------
-  // Load status by admission date to decorate corrales
-  // -----------------------
   useEffect(() => {
     const loadStatusByDate = async () => {
       try {
         setIsLoadingStatusByDate(true);
         const items = await getStatusCorralsByAdmissionDateService(selectedDate);
-        // Aggregate by idCorrals in case multiple entries exist
         const map: Record<string, { quantity: number; status: boolean; statusRecordId?: number; closeCorral?: boolean, urlVideo:string[] }> = {};
         for (const item of items as StatusCorralByAdmission[]) {
           const key = String(item.idCorrals);
@@ -932,11 +951,9 @@ export function CorralsManagement() {
             map[key] = { quantity: 0, status: true, statusRecordId: undefined, closeCorral: false, urlVideo: [] };
           }
           map[key].quantity += Number(item.quantity) || 0;
-          // If any item has status === false, mark overall status false
           if (!Boolean(item.status)) {
             map[key].status = false;
           }
-          // Keep the latest status record id and closeCorral flag when present
           if ((item as any).id) {
             map[key].statusRecordId = (item as any).id;
           }
@@ -944,7 +961,6 @@ export function CorralsManagement() {
             map[key].closeCorral = (item as any).closeCorral;
           }
 
-          // Aggregate video URLs if present
           if (item.urlVideo) {
             map[key].urlVideo = item.urlVideo
           }
@@ -981,10 +997,8 @@ export function CorralsManagement() {
           return;
         }
 
-        // Use optimized single API call to get all brand details for the line
         const allBrandDetails = await getBrandDetailsByLineService(selectedDate, currentLineData.id);
 
-        // Organize brand details by corral ID for easier lookup
         const brandMap: Record<string, BrandDetail[]> = {};
 
         for (const detail of allBrandDetails) {
@@ -1004,15 +1018,11 @@ export function CorralsManagement() {
       }
     };
 
-    // Only load if we have line data
     if (currentLineData) {
       loadBrandDetails();
     }
   }, [selectedDate, currentLineData]);
 
-  // -----------------------
-  // Load all corral groups from API (once on mount)
-  // -----------------------
 
   useEffect(() => {
     const loadAllGroups = async () => {
@@ -1028,31 +1038,24 @@ export function CorralsManagement() {
     };
 
     loadAllGroups();
-  }, []); // Only load once on component mount
+  }, []); 
 
-  // -----------------------
-  // Load corrales when processFilter changes
-  // -----------------------
 
   useEffect(() => {
     const loadCorrales = async () => {
       if (!currentLineData || !currentLineData.id) {
         setApiCorrales([]);
-        // Don't mark as loaded yet - wait for proper data
         return;
       }
 
       try {
         setIsLoadingCorrales(true);
-        setHasInitiallyLoaded(false); // Reset when starting new load
+        setHasInitiallyLoaded(false);
 
-        // Handle filter-based loading for all lines
         if (processFilter === "todos") {
-          // Load corrales from all groups of the current line only (DB is source of truth)
           const currentGroups = getGroupsForCurrentLine();
           if (currentGroups.length > 0) {
             const allGroupIds = currentGroups.map(g => g.id);
-            // Use cache to avoid redundant API calls
             const allCorralesPromises = allGroupIds.map(groupId => getCorralesWithCache(groupId));
             const allCorralesResults = await Promise.allSettled(allCorralesPromises);
             const allCorrales = allCorralesResults
@@ -1063,7 +1066,6 @@ export function CorralsManagement() {
             setApiCorrales([]);
           }
         } else {
-          // processFilter is now a group ID, use it directly with cache
           const targetGroupId = processFilter as number;
           const corrales = await getCorralesWithCache(targetGroupId);
           setApiCorrales(corrales);
@@ -1072,7 +1074,6 @@ export function CorralsManagement() {
         setApiCorrales([]);
       } finally {
         setIsLoadingCorrales(false);
-        // Only mark as loaded if we have the necessary data to make the request
         if (currentLineData && allCorralGroups.length > 0) {
           setHasInitiallyLoaded(true);
         }
@@ -1082,7 +1083,6 @@ export function CorralsManagement() {
     loadCorrales();
   }, [processFilter, currentLineData, allCorralGroups, selectedTab]);
 
-  // Helper function to get groups for current line
   const getGroupsForCurrentLine = (): CorralGroup[] => {
     if (!currentLineData || allCorralGroups.length === 0) {
       return [];
@@ -1097,21 +1097,19 @@ export function CorralsManagement() {
     );
   };
 
-  // Helper function to get default group ID for each line (for direct loading)
   const getDefaultGroupIdForLine = (lineaType: LineaType): number | null => {
     switch (lineaType) {
-      case "bovinos": // Línea 1
+      case "bovinos": 
         return 1;
-      case "porcinos": // Línea 2
+      case "porcinos":
         return 3;
-      case "ovinos-caprinos": // Línea 3
+      case "ovinos-caprinos":
         return 5;
       default:
         return null;
     }
   };
 
-  // Helper function to convert ApiCorral to legacy Corral format (temporary)
   const convertApiCorralToCorral = (
     apiCorral: ApiCorral | null | undefined
   ): Corral | null => {
@@ -1146,7 +1144,7 @@ export function CorralsManagement() {
       const safeIdCorralType =
         typeof apiCorral.idCorralType === "number" && !isNaN(apiCorral.idCorralType)
           ? apiCorral.idCorralType
-          : 1; // Default to type 1 if not provided
+          : 1; 
 
       const corral: Corral = {
         id: safeId,
@@ -1207,7 +1205,6 @@ export function CorralsManagement() {
           byId.set(c.id, c);
         }
       }
-      // Decorate with status-by-date overlay if available
       const decorated = Array.from(byId.values()).map((c) => {
         const overlay = statusByDateMap[c.id];
         if (!overlay) {
@@ -1269,7 +1266,7 @@ export function CorralsManagement() {
         disponibles: liveDisponibles,
         ocupacion: liveTotal,
         ocupacionPorcentaje: liveOcupacionPorcentaje,
-        status: liveStatus,   
+        status: liveStatus,
         originalTotal: corral.total,
         originalDisponibles: corral.disponibles,
         originalOcupacion: corral.ocupacion,
@@ -1827,20 +1824,16 @@ export function CorralsManagement() {
                                 <div className="h-[6px] w-full bg-gray-100 border-b border-gray-200 rounded-t-sm mb-2" />
                                 {(() => {
                                   const brands = getBrandDetailsForCorral(corral.id);
-
                                   if (brands.length === 0) {
-                                    // Show empty state
                                     return (
-                                      <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
-                                        <Users className="h-14 w-14 mb-4 text-gray-300" />
+                                      <div className="flex flex-col items-center justify-center py-4 text-muted-foreground">
+                                        <img src="/images/corrals-color.png" alt="Corrales" className="h-50 w-50 mb-1 object-contain -mt-4" />
                                         <span className="text-sm italic text-gray-500">
                                           Sin animales asignados
                                         </span>
                                       </div>
                                     );
                                   }
-
-                                  // Show brand information
                                   return (
                                     <div className="h-44 md:h-56 lg:h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
                                       <div className="grid gap-3 py-2 pr-1">
@@ -1865,7 +1858,7 @@ export function CorralsManagement() {
                                   size="sm"
                                   className={`text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 flex items-center justify-center ${( !statusByDateMap[corral.id]) ? 'opacity-80 cursor-not-allowed' : 'shadow-sm hover:shadow-md hover:from-teal-50 hover:to-teal-100 hover:border-teal-300'}`}
                                   onClick={() =>  openVideoDialogForLinea(corral.id)}
-                                  disabled={ !statusByDateMap[corral.id] }
+                                  disabled={ !canUploadVideoForCorral(corral.id)}
                                 >
                                   <Video className="h-4 w-4 mr-1 flex-shrink-0" />
                                   <span className="truncate font-medium">Video</span>
@@ -1967,8 +1960,8 @@ export function CorralsManagement() {
                               if (brands.length === 0) {
                                 // Show empty state
                                 return (
-                                  <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
-                                    <Users className="h-14 w-14 mb-4 text-gray-300" />
+                                  <div className="flex flex-col items-center justify-center py-4 text-muted-foreground">
+                                    <img src="/images/corrals-color.png" alt="Corrales" className="h-50 w-50 mb-1 object-contain -mt-4" />
                                     <span className="text-sm italic text-gray-500">
                                       Sin animales asignados
                                     </span>
@@ -2001,7 +1994,7 @@ export function CorralsManagement() {
                                 size="sm"
                                 className="text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 hover:border-teal-300 flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 shadow-sm hover:shadow-md"
                                 onClick={() => openVideoDialogForLinea(corral.id)}
-                                disabled={!statusByDateMap[corral.id]}
+                                disabled={!canUploadVideoForCorral(corral.id)}
                               >
                                 <Video className="h-4 w-4 mr-1 flex-shrink-0" />
                                 <span className="truncate font-medium">Video</span>
