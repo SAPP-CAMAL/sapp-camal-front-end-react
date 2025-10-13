@@ -1666,7 +1666,7 @@ const reloadStatusByDate = async () => {
 
   return (
     <div
-      className="w-full max-w-[100vw] overflow-x-hidden p-3 md:p-6 relative"
+      className="w-full p-3 md:p-6 relative"
     >
       {/* Floating loading indicator when switching line or fetching data */}
       {(isLoadingLine || isLoadingCorrales || isLoadingCounts || isLoadingStatusByDate || isLoadingBrandDetails || isLoadingProductiveStages) && (
@@ -1787,7 +1787,7 @@ const reloadStatusByDate = async () => {
                         return (
                           <Card
                             key={uniqueKey}
-                            className={`relative border-3 border-gray-800 rounded-lg ${
+                            className={`relative border-4 border-gray-800 rounded-lg ${
                               isClosed ? "bg-gray-50" : "bg-white"
                             }`}
                           >

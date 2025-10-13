@@ -71,7 +71,7 @@ export function ConfirmationModal({
             
             <div className="flex flex-col items-center gap-1">
               <ArrowRight className="h-5 w-5 text-gray-400" />
-              <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-full">
+              <div className="flex items-center gap-1 bg-primary-100 px-2 py-1 rounded-full">
                 <Users className="h-3 w-3 text-yellow-700" />
                 <span className="text-xs font-bold text-yellow-700">
                   {(confirmationModal.selectedMales ?? 0) + (confirmationModal.selectedFemales ?? 0)}
@@ -88,7 +88,7 @@ export function ConfirmationModal({
           </div>
 
           {/* Transfer summary - Enhanced */}
-          <div className="relative overflow-hidden rounded-xl border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-100">
+          <div className="relative overflow-hidden rounded-xl border-2 border-sidebar-primary-200 bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-100">
             <div className="absolute top-2 right-2">
               <div className="p-1 bg-yellow-200 rounded-full">
                 <Info className="h-3 w-3 text-yellow-700" />
