@@ -1666,7 +1666,7 @@ const reloadStatusByDate = async () => {
 
   return (
     <div
-      className="w-full p-3 md:p-6 relative"
+      className="w-full max-w-[100vw] overflow-x-hidden p-3 md:p-6 relative"
     >
       {/* Floating loading indicator when switching line or fetching data */}
       {(isLoadingLine || isLoadingCorrales || isLoadingCounts || isLoadingStatusByDate || isLoadingBrandDetails || isLoadingProductiveStages) && (
@@ -1899,7 +1899,7 @@ const reloadStatusByDate = async () => {
                   </div>
 
                   {/* Desktop: Normal grid */}
-                  <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+                  <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 w-full max-w-[100%] px-2 mx-auto">
                     {sortedCorrales.map((corral, index) => {
                     // Additional safety check for each corral
                     if (
@@ -1956,7 +1956,7 @@ const reloadStatusByDate = async () => {
                         </CardHeader>
 
                         <CardContent className="pt-0 px-4 pb-0">
-                          <div className="relative border-2 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner p-5 -mt-6 min-h-[280px] overflow-hidden transition-all duration-300 border-gray-200">
+                          <div className="relative border-2 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner p-3 -mt-6 min-h-[280px] overflow-hidden transition-all duration-300 border-gray-200 w-full max-w-full">
                             <div className="h-[6px] w-full bg-gray-100 border-b border-gray-200 rounded-t-sm mb-2" />
                             {(() => {
                               const brands = getBrandDetailsForCorral(corral.id);
@@ -1975,7 +1975,7 @@ const reloadStatusByDate = async () => {
 
                                 // Show brand information
                                 return (
-                                  <div className="h-44 md:h-56 lg:h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+                                  <div className="h-44 md:h-56 lg:h-64 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 w-full">
                                     <div className="space-y-3 py-2 pr-1">
                                       {brands.map((brand, brandIndex) => (
                                         <BrandCard
