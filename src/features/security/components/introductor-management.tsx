@@ -13,7 +13,6 @@ import { Specie } from '../domain';
 import { UpdateIntroductor } from './update-introductor';
 import { UpdateBrands } from './update-brands';
 import { getRolesService } from '@/features/roles/server/db/roles.service';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toCapitalize } from '@/lib/toCapitalize';
 
 export function IntroductorManagement() {

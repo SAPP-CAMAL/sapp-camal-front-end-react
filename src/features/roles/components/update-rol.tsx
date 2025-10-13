@@ -20,6 +20,7 @@ import { NewRoleFields } from "./role-form-fields";
 import { updateRoleService } from "../server/db/roles.service";
 import { getModulesWithMenusService } from "@/features/modules/server/db/modules.queries";
 import { NewRoleForm } from "./new-role";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function UpdateRol({ role }: { role: any }) {
   const queryClient = useQueryClient();
@@ -29,6 +30,9 @@ export function UpdateRol({ role }: { role: any }) {
 
   useEffect(() => {
     if (open) {
+      form.setValue("name", role.name);
+      form.setValue("description", role.description);
+
       (async () => {
         const modules = await getModulesWithMenusService();
         form.reset({
@@ -66,11 +70,16 @@ export function UpdateRol({ role }: { role: any }) {
 
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
-      <DialogTrigger asChild>
-        <Button variant={"outline"}>
-          <SquarePenIcon />
-        </Button>
-      </DialogTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+                  <Button variant={"outline"}><SquarePenIcon /></Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent side='top' align='center' sideOffset={5} avoidCollisions>
+          	Editar Rol
+          </TooltipContent>
+        </Tooltip>
       <DialogContent className="min-w-5xl">
         <DialogHeader>
           <DialogTitle>Editar Rol del Sistema</DialogTitle>
