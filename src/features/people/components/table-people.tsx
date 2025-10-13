@@ -78,12 +78,22 @@ export function PeopleTable<TData, TValue>({
     (meta?.itemCount ?? 0);
 
   const debounceFullName = useDebouncedCallback(
-    (text: string) => meta?.setSearchParams({ fullName: text }),
+    (text: string) =>
+      meta?.setSearchParams({
+        fullName: text,
+        page: 1,
+        limit: 10,
+      }),
     500
   );
 
   const debounceIdentification = useDebouncedCallback(
-    (text: string) => meta?.setSearchParams({ identification: text }),
+    (text: string) =>
+      meta?.setSearchParams({
+        identification: text,
+        page: 1,
+        limit: 10,
+      }),
     500
   );
 
@@ -228,9 +238,7 @@ export function PeopleTable<TData, TValue>({
                     key={i}
                     variant={"outline"}
                     className={
-                      isCurrentPage
-                        ? "bg-primary text-primary-foreground"
-                        : ""
+                      isCurrentPage ? "bg-primary text-primary-foreground" : ""
                     }
                     onClick={() => meta.onChangePage?.(pageNumber)}
                   >
