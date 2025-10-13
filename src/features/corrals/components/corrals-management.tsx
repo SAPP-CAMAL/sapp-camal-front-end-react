@@ -296,15 +296,15 @@ export function CorralsManagement() {
       });
     } catch (error: any) {
       console.error('Error pre-loading certificate data:', error);
-      
+
       // Show detailed error message
       const errorMessage = error?.response?.statusText || error?.message || 'Error desconocido';
       toast.error(`Error al cargar datos del certificado (ID: ${brand.id}): ${errorMessage}`);
-      
+
       // Fallback: Use brand's existing detailsCertificateBrand if available
       const initialQuantities: Record<number, number> = {};
       const stageQuantityMap: Record<number, number> = {};
-      
+
       // Try to use existing details from brand if available
       if (brand.detailsCertificateBrand && Array.isArray(brand.detailsCertificateBrand)) {
         brand.detailsCertificateBrand.forEach(detail => {
@@ -313,7 +313,7 @@ export function CorralsManagement() {
           }
         });
       }
-      
+
       // Set quantities for each productive stage
       productiveStages.forEach(stage => {
         const specificQuantity = stageQuantityMap[stage.id];
@@ -670,6 +670,9 @@ const reloadStatusByDate = async () => {
             };
           });
 
+
+        const currentCorral = apiCorrales.find(c => c.id === targetCorralId)
+
         const transferData: SaveCertificateBrand = {
           idBrands: certificateData.idBrands,
           idCorralType: certificateData.idCorralType || 1,
@@ -681,11 +684,12 @@ const reloadStatusByDate = async () => {
           slaughterDate: slaughterDate,
           commentary: `Transferido desde corral ${originalBrand.idCorral}`,
           status: true,
+          idCorralGroup : currentCorral?.idCorralType!,
           detailsCertificateBrand: detailsCertificateBrand
         };
 
         const createResult = await saveCertBrand(transferData);
-        
+
         // For partial transfer update: send ALL stages that originally had animals,
         // with their NEW quantities (after subtracting transferred animals)
         // This includes stages that now have 0 (all were transferred)
@@ -1038,7 +1042,7 @@ const reloadStatusByDate = async () => {
     };
 
     loadAllGroups();
-  }, []); 
+  }, []);
 
 
   useEffect(() => {
@@ -1099,7 +1103,7 @@ const reloadStatusByDate = async () => {
 
   const getDefaultGroupIdForLine = (lineaType: LineaType): number | null => {
     switch (lineaType) {
-      case "bovinos": 
+      case "bovinos":
         return 1;
       case "porcinos":
         return 3;
@@ -1144,7 +1148,7 @@ const reloadStatusByDate = async () => {
       const safeIdCorralType =
         typeof apiCorral.idCorralType === "number" && !isNaN(apiCorral.idCorralType)
           ? apiCorral.idCorralType
-          : 1; 
+          : 1;
 
       const corral: Corral = {
         id: safeId,
