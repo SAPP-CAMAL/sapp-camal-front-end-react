@@ -60,7 +60,7 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 							</Button>
 						}
 						confirmBtn={
-							<Button variant='ghost' className='bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white' size='lg'>
+							<Button variant='ghost' className=' hover:bg-emerald-600 hover:text-' size='lg'>
 								<Check />
 								Si
 							</Button>

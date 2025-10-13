@@ -209,20 +209,40 @@ export function PeopleTable<TData, TValue>({
             <ChevronLeft />
             Anterior
           </Button>
-          {Array.from({ length: meta?.totalPages ?? 1 }, (_, i) => (
-            <Button
-              key={i}
-              variant={"outline"}
-              className={
-                i === (meta?.currentPage ?? 1) - 1
-                  ? "bg-primary text-primary-foreground"
-                  : ""
-              }
-              onClick={() => meta?.onChangePage?.(i + 1)}
-            >
-              {i + 1}
-            </Button>
-          ))}
+          {meta && meta.totalPages && meta.totalPages > 1 && (
+            <>
+              {Array.from({ length: Math.min(meta.totalPages, 10) }, (_, i) => {
+                const pageNumber = i + 1;
+                const isCurrentPage = pageNumber === (meta.currentPage || 1);
+
+                // Show first page, last page, current page, and pages around current
+                const showPage =
+                  pageNumber === 1 ||
+                  pageNumber === meta.totalPages ||
+                  Math.abs(pageNumber - (meta.currentPage || 1)) <= 2;
+
+                if (!showPage) return null;
+
+                return (
+                  <Button
+                    key={i}
+                    variant={"outline"}
+                    className={
+                      isCurrentPage
+                        ? "bg-primary text-primary-foreground"
+                        : ""
+                    }
+                    onClick={() => meta.onChangePage?.(pageNumber)}
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
+              {meta.totalPages > 10 && (
+                <span className="px-2">... {meta.totalPages}</span>
+              )}
+            </>
+          )}
           <Button
             variant={"outline"}
             disabled={meta?.disabledNextPage}

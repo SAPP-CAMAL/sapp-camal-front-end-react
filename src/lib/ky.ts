@@ -4,10 +4,14 @@ import ky from 'ky'
 export const http = ky.create({
     prefixUrl: "http://localhost:3001/sappriobamba",
     credentials: "include",
-    retry: 0,
+    retry: 1,
+    timeout: 15000, // 15 second timeout
     hooks: {
         beforeRequest: [
             async request => {
+                // Add cache control headers for better performance
+                request.headers.set("Cache-Control", "no-cache");
+
                 const token = await window.cookieStore.get("accessToken")
 
                 if (token) {

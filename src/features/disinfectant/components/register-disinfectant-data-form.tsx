@@ -93,7 +93,7 @@ export function RegisterDisinfectantDataForm() {
 							}}
 							onSetShipper={shipper => form.setValue('shipper', shipper)}
 							triggerButton={
-								<Button variant='outline'>
+								<Button>
 									<Plus />
 									Crear Nuevo
 								</Button>

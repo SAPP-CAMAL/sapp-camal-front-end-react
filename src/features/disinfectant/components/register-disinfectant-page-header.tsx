@@ -61,7 +61,7 @@ export const RegisterDisinfectantPageHeader = () => {
 		<section className='mb-4 flex flex-col md:flex-row gap-2 justify-between'>
 			{/* Title and scanner qr button */}
 			<div>
-				<p className='mt-1'>Registro Diario Ingreso Vehículos y Producto Utilizado en el Arco de Desinfección</p>
+				<p className='mt-1 font-bold'>Registro Diario Ingreso Vehículos y Producto Utilizado en el Arco de Desinfección</p>
 			</div>
 
 			<div className='flex justify-end items-center gap-2'>

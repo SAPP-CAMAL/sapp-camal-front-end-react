@@ -51,8 +51,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+ --primary: #0ea38d;  /* Color de fondo del botón */
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -68,20 +68,169 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #0ea38d;
+  --sidebar-primary-foreground: ##ffffff;
+  --sidebar-accent: #f8f8f8;
+  --sidebar-accent-foreground: #0ea38d;
   --sidebar-border: oklch(0.922 0 0);
+  --sidebar-background: #41454e;
   --sidebar-ring: oklch(0.708 0 0);
-  --green: oklch(0.85 0.08 130);             
+  --green: oklch(0.85 0.08 130);
   --green-foreground: oklch(0.25 0.08 130);
-  --blue: oklch(0.8 0.08 250);             
-  --blue-foreground: oklch(0.3 0.08 250);   
+  --blue: oklch(0.8 0.08 250);
+  --blue-foreground: oklch(0.3 0.08 250);
+}
+ [data-sidebar="sidebar"],
+.sidebar,
+aside[class*="sidebar"] {
+  background-color: var(--sidebar-background) !important;
+}
+/* ========================================
+   ESTILOS GLOBALES PARA TABLAS
+   ======================================== */
+
+/* Contenedor de tabla con sombra y bordes redondeados */
+.rounded-md,
+table {
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
+/* Header de tabla - Color principal con texto blanco */
+thead tr {
+  background-color: var(--sidebar-primary) !important;
+  color: white !important;
+}
+
+thead tr th {
+  color: white !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  padding: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Filas del body - Zebra striping mejorado */
+tbody tr {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid oklch(0.95 0 0);
+}
+
+tbody tr:nth-child(odd) {
+  background-color: white;
+}
+
+tbody tr:nth-child(even) {
+  background-color: oklch(0.98 0 0);
+}
+
+/* Hover effect elegante */
+tbody tr:hover {
+  background-color: rgba(14, 163, 141, 0.08) !important;
+  transform: scale(1.001);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Celdas del body */
+tbody tr td {
+  color: var(--foreground);
+  padding: 0.875rem 1rem;
+  font-size: 0.9375rem;
+}
+
+/* Primera y última celda con padding especial */
+tbody tr td:first-child,
+thead tr th:first-child {
+  padding-left: 1.5rem;
+}
+
+tbody tr td:last-child,
+thead tr th:last-child {
+  padding-right: 1.5rem;
+}
+
+/* Bordes redondeados en las esquinas */
+thead tr th:first-child {
+  border-top-left-radius: var(--radius);
+}
+
+thead tr th:last-child {
+  border-top-right-radius: var(--radius);
+}
+
+tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--radius);
+}
+
+tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--radius);
+}
+
+/* Última fila sin borde inferior */
+tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Mejora para tablas responsivas */
+@media (max-width: 768px) {
+  thead tr th,
+  tbody tr td {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.875rem;
+  }
+  
+  tbody tr td:first-child,
+  thead tr th:first-child {
+    padding-left: 1rem;
+  }
+  
+  tbody tr td:last-child,
+  thead tr th:last-child {
+    padding-right: 1rem;
+  }
+}
+
+/* Estilo para celdas con acciones/botones */
+tbody tr td.actions,
+tbody tr td:has(button) {
+  text-align: right;
+}
+
+/* Animación suave para carga de contenido */
+tbody tr {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estado de fila seleccionada (opcional) */
+tbody tr.selected,
+tbody tr[data-selected="true"] {
+  background-color: rgba(14, 163, 141, 0.15) !important;
+  border-left: 3px solid var(--sidebar-primary);
+}
+
+/* Mejora visual para números y datos importantes */
+tbody tr td[data-type="number"],
+tbody tr td.numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-weight: 500;
+}
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
