@@ -67,11 +67,10 @@ export const Step1Certificate = () => {
 						<div className='flex items-center gap-2'>
 							{/* Qr modal */}
 							<QrCertificateModal
-								btnVariant='outline'
 								// extraSuccessInfoCard={<InfoCard />}
 								// onSetQrData={qrData => handleSetSelectedCertificate(qrData)}
 								renderSuccessButton={({ qrData, closeModal }) => (
-									<Button className='bg-green-600 hover:bg-green-700' onClick={() => handleSuccessButton(qrData, closeModal)}>
+									<Button className=' hover:bg-green-700' onClick={() => handleSuccessButton(qrData, closeModal)}>
 										<CircleCheckBig />
 										Finalizar
 									</Button>
@@ -82,7 +81,7 @@ export const Step1Certificate = () => {
 							<CreateUpdateCertificateModal
 								onSetCertificate={qrData => handleSetSelectedCertificate(qrData!)}
 								triggerButton={
-									<Button variant='outline'>
+									<Button >
 										<Plus />
 										Crear Nuevo
 									</Button>
@@ -191,7 +190,7 @@ export const Step1Certificate = () => {
 						{!isFromQR && (
 							<ShipperModal
 								triggerButton={
-									<Button variant='outline'>
+									<Button >
 										<Plus />
 										Crear Nuevo
 									</Button>
@@ -212,7 +211,7 @@ export const Step1Certificate = () => {
 										shipperData={selectedShipper}
 										onSetShipper={shipper => handleSetSelectedShipper(shipper!)}
 										triggerButton={
-											<Button variant='outline'>
+											<Button >
 												<Edit />
 												Editar
 											</Button>
@@ -284,7 +283,7 @@ export const Step1Certificate = () => {
 					<div className='flex justify-end pt-2'>
 						<Button
 							variant='ghost'
-							className={cn('bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white', {
+							className={cn('hover:bg-emerald-600 hover:text-white ', {
 								'opacity-50 pointer-events-none': !selectedCertificate || !selectedShipper,
 							})}
 							disabled={!selectedCertificate || !selectedShipper}

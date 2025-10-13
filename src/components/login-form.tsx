@@ -35,10 +35,14 @@ export function LoginForm({
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
+      console.log("Attempting login with:", data.identifier);
+
       const resp = await loginAction({
         identifier: data.identifier,
         password: data.password,
       });
+
+      console.log("Login response received");
 
       await Promise.all([
         window.cookieStore.set("accessToken", resp.data.accessToken),
@@ -46,8 +50,11 @@ export function LoginForm({
         window.cookieStore.set("user", JSON.stringify(resp.data)),
       ]);
 
+      console.log("Tokens stored, redirecting...");
+
       router.push("/dashboard/people");
-    } catch {
+    } catch (error) {
+      console.error("Login error:", error);
       alert("Hubo un error al iniciar sesión");
     }
   });
@@ -64,6 +71,8 @@ export function LoginForm({
               alt="GAMDR"
               width={124}
               height={124}
+              priority
+              style={{ width: "auto", height: "auto" }}
             />
           </CardDescription>
           <CardTitle className="text-2xl text-center">
@@ -97,6 +106,7 @@ export function LoginForm({
                       disabled={form.formState.isSubmitting}
                       placeholder="Ingrese su identificación"
                       maxLength={10}
+                      autoComplete="username"
                       required
                       {...form.register("identifier")}
                     />
@@ -109,6 +119,7 @@ export function LoginForm({
                       disabled={form.formState.isSubmitting}
                       placeholder="Ingrese su correo electrónico"
                       maxLength={100}
+                      autoComplete="email"
                       required
                       {...form.register("identifier")}
                     />
@@ -131,6 +142,7 @@ export function LoginForm({
                     {...form.register("password")}
                     type={showPassword ? "text" : "password"}
                     disabled={form.formState.isSubmitting}
+                    autoComplete="current-password"
                     required
                   />
                   <Button

@@ -123,12 +123,12 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 								</Button>
 
 								<div className='flex justify-end gap-2'>
-									<Button className='bg-green-600 hover:bg-green-700' onClick={setDefaultValues} disabled={!isInvalid && !qrData}>
+									<Button className=' hover:bg-green-700' onClick={setDefaultValues} disabled={!isInvalid && !qrData}>
 										Volver a escanear
 										<RotateCcw />
 									</Button>
 
-									<Button className='bg-green-600 hover:bg-green-700' onClick={handleSaveQrData}>
+									<Button className=' hover:bg-green-700' onClick={handleSaveQrData}>
 										{isSaving ? 'Guardando...' : 'Guardar y Continuar'}
 										<MoveRight />
 									</Button>
@@ -174,7 +174,7 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 							{extraSuccessInfoCard}
 
 							<div className='flex justify-between pt-4'>
-								<Button className='bg-green-600 hover:bg-green-700' onClick={() => setCurrentTab(1)}>
+								<Button className=' hover:bg-green-700' onClick={() => setCurrentTab(1)}>
 									<Edit />
 									Editar
 								</Button>
