@@ -33,8 +33,6 @@ export function NewUser() {
 
   const onSubmit = async (data: any) => {
     try {
-      console.log({ data });
-
       await createUserAction({
         personId: Number(data.personId),
         email: data.email,

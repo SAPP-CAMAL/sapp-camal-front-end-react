@@ -19,7 +19,7 @@ export type CommonHttpResponseSingle<T> = CommonHttp & {
     data: T
 }
 export type CreateOrUpdateHttpResponse<T> = CommonHttp & {
-	data: T;
+    data: T;
 };
 
 export type ResponsePeopleByFilter = CommonHttpResponsePagination<Person>
@@ -77,3 +77,24 @@ export type ResponseCreatePerson = {
     message: string
     data: Person
 }
+
+interface FindPersonByIdentificationOrFullName {
+    id: number;
+    firstName: string;
+    lastName: string;
+    identificationTypeId: number;
+    identification: string;
+    fullName: string;
+    code: string;
+    mobileNumber: string;
+    genderId: number;
+    address: string;
+    status: boolean;
+    affiliationDate: string;
+    gender: null;
+    isEmployee: boolean;
+    identificationType: null;
+}
+
+
+export type ResponseFindPersonByIdentificationOrFullName = CommonHttpResponse<FindPersonByIdentificationOrFullName>

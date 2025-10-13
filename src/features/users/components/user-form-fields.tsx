@@ -10,38 +10,33 @@ import {
 import { Input } from "@/components/ui/input";
 import { useFormContext } from "react-hook-form";
 import { CardContent } from "@/components/ui/card";
-import {
-  ResponseUserPersonSearchService,
-  UserPerson,
-} from "@/features/security/domain";
+import { UserPerson } from "@/features/security/domain";
 import { useState } from "react";
 import {
   PersonSearch,
   SelectedPersonCard,
 } from "@/features/security/components/introductor-form-fields";
 import { useQuery } from "@tanstack/react-query";
-import {
-  getUserPersonByFilterService,
-  getUserRolesService,
-} from "@/features/security/server/db/security.queries";
+import { getUserRolesService } from "@/features/security/server/db/security.queries";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { getPersonByIdentificationOrFullNameService } from "@/features/people/server/db/people.service";
 
 export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
   const [selectedPerson, setSelectedPerson] = useState<UserPerson | null>(null);
   const [activeField, setActiveField] = useState<
     "name" | "identification" | null
   >(null);
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [identification, setIdentification] = useState("");
 
-  const peopleData = useQuery<ResponseUserPersonSearchService>({
-    queryKey: ["people", name, identification],
+  const peopleData = useQuery({
+    queryKey: ["people", fullName, identification],
     queryFn: () =>
-      getUserPersonByFilterService({
-        ...(name.length > 2 && { fullName: name }),
+      getPersonByIdentificationOrFullNameService({
         identification: identification,
+        ...(fullName.length > 2 && { fullName: fullName }),
       }),
-    enabled: !!name || !!identification,
+    enabled: !!fullName || !!identification,
   });
 
   const query = useQuery({
@@ -52,7 +47,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
   const form = useFormContext();
 
   const handleSelectPerson = (person: UserPerson) => {
-    form.setValue("personId", person?.personId?.toString() ?? "");
+    form.setValue("personId", person?.id?.toString() ?? "");
     setSelectedPerson(person);
     setActiveField(null);
   };
@@ -61,7 +56,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
     setSelectedPerson(null);
     form.setValue("name", "");
     form.setValue("identification", "");
-    setName("");
+    setFullName("");
     setIdentification("");
     setActiveField(null);
   };
@@ -88,7 +83,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
-                            setName(e.target.value);
+                            setFullName(e.target.value);
                             setActiveField("name");
                             form.setValue("identification", "");
                             setIdentification("");
@@ -100,9 +95,10 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                   )}
                 />
 
-                {name.length > 2 && activeField === "name" && (
+                {fullName.length > 2 && activeField === "name" && (
                   <div className="w-full">
                     <PersonSearch
+                      // @ts-ignore
                       data={peopleData?.data?.data ?? []}
                       activeField={activeField}
                       onSelectPerson={handleSelectPerson}
@@ -128,7 +124,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                             setIdentification(e.target.value);
                             setActiveField("identification");
                             form.setValue("name", "");
-                            setName("");
+                            setFullName("");
                           }}
                         />
                       </FormControl>
@@ -141,6 +137,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                   activeField === "identification" && (
                     <div className="w-full">
                       <PersonSearch
+                        // @ts-ignore
                         data={peopleData?.data?.data ?? []}
                         activeField={activeField}
                         onSelectPerson={handleSelectPerson}

@@ -45,9 +45,9 @@ export type UserPerson = {
     userName: string;
     email: string;
     fullName: string;
-    state?:    string;
+    state?: string;
     personId?: number;
-    identification?:string;
+    identification?: string;
 }
 
 
@@ -84,10 +84,10 @@ type Brand = {
 
 export type ResponseSpecieSearchService = CommonHttpResponsePagination<Specie>
 export interface Specie {
-    id:          number;
-    name?:        string;
+    id: number;
+    name?: string;
     descriptio?: string;
-    status:      boolean;
+    status: boolean;
 }
 
 export type ResponseCreateIntroducerBrandService = {
@@ -97,25 +97,25 @@ export type ResponseCreateIntroducerBrandService = {
 }
 export interface CreateBrandsRequest {
     introducerId: number;
-    name:         string;
-    description:  string;
-    speciesIds:   number[];
+    name: string;
+    description: string;
+    speciesIds: number[];
 }
 
 export interface IntroducerBrand {
-    id:           number;
-    name:         string;
-    description:  string;
+    id: number;
+    name: string;
+    description: string;
     introducerId: number;
-    state:        string;
-    species:      SpeciesBrand[];
+    state: string;
+    species: SpeciesBrand[];
 }
 
 export interface SpeciesBrand {
-    id:            number;
+    id: number;
     brandSpecieId: number;
-    name:          string;
-    state:         string;
+    name: string;
+    state: string;
 }
 
 export type FilterUserPerson = {
@@ -124,20 +124,20 @@ export type FilterUserPerson = {
 }
 
 export interface UserResponse {
-    id:       number;
+    id: number;
     personId: number;
     fullName: string;
-    email:    string;
+    email: string;
     userName: string;
-    state:    string;
-    roles:    Role[];
+    state: string;
+    roles: Role[];
 }
 
 export interface UpdateUserRequest {
-    email:    string;
+    email: string;
     userName: string;
-    status:   boolean;
-    roles:    Role[];
+    status: boolean;
+    roles: Role[];
 }
 
 type Role = {
@@ -146,23 +146,30 @@ type Role = {
 }
 
 export interface UpdateBrandRequest {
-    name:        string;
+    name: string;
     description: string;
-    species:     Specie[];
+    species: Specie[];
 }
 
 export interface Species {
-    id:     number;
+    id: number;
     status: boolean;
 }
 
 
 export interface UserSetRoleResponse {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  expiresIn: number;
-  sessionUuid: string;
-  user: User;
-  activeRole: ActiveRole;
+    accessToken: string;
+    refreshToken: string;
+    tokenType: string;
+    expiresIn: number;
+    sessionUuid: string;
+    user: User;
+    activeRole: ActiveRole;
+}
+
+
+export interface ResetPasswordRequest {
+    token: string;
+    password: string;
+    passwordConfirmation: string;
 }

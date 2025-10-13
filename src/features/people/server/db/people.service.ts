@@ -1,5 +1,5 @@
 import { http } from "@/lib/ky";
-import { FilterPeople, Person, ResponseCreatePerson, ResponsePeopleByFilter, ResponseValidateDocumentType } from "@/features/people/domain";
+import { FilterPeople, Person, ResponseCreatePerson, ResponseFindPersonByIdentificationOrFullName, ResponsePeopleByFilter, ResponseValidateDocumentType } from "@/features/people/domain";
 
 export function getPeopleByFilterService(filters: FilterPeople = {}): Promise<ResponsePeopleByFilter> {
     return http.post("v1/1.0.0/person/person-by-filter", {
@@ -29,4 +29,13 @@ export function validateDocumentTypeService(codeDocument: string, identification
             identification
         }
     }).json<ResponseValidateDocumentType>()
+}
+
+export function getPersonByIdentificationOrFullNameService(query: { identification?: string, fullName?: string }): Promise<ResponseFindPersonByIdentificationOrFullName> {
+    return http.get("v1/1.0.0/person/by-identification", {
+        searchParams: {
+            ...(query.identification && { identification: query.identification }),
+            ...(query.fullName && { fullName: query.fullName })
+        }
+    }).json()
 }
