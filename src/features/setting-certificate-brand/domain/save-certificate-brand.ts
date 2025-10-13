@@ -10,6 +10,7 @@ export interface SaveCertificateBrand {
 	commentary: string;
 	status: boolean;
 	idFinishType?: number;
+	idCorralGroup: number;
 	detailsCertificateBrand: RequestDetailsCertificateBrand[];
 }
 
@@ -45,17 +46,65 @@ export interface SettingCertBrandByCertificateId {
 	id: number;
 	idBrands: number;
 	idCertificate: number;
-	codes: string;
+	codes?: string;
 	status: boolean;
 	commentary: string;
-	males: number;
-	females: null;
+	males?: number;
+	females?: number;
 	slaughterDate: string;
 	idSpecies: number;
 	idStatusCorrals: number;
-	idCorralType: null;
-}
+	idCorralType: number;
+	idFinishType?: number;
+	idCorralGroup: number;
+	brand: {
+		id: number;
+		name: string;
+		introducer: {
+			id: number;
+			user: {
+				id: number;
+				person: {
+					id: number;
+					fullName: string;
+					identification?: string;
+				};
+			};
+		};
+	};
+	certificate: {
+		id: number;
+		code: string;
+	};
+	species: {
+		id: number;
+		name: string;
+	};
+	statusCorrals: {
+		id: number;
+		corral: {
+			id: number;
+			name: string;
+		};
+	};
+	finishType?: {
+		id: number;
+		name: string;
 
+		idSpecie?: number;
+
+		status: boolean;
+	};
+	corralType: {
+		id: number;
+		description: string;
+	};
+	corralGroup: {
+		id: number;
+		name: string;
+	};
+	detailsCertificateBrand: DetailsCertificateBrand[];
+}
 export interface SettingCertBrandByID {
 	id: number;
 	idBrands: number;

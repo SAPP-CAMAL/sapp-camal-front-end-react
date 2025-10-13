@@ -1,4 +1,5 @@
 import { Origin } from '@/features/origin/domain';
+import { Specie } from '@/features/specie/domain';
 
 /**
  * Represents the structure of a valid Certificate saved in DB.

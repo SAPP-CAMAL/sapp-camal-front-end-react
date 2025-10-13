@@ -73,15 +73,15 @@ export const useRegisterDisinfectantData = () => {
 
 	useEffect(() => {
 		handleSearchFields('plate', dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '');
-		setSearchParams(prev => ({ ...prev, plate: dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '' }));
+		setSearchParams(prev => ({...prev, plate: dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || ''}));
 
 		if (formData) return form.reset(formData);
 
-        form.reset({
+		form.reset({
 			id: dailyDisinfectionRegister?.id,
-		dosage: dailyDisinfectionRegister?.dosage ?? '',
+			dosage: dailyDisinfectionRegister?.dosage ?? '',
 			disinfectant: dailyDisinfectionRegister?.disinfectant.id.toString() ?? '',
-		admissionApplicationTime: dailyDisinfectionRegister?.timeStar ?? getCurrentTime(),
+			admissionApplicationTime: dailyDisinfectionRegister?.timeStar ?? getCurrentTime(),
 			departureApplicationTime: dailyDisinfectionRegister?.timeEnd ?? '',
 			observations: dailyDisinfectionRegister?.commentary ?? '',
 			transportedSpecie: dailyDisinfectionRegister?.species.id,

@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => {
-	const { selectedSpecie, handleUpdateAnimalAdmission, handleRemoveAnimalAdmission } = useStep2Animals();
+	const { selectedSpecie, handleRemoveAnimalAdmission, handleReconstructAnimalAdmissionData } = useStep2Animals();
 	return (
 		<Card>
 			<CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
@@ -21,13 +21,14 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 					<Button
 						variant='outline'
 						size='sm'
-						onClick={() => handleUpdateAnimalAdmission({ ...animalAdmissionItem, isOpen: true })}
-						disabled={animalAdmissionItem?.animalAdmission?.corralType?.description
-							?.toLowerCase()
-							?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase())}
+						onClick={() => handleReconstructAnimalAdmissionData(animalAdmissionItem)}
+						disabled={
+							animalAdmissionItem?.animalAdmission?.corralType?.description?.toLowerCase()?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase()) ||
+							animalAdmissionItem.isRetrieveFormData
+						}
 					>
 						<Edit className='h-4 w-4' />
-						Editar
+						{animalAdmissionItem.isRetrieveFormData ? 'Cargando...' : 'Editar'}
 					</Button>
 					<Button variant='outline' size='sm' className='bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white'>
 						<FileText className='h-4 w-4' />
@@ -77,24 +78,31 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 							<span className='font-medium'>Especie:</span> {toCapitalize(selectedSpecie?.name ?? '')}
 						</div>
 						<div>
-							<span className='font-medium'>Cantidades:</span> H: {animalAdmissionItem?.animalAdmission?.females || 0}, M:{' '}
+							<span className='font-medium'>Cantidades: </span> H: {animalAdmissionItem?.animalAdmission?.females || 0}, M:{' '}
 							{animalAdmissionItem?.animalAdmission?.males || 0}
 						</div>
 						<div>
-							<span className='font-medium'>Fecha Faenamiento:</span> {animalAdmissionItem?.animalAdmission?.date?.split('T')[0] || 'N/A'}
+							<span className='font-medium'>Fecha Faenamiento: </span> {animalAdmissionItem?.animalAdmission?.date?.split('T')[0] || 'N/A'}
 						</div>
 						<div>
-							<span className='font-medium'>Tipo de Corral:</span> {animalAdmissionItem?.animalAdmission?.corralType?.description}
+							<span className='font-medium'>Tipo de Corral: </span> {animalAdmissionItem?.animalAdmission?.corralType?.description}
 						</div>
 						<div>
-							<span className='font-medium'>Corral:</span> {animalAdmissionItem?.animalAdmission?.corral?.name || ''}
+							<span className='font-medium'>Corral: </span>
+							{animalAdmissionItem?.animalAdmission?.corral?.name || animalAdmissionItem.retrievedFromApi?.statusCorrals.corral.name || ''}
 						</div>
 						<div>
-							<span className='font-medium'>Observación:</span> {animalAdmissionItem?.animalAdmission?.observations || ''}
+							<span className='font-medium'>Observación:</span> {animalAdmissionItem?.animalAdmission?.observations || 'N/A'}
 						</div>
 						<div>
-							{animalAdmissionItem?.animalAdmission?.finishType && <span className='font-medium'>Tipo de acabado: </span>}
-							{animalAdmissionItem?.animalAdmission?.finishType ? animalAdmissionItem?.animalAdmission?.finishType?.name || animalAdmissionItem?.animalAdmission?.corralGroup?.name : ''}
+							{animalAdmissionItem?.animalAdmission?.finishType?.name && (
+								<span className='font-medium'>
+									Tipo de acabado:
+									{toCapitalize(
+										animalAdmissionItem?.animalAdmission?.finishType?.name || animalAdmissionItem?.animalAdmission?.corralGroup?.name || ''
+									)}
+								</span>
+							)}
 						</div>
 					</div>
 				</div>

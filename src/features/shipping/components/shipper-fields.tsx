@@ -100,7 +100,7 @@ export const ShipperFields = () => {
 
 							if (isCedula && value.length !== 10) return 'El número de documento debe tener 10 caracteres';
 
-							if (isRUCJ && value.length !== 13) return 'El número de documento debe tener 11 caracteres';
+							if (isRUCJ && value.length !== 13) return 'El número de documento debe tener 13 caracteres';
 
 							if (isRUCN && value.length !== 13) return 'El número de documento debe tener 13 caracteres';
 
