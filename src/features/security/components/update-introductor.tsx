@@ -67,7 +67,7 @@ export function UpdateIntroductor({
 
       form.reset(form.formState.defaultValues);
       toast.success("Introductor actualizado exitosamente");
-      onRefresh;
+      onRefresh();
       setOpen(false);
     } catch (error: any) {
       const { data } = await error.response.json();
