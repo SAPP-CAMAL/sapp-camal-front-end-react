@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { UpdatePerson } from "./update-person.form";
 import { getUserPersonByFilterService } from "@/features/security/server/db/security.queries";
 import { getUsersByFilter } from "../server/db/queries.users";
+import { toCapitalize } from '../../../lib/toCapitalize';
 
 export function UsersManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
@@ -64,6 +65,10 @@ export function UsersManagement() {
           {
             accessorKey: "person.fullName",
             header: "Nombre Completo",
+            cell: ({ row }) => {
+              return (<span>{toCapitalize(row.original.person.fullName, true)}</span>
+              );
+            }
           },
           {
             header: "Acciones",

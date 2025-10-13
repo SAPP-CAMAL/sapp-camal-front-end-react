@@ -181,7 +181,7 @@ export function TableIntroducers<TData, TValue>({
           </Select>
         </div>
         {Object.keys(meta?.searchParams).length > 0 && (
-          <div className="mt-2 flex justify-end">
+          <div className="mt-4 flex justify-end">
             <Button
               variant={"outline"}
               onClick={() => {

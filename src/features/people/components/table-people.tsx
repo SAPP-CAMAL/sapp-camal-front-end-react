@@ -111,7 +111,7 @@ export function PeopleTable<TData, TValue>({
             }}
             defaultValue={"*"}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-62">
               <SelectValue placeholder="" />
             </SelectTrigger>
             <SelectContent>
@@ -124,7 +124,7 @@ export function PeopleTable<TData, TValue>({
             onValueChange={(value) => meta?.setSearchParams({ status: value })}
             defaultValue={"todos"}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-62">
               <SelectValue placeholder="" />
             </SelectTrigger>
             <SelectContent>
