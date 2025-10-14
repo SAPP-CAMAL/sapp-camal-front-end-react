@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, Save, Loader2, X, GripVertical, Venus, Mars, BringToFront } from "lucide-react";
+import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, Save, Loader2, X, GripVertical, Venus, Mars, BringToFront, CircleCheckBig } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { QuantitySelector } from "@/components/quantity-selector";
 import { format } from "date-fns";
@@ -511,10 +511,10 @@ export function AntemortemManagement() {
               <TableHead className="text-center border font-bold border-l-0"> <Hash className="inline-block w-4 h-4 mb-1 mr-2" />CORRAL</TableHead>
               <TableHead className="text-center border font-bold"> <Hash className="inline-block w-4 h-4 mb-1 mr-2" />MARCAS</TableHead>
               <TableHead className="text-center border font-bold"> <Eye className="inline-block w-4 h-4 mb-1 mr-2" />OBSERVACIONES</TableHead>
-              {showArgollas && <TableHead className="text-center border font-bold"> <Coins className="inline-block w-4 h-4 mb-1 mr-2 text-amber-600" />ARGOLLAS</TableHead>}
-              <TableHead className="text-center border font-bold"><User className="inline-block w-4 h-4 mb-1 mr-2 text-blue-600" />MACHOS</TableHead>
-              <TableHead className="text-center border font-bold"><User className="inline-block w-4 h-4 mb-1 mr-2 text-rose-600" />HEMBRAS</TableHead>
-              <TableHead className="text-center border font-bold"> <Users className="inline-block w-4 h-4 mb-1 mr-2" />TOTAL</TableHead>
+              {showArgollas && <TableHead className="text-center border font-bold"> <BringToFront className="inline-block w-4 h-4 mb-1 mr-2 text-white" />ARGOLLAS</TableHead>}
+              <TableHead className="text-center border font-bold"><Venus className="inline-block w-4 h-4 mb-1 mr-2 text-white" />MACHOS</TableHead>
+              <TableHead className="text-center border font-bold"><Mars className="inline-block w-4 h-4 mb-1 mr-2 text-white" />HEMBRAS</TableHead>
+              <TableHead className="text-center border font-bold"> <CircleCheckBig className="inline-block w-4 h-4 mb-1 mr-2" />TOTAL</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
