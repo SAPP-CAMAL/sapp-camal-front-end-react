@@ -563,6 +563,7 @@ div.bg-primary .lucide {
   box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 35%, transparent);
 }
 
+
 /* ========================================
    INPUTS MEJORADOS
    ======================================== */
@@ -1261,4 +1262,33 @@ span[class*="Arrow"]:empty {
 button[data-slot="tooltip-trigger"],
 [data-slot="tooltip-trigger"] {
   position: relative;
+}
+
+/* ========================================
+   SELECT - Asegurar que dropdown sea visible sobre dialogs
+   ======================================== */
+[data-slot="select-content"] {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+/* Asegurar que el portal del select tenga z-index alto */
+[data-radix-select-content] {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+/* Asegurar que los items del select sean interactuables */
+[data-slot="select-content"] [role="option"],
+[data-radix-select-content] [role="option"] {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10000 !important;
+}
+
+/* Reducir z-index de botones del dialog cuando el select está abierto */
+[data-state="open"] ~ * button,
+[data-slot="dialog-content"] button:not([data-slot="select-trigger"]) {
+  position: relative;
+  z-index: 1;
 }
