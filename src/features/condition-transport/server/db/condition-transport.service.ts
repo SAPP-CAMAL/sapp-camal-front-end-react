@@ -10,6 +10,14 @@ export const saveConditionTransport = (request: ConditionTransportRequest) => {
 		.json<CreateOrUpdateHttpResponse<ConditionTransportResponse>>();
 };
 
+export const getConditionTransportByCertificateId = (certificateId: string) => {
+	return http
+		.get('v1/1.0.0/conditions-transport/by-certificate-id', {
+			searchParams: { certificateId },
+		})
+		.json<CreateOrUpdateHttpResponse<Partial<ConditionTransportResponse>>>();
+};
+
 export const updateConditionTransport = (conditionId: string, request: ConditionTransportRequest) => {
 	return http
 		.patch('v1/1.0.0/conditions-transport/' + conditionId, {

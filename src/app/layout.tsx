@@ -17,10 +17,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CAMAL MUNICIPAL DE RIOBAMBA",
+  title: "SAPP",
   description: "CAMAL MUNICIPAL DE RIOBAMBA",
+  icons: {
+    icon: [
+      { url: "/images/ico.ico", type: "image/ico" },
+    ],
+    apple: [
+      { url: "/images/ico.ico", type: "image/ico" },
+    ],
+    shortcut: ["/images/ico.ico"],
+  }
 };
-
 export const viewport = {
   width: 'device-width',
   initialScale: 1,

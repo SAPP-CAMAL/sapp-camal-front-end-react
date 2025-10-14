@@ -53,9 +53,7 @@ export function SpeciesMenu({
       onSelectSpecies([]);
       onSelectFinishType(null);
     } else {
-      // Seleccionar solo esta especie
       onSelectSpecies([speciesName]);
-      // Si no es PORCINO, limpiar finish type
       if (speciesName !== "PORCINO") {
         onSelectFinishType(null);
       }
@@ -91,7 +89,7 @@ export function SpeciesMenu({
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className={`justify-between w-full bg-muted hover:bg-muted text-left ${
+            className={`justify-between w-full hover:bg-muted text-left ${
               selectedSpecies === "PORCINO" ? 'border-primary/50 bg-primary/5' : ''
             }`}
           >
@@ -103,7 +101,6 @@ export function SpeciesMenu({
         </DropdownMenuTrigger>
         
         <DropdownMenuContent className="w-[280px]" align="start">
-          {/* Opción para limpiar selección */}
           {selectedSpecies && (
             <>
               <DropdownMenuItem 
@@ -171,7 +168,6 @@ export function SpeciesMenu({
                 </DropdownMenuSub>
               );
             } else {
-              // Especies normales sin submenu
               return (
                 <DropdownMenuItem 
                   key={specie.id}

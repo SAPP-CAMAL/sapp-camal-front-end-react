@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { NewPeopleFields } from "./person-form-fields";
+import { NewUserFields } from "./user-form-fields";
 import {
   getEmployeesByPersonIdService,
   updateEmployeeService,
@@ -36,6 +36,7 @@ export function UpdatePerson({ person }: { person: any }) {
     slaughterhouse: false,
     address: person.address,
     positions: [],
+    status: person.status?.toString()
   };
   const form = useForm<any>({ defaultValues });
   const personId = person.id;
@@ -77,7 +78,8 @@ export function UpdatePerson({ person }: { person: any }) {
         form.formState.dirtyFields.mobileNumber ||
         form.formState.dirtyFields.firstName ||
         form.formState.dirtyFields.lastName ||
-        form.formState.dirtyFields.address;
+        form.formState.dirtyFields.address ||
+        form.formState.dirtyFields.status;
 
       if (shouldUpdatePerson) {
         await updatePersonService(person.id, {
@@ -102,6 +104,9 @@ export function UpdatePerson({ person }: { person: any }) {
           ...(form.formState.dirtyFields.address && {
             address: data.address,
           }),
+          ...(form.formState.dirtyFields.status && {
+            status: data.status === "true"
+          })
         });
       }
 
@@ -171,7 +176,7 @@ export function UpdatePerson({ person }: { person: any }) {
             onSubmit={form.handleSubmit(onSubmit)}
             className="gap-y-4 grid grid-cols-2 gap-2"
           >
-            <NewPeopleFields isUpdate />
+            <NewUserFields isUpdate />
             <div className="flex justify-end col-span-2">
               <Button
                 type="submit"

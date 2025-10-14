@@ -1,3 +1,4 @@
+import { Specie } from '@/features/specie/domain';
 import { Shipper } from './shipper';
 import { CommonHttpResponsePagination, CreateOrUpdateHttpResponse } from '@/features/people/domain';
 
@@ -25,16 +26,10 @@ export interface DetailRegisterVehicleResponseByCodeAndIdShipping {
 	timeStar: string;
 	timeEnd: null;
 	status: boolean;
-	species: Species;
+	species: Specie;
 	disinfectant: Disinfectant;
 }
 
-interface Species {
-	id: number;
-	name: string;
-	description: string;
-	status: boolean;
-}
 interface Disinfectant {
 	id: number;
 	name: string;

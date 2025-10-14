@@ -99,7 +99,7 @@ export function DailyDisinfectionLogTable() {
 				<div className='flex items-center gap-3'>
 					<span className='whitespace-nowrap'>Filtrar por fecha</span>
 					<Input value={searchParams.date} type='date' onChange={e => setSearchParams({ date: e.target.value })} />
-					<Button variant='outline'>
+					<Button >
 						<FileText />
 						Generar Reporte
 					</Button>

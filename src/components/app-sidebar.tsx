@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { useEffect, useRef } from "react"
+import { useSidebar } from "@/components/ui/sidebar"
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { RoleSwitcher } from "@/components/team-switcher";
@@ -222,6 +224,7 @@ import { AdministrationMenu } from "@/features/modules/domain/module.domain";
 // };
 
 export function AppSidebar({
+ 
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   user: LoginResponse;

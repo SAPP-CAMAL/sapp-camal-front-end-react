@@ -2,21 +2,23 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { UsersTable } from "./users-table";
-import { NewPerson } from "./new-person.form";
+import { NewUser } from "./new-user.form";
 import { parseAsInteger, useQueryStates, parseAsString } from "nuqs";
 import { Badge } from "@/components/ui/badge";
 import { UpdatePerson } from "./update-person.form";
 import { getUserPersonByFilterService } from "@/features/security/server/db/security.queries";
+import { getUsersByFilter } from "../server/db/queries.users";
+import { toCapitalize } from '../../../lib/toCapitalize';
 
 export function UsersManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
     {
       page: parseAsInteger.withDefault(1),
       limit: parseAsInteger.withDefault(10),
-      status: parseAsString.withDefault("todos"),
-      identification: parseAsString.withDefault(""),
       fullName: parseAsString.withDefault(""),
-      isEmployee: parseAsString.withDefault("*"),
+      email: parseAsString.withDefault(""),
+      userName: parseAsString.withDefault(""),
+      identification: parseAsString.withDefault(""),
     },
     {
       history: "push",
@@ -24,8 +26,8 @@ export function UsersManagement() {
   );
 
   const query = useQuery({
-    queryKey: ["people", searchParams],
-    queryFn: () => getUserPersonByFilterService(),
+    queryKey: ["users", searchParams],
+    queryFn: () => getUsersByFilter(searchParams),
   });
 
   return (
@@ -39,60 +41,60 @@ export function UsersManagement() {
           </p>
         </div>
         <div>
-          <NewPerson />
+          <NewUser />
         </div>
       </section>
       <UsersTable
         columns={[
           {
-            accessorKey: "fullName",
-            header: "Nombres",
+            accessorKey: "userName",
+            header: "Nombre de Usuario",
           },
-          // {
-          //   accessorKey: "isEmployee",
-          //   header: "Personal Camal",
-          //   cell: ({ row }) => (
-          //     <Badge variant={"outline"}>
-          //       {row.original.isEmployee ? "Si" : "No"}
-          //     </Badge>
-          //   ),
-          // },
-          // {
-          //   accessorKey: "status",
-          //   header: "Estado",
-          //   cell: ({ row }) => (
-          //     <Badge>{row.original.status ? "Activo" : "Inactivo"}</Badge>
-          //   ),
-          // },
+          {
+            accessorKey: "email",
+            header: "Correo Electrónico",
+          },
+          {
+            accessorKey: "person.code",
+            header: "Código",
+          },
+          {
+            accessorKey: "person.identification",
+            header: "Identificación",
+          },
+          {
+            accessorKey: "person.fullName",
+            header: "Nombre Completo",
+            cell: ({ row }) => {
+              return (<span>{toCapitalize(row.original.person.fullName, true)}</span>
+              );
+            }
+          },
           {
             header: "Acciones",
             cell: ({ row }) => {
-              return (
-                <div>
-                  {/* <UpdatePerson person={row.original} /> */}
-                </div>
-              );
+              return <div>{/* <UpdatePerson person={row.original} /> */}</div>;
             },
           },
         ]}
-        data={query.data?.data ?? []}
-        // meta={{
-        //   ...query.data?.data.meta,
-        //   onChangePage: (page) => {
-        //     setSearchParams({ page });
-        //   },
-        //   onNextPage: () => {
-        //     setSearchParams({ page: searchParams.page + 1 });
-        //   },
-        //   disabledNextPage:
-        //     searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
-        //   onPreviousPage: () => {
-        //     setSearchParams({ page: searchParams.page - 1 });
-        //   },
-        //   disabledPreviousPage: searchParams.page <= 1,
-        //   setSearchParams,
-        // }}
-        // isLoading={query.isLoading}
+        data={query.data?.data.items ?? []}
+        meta={{
+          ...query.data?.data.meta,
+          onChangePage: (page) => {
+            setSearchParams({ page });
+          },
+          onNextPage: () => {
+            setSearchParams({ page: searchParams.page + 1 });
+          },
+          disabledNextPage:
+            searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
+          onPreviousPage: () => {
+            setSearchParams({ page: searchParams.page - 1 });
+          },
+          disabledPreviousPage: searchParams.page <= 1,
+          setSearchParams,
+        }}
+        isLoading={query.isLoading}
       />
     </div>
   );

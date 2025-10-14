@@ -136,9 +136,7 @@ export function NewPeopleFields({ isUpdate = false }: { isUpdate?: boolean }) {
           <FormItem>
             <FormLabel>Número de Documento *</FormLabel>
             <FormControl>
-              <Input {...field} 
-              className="border-gray-200"
-              />
+              <Input {...field} className="border-gray-200" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -231,6 +229,35 @@ export function NewPeopleFields({ isUpdate = false }: { isUpdate?: boolean }) {
           </FormItem>
         )}
       />
+
+      <FormField
+        control={form.control}
+        name="status"
+        rules={{
+          required: {
+            value: true,
+            message: "El campo de estado es requerido",
+          },
+        }}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Estado *</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccione un Estado" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="true">Activo</SelectItem>
+                <SelectItem value="false">Inactivo</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={form.control}
         name="address"
@@ -244,6 +271,7 @@ export function NewPeopleFields({ isUpdate = false }: { isUpdate?: boolean }) {
           </FormItem>
         )}
       />
+
       <div className="border-t border-gray-200 col-span-2">
         <div className="flex gap-x-2 mt-4">
           <FormField

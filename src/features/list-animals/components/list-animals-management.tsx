@@ -187,13 +187,24 @@ export function ListAnimalsManagement() {
   const totals = {
     registros: apiData.length,
     totalEnGuia: apiData.reduce(
-      (acc, item) => acc + (item.certificate?.quantity || 0),
-      0
-    ),
-    totalFaenamiento: apiData.reduce(
       (acc, item) => acc + (item.males || 0) + (item.females || 0),
       0
     ),
+    totalFaenamiento: apiData.reduce((acc, item) => {
+      const targetDate = fechaFaenamiento
+        ? new Date(fechaFaenamiento).toISOString().slice(0, 10)
+        : new Date().toISOString().slice(0, 10);
+
+      const itemSlaughter = item.slaughterDate
+        ? new Date(item.slaughterDate).toISOString().slice(0, 10)
+        : null;
+
+      if (itemSlaughter && itemSlaughter === targetDate) {
+        return acc + (item.males || 0) + (item.females || 0);
+      }
+
+      return acc;
+    }, 0),
   };
 
   // Componente para mostrar los datos en formato de tarjeta (móvil)
@@ -458,7 +469,7 @@ export function ListAnimalsManagement() {
             </div>
             <div className="flex flex-col gap-2 lg:items-end lg:justify-end">
               <Button
-                className="bg-emerald-600 hover:bg-emerald-600/90 text-white w-full"
+                className="w-full"
                 title="Generar reporte de los registros actuales"
               >
                 <FileUp className="h-4 w-4" />
@@ -550,7 +561,7 @@ export function ListAnimalsManagement() {
               <Table className="min-w-[1200px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-32 whitespace-normal leading-tight text-center sticky left-0 bg-background border-r">
+                    <TableHead className="w-32 whitespace-normal leading-tight text-center sticky left-0  border-r">
                       <span className="block text-xs font-semibold">
                         Fecha y hora
                       </span>
@@ -696,7 +707,7 @@ export function ListAnimalsManagement() {
                             <div className="border-l font-semibold text-pink-600 pl-2">
                               {item.males || 0}
                             </div>
-                            <div className="border-l font-semibold text-emerald-600 pl-2">
+                            <div className="border-l font-semibold text-primary pl-2">
                               {(item.males || 0) + (item.females || 0)}
                             </div>
                           </div>
@@ -714,10 +725,10 @@ export function ListAnimalsManagement() {
                         </TableCell>
                         <TableCell className="whitespace-normal text-center">
                           <div className="flex flex-col items-center gap-1">
-                            <Badge className="bg-emerald-600 text-xs">
+                            <Badge className="bg-primary text-xs">
                               {item.brand?.name || "N/A"}
                             </Badge>
-                            <div className="text-xs font-semibold text-emerald-600">
+                            <div className="text-xs font-semibold text-primary">
                               {item.statusCorrals?.corral?.name || "N/A"}
                             </div>
                             {item.codes && (

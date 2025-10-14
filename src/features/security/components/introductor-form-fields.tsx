@@ -109,7 +109,6 @@ export function IntroductorFormFields({
       setIntroducerId(introductor.data.items[0].id);
       setIsSuccess(true);
     } catch (error: any) {
-      console.log({ error });
       const { data } = await error.response.json();
       toast.error(data);
     }
@@ -141,7 +140,6 @@ export function IntroductorFormFields({
         species: brand.data.species.map((s) => s.name),
       };
       setCreatedBrands((prev) => [...prev, newBrand]);
-      console.log({ brand });
       toast.success("Marca creada exitosamente");
 
       form.reset({ description: "" });
@@ -401,7 +399,6 @@ export function PersonSearch({
   onSelectPerson,
 }: PersonSearchProps) {
   if (!activeField) return null;
-  console.log("a", data.length);
 
   return (
     <Command className="rounded-lg border shadow-md w-full mt-2">

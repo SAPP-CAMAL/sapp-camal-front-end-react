@@ -167,8 +167,6 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 
 			let response;
 
-			if (qrModalState.qrData.id) request.placeOrigin = qrModalState.selectedOrigin.description || 'N/A';
-
 			if (qrModalState.qrData.id) response = await updateCertificateService(qrModalState.qrData.id, request);
 			else response = await saveScannedCertificateService(request);
 
@@ -181,7 +179,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 			toast.success(`Código QR ${qrModalState.qrData.id ? 'actualizado' : 'guardado'} correctamente`);
 			setQrState('active');
 		} catch (error: any) {
-			const { data, message } = await error.response.json();
+			const { data, message } = await error?.response?.json?.();
 			toast.error(data ?? message ?? 'Ocurrió un error al guardar el código QR');
 			setQrState('active');
 		}

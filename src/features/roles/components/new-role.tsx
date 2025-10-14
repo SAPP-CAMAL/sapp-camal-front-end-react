@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 export type NewRoleForm = {
   name: string;
   description: string;
-  modules: ResponseModuleWithMenus;
+  modules?: ResponseModuleWithMenus;
 };
 
 const defaultValues: NewRoleForm = {

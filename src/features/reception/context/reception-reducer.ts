@@ -1,6 +1,7 @@
 import { Certificate } from '@/features/certificate/domain';
 import { Specie } from '@/features/specie/domain';
 import { ShipperBasicData } from '@/features/shipping/domain';
+import { AnimalTransportForm } from '../hooks/use-step-3-transport';
 import { AccordionState, AccordionStepKeys, AnimalAdmissionItem, initialState, ReceptionState } from './reception-provider';
 
 export type ReceptionAction =
@@ -10,7 +11,7 @@ export type ReceptionAction =
 	// Selected certificate
 	| { type: 'SET_SELECTED_CERTIFICATE'; payload: Certificate }
 	| { type: 'REMOVE_SELECTED_CERTIFICATE' }
-	// QR flag
+	// Check if the certificate was retrieved from QR
 	| { type: 'SET_IS_FROM_QR'; payload: boolean }
 	// Accordion control
 	| { type: 'SET_ACCORDION_STATE'; payload: { name: AccordionStepKeys; accordionState: Partial<AccordionState> } }
@@ -22,7 +23,8 @@ export type ReceptionAction =
 	// Selected specie
 	| { type: 'SET_SELECTED_SPECIE'; payload: Specie }
 	| { type: 'REMOVE_SELECTED_SPECIE' }
-
+	// Animal transport data
+	| { type: 'SET_ANIMAL_TRANSPORT_DATA'; payload: Partial<AnimalTransportForm> }
 	// Reset state
 	| { type: 'RESET_RECEPTION_STATE' };
 
@@ -52,7 +54,7 @@ export const uiReducer = (
 
 		// Animal admission list control
 		case 'ADD_ANIMAL_ADMISSION':
-			return { ...receptionState, animalAdmissionList: [...receptionState.animalAdmissionList, action.payload] };
+			return { ...receptionState, animalAdmissionList: [action.payload, ...receptionState.animalAdmissionList] };
 
 		case 'UPDATE_ANIMAL_ADMISSION':
 			return {
@@ -76,6 +78,11 @@ export const uiReducer = (
 		case 'REMOVE_SELECTED_SPECIE':
 			return { ...receptionState, selectedSpecie: undefined };
 
+		// Animal transport data
+		case 'SET_ANIMAL_TRANSPORT_DATA':
+			return { ...receptionState, animalTransportData: { ...receptionState.animalTransportData, ...action.payload } };
+
+		// Reset all state
 		case 'RESET_RECEPTION_STATE':
 			return initialState;
 

@@ -1,15 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, Plus, Building2Icon } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
+import Image from 'next/image'
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -35,11 +34,6 @@ export function RoleSwitcher() {
     queryFn: () => getUserRolesService(),
   });
 
-  console.log(query.data);
-
-  // if (!activeTeam) {
-  //   return null;
-  // }
 
   return (
     <SidebarMenu>
@@ -50,14 +44,20 @@ export function RoleSwitcher() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <Building2Icon className="size-4" />
+              <div className="bg-primary text-primary-foreground flex items-center justify-center rounded-lg overflow-hidden w-10 h-10">
+                <Image
+                  src="/images/sapp-b-vertical.png"
+                  alt="Logo Camal"
+                  className="h-full w-auto object-contain"
+                  width={100}
+                  height={100}
+                />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-medium">CAMAL MUNICIPAL</span>
                 <span className="truncate text-xs">RIOBAMBA</span>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <ChevronsUpDown className="ml-auto group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -110,7 +110,11 @@ function RoleItem({ role }: { role: any }) {
       }}
       className="gap-2 p-2"
     >
-      {isPending ? <span className="font-mono text-sm">Cambiando de rol...</span> : role.name}
+      {isPending ? (
+        <span className="font-mono text-sm">Cambiando de rol...</span>
+      ) : (
+        role.name
+      )}
     </DropdownMenuItem>
   );
 }

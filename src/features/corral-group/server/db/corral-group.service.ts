@@ -1,5 +1,5 @@
 import { http } from '@/lib/ky';
-import type { CommonHttpResponse } from '@/features/people/domain';
+import type { CommonHttpResponse, CreateOrUpdateHttpResponse } from '@/features/people/domain';
 import { CORRAL_GROUP_BY_SPECIE_LIST_TAG, CORRAL_GROUP_LIST_TAG } from '@/features/corral-group/constants';
 import type { CorralGroupBySpecieResponse, GetAllCorralGroup } from '@/features/corral-group/domain';
 import { CorralGroup } from '@/features/corrals/domain';
@@ -27,4 +27,12 @@ export const getCorralGroupBySpecieAndType = (specieId: string, typeId: string) 
 			next: { tags: [CORRAL_GROUP_BY_SPECIE_LIST_TAG] },
 		})
 		.json<CommonHttpResponse<CorralGroup & { idFinishType: number }>>();
+};
+
+export const getCorralGroupById = (id: string) => {
+	return http
+		.get('v1/1.0.0/corral-group', {
+			searchParams: { id },
+		})
+		.json<CreateOrUpdateHttpResponse<CorralGroup & { idFinishType?: number }>>();
 };

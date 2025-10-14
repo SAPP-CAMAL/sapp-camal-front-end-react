@@ -6,6 +6,7 @@ import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { getPeopleByFilterService } from "@/features/people/server/db/people.service";
 import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function SecurityManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
@@ -60,12 +61,14 @@ export function SecurityManagement() {
             cell: ({ row }) => (
               <div className="flex gap-x-2 items-center">
                 <Avatar>
-                  <AvatarImage src="https://github.com/shadcnxxx.png" />
-                  <AvatarFallback>CN</AvatarFallback>
+                  {/* <AvatarImage src="https://github.com/shadcnxxx.png" /> */}
+                  {/* <AvatarFallback>CN</AvatarFallback> */}
                 </Avatar>
                 <div>
-                  <p className="font-semibold">María González</p>
-                  <p className="text-gray-500">maria.gonzalez@empresa.com</p>
+                  <p className="font-semibold">
+                    {toCapitalize(row.original.fullName, true)}
+                  </p>
+                  {/* <p className="text-gray-500">{row.original?.email}</p> */}
                 </div>
               </div>
             ),
@@ -88,12 +91,12 @@ export function SecurityManagement() {
             header: "Estado",
             cell: ({ row }) => (
               <Badge
-                className={
-                  row.original.status
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }
-                variant={"outline"}
+                // className={
+                //   row.original.status
+                //     ? "bg-green-100 text-green-800"
+                //     : "bg-red-100 text-red-800"
+                // }
+                variant={row.original.status ? "default" : "outline"}
               >
                 {row.original.status ? "Activo" : "Inactivo"}
               </Badge>
