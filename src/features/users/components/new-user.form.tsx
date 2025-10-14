@@ -26,6 +26,7 @@ export function NewUser() {
     email: "",
     userName: "",
     password: "",
+    passwordConfirm: "",
     roles: [],
   };
 
@@ -50,7 +51,7 @@ export function NewUser() {
       toast.success("Usuario creado exitosamente");
     } catch (error: any) {
       const resp = await error.response.json();
-      toast.error(`Error: ${JSON.stringify(resp.errors)}`);
+      toast.error(`Error: ${JSON.stringify(resp?.errors ?? resp.message)}`);
     }
   };
 

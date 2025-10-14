@@ -4,11 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { UsersTable } from "./users-table";
 import { NewUser } from "./new-user.form";
 import { parseAsInteger, useQueryStates, parseAsString } from "nuqs";
-import { Badge } from "@/components/ui/badge";
-import { UpdatePerson } from "./update-person.form";
-import { getUserPersonByFilterService } from "@/features/security/server/db/security.queries";
 import { getUsersByFilter } from "../server/db/queries.users";
-import { toCapitalize } from '../../../lib/toCapitalize';
+import { toCapitalize } from "../../../lib/toCapitalize";
+import { UpdateUserForm } from "./update-user.form";
 
 export function UsersManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
@@ -66,14 +64,21 @@ export function UsersManagement() {
             accessorKey: "person.fullName",
             header: "Nombre Completo",
             cell: ({ row }) => {
-              return (<span>{toCapitalize(row.original.person.fullName ?? '', true)}</span>
+              return (
+                <span>
+                  {toCapitalize(row.original.person.fullName ?? "", true)}
+                </span>
               );
-            }
+            },
           },
           {
             header: "Acciones",
             cell: ({ row }) => {
-              return <div>{/* <UpdatePerson person={row.original} /> */}</div>;
+              return (
+                <div>
+                  <UpdateUserForm userId={row.original.id} />
+                </div>
+              );
             },
           },
         ]}

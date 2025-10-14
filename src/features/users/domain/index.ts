@@ -29,4 +29,6 @@ export interface CreateUserInput {
     roles: number[];
 }
 
+export type UpdateUserInput = Pick<CreateUserInput, 'email' | 'userName'> & { roles: { id: number, status: boolean }[] };
+
 export type ResponseGetUserByFilter = CommonHttpResponsePagination<UserFilter>;

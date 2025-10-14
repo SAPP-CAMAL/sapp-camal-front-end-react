@@ -1,4 +1,4 @@
-import { CommonHttpResponse, CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination, CommonHttpResponseSingle, Person } from "@/features/people/domain";
 
 export type LoginBody = {
     identifier: string;
@@ -172,4 +172,24 @@ export interface ResetPasswordRequest {
     token: string;
     password: string;
     passwordConfirmation: string;
+}
+
+
+export interface GetUserByIdService {
+  id: number;
+  personId: number;
+  userName: string;
+  password: string;
+  email: string;
+  status: boolean;
+  person: Person;
+  userRoles: any[];
+  introducer: IntroducerGetUser;
+}
+
+interface IntroducerGetUser {
+  id: number;
+  userId: number;
+  status: boolean;
+  brands: any[];
 }

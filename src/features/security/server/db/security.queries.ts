@@ -1,5 +1,5 @@
 import { http } from "@/lib/ky";
-import { BodyIntroducersSearch, CreateBrandsRequest, FilterUserPerson, ResetPasswordRequest, ResponseCreateIntroducerBrandService, ResponseIntroducersSearchService, ResponseSpecieSearchService, ResponseUserPersonSearchService, UpdateBrandRequest, UpdateUserRequest, UserResponse, UserSetRoleResponse } from "../../domain";
+import { BodyIntroducersSearch, CreateBrandsRequest, FilterUserPerson, GetUserByIdService, ResetPasswordRequest, ResponseCreateIntroducerBrandService, ResponseIntroducersSearchService, ResponseSpecieSearchService, ResponseUserPersonSearchService, UpdateBrandRequest, UpdateUserRequest, UserResponse, UserSetRoleResponse } from "../../domain";
 import { Role } from "@/features/roles/domain/roles.domain";
 import { CommonHttpResponse, CommonHttpResponseSingle } from "@/features/people/domain";
 
@@ -58,4 +58,12 @@ export function resetPasswordService(body: ResetPasswordRequest) {
     return http.post("v1/1.0.0/users/reset-password", {
         json: body
     })
+}
+
+export function getUserByIdService(userId: number): Promise<CommonHttpResponseSingle<GetUserByIdService>> {
+    return http.get("v1/1.0.0/users/by-id", {
+        searchParams: {
+            id: userId
+        }
+    }).json()
 }

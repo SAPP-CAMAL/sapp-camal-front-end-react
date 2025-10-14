@@ -436,11 +436,13 @@ export function PersonSearch({
 interface SelectedPersonCardProps {
   person: UserPerson;
   onRemove: () => void;
+  showEmail?: boolean;
 }
 
 export function SelectedPersonCard({
   person,
   onRemove,
+  showEmail = true,
 }: SelectedPersonCardProps) {
   return (
     <div className="w-full mt-4 space-y-4">
@@ -468,15 +470,21 @@ export function SelectedPersonCard({
           </button>
         </div>
       </div>
-      <Separator />
-      <div>
-        <label className="font-semibold text-sm">Correo Electrónico *</label>
-        <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
-          <p className="text-sm text-muted-foreground truncate">
-            {person.email}
-          </p>
-        </div>
-      </div>
+      {showEmail && (
+        <>
+          <Separator />
+          <div>
+            <label className="font-semibold text-sm">
+              Correo Electrónico *
+            </label>
+            <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
+              <p className="text-sm text-muted-foreground truncate">
+                {person.email}
+              </p>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

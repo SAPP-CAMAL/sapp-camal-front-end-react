@@ -64,7 +64,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
   return (
     <>
       <CardContent className="space-y-4 col-span-2 mx-0 px-0 pb-8 border-b-2">
-        {!selectedPerson ? (
+        {isUpdate ? null : !selectedPerson ? (
           <>
             <label className="font-semibold">Buscar Persona</label>
 
@@ -152,6 +152,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
             <SelectedPersonCard
               person={selectedPerson}
               onRemove={handleRemovePerson}
+              showEmail={false}
             />
             {/* <Button
               type="button"
@@ -209,26 +210,54 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
           </FormItem>
         )}
       />
-
-      <FormField
-        control={form.control}
-        name="password"
-        rules={{
-          required: {
-            value: true,
-            message: "El campo de contraseña es requerido",
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Contraseña *</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {isUpdate ? null : (
+        <>
+          <FormField
+            control={form.control}
+            name="password"
+            rules={{
+              required: {
+                value: true,
+                message: "El campo de contraseña es requerido",
+              },
+            }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contraseña *</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="passwordConfirm"
+            rules={{
+              required: {
+                value: true,
+                message: "La confirmación de contraseña es requerida",
+              },
+              validate: {
+                matches: (value) =>
+                  value === form.watch("password")
+                    ? true
+                    : "Las contraseñas no coinciden",
+              },
+            }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirmar Contraseña *</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
       <FormField
         control={form.control}
         name="roles"
@@ -239,7 +268,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
           },
         }}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="col-span-2">
             <FormLabel>Roles *</FormLabel>
             <FormControl>
               <MultiSelect
@@ -250,7 +279,8 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                     label: role.name,
                   })) ?? []
                 }
-                value={field.value}
+                // value={field.value}
+                defaultValue={field.value}
                 onValueChange={field.onChange}
                 placeholder="Seleccionar Roles..."
               />
