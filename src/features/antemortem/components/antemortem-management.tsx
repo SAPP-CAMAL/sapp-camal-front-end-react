@@ -556,10 +556,12 @@ export function AntemortemManagement() {
                       admissionDate={format(fecha, "yyyy-MM-dd")}
                       marcasInfo={r.marcasInfo}
                     >
-                      <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Ver observaciones
-                      </Button>
+                        <div className="flex justify-center">
+                        <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700 justify-center items-center">
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver observaciones
+                        </Button>
+                        </div>
                     </ObservacionesModal>
                   ) : (
                     <span className="text-muted-foreground">Sin observaciones</span>
@@ -591,7 +593,7 @@ export function AntemortemManagement() {
                             size="sm"
                             onClick={() => handleSaveArgollas(r)}
                             disabled={savingArgollasCorral === r.corral}
-                            className="h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-700 text-white"
+                            className="h-8 w-8 p-0 bg-primary hover:bg-primary/80 text-white"
                             title="Guardar argollas"
                           >
                             {savingArgollasCorral === r.corral ? (
@@ -681,7 +683,7 @@ export function AntemortemManagement() {
               }
             }}
           >
-            <div className="px-2 py-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 drag-handle cursor-move">
+            <div className="px-2 py-1.5 bg-primary drag-handle cursor-move">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-0.5">
                   <GripVertical className="h-2.5 w-2.5 text-white/70" />

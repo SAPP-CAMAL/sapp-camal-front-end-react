@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import React from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import { Footer } from "@/components/footer";
 import {
   SidebarProvider,
   SidebarInset,
@@ -27,7 +28,7 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider>
       <AppSidebar menus={menus.data} user={JSON.parse(user.value)} />
-      <SidebarInset>
+      <SidebarInset className="flex flex-col">
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
@@ -59,6 +60,7 @@ export default async function DashboardLayout({
           </div>
           <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" /> */}
         </div>
+        <Footer />
       </SidebarInset>
     </SidebarProvider>
   );

@@ -59,7 +59,7 @@ export function LoginForm({
       {/* Left side - Image (70%) */}
       <div className="hidden lg:flex lg:w-[70%] relative bg-white items-center justify-center">
         <Image
-          src="/images/sapp-loggin.png"
+          src="/images/sapp-fondo-ingreso.svg"
           alt="SAPP Login"
           width={1200}
           height={1200}
