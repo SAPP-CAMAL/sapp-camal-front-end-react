@@ -371,8 +371,36 @@ button[class*="variant-ghost"]:hover:not([data-sidebar] button):not([role="tab"]
 [class*="card"]:hover:not([data-sidebar]),
 .rounded-lg:hover:not([data-sidebar]):not(table),
 .rounded-xl:hover:not([data-sidebar]) {
+  /* Elevate only with shadow; avoid shifting the entire content */
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+  border-color: color-mix(in oklch, var(--primary) 40%, transparent);
+}
+[data-slot="card"] {
+  /* Container cards: keep stable, no hover elevation */
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+[data-slot="card"]:hover {
+  /* Neutralize hover so big layout cards don't animate */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  border-color: var(--border);
+}
+
+[data-slot="card"]::after {
+  /* Remove glow specifically for container cards */
+  content: none !important;
+}
+
+/* Subtle border glow on hover without moving layout */
+[class*="card"]:hover:not([data-sidebar])::after,
+.rounded-lg:hover:not([data-sidebar]):not(table)::after,
+.rounded-xl:hover:not([data-sidebar])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 35%, transparent);
 }
 
 /* ========================================
@@ -554,6 +582,25 @@ span[class*="rounded-full"] {
   animation: scaleIn 0.2s ease-out;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
   background-color: var(--card);
+}
+
+/* Ensure Radix dialog content/close are positioned correctly globally */
+[data-slot="dialog-content"] {
+  position: fixed; /* anchor element */
+  overflow: visible; /* allow close button to be visible */
+}
+
+[data-slot="dialog-close"] {
+  position: absolute !important;
+  top: 0.75rem !important; /* 12px */
+  right: 0.75rem !important;
+  z-index: 999 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem; /* 28px */
+  height: 1.75rem; /* 28px */
+  border-radius: 0.25rem;
 }
 
 /* ========================================
