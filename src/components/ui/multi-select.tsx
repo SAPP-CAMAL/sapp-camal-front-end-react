@@ -1071,12 +1071,12 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                     >
                       <div
                         className={cn(
-                          "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                          "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border-2",
                           selectedValues.length ===
                             getAllOptions().filter((opt) => !opt.disabled)
                               .length
-                            ? "bg-primary text-primary-foreground"
-                            : "opacity-50 [&_svg]:invisible"
+                            ? "bg-primary border-primary text-white"
+                            : "bg-white border-border opacity-50 [&_svg]:invisible"
                         )}
                         aria-hidden="true"
                       >
@@ -1117,10 +1117,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           >
                             <div
                               className={cn(
-                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border-2",
                                 isSelected
-                                  ? "bg-primary text-primary-foreground"
-                                  : "opacity-50 [&_svg]:invisible"
+                                  ? "bg-primary border-primary text-white"
+                                  : "bg-white border-border opacity-50 [&_svg]:invisible"
                               )}
                               aria-hidden="true"
                             >
@@ -1160,10 +1160,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         >
                           <div
                             className={cn(
-                              "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                              "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border-2",
                               isSelected
-                                ? "bg-primary text-primary-foreground"
-                                : "opacity-50 [&_svg]:invisible"
+                                ? "bg-primary border-primary text-white"
+                                : "bg-white border-border opacity-50 [&_svg]:invisible"
                             )}
                             aria-hidden="true"
                           >

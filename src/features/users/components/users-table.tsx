@@ -2,13 +2,40 @@
 
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 
+<<<<<<< HEAD
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, CreditCardIcon, FilterIcon, MailIcon, UserIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CreditCardIcon, FilterIcon, MailIcon, Search, UserIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useSearchParams } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
 import { MetaPagination } from '@/features/people/domain';
+import { Card, CardContent } from '@/components/ui/card';
+=======
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CreditCardIcon,
+  FilterIcon,
+  MailIcon,
+  Search,
+  UserIcon,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useSearchParams } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
+import { MetaPagination } from "@/features/people/domain";
+import { Card, CardContent } from "@/components/ui/card";
+>>>>>>> 994b9d6844b7d0f416e69521f4b0808867d92ff1
 
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
@@ -172,10 +199,26 @@ export function UsersTable<TData, TValue>({ columns, data, meta, isLoading }: Da
 						))
 					) : (
 						<TableRow>
-							<TableCell colSpan={columns.length} className='h-24 text-center'>
-								No se encontró resultados.
-							</TableCell>
-						</TableRow>
+              <TableCell colSpan={columns.length} className="h-80 text-center">
+                <Card className="max-w-full border-0 shadow-none bg-transparent">
+                  <CardContent className="py-20">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-full bg-muted p-3">
+                        <Search className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-medium text-muted-foreground mb-1">
+                          No se encontraron registros
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Intenta ajustar los filtros
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TableCell>
+            </TableRow>
 					)}
 				</TableBody>
 			</Table>

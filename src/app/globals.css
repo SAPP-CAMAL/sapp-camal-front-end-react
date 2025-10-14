@@ -259,6 +259,112 @@ button[class*="sidebar-trigger"] {
 }
 
 /* ========================================
+   MEJORAS UX SIDEBAR
+   ======================================== */
+/* Mejorar hover en botones del menú principal */
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"] {
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"]:hover {
+  background-color: rgba(14, 163, 141, 0.1) !important;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"]:active {
+  transform: scale(0.98);
+}
+
+/* Mejorar hover en sub-items del menú */
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-sub-button"] {
+  position: relative;
+  transition: all 0.15s ease;
+  border-radius: 6px;
+  margin: 2px 0;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-sub-button"]:hover {
+  background-color: rgba(14, 163, 141, 0.08) !important;
+  padding-left: 1.25rem;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-sub-button"]:active {
+  background-color: rgba(14, 163, 141, 0.15) !important;
+}
+
+/* Indicador visual para item activo */
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-sub-button"][data-active="true"],
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-sub-button"].active {
+  background-color: rgba(14, 163, 141, 0.15) !important;
+  border-left: 3px solid var(--primary);
+  font-weight: 600;
+}
+
+/* Animación suave del chevron en collapsibles */
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"] svg[class*="chevron"],
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"] svg.lucide-chevron-right {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mejorar separación visual entre grupos */
+[data-sidebar="sidebar"] [data-slot="sidebar-group"] {
+  margin-bottom: 0.5rem;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-group-label"] {
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+/* Animación de apertura del submenu */
+[data-sidebar="sidebar"] [data-slot="collapsible-content"] {
+  overflow: hidden;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mejorar espaciado de iconos */
+[data-sidebar="sidebar"] svg.lucide {
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"]:hover svg.lucide {
+  color: var(--primary);
+}
+
+/* Efecto de feedback al hacer clic */
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"]::before,
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-sub-button"]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  background: var(--primary);
+  border-radius: 0 4px 4px 0;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"]:hover::before {
+  width: 4px;
+  height: 70%;
+  opacity: 0.8;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-sub-button"]:hover::before {
+  width: 3px;
+  height: 60%;
+  opacity: 0.6;
+}
+
+/* ========================================
    BOTONES MEJORADOS
    ======================================== */
 /* Reset para todos los botones */
@@ -270,7 +376,7 @@ button {
 
 /* Botones que no son del sidebar */
 button:not([data-sidebar] button):not([role="tab"]) {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   border: none;
 }
@@ -301,8 +407,8 @@ button[type="submit"]:not([class*="variant"]):active:not([data-sidebar] button):
   box-shadow: 0 2px 4px rgba(14, 163, 141, 0.2);
 }
 
-/* Efecto ripple en botones (excepto sidebar y tabs) */
-button:not([data-sidebar] button):not([role="tab"])::after {
+/* Efecto ripple en botones (excepto sidebar, tabs y tooltips) */
+button:not([data-sidebar] button):not([role="tab"]):not([data-slot="tooltip-trigger"])::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -316,7 +422,7 @@ button:not([data-sidebar] button):not([role="tab"])::after {
   pointer-events: none;
 }
 
-button:active:not([data-sidebar] button):not([role="tab"])::after {
+button:active:not([data-sidebar] button):not([role="tab"]):not([data-slot="tooltip-trigger"])::after {
   width: 300px;
   height: 300px;
 }
@@ -360,43 +466,95 @@ button[class*="variant-ghost"]:hover:not([data-sidebar] button):not([role="tab"]
 }
 
 /* ========================================
+   CHECKBOXES - FONDO BLANCO
+   ======================================== */
+/* Checkbox sin marcar - fondo blanco forzado */
+input[type="checkbox"],
+[data-slot="checkbox"],
+button[role="checkbox"],
+div[class*="border-primary"][class*="rounded-sm"]:not([class*="bg-primary"]) {
+  background-color: white !important;
+  border: 2px solid var(--border) !important;
+  transition: all 0.2s ease;
+}
+
+/* Hover en checkbox sin marcar */
+input[type="checkbox"]:hover:not(:checked),
+[data-slot="checkbox"]:hover:not([data-state="checked"]),
+button[role="checkbox"]:hover:not([data-state="checked"]) {
+  border-color: var(--primary) !important;
+  background-color: white !important;
+}
+
+/* Checkbox marcado - fondo verde */
+input[type="checkbox"]:checked,
+[data-slot="checkbox"][data-state="checked"],
+button[role="checkbox"][data-state="checked"] {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Asegurar que el indicador (checkmark) sea visible */
+[data-slot="checkbox-indicator"] {
+  color: white !important;
+}
+
+/* Fix específico para multi-select y command items */
+[role="option"] div[class*="border-primary"],
+[role="menuitem"] div[class*="border-primary"],
+.command-item div[class*="border-primary"] {
+  background-color: white !important;
+}
+
+/* Cuando está seleccionado en multi-select */
+[role="option"] div.bg-primary,
+[role="menuitem"] div.bg-primary,
+.command-item div.bg-primary {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Asegurar que los iconos de check sean blancos cuando el fondo es primario */
+div.bg-primary svg,
+div.bg-primary .lucide {
+  color: white !important;
+}
+
+/* ========================================
    CARDS MEJORADOS
    ======================================== */
-[class*="card"]:not([data-sidebar]),
-.rounded-lg:not([data-sidebar]):not(table),
-.rounded-xl:not([data-sidebar]) {
-  transition: all 0.3s ease;
-  background-color: var(--card);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+/* Solo aplicar animación a cards de menor jerarquía (cards dentro de otros cards) */
+.card:not(:has(.card)),
+[class*="rounded"]:not([data-sidebar]):not(table):not([data-slot]):not(:has(.card)):not(:has([class*="rounded"])) {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-[class*="card"]:hover:not([data-sidebar]),
-.rounded-lg:hover:not([data-sidebar]):not(table),
-.rounded-xl:hover:not([data-sidebar]) {
-  /* Elevate only with shadow; avoid shifting the entire content */
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.08);
-  border-color: color-mix(in oklch, var(--primary) 40%, transparent);
-}
-[data-slot="card"] {
-  /* Container cards: keep stable, no hover elevation */
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+/* Hover solo en cards de nivel más bajo */
+.card:not(:has(.card)):hover,
+[class*="rounded"]:not([data-sidebar]):not(table):not([data-slot]):not(:has(.card)):not(:has([class*="rounded"])):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-[data-slot="card"]:hover {
-  /* Neutralize hover so big layout cards don't animate */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
-  border-color: var(--border);
+/* Cards contenedores (mayor jerarquía) - sin animaciones */
+.card:has(.card),
+[data-slot="card"],
+[class*="bg-card"],
+[class*="border-"] {
+  transition: none !important;
+  transform: none !important;
 }
 
-[data-slot="card"]::after {
-  /* Remove glow specifically for container cards */
-  content: none !important;
+.card:has(.card):hover,
+[data-slot="card"]:hover,
+[class*="bg-card"]:hover,
+[class*="border-"]:hover {
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-/* Subtle border glow on hover without moving layout */
-[class*="card"]:hover:not([data-sidebar])::after,
-.rounded-lg:hover:not([data-sidebar]):not(table)::after,
-.rounded-xl:hover:not([data-sidebar])::after {
+/* Subtle border glow on hover - solo en cards sin hijos */
+.card:not(:has(.card)):hover::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -411,7 +569,7 @@ button[class*="variant-ghost"]:hover:not([data-sidebar] button):not([role="tab"]
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,
 select {
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   border: 1px solid var(--border);
   background-color: var(--card);
 }
@@ -420,7 +578,7 @@ input:focus,
 textarea:focus,
 select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(14, 163, 141, 0.1);
+  box-shadow: 0 0 0 3px rgba(14, 163, 141, 0.08);
   outline: none;
   background-color: var(--card);
 }
@@ -439,7 +597,6 @@ table {
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  animation: scaleIn 0.3s ease-out;
 }
 
 /* Header de tabla */
@@ -459,30 +616,11 @@ thead tr th {
   position: relative;
 }
 
-thead tr th::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  animation: shimmer 2s infinite;
-}
-
 /* Filas del body */
 tbody tr {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   border-bottom: 1px solid oklch(0.95 0 0);
-  animation: fadeIn 0.3s ease-in;
-  animation-fill-mode: both;
 }
-
-tbody tr:nth-child(1) { animation-delay: 0.05s; }
-tbody tr:nth-child(2) { animation-delay: 0.1s; }
-tbody tr:nth-child(3) { animation-delay: 0.15s; }
-tbody tr:nth-child(4) { animation-delay: 0.2s; }
-tbody tr:nth-child(5) { animation-delay: 0.25s; }
 
 tbody tr:nth-child(odd) {
   background-color: white;
@@ -494,9 +632,8 @@ tbody tr:nth-child(even) {
 
 /* Hover effect elegante */
 tbody tr:hover {
-  background: linear-gradient(90deg, rgba(14, 163, 141, 0.08) 0%, rgba(14, 163, 141, 0.02) 100%) !important;
-  transform: scale(1.002);
-  box-shadow: 0 4px 12px rgba(14, 163, 141, 0.1);
+  background: linear-gradient(90deg, rgba(14, 163, 141, 0.06) 0%, rgba(14, 163, 141, 0.02) 100%) !important;
+  box-shadow: 0 2px 8px rgba(14, 163, 141, 0.08);
   border-left: 3px solid var(--primary);
 }
 
@@ -566,14 +703,14 @@ tbody tr:hover td:has(button) button {
 [class*="badge"],
 .badge,
 span[class*="rounded-full"] {
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 [class*="badge"]:hover,
 .badge:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: scale(1.03);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
 /* ========================================
@@ -581,8 +718,8 @@ span[class*="rounded-full"] {
    ======================================== */
 [role="dialog"],
 [data-radix-dialog-content] {
-  animation: scaleIn 0.2s ease-out;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.15s ease-out;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
   background-color: var(--card);
 }
 
@@ -653,6 +790,25 @@ span[class*="rounded-full"] {
   background: var(--primary-hover);
 }
 
+/* Scrollbar específico para sidebar */
+[data-sidebar="sidebar"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+[data-sidebar="sidebar"]::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+[data-sidebar="sidebar"]::-webkit-scrollbar-thumb {
+  background: rgba(14, 163, 141, 0.5);
+  border-radius: 10px;
+}
+
+[data-sidebar="sidebar"]::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 163, 141, 0.7);
+}
+
 /* ========================================
    RESPONSIVE MEJORADO
    ======================================== */
@@ -714,7 +870,100 @@ span[class*="rounded-full"] {
   body:has([data-login-page]) {
     animation: none;
   }
+
+  /* ========================================
+     HEADINGS MEJORADOS - H1, H2, H3
+     ======================================== */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+  }
+
+  h1 {
+    font-size: 2.5rem; /* 40px */
+    margin-bottom: 1.5rem;
+    margin-top: 0;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--foreground) 0%, var(--primary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.03em;
+  }
+
+  h2 {
+    font-size: 2rem; /* 32px */
+    margin-bottom: 1.25rem;
+    margin-top: 2rem;
+    font-weight: 700;
+    color: var(--foreground);
+    position: relative;
+    padding-bottom: 0.5rem;
+  }
+
+  h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary) 0%, transparent 100%);
+    border-radius: 2px;
+  }
+
+  h3 {
+    font-size: 1.5rem; /* 24px */
+    margin-bottom: 1rem;
+    margin-top: 1.5rem;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+
+  h4 {
+    font-size: 1.25rem; /* 20px */
+    margin-bottom: 0.875rem;
+    margin-top: 1.25rem;
+    font-weight: 600;
+  }
+
+  h5 {
+    font-size: 1.125rem; /* 18px */
+    margin-bottom: 0.75rem;
+    margin-top: 1rem;
+    font-weight: 600;
+  }
+
+  h6 {
+    font-size: 1rem; /* 16px */
+    margin-bottom: 0.625rem;
+    margin-top: 0.875rem;
+    font-weight: 600;
+  }
+
+  /* Headings dentro de cards */
+  .card h1, .card h2, .card h3 {
+    margin-top: 0;
+  }
+
+  /* Responsive headings */
+  @media (max-width: 768px) {
+    h1 {
+      font-size: 2rem; /* 32px */
+    }
+
+    h2 {
+      font-size: 1.75rem; /* 28px */
+    }
+
+    h3 {
+      font-size: 1.375rem; /* 22px */
+    }
+  }
 }
+
 
 /* ========================================
    FIX CRÍTICO PARA SIDEBAR
@@ -918,4 +1167,98 @@ input[type="text"] + button {
 /* Ensure buttons don't wrap */
 .relative.flex.items-center button {
   flex-shrink: 0;
+}
+
+/* ========================================
+   MEJORAS ADICIONALES SIDEBAR
+   ======================================== */
+/* Footer del usuario en sidebar */
+[data-sidebar="sidebar"] [data-slot="sidebar-footer"] {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.75rem;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-footer"] button {
+  transition: all 0.2s ease;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-footer"] button:hover {
+  background-color: rgba(14, 163, 141, 0.15) !important;
+}
+
+/* Header del sidebar */
+[data-sidebar="sidebar"] [data-slot="sidebar-header"] {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Transición suave al colapsar/expandir sidebar */
+[data-sidebar="sidebar"] {
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Mejorar visibilidad de tooltips cuando el sidebar está colapsado */
+[data-sidebar="sidebar"][data-state="collapsed"] [data-slot="sidebar-menu-button"] {
+  justify-content: center;
+}
+
+/* Estilos para el rail del sidebar */
+[data-sidebar="sidebar"] [data-slot="sidebar-rail"] {
+  transition: opacity 0.2s ease;
+}
+
+[data-sidebar="sidebar"] [data-slot="sidebar-rail"]:hover {
+  opacity: 0.8;
+}
+
+/* Mejorar focus visible en elementos del sidebar */
+[data-sidebar="sidebar"] button:focus-visible,
+[data-sidebar="sidebar"] a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Animación de entrada para el contenido del sidebar */
+[data-sidebar="sidebar"] [data-slot="sidebar-content"] {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Separador visual entre secciones del menú */
+[data-sidebar="sidebar"] [data-slot="sidebar-group"] + [data-slot="sidebar-group"] {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================
+   TOOLTIPS - Ocultar elementos visuales no deseados
+   ======================================== */
+/* Ocultar solo los pseudo-elementos de los triggers, NO del contenido */
+button[data-slot="tooltip-trigger"]::before,
+button[data-slot="tooltip-trigger"]::after,
+[data-slot="tooltip-trigger"]::before,
+[data-slot="tooltip-trigger"]::after,
+[data-slot="tooltip-trigger"] *::before,
+[data-slot="tooltip-trigger"] *::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Ocultar solo los spans vacíos de Radix (flechas), no el texto */
+[data-radix-popper-content-wrapper] > div > span:empty,
+span[data-radix-popper-arrow-wrapper],
+span[class*="Arrow"]:empty {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Asegurar que no hay efectos ripple en tooltips */
+button[data-slot="tooltip-trigger"],
+[data-slot="tooltip-trigger"] {
+  position: relative;
 }

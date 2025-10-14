@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FilterIcon,
+  Search,
   SearchIcon,
 } from "lucide-react";
 import {
@@ -33,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import { MetaPagination } from "../people/domain";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -153,7 +155,7 @@ export function TableRoles<TData, TValue>({
                 colSpan={columns.length}
                 className="h-96 text-center animate-pulse font-semibold"
               >
-                Loading...
+                Cargando...
               </TableCell>
             </TableRow>
           ) : table.getRowModel().rows?.length ? (
@@ -171,8 +173,24 @@ export function TableRoles<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+              <TableCell colSpan={columns.length} className="h-96 text-center">
+                <Card className="max-w-full border-0 shadow-none bg-transparent">
+                  <CardContent className="py-20">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-full bg-muted p-3">
+                        <Search className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-medium text-muted-foreground mb-1">
+                          No se encontraron registros
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Intenta ajustar los filtros.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </TableCell>
             </TableRow>
           )}
