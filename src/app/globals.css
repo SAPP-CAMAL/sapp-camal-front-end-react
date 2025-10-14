@@ -33,6 +33,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-inactive: var(--primary-inactive);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -83,6 +84,7 @@
   --green-foreground: oklch(0.25 0.08 130);
   --blue: oklch(0.8 0.08 250);
   --blue-foreground: oklch(0.3 0.08 250);
+  --primary-inactive: #85c6c5
 }
 
 /* ========================================
@@ -660,7 +662,7 @@ span[class*="rounded-full"] {
     padding: 0.75rem 0.875rem;
     font-size: 0.875rem;
   }
-  
+
   button:not([data-sidebar] button) {
     padding: 0.625rem 1rem;
   }
@@ -707,7 +709,7 @@ span[class*="rounded-full"] {
     margin: 0;
     padding: 0;
   }
-  
+
   /* Evitar animación fadeIn en el login */
   body:has([data-login-page]) {
     animation: none;
@@ -900,7 +902,7 @@ html:has([data-login-page]) {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
+  background-image:
     radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
   pointer-events: none;
