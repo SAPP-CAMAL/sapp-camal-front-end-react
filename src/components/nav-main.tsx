@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import {
   Collapsible,
@@ -22,16 +23,23 @@ import DynamicLucideIcon from "@/lib/lucide-icon-dynamic";
 import { AdministrationMenu } from "@/features/modules/domain/module.domain";
 
 export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
+  const pathname = usePathname();
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Módulos</SidebarGroupLabel>
       <SidebarMenu>
         {menus.map((menu) => {
+          // Verificar si algún hijo está activo
+          const hasActiveChild = menu.children?.some(
+            (child) => child.url && pathname === child.url
+          );
+
           return (
             <Collapsible
               key={menu.id}
               asChild
-              // defaultOpen={menu.isActive}
+              defaultOpen={hasActiveChild}
               className="group/collapsible"
             >
               <SidebarMenuItem>
@@ -48,23 +56,31 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {menu.children?.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.id}>
-                        <SidebarMenuSubButton asChild>
-                          <Link href={subItem.url ?? "#"}>
-                            {/* {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />} */}
-                            <DynamicLucideIcon
-                              name={(subItem?.icon as any) ?? "badge-info"}
-                              className="mr h-4 w-4"
-                            />
+                    {menu.children?.map((subItem) => {
+                      const isActive = !!(subItem.url && pathname === subItem.url);
+                      
+                      return (
+                        <SidebarMenuSubItem key={subItem.id}>
+                          <SidebarMenuSubButton 
+                            asChild 
+                            isActive={isActive}
+                            data-active={isActive}
+                          >
+                            <Link href={subItem.url ?? "#"}>
+                              {/* {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />} */}
+                              <DynamicLucideIcon
+                                name={(subItem?.icon as any) ?? "badge-info"}
+                                className="mr h-4 w-4"
+                              />
 
-                            <span className="font-semibold text-xs">
-                              {subItem.menuName}
-                            </span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
+                              <span className="font-semibold text-xs">
+                                {subItem.menuName}
+                              </span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>

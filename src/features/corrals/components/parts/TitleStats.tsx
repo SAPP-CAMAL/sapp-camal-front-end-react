@@ -118,13 +118,13 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
       <div className="lg:hidden bg-gray-100 px-4 py-4 rounded-lg space-y-4">
         {/* Title and corrales count */}
         <div className="text-center">
-          <h1 className="text-lg sm:text-xl font-bold mb-1">{title}</h1>
-          <span className="text-gray-600 text-sm sm:text-base">{totals.corrales} corrales</span>
+          <h1 className="text-lg sm:text-xl font-bold">{title}</h1>
+          <span className="text-gray-600 text-sm sm:text-base mt-10">{totals.corrales} corrales</span>
         </div>
         
         {/* Badges */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <Badge className="bg-green-500 text-white px-2 sm:px-4 py-2 rounded-full text-center text-xs sm:text-sm">
+          <Badge className="bg-primary text-white px-2 sm:px-4 py-2 rounded-full text-center text-xs sm:text-sm">
             Disponibles: {totals.disponibles}
           </Badge>
           <Badge className="bg-red-500 text-white px-2 sm:px-4 py-2 rounded-full text-center text-xs sm:text-sm">
