@@ -84,7 +84,7 @@ export function LoginForm({
                   style={{ filter: 'brightness(0) invert(1)' }}
                 />
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-center text-slate-800 mb-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-center mb-1 text-black-important">
                 CAMAL MUNICIPAL
               </h1>
               <p className="text-xs text-primary text-center font-bold">

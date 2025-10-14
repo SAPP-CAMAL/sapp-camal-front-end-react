@@ -45,7 +45,7 @@ export const Step1Certificate = () => {
 	const { plate, fullName, identification, certificateNumber } = searchParams;
 
 	return (
-		<AccordionItem value={ACCORDION_NAMES.STEP_1} className='border rounded-lg'>
+		<AccordionItem value={ACCORDION_NAMES.STEP_1} className='border rounded-lg bg-white'>
 			{/*  Accordion header*/}
 			<BasicAnimalAdmissionAccordionHeader
 				stepNumber={1}
@@ -65,6 +65,17 @@ export const Step1Certificate = () => {
 						</Label>
 
 						<div className='flex items-center gap-2'>
+							{/* Create new certificate modal */}
+							<CreateUpdateCertificateModal
+								onSetCertificate={qrData => handleSetSelectedCertificate(qrData!)}
+								triggerButton={
+									<Button >
+										<Plus />
+										Crear Nuevo
+									</Button>
+								}
+							/>
+
 							{/* Qr modal */}
 							<QrCertificateModal
 								// extraSuccessInfoCard={<InfoCard />}
@@ -76,24 +87,13 @@ export const Step1Certificate = () => {
 									</Button>
 								)}
 							/>
-
-							{/* Create new certificate modal */}
-							<CreateUpdateCertificateModal
-								onSetCertificate={qrData => handleSetSelectedCertificate(qrData!)}
-								triggerButton={
-									<Button >
-										<Plus />
-										Crear Nuevo
-									</Button>
-								}
-							/>
 						</div>
 					</div>
 
 					<div className='relative'>
 						<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
 						<Input
-							className='placeholder:text-muted-foreground bg-secondary pl-10'
+							className='placeholder:text-muted-foreground pl-10'
 							placeholder='Buscar certificado por número...'
 							value={certificateNumber.value}
 							onChange={e => debounceFields('certificateNumber', e.target.value)}
@@ -211,7 +211,7 @@ export const Step1Certificate = () => {
 										shipperData={selectedShipper}
 										onSetShipper={shipper => handleSetSelectedShipper(shipper!)}
 										triggerButton={
-											<Button >
+											<Button variant='ghost' >
 												<Edit />
 												Editar
 											</Button>
@@ -282,7 +282,7 @@ export const Step1Certificate = () => {
 
 					<div className='flex justify-end pt-2'>
 						<Button
-							variant='ghost'
+							
 							className={cn('hover:bg-emerald-600 hover:text-white ', {
 								'opacity-50 pointer-events-none': !selectedCertificate || !selectedShipper,
 							})}

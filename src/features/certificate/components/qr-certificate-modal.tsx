@@ -46,7 +46,7 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 	return (
 		<Dialog open={isModalOpen} onOpenChange={open => setIsModalOpen(open)}>
 			<DialogTrigger asChild>
-				<Button variant={btnVariant}>
+				<Button variant='ghost'>
 					<QrCode />
 					{btnText}
 				</Button>

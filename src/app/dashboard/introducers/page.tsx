@@ -1,5 +1,5 @@
 import { IntroductorManagement } from "@/features/security/components/introductor-management";
 
-export default function IntroducersPage() {
+export default async function IntroductorManagementPage() {
   return <IntroductorManagement />;
 }
