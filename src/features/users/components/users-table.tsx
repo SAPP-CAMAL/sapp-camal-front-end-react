@@ -59,7 +59,7 @@ export function UsersTable<TData, TValue>({
   meta,
   isLoading,
 }: DataTableProps<TData, TValue>) {
-  const searhParams = useSearchParams();
+  const searchParams = useSearchParams();
   const table = useReactTable({
     data: data,
     columns: columns,
@@ -135,8 +135,8 @@ export function UsersTable<TData, TValue>({
               type="text"
               placeholder="Nombre de usuario"
               className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
-              defaultValue={searhParams.get("identification") ?? ""}
-              onChange={(e) => debounceEmail(e.target.value)}
+              defaultValue={searchParams.get("userName") ?? ""}
+              onChange={(e) => debounceUserName(e.target.value)}
             />
           </div>
           <div className="relative h-8 w-full flex items-center">
@@ -145,8 +145,8 @@ export function UsersTable<TData, TValue>({
               type="text"
               placeholder="Buscar por email"
               className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
-              defaultValue={searhParams.get("identification") ?? ""}
-              onChange={(e) => debounceUserName(e.target.value)}
+              defaultValue={searchParams.get("email") ?? ""}
+              onChange={(e) => debounceEmail(e.target.value)}
             />
           </div>
           <div className="relative h-8 w-full flex items-center ">
@@ -155,7 +155,7 @@ export function UsersTable<TData, TValue>({
               type="text"
               placeholder="Buscar por identificación"
               className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
-              defaultValue={searhParams.get("identification") ?? ""}
+              defaultValue={searchParams.get("identification") ?? ""}
               onChange={(e) => debounceIdentification(e.target.value)}
             />
           </div>
@@ -165,7 +165,7 @@ export function UsersTable<TData, TValue>({
               type="text"
               placeholder="Buscar Nombres"
               className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
-              defaultValue={searhParams.get("fullName") ?? ""}
+              defaultValue={searchParams.get("fullName") ?? ""}
               onChange={(e) => debounceFullName(e.target.value)}
             />
           </div>

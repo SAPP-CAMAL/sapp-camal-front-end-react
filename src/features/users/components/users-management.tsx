@@ -66,7 +66,7 @@ export function UsersManagement() {
             accessorKey: "person.fullName",
             header: "Nombre Completo",
             cell: ({ row }) => {
-              return (<span>{toCapitalize(row.original.person.fullName, true)}</span>
+              return (<span>{toCapitalize(row.original.person.fullName ?? '', true)}</span>
               );
             }
           },
