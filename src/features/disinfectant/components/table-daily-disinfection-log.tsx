@@ -103,7 +103,7 @@ export function DailyDisinfectionLogTable() {
 				<div className='flex items-center gap-3'>
 					<span className='whitespace-nowrap'>Filtrar por fecha</span>
 					<Input value={searchParams.date} type='date' onChange={e => setSearchParams({ date: e.target.value })} />
-					<Button >
+					<Button>
 						<FileText />
 						Generar Reporte
 					</Button>
@@ -157,7 +157,7 @@ export function DailyDisinfectionLogTable() {
 					Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()} páginas (filtrado por fecha: {searchParams.date})
 				</span>
 
-				<Button variant='outline' disabled={!table.getCanPreviousPage()} onClick={() => table.nextPage()}>
+				<Button variant='outline' disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
 					Siguiente
 					<ChevronRight className='w-4 h-4' />
 				</Button>
