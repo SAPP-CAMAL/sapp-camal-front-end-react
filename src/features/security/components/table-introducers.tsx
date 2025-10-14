@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
   IdCardIcon,
+  Search,
   SearchIcon,
   TagIcon,
   XIcon,
@@ -38,6 +39,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { MetaPagination } from "@/features/people/domain";
 import { useState } from "react";
 import { Specie } from "../domain";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -223,7 +225,7 @@ export function TableIntroducers<TData, TValue>({
                 colSpan={columns.length}
                 className="h-96 text-center animate-pulse font-semibold"
               >
-                Loading...
+                Cargando...
               </TableCell>
             </TableRow>
           ) : table.getRowModel().rows?.length ? (
@@ -241,8 +243,24 @@ export function TableIntroducers<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+              <TableCell colSpan={columns.length} className="h-96 text-center">
+                <Card className="max-w-full border-0 shadow-none bg-transparent">
+                  <CardContent className="py-20">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-full bg-muted p-3">
+                        <Search className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-medium text-muted-foreground mb-1">
+                          No se encontraron registros
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Intenta ajustar los filtros.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </TableCell>
             </TableRow>
           )}

@@ -25,6 +25,8 @@ import {
   MapPin,
   Loader2,
   X,
+  Venus,
+  Mars,
 } from "lucide-react";
 import { type BrandDetail, type Corral } from "../domain";
 import { type ProductiveStage } from "@/features/productive-stage/domain";
@@ -201,15 +203,16 @@ export function TransferModal({
               </div>
               
               <div className="p-4 md:p-6">
-                <h4 className="flex items-center gap-3 font-bold text-lg md:text-xl text-gray-900 mb-4">
-                  <Users className="h-5 w-5 text-blue-600" />
+                <h4 className="flex items-center gap-1 font-bold text-lg md:text-xl text-gray-900 mb-4">
+                  <Venus className="h-5 w-5 text-blue-600" />
+                  <Mars className="h-5 w-5 text-pink-600" />
                   {brand.nameBrand}
                 </h4>
                 
                 <div className="flex justify-center gap-8 mb-4">
                   <div className="flex flex-col items-center text-center p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-sm w-24">
                     <div className="flex items-center justify-center mb-2">
-                      <User className="h-4 w-4 text-blue-600" />
+                      <Venus className="h-4 w-4 text-blue-600" />
                     </div>
                     <p className="text-xl md:text-2xl font-bold text-blue-700">
                       {brand.males}
@@ -219,7 +222,7 @@ export function TransferModal({
                   
                   <div className="flex flex-col items-center text-center p-4 bg-pink-50 rounded-lg border border-pink-200 shadow-sm w-24">
                     <div className="flex items-center justify-center mb-2">
-                      <UserCheck className="h-4 w-4 text-pink-600" />
+                      <Mars className="h-4 w-4 text-pink-600" />
                     </div>
                     <p className="text-xl md:text-2xl font-bold text-pink-700">
                       {brand.females}
@@ -235,7 +238,7 @@ export function TransferModal({
                       {maleStages.length > 0 && (
                         <div>
                           <h6 className="text-xs font-medium text-blue-600 mb-2 flex items-center gap-1">
-                            <User className="h-3 w-3" />
+                            <Venus className="h-3 w-3" />
                             Machos:
                           </h6>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -254,7 +257,7 @@ export function TransferModal({
                       {femaleStages.length > 0 && (
                         <div>
                           <h6 className="text-xs font-medium text-pink-600 mb-2 flex items-center gap-1">
-                            <UserCheck className="h-3 w-3" />
+                            <Mars className="h-3 w-3" />
                             Hembras:
                           </h6>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -356,7 +359,7 @@ export function TransferModal({
             {maleStages.length > 0 && (
               <div className="space-y-4">
                 <h6 className="text-base font-semibold text-blue-700 flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                  <Venus className="h-5 w-5" />
                   Machos
                 </h6>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -365,7 +368,7 @@ export function TransferModal({
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="p-1 bg-blue-100 rounded-full flex-shrink-0">
-                            <User className="h-3 w-3 text-blue-600" />
+                            <Venus className="h-3 w-3 text-blue-600" />
                           </div>
                           <Label htmlFor={`stage-${stage.id}`} className="text-xs font-medium text-blue-700 truncate">
                             {stage.name}
@@ -405,7 +408,7 @@ export function TransferModal({
             {femaleStages.length > 0 && (
               <div className="space-y-4">
                 <h6 className="text-base font-semibold text-pink-700 flex items-center gap-2">
-                  <UserCheck className="h-5 w-5" />
+                  <Mars className="h-5 w-5" />
                   Hembras
                 </h6>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -414,7 +417,7 @@ export function TransferModal({
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="p-1 bg-pink-100 rounded-full flex-shrink-0">
-                            <UserCheck className="h-3 w-3 text-pink-600" />
+                            <Mars className="h-3 w-3 text-pink-600" />
                           </div>
                           <Label htmlFor={`stage-${stage.id}`} className="text-xs font-medium text-pink-700 truncate">
                             {stage.name}

@@ -22,6 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MetaPagination } from "@/features/people/domain";
+import { Card, CardContent } from "@/components/ui/card";
+import { Search } from "lucide-react";
 
 export type Payment = {
   id: string;
@@ -119,13 +121,26 @@ export function EmployeeTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
+              <TableCell colSpan={columns.length} className="h-96 text-center">
+                <Card className="max-w-full border-0 shadow-none bg-transparent">
+                  <CardContent className="py-20">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-full bg-muted p-3">
+                        <Search className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-medium text-muted-foreground mb-1">
+                          No se encontraron registros
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Intenta ajustar los filtros.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TableCell>
+            </TableRow>
             )}
           </TableBody>
         </Table>
