@@ -37,7 +37,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 	const [qrModalState, setQrModalState] = useState(defaultValues);
 	const query = useAllOrigins();
 
-	const origins = query.data.data;
+	const origins = query.data?.data || [];
 
 	// State Handlers
 	const setQrState = (state: QrState) => setQrModalState(data => ({ ...data, state }));
