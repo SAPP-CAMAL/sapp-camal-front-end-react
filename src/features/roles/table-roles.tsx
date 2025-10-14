@@ -79,7 +79,7 @@ export function TableRoles<TData, TValue>({
     (meta?.itemCount ?? 0);
 
   const debounceName = useDebouncedCallback(
-    (text: string) => meta?.setSearchParams({ name: text }),
+    (text: string) => meta?.setSearchParams({ name: text, page: 1 }),
     500
   );
 
@@ -109,11 +109,13 @@ export function TableRoles<TData, TValue>({
               if (value === "*") {
                 meta?.setSearchParams({
                   status: null,
+                  page: 1,
                 });
                 return;
               }
               meta?.setSearchParams({
                 status: value === "true" ? "true" : "false",
+                page: 1,
               });
             }}
             defaultValue={"*"}
