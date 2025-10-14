@@ -154,12 +154,6 @@ export function LoginForm({
                   <Label htmlFor="password" className="text-xs font-medium text-slate-700">
                     Contraseña
                   </Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-[10px] text-primary hover:underline"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
                 </div>
                 <div className="flex items-center">
                   <Input
@@ -186,15 +180,24 @@ export function LoginForm({
                 </div>
               </div>
 
-              {/* Remember me checkbox */}
-              <div className="flex items-center space-x-2 pt-1">
-                <Checkbox id="remember" className="border-slate-300 h-4 w-4" />
-                <Label
-                  htmlFor="remember"
-                  className="text-xs font-normal text-slate-600 cursor-pointer"
-                >
-                  Recuérdame
-                </Label>
+
+              <div className="flex items-center justify-between pt-2">
+                {/* Remember me checkbox */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="remember" className="border-slate-300 h-4 w-4" />
+                  <Label
+                    htmlFor="remember"
+                    className="text-xs font-normal text-slate-600 cursor-pointer"
+                    >
+                    Recuérdame
+                  </Label>
+                </div>
+                 <Link
+                    href="/auth/forgot-password"
+                    className="text-[10px] text-primary hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
               </div>
 
               {/* Submit button */}
@@ -216,7 +219,7 @@ export function LoginForm({
               </Button>
 
               {/* Registration link */}
-              <div className="text-center pt-3">
+              {/* <div className="text-center pt-3">
                 <p className="text-xs text-slate-600">
                   ¿Deseas registrarte?{" "}
                   <Link
@@ -226,7 +229,7 @@ export function LoginForm({
                     Registrarte
                   </Link>
                 </p>
-              </div>
+              </div> */}
             </form>
           </div>
         </div>
