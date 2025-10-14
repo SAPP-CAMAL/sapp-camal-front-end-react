@@ -161,7 +161,7 @@ export function LoginForm({
                     ¿Olvidaste tu contraseña?
                   </Link>
                 </div>
-                <div className="relative flex items-center">
+                <div className="flex items-center">
                   <Input
                     id="password"
                     {...form.register("password")}
@@ -169,12 +169,12 @@ export function LoginForm({
                     disabled={form.formState.isSubmitting}
                     autoComplete="current-password"
                     placeholder="••••••••"
-                    className="h-10 pr-10 text-sm w-full"
+                    className="h-10 text-sm w-full"
                     required
                   />
                   <button
                     type="button"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center hover:bg-transparent transition-colors focus:outline-none"
+                    className="h-10 w-10 flex items-center justify-center hover:bg-transparent transition-colors focus:outline-none"
                     onClick={() => form.setValue("showPassword", !showPassword)}
                   >
                     {showPassword ? (
@@ -189,8 +189,8 @@ export function LoginForm({
               {/* Remember me checkbox */}
               <div className="flex items-center space-x-2 pt-1">
                 <Checkbox id="remember" className="border-slate-300 h-4 w-4" />
-                <Label 
-                  htmlFor="remember" 
+                <Label
+                  htmlFor="remember"
                   className="text-xs font-normal text-slate-600 cursor-pointer"
                 >
                   Recuérdame
@@ -219,8 +219,8 @@ export function LoginForm({
               <div className="text-center pt-3">
                 <p className="text-xs text-slate-600">
                   ¿Deseas registrarte?{" "}
-                  <Link 
-                    href="#" 
+                  <Link
+                    href="#"
                     className="font-medium text-primary hover:underline"
                   >
                     Registrarte
