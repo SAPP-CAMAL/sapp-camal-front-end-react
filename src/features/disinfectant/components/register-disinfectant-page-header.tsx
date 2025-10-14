@@ -76,7 +76,7 @@ export const RegisterDisinfectantPageHeader = () => {
 				{/* QR Certificate Modal */}
 				<QrCertificateModal
 					renderSuccessButton={({ qrData, closeModal }) => (
-						<Button type='button' className='bg-green-600 hover:bg-green-700' onClick={() => handleSuccessButton(qrData, closeModal)}>
+						<Button type='button' variant='default' onClick={() => handleSuccessButton(qrData, closeModal)}>
 							<CircleCheckBig />
 							Finalizar
 						</Button>

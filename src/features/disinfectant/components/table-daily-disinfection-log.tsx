@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useDailyDisinfectionRegisterContext } from '../hooks/use-daily-disinfection-register-context';
 import { RegisterVehicleTimeOut } from './register-vehicle-time-out';
+import { toCapitalize } from '../../../lib/toCapitalize';
 
 const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
@@ -26,6 +27,7 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
 		accessorKey: 'registerVehicle.shipping.person.fullName',
 		header: 'Chofer',
+		cell: ({ row }) => toCapitalize(row.original.registerVehicle.shipping.person.fullName ?? '', true),
 	},
 	{
 		accessorKey: 'registerVehicle.shipping.vehicle.plate',
@@ -34,10 +36,12 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
 		accessorKey: 'registerVehicle.shipping.vehicle.vehicleDetail.vehicleType.name',
 		header: 'Tipo Vehículo',
+		cell: ({ row }) => toCapitalize(row.original.registerVehicle.shipping.vehicle.vehicleDetail.vehicleType.name ?? '', true),
 	},
 	{
 		accessorKey: 'species.name',
 		header: 'Especies',
+		cell: ({ row }) => toCapitalize(row.original.species.name ?? '', true),
 	},
 	{
 		accessorKey: 'disinfectant.name',
