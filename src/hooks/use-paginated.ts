@@ -23,7 +23,7 @@ export const usePaginated = <TData extends { id: string | number }, TValue>({
 	columns,
 	data,
 	pageIndex = 0,
-	pageSize = 4,
+	pageSize = 10,
 	enableMultiRowSelection = false,
 	getRowId = row => row.id.toString(),
 }: Props<TData, TValue>) => {
