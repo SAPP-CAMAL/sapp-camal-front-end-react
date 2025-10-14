@@ -28,6 +28,7 @@ import { getAdresseesByFilterService } from "../server/addressees.service";
 import { useProvinces } from "@/features/provinces/hooks/use-provinces";
 import { format } from "date-fns";
 import NewAddresseesForm from "./new-addressees.form";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function AddresseesManagement({}) {
   const searchAddresseesParams = useSearchParams();
@@ -176,7 +177,7 @@ export function AddresseesManagement({}) {
               return (
                 <div className="flex flex-col">
                   <span className="font-medium text-sm">
-                    {row.original.fullName ?? "—"}
+                    {toCapitalize(row.original.fullName ?? '', true) ?? "—"}
                   </span>
                   <span className="text-gray-600 text-xs">
                     {row.original.email ?? "—"}{" "}
@@ -198,10 +199,10 @@ export function AddresseesManagement({}) {
               return (
                 <div className="flex flex-col">
                   <span className="font-medium text-sm">
-                    {address.canton ?? "—"} - {address.province ?? "—"}
+                    {toCapitalize(address.canton ?? '', true) ?? "—"} - {toCapitalize(address.province ?? '', true) ?? "—"}
                   </span>
                   <span className="text-gray-600 text-xs">
-                    {address.parish ?? "—"} - {address.firstStree ?? "—"}
+                    {toCapitalize(address.parish ?? '', true) ?? "—"} - {toCapitalize(address.firstStree ?? '', true) ?? "—"}
                   </span>
                 </div>
               );

@@ -21,6 +21,8 @@ const badgeVariants = cva(
           "border-transparent bg-[var(--green)] text-[var(--green-foreground)] [a&]:hover:bg-[var(--green)/90]",
         quaterniary:
           "border-transparent bg-[var(--blue)] text-[var(--blue-foreground)] [a&]:hover:bg-[var(--blue)/90]",
+        inactive:
+          "border-transparent bg-primary-inactive text-primary-foreground [a&]:hover:bg-primary-inactive/90",
       },
     },
     defaultVariants: {

@@ -67,8 +67,8 @@ export function PeopleManagement({}) {
             header: "Nombre Completo",
             cell: ({ row }) => (
               <div className="flex items-center gap-x-2">
-                <div>{toCapitalize(row.original.firstName, true)}</div>
-                <div>{toCapitalize(row.original.lastName, true)}</div>
+                <div>{toCapitalize(row.original.firstName ?? '', true)}</div>
+                <div>{toCapitalize(row.original.lastName ?? '', true)}</div>
               </div>
             ),
           },
@@ -98,7 +98,7 @@ export function PeopleManagement({}) {
             accessorKey: "status",
             header: "Estado",
             cell: ({ row }) => (
-              <Badge>{row.original.status ? "Activo" : "Inactivo"}</Badge>
+              <Badge variant={row.original.status? 'default' : 'inactive'}>{row.original.status ? "Activo" : "Inactivo"}</Badge>
             ),
           },
           {

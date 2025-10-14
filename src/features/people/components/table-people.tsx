@@ -74,7 +74,10 @@ export function PeopleTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const start = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + 1;
+  let start = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + 1;
+
+	if (isLoading || !data?.length) start = 0;
+
   const end =
     ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) +
     (meta?.itemCount ?? 0);
@@ -213,7 +216,7 @@ export function PeopleTable<TData, TValue>({
                           No se encontraron registros
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          Intenta ajustar los filtros 
+                          Intenta ajustar los filtros
                         </p>
                       </div>
                     </div>
@@ -226,7 +229,7 @@ export function PeopleTable<TData, TValue>({
       </Table>
       <div className="h-10 flex items-end justify-between mt-4">
         <p className="text-sm text-gray-600">
-          Mostrando {start} a {end} de {meta?.totalItems} personas
+          Mostrando {start > 0 && `${start} a`} {end} de {meta?.totalItems ?? 0} personas
         </p>
         <div className="flex items-center gap-x-2">
           <Button

@@ -23,6 +23,8 @@ import {
   updateEmployeeService,
 } from "@/features/employees/server/db/employees.services";
 import { useSearchParams } from "next/navigation";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function UpdatePerson({ person }: { person: any }) {
   const searchParams = useSearchParams();
@@ -31,15 +33,15 @@ export function UpdatePerson({ person }: { person: any }) {
   const defaultValues = {
     open: false,
     identificationType: String(person.identificationType.id),
-    identification: person.identification,
+    identification: person.identification ?? '',
     genderId: String(person.genderId),
-    mobileNumber: person.mobileNumber,
-    firstName: person.firstName,
-    lastName: person.lastName,
+    mobileNumber: person.mobileNumber ?? '',
+    firstName: toCapitalize(person.firstName ?? '', true),
+    lastName: toCapitalize(person.lastName ?? '', true),
     slaughterhouse: false,
-    address: person.address,
+    address: person.address ?? '',
     positions: [],
-    status: person.status?.toString(),
+    status: person.status?.toString() ?? '',
   };
   const form = useForm<any>({ defaultValues });
   const personId = person.id;
@@ -113,7 +115,6 @@ export function UpdatePerson({ person }: { person: any }) {
         });
       }
 
-      console.log(form.formState.dirtyFields.positions);
 
       if (form.formState.dirtyFields.positions) {
         await Promise.all(
@@ -157,17 +158,25 @@ export function UpdatePerson({ person }: { person: any }) {
     } catch (error: any) {
       console.log({ error });
       const { data } = await error.response.json();
-      toast.error(data);
+      toast.error(data || 'Ocurrió un error al actualizar la persona');
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => form.setValue("open", open)}>
-      <DialogTrigger asChild>
-        <Button variant={"outline"}>
-          <EditIcon />
-        </Button>
-      </DialogTrigger>
+  <Dialog open={open} onOpenChange={(open) => form.setValue("open", open)}>
+      <Tooltip>
+				<TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button variant={"outline"}>
+                <EditIcon />
+              </Button>
+            </DialogTrigger>
+				</TooltipTrigger>
+				<TooltipContent side='top' align='center' sideOffset={5} avoidCollisions>
+					Editar persona
+				</TooltipContent>
+			</Tooltip>
+
       <DialogContent className="min-w-[80vw] min-h-[80vh]">
         <DialogHeader>
           <DialogTitle>Editar Persona</DialogTitle>

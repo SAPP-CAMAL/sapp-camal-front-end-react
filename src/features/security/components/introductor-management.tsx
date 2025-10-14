@@ -154,7 +154,7 @@ export function IntroductorManagement() {
 					{
 						accessorKey: 'id',
 						header: 'Estado',
-						cell: ({ row }) => <Badge variant={row.original.status ? 'default' : 'outline'}>{row.original.status ? 'Activo' : 'Inactivo'}</Badge>,
+						cell: ({ row }) => <Badge variant={row.original.status ? 'default' : 'inactive'}>{row.original.status ? 'Activo' : 'Inactivo'}</Badge>,
 					},
 					{
 						header: 'Acciones',

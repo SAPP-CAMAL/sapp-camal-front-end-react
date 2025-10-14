@@ -87,7 +87,7 @@ export function LoginForm({
               <h1 className="text-xl sm:text-2xl font-bold text-center text-slate-800 mb-1">
                 CAMAL MUNICIPAL
               </h1>
-              <p className="text-xs text-primary text-center font-medium">
+              <p className="text-xs text-primary text-center font-bold">
                 DE RIOBAMBA
               </p>
             </div>
@@ -154,14 +154,8 @@ export function LoginForm({
                   <Label htmlFor="password" className="text-xs font-medium text-slate-700">
                     Contraseña
                   </Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-[10px] text-primary hover:underline"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
                 </div>
-                <div className="relative flex items-center">
+                <div className="flex items-center">
                   <Input
                     id="password"
                     {...form.register("password")}
@@ -169,12 +163,12 @@ export function LoginForm({
                     disabled={form.formState.isSubmitting}
                     autoComplete="current-password"
                     placeholder="••••••••"
-                    className="h-10 pr-10 text-sm w-full"
+                    className="h-10 text-sm w-full"
                     required
                   />
                   <button
                     type="button"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center hover:bg-transparent transition-colors focus:outline-none"
+                    className="h-10 w-10 flex items-center justify-center hover:bg-transparent transition-colors focus:outline-none"
                     onClick={() => form.setValue("showPassword", !showPassword)}
                   >
                     {showPassword ? (
@@ -186,15 +180,24 @@ export function LoginForm({
                 </div>
               </div>
 
-              {/* Remember me checkbox */}
-              <div className="flex items-center space-x-2 pt-1">
-                <Checkbox id="remember" className="border-slate-300 h-4 w-4" />
-                <Label 
-                  htmlFor="remember" 
-                  className="text-xs font-normal text-slate-600 cursor-pointer"
-                >
-                  Recuérdame
-                </Label>
+
+              <div className="flex items-center justify-between pt-2">
+                {/* Remember me checkbox */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="remember" className="border-slate-300 h-4 w-4" />
+                  <Label
+                    htmlFor="remember"
+                    className="text-xs font-normal text-slate-600 cursor-pointer"
+                    >
+                    Recuérdame
+                  </Label>
+                </div>
+                 <Link
+                    href="/auth/forgot-password"
+                    className="text-[10px] text-primary hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
               </div>
 
               {/* Submit button */}
@@ -216,17 +219,17 @@ export function LoginForm({
               </Button>
 
               {/* Registration link */}
-              <div className="text-center pt-3">
+              {/* <div className="text-center pt-3">
                 <p className="text-xs text-slate-600">
                   ¿Deseas registrarte?{" "}
-                  <Link 
-                    href="#" 
+                  <Link
+                    href="#"
                     className="font-medium text-primary hover:underline"
                   >
                     Registrarte
                   </Link>
                 </p>
-              </div>
+              </div> */}
             </form>
           </div>
         </div>
