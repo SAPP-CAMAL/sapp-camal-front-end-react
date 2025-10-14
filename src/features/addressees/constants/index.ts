@@ -1,0 +1,1 @@
+export const ADDRESSEES_LIST_BY_FILTER_TAG = 'addressees-list-by-filter';

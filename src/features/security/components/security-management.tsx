@@ -65,7 +65,9 @@ export function SecurityManagement() {
                   {/* <AvatarFallback>CN</AvatarFallback> */}
                 </Avatar>
                 <div>
-                  <p className="font-semibold">{toCapitalize(row.original.fullName, true)}</p>
+                  <p className="font-semibold">
+                    {toCapitalize(row.original.fullName, true)}
+                  </p>
                   {/* <p className="text-gray-500">{row.original?.email}</p> */}
                 </div>
               </div>
@@ -80,7 +82,7 @@ export function SecurityManagement() {
             header: "Roles",
             cell: ({ row }) => (
               <Badge variant={"outline"}>
-                {row.original.identificationType.description}
+                {row.original.identificationType?.description}
               </Badge>
             ),
           },
@@ -107,9 +109,7 @@ export function SecurityManagement() {
           {
             header: "Acciones",
             cell: ({ row }) => {
-              return <div>
-                {/* <UpdatePerson person={row.original} /> */}
-                </div>;
+              return <div>{/* <UpdatePerson person={row.original} /> */}</div>;
             },
           },
         ]}

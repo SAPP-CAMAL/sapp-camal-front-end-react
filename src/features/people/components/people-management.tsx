@@ -77,7 +77,7 @@ export function PeopleManagement({}) {
             header: "Tipo ID",
             cell: ({ row }) => (
               <Badge variant={"outline"}>
-                {row.original.identificationType.description}
+                {row.original.identificationType?.description}
               </Badge>
             ),
           },
