@@ -47,7 +47,10 @@ export function AddresseesTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const start = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + 1;
+  let start = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + 1;
+
+  if (isLoading || !data?.length) start = 0;
+
   const end =
     ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) +
     (meta?.itemCount ?? 0);
@@ -56,9 +59,9 @@ export function AddresseesTable<TData, TValue>({
     <div className="overflow-hidden rounded-lg border p-4">
       <div className="py-4 px-2 flex flex-col">
         <Label className="font-semibold">Lista de Destinatarios</Label>
-        <p className="text-sm text-muted-foreground">
+        {/* <p className="text-sm text-muted-foreground">
           {`${meta?.totalItems ?? 0} destinatario(s) encontrado(s)`}{" "}
-        </p>
+        </p> */}
       </div>
       <Table>
         <TableHeader>
@@ -86,7 +89,7 @@ export function AddresseesTable<TData, TValue>({
                 colSpan={columns.length}
                 className="h-96 text-center animate-pulse font-semibold"
               >
-                Loading...
+                Cargando...
               </TableCell>
             </TableRow>
           ) : table.getRowModel().rows?.length ? (
@@ -105,7 +108,7 @@ export function AddresseesTable<TData, TValue>({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                No se encontró resultados.
               </TableCell>
             </TableRow>
           )}
@@ -113,7 +116,7 @@ export function AddresseesTable<TData, TValue>({
       </Table>
       <div className="h-10 flex items-end justify-between mt-4">
         <p className="text-sm text-gray-600">
-          Mostrando {start} a {end} de {meta?.totalItems} personas
+          Mostrando {start > 0 && `${start} a`} {end} de {meta?.totalItems} personas
         </p>
         <div className="flex items-center gap-x-2">
           <Button

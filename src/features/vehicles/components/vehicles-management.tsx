@@ -27,6 +27,7 @@ import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 import { capitalizeText } from "@/lib/utils";
 import { getVehicleByFilterService } from "../server/db/vehicle.service";
 import NewVehicleForm from "./new-vehicle.form";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function VehiclesManagement({}) {
   const searchCarriersParams = useSearchParams();
@@ -204,7 +205,7 @@ export function VehiclesManagement({}) {
             cell: ({ row }) => {
               const brand = row.original.brand ?? "";
               const model = row.original.model ?? "";
-              return `${brand} - ${model}`;
+              return toCapitalize(`${brand} - ${model}`, true);
             },
           },
           {

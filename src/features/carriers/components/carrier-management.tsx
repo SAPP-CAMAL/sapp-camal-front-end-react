@@ -33,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function CarriersManagement({}) {
   const searchCarriersParams = useSearchParams();
@@ -261,14 +262,18 @@ export function CarriersManagement({}) {
             accessorFn: (row) => row.vehicle,
             cell: ({ row }) => {
               const vehicle = row.original.vehicle;
+              let value = toCapitalize(vehicle.vehicleDetail?.vehicleType?.name ?? '')
+
+              if (vehicle.color) value += ` • ${vehicle.color}`;
+              if (vehicle.manufactureYear) value += ` • ${vehicle.manufactureYear}`;
+
               return (
                 <div className="flex flex-col">
                   <span className="font-medium">
                     {vehicle.brand} {vehicle.model}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {vehicle.vehicleDetail?.vehicleType?.name} • {vehicle.color}{" "}
-                    • {vehicle.manufactureYear}
+                    {value}
                   </span>
                 </div>
               );

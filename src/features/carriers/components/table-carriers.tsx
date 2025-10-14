@@ -58,9 +58,6 @@ export function CarriersTable<TData, TValue>({
         <Label className="font-semibold">
           Lista de Transportistas por Vehículo
         </Label>
-        <p className="text-sm text-muted-foreground">
-          {`${meta?.totalItems ?? 0} registro(s) encontrado(s)`}{" "}
-        </p>
       </div>
       <Table>
         <TableHeader>
@@ -88,7 +85,7 @@ export function CarriersTable<TData, TValue>({
                 colSpan={columns.length}
                 className="h-96 text-center animate-pulse font-semibold"
               >
-                Loading...
+                Cargando...
               </TableCell>
             </TableRow>
           ) : table.getRowModel().rows?.length ? (

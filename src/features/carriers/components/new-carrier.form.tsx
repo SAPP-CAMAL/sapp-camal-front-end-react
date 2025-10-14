@@ -51,6 +51,7 @@ import {
   updateShippingService,
 } from "../server/carriers.service";
 import { Separator } from "@/components/ui/separator";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 interface NewCarrierProps {
   shipping?: any;
@@ -615,7 +616,7 @@ export function NewCarrier({
                                 {getTransportName(transportId).toLowerCase()}:
                               </span>{" "}
                               {vehicleTypes[transportId]
-                                .map((vehicle) => vehicle.name)
+                                .map((vehicle) => toCapitalize(vehicle.name ?? '', true))
                                 .join(", ")}
                             </Label>
                           ) : null}
