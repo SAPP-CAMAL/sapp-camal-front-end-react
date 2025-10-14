@@ -16,10 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MetaPagination } from "@/features/people/domain";
 import { Label } from "@/components/ui/label";
 
@@ -38,15 +35,12 @@ interface DataTableProps<TData, TValue> {
   children?: React.ReactNode;
 }
 
-
-
 export function CarriersTable<TData, TValue>({
   columns,
   data,
   meta,
   isLoading,
 }: DataTableProps<TData, TValue>) {
-
   const table = useReactTable({
     data: data,
     columns: columns,
@@ -54,13 +48,19 @@ export function CarriersTable<TData, TValue>({
   });
 
   const start = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + 1;
-  const end = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + (meta?.itemCount ?? 0);
+  const end =
+    ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) +
+    (meta?.itemCount ?? 0);
 
   return (
     <div className="overflow-hidden rounded-lg border p-4">
       <div className="py-4 px-2 flex flex-col">
-        <Label className="font-semibold">Lista de Transportistas por Vehículo</Label>
-        <p className="text-sm text-muted-foreground">{`${meta?.totalItems} registro(s) encontrado(s)`} </p>
+        <Label className="font-semibold">
+          Lista de Transportistas por Vehículo
+        </Label>
+        <p className="text-sm text-muted-foreground">
+          {`${meta?.totalItems ?? 0} registro(s) encontrado(s)`}{" "}
+        </p>
       </div>
       <Table>
         <TableHeader>
@@ -114,9 +114,11 @@ export function CarriersTable<TData, TValue>({
         </TableBody>
       </Table>
       <div className="h-10 flex items-end justify-between mt-4">
-        <p className="text-sm text-gray-600">
-          Mostrando {start} a {end} de {meta?.totalItems} personas
-        </p>
+        {meta?.totalItems && meta?.totalItems > 0 && (
+          <p className="text-sm text-gray-600">
+            Mostrando {start} a {end} de {meta?.totalItems} personas
+          </p>
+        )}
         <div className="flex items-center gap-x-2">
           <Button
             disabled={meta?.disabledPreviousPage}

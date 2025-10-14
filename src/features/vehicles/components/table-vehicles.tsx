@@ -57,7 +57,7 @@ export function VehicleTable<TData, TValue>({
       <div className="py-4 px-2 flex flex-col">
         <Label className="font-semibold">Lista de Vehículos</Label>
         <p className="text-sm text-muted-foreground">
-          {`${meta?.totalItems} vehículo(s) encontrado(s)`}{" "}
+          {`${meta?.totalItems ?? 0} vehículo(s) encontrado(s)`}{" "}
         </p>
       </div>
       <Table>
@@ -112,9 +112,11 @@ export function VehicleTable<TData, TValue>({
         </TableBody>
       </Table>
       <div className="h-10 flex items-end justify-between mt-4">
-        <p className="text-sm text-gray-600">
-          Mostrando {start} a {end} de {meta?.totalItems} personas
-        </p>
+        {meta?.totalItems && meta?.totalItems > 0 && (
+          <p className="text-sm text-gray-600">
+            Mostrando {start} a {end} de {meta?.totalItems} personas
+          </p>
+        )}
         <div className="flex items-center gap-x-2">
           <Button
             disabled={meta?.disabledPreviousPage}

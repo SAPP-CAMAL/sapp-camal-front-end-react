@@ -57,7 +57,7 @@ export function AddresseesTable<TData, TValue>({
       <div className="py-4 px-2 flex flex-col">
         <Label className="font-semibold">Lista de Destinatarios</Label>
         <p className="text-sm text-muted-foreground">
-          {`${meta?.totalItems} destinatario(s) encontrado(s)`}{" "}
+          {`${meta?.totalItems ?? 0} destinatario(s) encontrado(s)`}{" "}
         </p>
       </div>
       <Table>

@@ -61,11 +61,11 @@ export function VehiclesManagement({}) {
   });
 
   const debouncePlate = useDebouncedCallback(
-    (text: string) => setSearchParams({ plate: text }),
+    (text: string) => setSearchParams({ plate: text, page: 1 }),
     500
   );
   const debounceBrand = useDebouncedCallback(
-    (text: string) => setSearchParams({ brand: text }),
+    (text: string) => setSearchParams({ brand: text, page: 1 }),
     500
   );
 
@@ -103,8 +103,8 @@ export function VehiclesManagement({}) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-x-4 justify-between">
-            <div className="flex flex-col w-1/5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por placa
               </label>
@@ -120,7 +120,7 @@ export function VehiclesManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por marca
               </label>
@@ -128,7 +128,7 @@ export function VehiclesManagement({}) {
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
                 <Input
                   type="text"
-                  placeholder="Ingrese la placa"
+                  placeholder="Ingrese la marca"
                   className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
                   defaultValue={searchCarriersParams.get("brand") ?? ""}
                   onChange={(e) => debounceBrand(e.target.value)}
@@ -136,7 +136,7 @@ export function VehiclesManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Tipo de transporte
               </label>
@@ -147,7 +147,7 @@ export function VehiclesManagement({}) {
                 defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="Seleccione el tipo de transporte" />
+                  <SelectValue placeholder="Seleccione el tipo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="*">Todos los tipos</SelectItem>
@@ -165,7 +165,7 @@ export function VehiclesManagement({}) {
               </Select>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Tipo de vehículo
               </label>
@@ -176,7 +176,7 @@ export function VehiclesManagement({}) {
                 defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="Seleccione el tipo de transporte" />
+                  <SelectValue placeholder="Seleccione el vehículo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="*">Todos los vehículos</SelectItem>

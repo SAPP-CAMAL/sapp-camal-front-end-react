@@ -33,7 +33,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
 
 export function CarriersManagement({}) {
   const searchCarriersParams = useSearchParams();
@@ -76,17 +75,17 @@ export function CarriersManagement({}) {
   });
 
   const debounceFullName = useDebouncedCallback(
-    (text: string) => setSearchParams({ fullName: text }),
+    (text: string) => setSearchParams({ fullName: text, page: 1 }),
     500
   );
 
   const debounceIdentification = useDebouncedCallback(
-    (text: string) => setSearchParams({ identification: text }),
+    (text: string) => setSearchParams({ identification: text, page: 1 }),
     500
   );
 
   const debouncePlate = useDebouncedCallback(
-    (text: string) => setSearchParams({ plate: text }),
+    (text: string) => setSearchParams({ plate: text, page: 1 }),
     500
   );
 
@@ -121,8 +120,8 @@ export function CarriersManagement({}) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-x-4 justify-between">
-            <div className="flex flex-col w-1/5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por nombre
               </label>
@@ -138,7 +137,7 @@ export function CarriersManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por identificación
               </label>
@@ -156,7 +155,7 @@ export function CarriersManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por placa
               </label>
@@ -172,7 +171,7 @@ export function CarriersManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Tipo de transporte
               </label>
@@ -186,7 +185,7 @@ export function CarriersManagement({}) {
                   <SelectValue placeholder="Seleccione el tipo de transporte" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="*">Todos los estados</SelectItem>
+                  <SelectItem value="*">Todos los tipos</SelectItem>
                   {catalogueTransportsType.data?.data.map(
                     (transport, index) => (
                       <SelectItem
@@ -201,7 +200,7 @@ export function CarriersManagement({}) {
               </Select>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Estado Transportista
               </label>
@@ -212,7 +211,7 @@ export function CarriersManagement({}) {
                 defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="" />
+                  <SelectValue placeholder="Seleccione un estado" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={"*"}>Todos los estados</SelectItem>
@@ -222,7 +221,7 @@ export function CarriersManagement({}) {
               </Select>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Estado Vehículo
               </label>
@@ -233,7 +232,7 @@ export function CarriersManagement({}) {
                 defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="" />
+                  <SelectValue placeholder="Seleccione un estado" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={"*"}>Todos los estados</SelectItem>

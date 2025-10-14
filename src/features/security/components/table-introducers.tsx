@@ -87,29 +87,29 @@ export function TableIntroducers<TData, TValue>({
     (meta?.itemCount ?? 0);
 
   const debounceFullName = useDebouncedCallback((text: string) => {
-    meta?.setSearchParams({ fullName: text });
+    meta?.setSearchParams({ fullName: text, page: 1 });
   }, 500);
 
   const debounceIdentification = useDebouncedCallback(
-    (text: string) => meta?.setSearchParams({ identification: text }),
+    (text: string) => meta?.setSearchParams({ identification: text, page: 1 }),
     500
   );
 
   const debounceBrandName = useDebouncedCallback(
-    (text: string) => meta?.setSearchParams({ brandName: text }),
+    (text: string) => meta?.setSearchParams({ brandName: text, page: 1 }),
     500
   );
 
   return (
     <div className="overflow-hidden rounded-lg border p-4">
       <div className="py-4 px-2">
-        <div className="flex gap-x-2 justify-between">
-          <div className="relative h-8 flex items-center w-1/5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 w-full">
+          <div className="relative flex items-center">
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
             <Input
               type="text"
               placeholder="Buscar por nombres"
-              className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+              className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
               value={fullName}
               onChange={(e) => {
                 setFullName(e.target.value);
@@ -117,12 +117,12 @@ export function TableIntroducers<TData, TValue>({
               }}
             />
           </div>
-          <div className="relative h-8 flex items-center w-1/5">
+          <div className="relative flex items-center">
             <IdCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
             <Input
               type="text"
               placeholder="Número de Identificación"
-              className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+              className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
               value={identification}
               onChange={(e) => {
                 setIdentification(e.target.value);
@@ -130,12 +130,12 @@ export function TableIntroducers<TData, TValue>({
               }}
             />
           </div>
-          <div className="relative h-8 flex items-center w-1/5">
+          <div className="relative flex items-center">
             <TagIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
             <Input
               type="text"
               placeholder="Buscar por marcas"
-              className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+              className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
               value={brandName}
               onChange={(e) => {
                 setBrandName(e.target.value);
@@ -149,8 +149,8 @@ export function TableIntroducers<TData, TValue>({
             }}
             value={meta?.searchParams.species[0] ?? "*"}
           >
-            <SelectTrigger className="w-1/5">
-              <Beef />
+            <SelectTrigger className="w-full h-10">
+              <Beef className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Selecciona una especie" />
             </SelectTrigger>
             <SelectContent>
@@ -169,8 +169,8 @@ export function TableIntroducers<TData, TValue>({
             onValueChange={(value) => meta?.setSearchParams({ status: value })}
             value={meta?.searchParams.status ?? "*"}
           >
-            <SelectTrigger className="w-1/5">
-              <Activity />
+            <SelectTrigger className="w-full h-10">
+              <Activity className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Seleccione un estado" />
             </SelectTrigger>
             <SelectContent>
