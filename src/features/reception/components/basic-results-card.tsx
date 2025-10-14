@@ -31,7 +31,7 @@ export const BasicResultsCard = ({
 		<div className={cn(defaultStyle, isSelected && selectedStyle, className)} onClick={onSelect}>
 			<div className='flex items-center justify-between'>
 				<div className={cn(leftBlockClass)}>
-					{isSelected ? <Badge variant='tertiary'>{title}</Badge> : <p className='font-medium'>{title}</p>}
+					{isSelected ? <Badge >{title}</Badge> : <p className='font-medium'>{title}</p>}
 					<p className='text-sm text-gray-600'>{paragraph}</p>
 				</div>
 
