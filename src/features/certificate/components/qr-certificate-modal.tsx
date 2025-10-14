@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 import 'ldrs/react/Ring.css';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface RenderSuccessButtonProps {
 	closeModal: () => void;
@@ -76,19 +75,27 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 							{qrData ? (
 								<>
 									<QrInfo qrData={qrData} />
-									<Label className={isInvalidOrigin ? 'text-red-500' : ''}>Procedencia</Label>
-									<Select name='origin' value={origin?.id.toString() ?? ''} onValueChange={value => setOrigin(value)}>
-										<SelectTrigger className={'w-full bg-secondary' + (isInvalidOrigin ? ' border-red-500' : '')}>
-											<SelectValue placeholder='Seleccione una procedencia' />
-										</SelectTrigger>
-										<SelectContent>
-											{origins.map(origin => (
-												<SelectItem key={origin.id} value={String(origin.id)}>
-													{origin.description}
-												</SelectItem>
+									<div className='space-y-2'>
+										<Label className={isInvalidOrigin ? 'text-red-500' : ''}>Procedencia</Label>
+										<div className='flex flex-col gap-2 p-3 bg-secondary rounded-md border'>
+											{origins.map(originOption => (
+												<label 
+													key={originOption.id} 
+													className='flex items-center gap-3 p-2 hover:bg-background rounded-md cursor-pointer transition-colors'
+												>
+													<input
+														type="radio"
+														name="origin"
+														value={originOption.id}
+														checked={origin?.id === originOption.id}
+														onChange={() => setOrigin(String(originOption.id))}
+														className='w-4 h-4 text-primary focus:ring-primary focus:ring-2'
+													/>
+													<span className='text-sm font-medium'>{originOption.description}</span>
+												</label>
 											))}
-										</SelectContent>
-									</Select>
+										</div>
+									</div>
 								</>
 							) : (
 								<div className='flex flex-col items-center space-y-4'>
