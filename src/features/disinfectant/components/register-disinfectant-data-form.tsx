@@ -1,6 +1,6 @@
 'use client';
 
-import { Car, Plus, Save, Search, XIcon } from 'lucide-react';
+import { Plus, Save, Search, XIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { SearchShippersInput, ShipperListCard, ShipperModal } from '@/features/shipping/components';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BasicResultsCard } from '@/features/reception/components';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function RegisterDisinfectantDataForm() {
 	const {
@@ -27,7 +26,6 @@ export function RegisterDisinfectantDataForm() {
 		showShippersList,
 		isSpeciesLoading,
 		isShippersLoading,
-		selectedCertificate,
 		addShipper,
 		addVehicle,
 		selectedCertificatePlate,

@@ -178,7 +178,7 @@ export function CarriersManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ transportType: Number(value) });
+                  setSearchParams({ transportType: Number(value), page: 1});
                 }}
                 defaultValue={"*"}
               >
@@ -207,7 +207,7 @@ export function CarriersManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ shippingStatus: value });
+                  setSearchParams({ shippingStatus: value, page: 1 });
                 }}
                 defaultValue={"*"}
               >
@@ -228,7 +228,7 @@ export function CarriersManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ vehicleStatus: value });
+                  setSearchParams({ vehicleStatus: value, page: 1 });
                 }}
                 defaultValue={"*"}
               >

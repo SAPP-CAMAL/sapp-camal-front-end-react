@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { forgotPasswordService } from "@/features/security/server/db/security.queries";
+import Link from "next/link";
 
 const formSchema = z.object({
   email: z.email(),
@@ -90,15 +91,23 @@ export default function ForgetPasswordPage() {
                     </FormItem>
                   )}
                 />
-                <Button
-                  disabled={form.formState.isSubmitting}
-                  type="submit"
-                  className="w-full"
-                >
-                  {form.formState.isSubmitting
-                    ? "Enviando..."
-                    : "Enviar enlace de restablecimiento"}
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/auth/login"
+                    className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5 bg-primary-foreground shadow-xs flex items-center justify-center"
+                  >
+                    Cancelar
+                  </Link>
+                  <Button
+                    disabled={form.formState.isSubmitting}
+                    type="submit"
+                    // className="w-full"
+                    >
+                    {form.formState.isSubmitting
+                      ? "Enviando..."
+                      : "Enviar"}
+                  </Button>
+                </div>
               </div>
             </form>
           </Form>
