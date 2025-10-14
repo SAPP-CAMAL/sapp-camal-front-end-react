@@ -701,10 +701,10 @@ export function ListAnimalsManagement() {
                         </TableCell>
                         <TableCell className="whitespace-normal text-center border-x">
                           <div className="grid grid-cols-3 gap-2 text-center">
-                            <div className="font-semibold text-blue-600">
+                            <div className="font-semibold text-pink-600">
                               {item.females || 0}
                             </div>
-                            <div className="border-l font-semibold text-pink-600 pl-2">
+                            <div className="border-l font-semibold text-blue-600 pl-2">
                               {item.males || 0}
                             </div>
                             <div className="border-l font-semibold text-primary pl-2">

@@ -204,8 +204,7 @@ export function TransferModal({
               
               <div className="p-4 md:p-6">
                 <h4 className="flex items-center gap-1 font-bold text-lg md:text-xl text-gray-900 mb-4">
-                  <Venus className="h-5 w-5 text-blue-600" />
-                  <Mars className="h-5 w-5 text-pink-600" />
+                  <span>Marca:</span>
                   {brand.nameBrand}
                 </h4>
                 
