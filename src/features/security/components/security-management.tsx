@@ -79,7 +79,7 @@ export function SecurityManagement() {
             header: "Roles",
             cell: ({ row }) => (
               <Badge variant={"outline"}>
-                {row.original.identificationType.description}
+                {row.original.identificationType?.description}
               </Badge>
             ),
           },
@@ -93,7 +93,7 @@ export function SecurityManagement() {
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"
                 }
-                variant={"outline"} 
+                variant={"outline"}
               >
                 {row.original.status ? "Activo" : "Inactivo"}
               </Badge>

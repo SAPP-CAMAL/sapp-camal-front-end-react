@@ -34,20 +34,21 @@ export type MetaPagination = {
 
 export type Person = {
     id: number;
-    firstName: string;
-    lastName: string;
-    identificationTypeId: number;
-    identification: string;
-    fullName: string;
-    code: string;
-    mobileNumber: string;
-    genderId: number;
-    address: string;
-    affiliationDate: string | Date;
-    gender: Gender;
-    identificationType: Gender;
-    status: boolean;
+    firstName?: string;
+    lastName?: string;
+    identificationTypeId?: number;
+    identification?: string;
+    fullName?: string;
+    code?: string;
+    mobileNumber?: string;
+    genderId?: number;
+    address?: string;
+    affiliationDate?: string | Date;
+    gender?: Gender;
+    identificationType?: Gender;
+    status?: boolean;
     isEmployee?: boolean;
+    email?:string
 }
 
 type Gender = {
