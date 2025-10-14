@@ -147,7 +147,7 @@ export function AddresseesManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ providenceId: Number(value) });
+                  setSearchParams({ providenceId: Number(value), page: 1 });
                 }}
                 defaultValue="*"
               >
