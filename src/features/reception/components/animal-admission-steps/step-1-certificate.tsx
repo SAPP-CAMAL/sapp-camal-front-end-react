@@ -81,7 +81,7 @@ export const Step1Certificate = () => {
 								// extraSuccessInfoCard={<InfoCard />}
 								// onSetQrData={qrData => handleSetSelectedCertificate(qrData)}
 								renderSuccessButton={({ qrData, closeModal }) => (
-									<Button className=' hover:bg-green-700' onClick={() => handleSuccessButton(qrData, closeModal)}>
+									<Button className=' hover:bg-primary hover:text-white' onClick={() => handleSuccessButton(qrData, closeModal)}>
 										<CircleCheckBig />
 										Finalizar
 									</Button>
@@ -206,18 +206,16 @@ export const Step1Certificate = () => {
 							paragraph={`${selectedShipper.identification} • ${selectedShipper.plate} • ${toCapitalize(selectedShipper.vehicleType)}`}
 							onRemove={isFromQR ? undefined : handleRemoveSelectedShipper}
 							editButton={
-								!isFromQR && (
-									<ShipperModal
-										shipperData={selectedShipper}
-										onSetShipper={shipper => handleSetSelectedShipper(shipper!)}
-										triggerButton={
-											<Button variant='ghost' >
-												<Edit />
-												Editar
-											</Button>
-										}
-									/>
-								)
+								<ShipperModal
+									shipperData={selectedShipper}
+									onSetShipper={shipper => handleSetSelectedShipper(shipper!)}
+									triggerButton={
+										<Button variant='ghost' >
+											<Edit />
+											Editar
+										</Button>
+									}
+								/>
 							}
 							isSelected
 						/>
@@ -264,6 +262,7 @@ export const Step1Certificate = () => {
 												personId: shipper.person.id,
 												firstName: shipper.person.firstName,
 												lastName: shipper.person.lastName,
+												fullName: shipper.person.fullName,
 												identification: shipper.person.identification,
 												identificationTypeId: shipper.person.identificationTypeId.toString(),
 												plate: shipper.vehicle.plate,
