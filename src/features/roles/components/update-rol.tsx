@@ -20,7 +20,11 @@ import { NewRoleFields } from "./role-form-fields";
 import { updateRoleService } from "../server/db/roles.service";
 import { getModulesWithMenusService } from "@/features/modules/server/db/modules.queries";
 import { NewRoleForm } from "./new-role";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function UpdateRol({ role }: { role: any }) {
   const queryClient = useQueryClient();
@@ -70,17 +74,24 @@ export function UpdateRol({ role }: { role: any }) {
 
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-                  <Button variant={"outline"}><SquarePenIcon /></Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent side='top' align='center' sideOffset={5} avoidCollisions>
-          	Editar Rol
-          </TooltipContent>
-        </Tooltip>
-      <DialogContent className="min-w-5xl">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant={"outline"}>
+              <SquarePenIcon />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          align="center"
+          sideOffset={5}
+          avoidCollisions
+        >
+          Editar Rol
+        </TooltipContent>
+      </Tooltip>
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[60vw]">
         <DialogHeader>
           <DialogTitle>Editar Rol del Sistema</DialogTitle>
           <DialogDescription>

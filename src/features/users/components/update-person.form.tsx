@@ -36,7 +36,7 @@ export function UpdatePerson({ person }: { person: any }) {
     slaughterhouse: false,
     address: person.address,
     positions: [],
-    status: person.status?.toString()
+    status: person.status?.toString(),
   };
   const form = useForm<any>({ defaultValues });
   const personId = person.id;
@@ -105,8 +105,8 @@ export function UpdatePerson({ person }: { person: any }) {
             address: data.address,
           }),
           ...(form.formState.dirtyFields.status && {
-            status: data.status === "true"
-          })
+            status: data.status === "true",
+          }),
         });
       }
 
@@ -163,7 +163,7 @@ export function UpdatePerson({ person }: { person: any }) {
           <EditIcon />
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-[80vw] min-h-[80vh]">
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[80vw]">
         <DialogHeader>
           <DialogTitle>Editar Persona</DialogTitle>
           <DialogDescription>

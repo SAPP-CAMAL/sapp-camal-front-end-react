@@ -66,7 +66,9 @@ export function NewUser() {
           Nuevo Usuario
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-4xl">
+      <DialogContent 
+      className="max-h-screen overflow-y-auto min-w-[60vw]"
+      >
         <DialogHeader>
           <DialogTitle>Nuevo Usuario</DialogTitle>
           <DialogDescription>

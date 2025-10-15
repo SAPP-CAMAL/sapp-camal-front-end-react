@@ -88,7 +88,9 @@ export function UpdateUserForm({ userId }: { userId: number }) {
           <Edit2Icon />
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-4xl">
+      <DialogContent 
+      className="max-h-screen overflow-y-auto min-w-[60vw]"
+      >
         <DialogHeader>
           <DialogTitle>Actualizar Usuario</DialogTitle>
           <DialogDescription>
