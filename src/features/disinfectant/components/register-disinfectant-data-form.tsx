@@ -97,7 +97,7 @@ export function RegisterDisinfectantDataForm() {
 
 					<ShipperDataCard
 						shipper={selectedShipper}
-						onSetShipper={shipper => form.setValue('shipper', shipper)}
+						onSetShipper={handleSetShipper}
 						addShipper={addShipper}
 						addVehicle={addVehicle}
 					/>
@@ -124,7 +124,7 @@ export function RegisterDisinfectantDataForm() {
 					{isShippersLoading && <BasicResultsCard className='text-sm' title='Buscando transportistas...' />}
 
 					{/* Shippers list */}
-					{showShippersList && <ShipperListCard onSelectShipper={shipper => form.setValue('shipper', shipper)} shippers={shippers} />}
+					{showShippersList && <ShipperListCard onSelectShipper={handleSetShipper} shippers={shippers} />}
 
 					{showCreateShippingFromSomeFields && (
 						<BasicResultsCard className='text-sm' title='No se encontraron transportistas con el nombre, identificación o placa proporcionados.' />
