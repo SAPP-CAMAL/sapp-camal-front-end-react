@@ -67,7 +67,7 @@ export const RegisterDisinfectantPageHeader = () => {
 			<div className='flex justify-end items-center gap-2'>
 				{/* Remove certificate button */}
 				{selectedCertificate && (
-					<Button variant='destructive' onClick={() => handleRemoveSelectedCertificate()}>
+					<Button variant='ghost' onClick={() => handleRemoveSelectedCertificate()}>
 						<FileX />
 						Quitar Certificado Escaneado
 					</Button>
