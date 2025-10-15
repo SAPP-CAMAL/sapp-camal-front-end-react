@@ -30,6 +30,7 @@ export function RegisterDisinfectantDataForm() {
 		addVehicle,
 		selectedCertificatePlate,
 		showCreateShippingFromSomeFields,
+		handleSetShipper,
 		handleSearchFields,
 		handleRemoveSelected,
 		handleRegisterDisinfectantData,
@@ -48,11 +49,6 @@ export function RegisterDisinfectantDataForm() {
 								Cancelar
 							</Button>
 						)}
-
-						<Button type='submit' disabled={form.formState.isSubmitting}>
-							<Save />
-							{btnValue}
-						</Button>
 					</div>
 				</div>
 
@@ -89,7 +85,7 @@ export function RegisterDisinfectantDataForm() {
 								firstName: form.watch('fullName') || '',
 								identification: form.watch('identification') || '',
 							}}
-							onSetShipper={shipper => form.setValue('shipper', shipper)}
+							onSetShipper={handleSetShipper}
 							triggerButton={
 								<Button>
 									<Plus />
@@ -279,6 +275,13 @@ export function RegisterDisinfectantDataForm() {
 							</FormItem>
 						)}
 					/>
+				</div>
+
+				<div className='px-2 py-4 flex justify-end'>
+					<Button type='submit' disabled={form.formState.isSubmitting}>
+						<Save />
+						{btnValue}
+					</Button>
 				</div>
 			</form>
 		</Form>
