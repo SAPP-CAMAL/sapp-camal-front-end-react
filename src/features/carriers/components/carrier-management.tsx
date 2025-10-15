@@ -337,19 +337,10 @@ export function CarriersManagement({}) {
               const [open, setOpen] = useState(false);
               return (
                 <div className="flex items-center space-x-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Ellipsis className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setOpen(true)}>
-                        <EditIcon className="h-4 w-4 mr-2" />
-                        Editar Transportista
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button variant={"outline"} onClick={() => setOpen(true)}>
+                    <EditIcon className="h-4 w-4" />
+                    Editar
+                  </Button>
                   <NewCarrier
                     shipping={row.original}
                     isUpdate={true}
