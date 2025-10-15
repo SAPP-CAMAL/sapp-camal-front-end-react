@@ -62,6 +62,7 @@ interface NewCarrierProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 export function NewCarrier({
@@ -70,6 +71,7 @@ export function NewCarrier({
   trigger,
   onOpenChange,
   open,
+  onSuccess,
 }: NewCarrierProps) {
   const catalogueTransportsType = useCatalogue("TTR");
   const catalogueVehiclesType = useCatalogue("TVH");
@@ -195,6 +197,7 @@ export function NewCarrier({
       setVehiclesList([]);
       onOpenChange?.(false);
       form.setValue("open", false);
+      onSuccess?.();
     } catch (error: any) {
       let errorMessage = "Error al actualizar";
       if (error.response?.data?.message) {

@@ -187,7 +187,7 @@ export function CreateVehicleForm({
                 required
                 disabled={isSubmitting}
               >
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 w-full">
                   <SelectValue placeholder="Seleccione el tipo" />
                 </SelectTrigger>
                 <SelectContent>
