@@ -23,7 +23,11 @@ import {
   updateEmployeeService,
 } from "@/features/employees/server/db/employees.services";
 import { useSearchParams } from "next/navigation";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toCapitalize } from "@/lib/toCapitalize";
 
 export function UpdatePerson({ person }: { person: any }) {
@@ -33,15 +37,15 @@ export function UpdatePerson({ person }: { person: any }) {
   const defaultValues = {
     open: false,
     identificationType: String(person.identificationType.id),
-    identification: person.identification ?? '',
+    identification: person.identification ?? "",
     genderId: String(person.genderId),
-    mobileNumber: person.mobileNumber ?? '',
-    firstName: toCapitalize(person.firstName ?? '', true),
-    lastName: toCapitalize(person.lastName ?? '', true),
+    mobileNumber: person.mobileNumber ?? "",
+    firstName: toCapitalize(person.firstName ?? "", true),
+    lastName: toCapitalize(person.lastName ?? "", true),
     slaughterhouse: false,
-    address: person.address ?? '',
+    address: person.address ?? "",
     positions: [],
-    status: person.status?.toString() ?? '',
+    status: person.status?.toString() ?? "",
   };
   const form = useForm<any>({ defaultValues });
   const personId = person.id;
@@ -115,7 +119,6 @@ export function UpdatePerson({ person }: { person: any }) {
         });
       }
 
-
       if (form.formState.dirtyFields.positions) {
         await Promise.all(
           data.positions.map((position: any) => {
@@ -158,26 +161,31 @@ export function UpdatePerson({ person }: { person: any }) {
     } catch (error: any) {
       console.log({ error });
       const { data } = await error.response.json();
-      toast.error(data || 'Ocurrió un error al actualizar la persona');
+      toast.error(data || "Ocurrió un error al actualizar la persona");
     }
   };
 
   return (
-  <Dialog open={open} onOpenChange={(open) => form.setValue("open", open)}>
+    <Dialog open={open} onOpenChange={(open) => form.setValue("open", open)}>
       <Tooltip>
-				<TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <Button variant={"outline"}>
-                <EditIcon />
-              </Button>
-            </DialogTrigger>
-				</TooltipTrigger>
-				<TooltipContent side='top' align='center' sideOffset={5} avoidCollisions>
-					Editar persona
-				</TooltipContent>
-			</Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant={"outline"}>
+              <EditIcon />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          align="center"
+          sideOffset={5}
+          avoidCollisions
+        >
+          Editar persona
+        </TooltipContent>
+      </Tooltip>
 
-      <DialogContent className="min-w-[80vw] min-h-[80vh]">
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[80vw]">
         <DialogHeader>
           <DialogTitle>Editar Persona</DialogTitle>
           <DialogDescription>

@@ -182,14 +182,18 @@ export const useRegisterDisinfectantData = () => {
 
 			form.reset({ ...defaultValues, admissionApplicationTime: getCurrentTime() });
 			form.setValue('id', undefined);
+			form.setValue('shipper', undefined);
 			form.clearErrors();
 
+			// Reset search params
+			setSearchParams(defaultSearchParams);
 			handleSearchFields('plate', '');
 			handleSearchFields('fullName', '');
 			handleSearchFields('identification', '');
 
 			handleRemoveSelectedCertificate();
 			handleRemoveSelectedFormData();
+			handleRemoveDailyDisinfectionRegister();
 
 			await queryClient.invalidateQueries({ queryKey: [DETAIL_REGISTER_VEHICLE_TAG] });
 		} catch (error: any) {
@@ -199,8 +203,19 @@ export const useRegisterDisinfectantData = () => {
 	};
 
 	const handleRemoveSelected = () => {
+		// Reset form to default values
+		form.reset({ ...defaultValues, admissionApplicationTime: getCurrentTime() });
+		form.setValue('id', undefined);
+		form.setValue('shipper', undefined);
+		form.clearErrors();
+
+		// Reset search params
+		setSearchParams(defaultSearchParams);
+
+		// Remove selected data from context
 		handleRemoveSelectedFormData();
 		handleRemoveDailyDisinfectionRegister();
+		handleRemoveSelectedCertificate();
 	};
 
 	const handleSetShipper = async (shipper?: ShipperBasicData) => {

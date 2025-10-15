@@ -32,7 +32,7 @@ export function NewPerson() {
     slaughterhouse: false,
     positions: [],
     address: "",
-    status: "true"
+    status: "true",
   };
 
   const form = useForm({ defaultValues });
@@ -50,7 +50,7 @@ export function NewPerson() {
         address: data.address,
         affiliationDate: new Date(),
         fullName: data.lastName + " " + data.firstName,
-        status: data.status === "true"
+        status: data.status === "true",
       });
 
       const employeeMap = data?.positions.map((position: any) => {
@@ -89,7 +89,7 @@ export function NewPerson() {
           Nueva Persona
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-2xl">
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[80vw]">
         <DialogHeader>
           <DialogTitle>Nueva Persona</DialogTitle>
           <DialogDescription>

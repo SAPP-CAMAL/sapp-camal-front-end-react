@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ACCORDION_NAMES } from '../../constants';
 import { useStep3Transport } from '../../hooks';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { AccordionContent, AccordionItem } from '@/components/ui/accordion';
 import { BasicAnimalAdmissionAccordionHeader } from '../basic-animal-admission-accordion-header';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -123,6 +124,25 @@ export const Step3Transport = () => {
 							)}
 						/>
 
+						{/* Observaciones */}
+						<FormField
+							control={form.control}
+							name='description'
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Observaciones (opcional)</FormLabel>
+									<FormControl>
+										<Textarea
+											placeholder='Ingrese observaciones adicionales sobre las condiciones de transporte...'
+											className='min-h-[100px] resize-none'
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
 						<div className='flex items-center justify-end'>
 							<ConfirmationDialog
 								title={`¿Esta seguro que desea finalizar el ingreso de animales?`}
@@ -131,7 +151,7 @@ export const Step3Transport = () => {
 								triggerBtn={
 									<Button
 										variant='ghost'
-										className='bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white'
+										className='bg-primary hover:bg-primary hover:text-white text-white'
 										type='button'
 										disabled={!form.formState.isValid || form.formState.isSubmitting}
 									>
@@ -146,7 +166,7 @@ export const Step3Transport = () => {
 									</Button>
 								}
 								confirmBtn={
-									<Button variant='ghost' className='bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white' size='lg'>
+									<Button variant='ghost' className='bg-primary hover:bg-primary hover:text-white text-white' size='lg'>
 										<Check />
 										Si
 									</Button>

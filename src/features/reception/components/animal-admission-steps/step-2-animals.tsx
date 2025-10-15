@@ -1,4 +1,4 @@
-import { Info, Plus } from 'lucide-react';
+import { AlertTriangle, ArrowBigRightDash, Info, Plus } from 'lucide-react';
 import { AccordionContent, AccordionItem } from '@/components/ui/accordion';
 import { BasicAnimalAdmissionAccordionHeader } from '../basic-animal-admission-accordion-header';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { BasicAnimalAdmissionInfoCard } from '../basic-animal-admission-info-car
 import { useStep2Animals } from '../../hooks/use-step-2-animals';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useState, useEffect } from 'react';
 import { toCapitalize } from '@/lib/toCapitalize';
 
 export const Step2Animals = () => {
@@ -27,6 +29,58 @@ export const Step2Animals = () => {
 		handleNextStep3,
 	} = useStep2Animals();
 
+	const [showExitDialog, setShowExitDialog] = useState(false);
+	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+	const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+
+	// Detectar cambios sin guardar (solo formularios abiertos)
+	useEffect(() => {
+		const hasOpenForms = animalAdmissionList.some(admission => admission.isOpen);
+		setHasUnsavedChanges(hasOpenForms);
+	}, [animalAdmissionList]);
+
+	// Proteger contra salida de la página sin guardar
+	useEffect(() => {
+		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+			if (hasUnsavedChanges && step2Accordion.isOpen) {
+				e.preventDefault();
+				e.returnValue = '';
+			}
+		};
+
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+	}, [hasUnsavedChanges, step2Accordion.isOpen]);
+
+	const handleNavigationAttempt = (navigationFn: () => void) => {
+		if (hasUnsavedChanges) {
+			setPendingNavigation(() => navigationFn);
+			setShowExitDialog(true);
+		} else {
+			navigationFn();
+		}
+	};
+
+	const handleConfirmExit = () => {
+		if (pendingNavigation) {
+			pendingNavigation();
+		}
+		setShowExitDialog(false);
+		setPendingNavigation(null);
+	};
+
+	const handleCancelExit = () => {
+		setShowExitDialog(false);
+		setPendingNavigation(null);
+	};
+
+	const handleNextStep3WithValidation = () => {
+		if (totalAnimals === 0) {
+			return; // El botón estará deshabilitado si no hay animales
+		}
+		handleNextStep3();
+	};
+
 	// console.log({selectedSpecie})
 	return (
 		<AccordionItem value={ACCORDION_NAMES.STEP_2} className='border rounded-lg'>
@@ -38,7 +92,13 @@ export const Step2Animals = () => {
 				isDisabledMessage='Debe completar el paso 1 para continuar'
 				variant={step2Accordion.state === 'completed' ? 'success' : 'default'}
 				subTitle={`Animales registrados ${totalAnimals} de ${selectedCertificate?.quantity || 0}`}
-				onClick={handleChangeStep2}
+				onClick={() => {
+					if (step2Accordion.isOpen) {
+						handleNavigationAttempt(handleChangeStep2);
+					} else {
+						handleChangeStep2();
+					}
+				}}
 			/>
 
 			<AccordionContent className='p-4 space-y-4'>
@@ -120,9 +180,25 @@ export const Step2Animals = () => {
 				</Card>
 
 				<div className='flex justify-end gap-2'>
-					<Button variant='outline' onClick={handleNextStep3}>
-						Continuar con transporte
-					</Button>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<span>
+								<Button 
+									variant='ghost' 
+									onClick={handleNextStep3WithValidation}
+									disabled={totalAnimals === 0}
+									className={totalAnimals === 0 ? ' hover:bg-primary hover:text-white text-primary cursor-not-allowed opacity-50' : ' hover:bg-primary hover:text-white text-primary'}
+								><ArrowBigRightDash />
+									Continuar con transporte
+								</Button>
+							</span>
+						</TooltipTrigger>
+						{totalAnimals === 0 && (
+							<TooltipContent side='top' align='end'>
+								Debe registrar al menos un animal para continuar
+							</TooltipContent>
+						)}
+					</Tooltip>
 					{/* <ConfirmationDialog
 						title={`¿Esta seguro que desea finalizar el ingreso de animales?`}
 						description={`Esta acción completará el ingreso de los animales y se reiniciará el formulario para un nuevo ingreso.`}
@@ -153,6 +229,29 @@ export const Step2Animals = () => {
 					/> */}
 				</div>
 			</AccordionContent>
+
+			{/* Dialog de confirmación al salir sin guardar */}
+			<Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle className='flex items-center gap-2'>
+							<AlertTriangle className='w-5 h-5 text-yellow-500' />
+							¿Salir sin guardar?
+						</DialogTitle>
+						<DialogDescription>
+							Tienes cambios sin guardar en el ingreso de animales. Si sales ahora, perderás todos los cambios realizados.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter className='gap-2'>
+						<Button variant='outline' onClick={handleCancelExit}>
+							Cancelar
+						</Button>
+						<Button variant='destructive' onClick={handleConfirmExit}>
+							Salir sin guardar
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</AccordionItem>
 	);
 };
