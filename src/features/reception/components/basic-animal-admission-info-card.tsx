@@ -30,7 +30,7 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 						<Edit className='h-4 w-4' />
 						{animalAdmissionItem.isRetrieveFormData ? 'Cargando...' : 'Editar'}
 					</Button>
-					<Button variant='outline' size='sm' className='bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white'>
+					<Button variant='outline' size='sm' className='bg-primary hover:bg-primary hover:text-white text-white'>
 						<FileText className='h-4 w-4' />
 						Ticket
 					</Button>
@@ -60,7 +60,7 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 							</Button>
 						}
 						confirmBtn={
-							<Button variant='ghost' className=' hover:bg-emerald-600 hover:text-' size='lg'>
+							<Button variant='ghost' className=' hover:bg-primary hover:text-white' size='lg'>
 								<Check />
 								Si
 							</Button>

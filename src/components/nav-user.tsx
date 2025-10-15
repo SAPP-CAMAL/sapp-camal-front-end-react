@@ -85,7 +85,7 @@ export function NavUser({ user }: { user: LoginResponse }) {
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            {/* <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />
@@ -107,7 +107,7 @@ export function NavUser({ user }: { user: LoginResponse }) {
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator /> */}
             <DropdownMenuItem
               onClick={async () => {
                 await logoutAction();

@@ -41,7 +41,7 @@ export const BasicAnimalAdmissionAccordionHeader = ({
 			>
 				<div className={'flex items-center gap-4'}>
 					{variant === 'success' ? (
-						<div className='w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors bg-emerald-500 text-white'>
+						<div className='w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors bg-primary text-white'>
 							<Check />
 						</div>
 					) : (

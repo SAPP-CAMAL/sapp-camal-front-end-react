@@ -64,7 +64,7 @@ export function IntroductorManagement() {
 						page: 1,
 						limit: 10,
 						name: 'INTRODUCTOR',
-						status: true,
+						status: 'true',
 					}),
 				]);
 				setSpecies(speciesResp?.data?.items || speciesResp?.data || []);

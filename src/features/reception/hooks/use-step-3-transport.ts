@@ -13,6 +13,7 @@ export type AnimalTransportForm = {
 	bedTypeId?: number;
 	arrivalConditionId?: number;
 	ownMedium?: 'si' | 'no';
+	description?: string;
 };
 
 const defaultValues: AnimalTransportForm = {};
@@ -43,6 +44,7 @@ export const useStep3Transport = () => {
 			idBedType: data.bedTypeId ?? NaN,
 			idConditionsArrival: data.arrivalConditionId ?? NaN,
 			ownMedium: data.ownMedium === 'si',
+			description: data.description || undefined,
 			status: true,
 		};
 

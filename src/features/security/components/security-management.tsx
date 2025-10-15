@@ -66,7 +66,7 @@ export function SecurityManagement() {
                 </Avatar>
                 <div>
                   <p className="font-semibold">
-                    {toCapitalize(row.original.fullName, true)}
+                    {toCapitalize(row.original.fullName ?? '', true)}
                   </p>
                   {/* <p className="text-gray-500">{row.original?.email}</p> */}
                 </div>

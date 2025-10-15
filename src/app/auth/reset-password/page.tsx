@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Suspense } from "react";
 
 import {
   Form,
@@ -26,15 +27,27 @@ import { useSearchParams } from "next/navigation";
 import { resetPasswordService } from "@/features/security/server/db/security.queries";
 import { useRouter } from "next/navigation";
 
-const formSchema = z.object({
-  password: z.string().min(8).max(128),
-  confirmPassword: z.string().min(8).max(128),
-});
+const formSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "La contraseña debe tener al menos 8 caracteres")
+      .max(128, "La contraseña no puede exceder 128 caracteres"),
+    confirmPassword: z
+      .string()
+      .min(8, "La contraseña debe tener al menos 8 caracteres")
+      .max(128, "La contraseña no puede exceder 128 caracteres"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  console.log(searchParams);
+  const token = searchParams.get("token");
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,13 +56,39 @@ export default function ResetPasswordPage() {
     },
   });
 
+  if (!token) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center px-4">
+        <Card className="mx-auto w-96">
+          <CardHeader>
+            <CardTitle className="text-2xl text-red-600">
+              Token Inválido
+            </CardTitle>
+            <CardDescription>
+              El enlace de restablecimiento de contraseña es inválido o ha
+              expirado.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              onClick={() => router.push("/auth/forgot-password")}
+              className="w-full"
+            >
+              Solicitar nuevo enlace
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       console.log(values);
-
-      const token = searchParams.get("token");
-
-      if (!token) return;
+      if (!token) {
+      toast.error("No se encontró token");
+      return;
+    }
 
       await resetPasswordService({
         token,
@@ -124,8 +163,14 @@ export default function ResetPasswordPage() {
                   )}
                 />
 
-                <Button type="submit" className="w-full">
-                  Restablecer Contraseña
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={form.formState.isSubmitting}
+                >
+                  {form.formState.isSubmitting
+                    ? "Restableciendo..."
+                    : "Restablecer Contraseña"}
                 </Button>
               </div>
             </form>
@@ -133,5 +178,32 @@ export default function ResetPasswordPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Componente principal con Suspense
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center px-4">
+          <Card className="mx-auto w-96 animate-pulse">
+            <CardHeader>
+              <div className="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="h-10 bg-gray-200 rounded"></div>
+                <div className="h-10 bg-gray-200 rounded"></div>
+                <div className="h-10 bg-gray-200 rounded"></div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

@@ -34,6 +34,7 @@ export interface ShipperFormValues {
 
 	/** The type of transport. */
 	transportType: string;
+	fullName: string;
 }
 
 /** Use all field to create new shipper. */
