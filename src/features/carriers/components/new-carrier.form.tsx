@@ -45,7 +45,10 @@ import {
 import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 import { capitalizeText } from "@/lib/utils";
 import { getDetailVehicleByTransportIdService } from "@/features/vehicles/server/db/vehicle-detail.service";
-import { TransportType, Vehicle } from "@/features/vehicles/domain/vehicle-detail-service";
+import {
+  TransportType,
+  Vehicle,
+} from "@/features/vehicles/domain/vehicle-detail-service";
 import {
   createShippingService,
   updateShippingService,
@@ -69,6 +72,7 @@ export function NewCarrier({
   open,
 }: NewCarrierProps) {
   const catalogueTransportsType = useCatalogue("TTR");
+  const catalogueVehiclesType = useCatalogue("TVH");
   const [selectedTransportIds, setSelectedTransportIds] = useState<number[]>(
     []
   );
@@ -615,8 +619,10 @@ export function NewCarrier({
                                 Vehículos disponibles para{" "}
                                 {getTransportName(transportId).toLowerCase()}:
                               </span>{" "}
-                              {vehicleTypes[transportId]
-                                .map((vehicle) => toCapitalize(vehicle.name ?? '', true))
+                              {catalogueVehiclesType.data?.data
+                                .map((vehicle) =>
+                                  toCapitalize(vehicle.name ?? "", true)
+                                )
                                 .join(", ")}
                             </Label>
                           ) : null}
@@ -628,7 +634,7 @@ export function NewCarrier({
                   {showCreateVehicle && (
                     <CreateVehicleForm
                       onCancel={handleCancelVehicle}
-                      vehicleTypes={getAllVehicleTypes()}
+                      vehicleTypes={catalogueVehiclesType.data?.data ?? []}
                       onGetVehicleById={onSubmit}
                     />
                   )}

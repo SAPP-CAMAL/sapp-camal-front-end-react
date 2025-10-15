@@ -124,7 +124,7 @@ export default function NewVehicleForm({
       } else {
         await createVehicleService({
           vehicleDetailId: Number(vehicleData.vehicleTypeId),
-          plate: vehicleData.plate.toUpperCase(),
+          plate: vehicleData.plate.toUpperCase().replace(/-/g, ""),
           brand: vehicleData.brand.trim(),
           model: vehicleData.model.trim(),
           color: vehicleData.color.trim(),
@@ -230,7 +230,7 @@ export default function NewVehicleForm({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="plate" className="text-sm font-medium">
-                    Plate <span className="text-red-500">*</span>
+                    Placa <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="plate"
