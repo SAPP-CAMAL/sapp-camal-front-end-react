@@ -27,16 +27,17 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
 		accessorKey: 'registerVehicle.shipping.person.fullName',
 		header: 'Chofer',
-		cell: ({ row }) => toCapitalize(row.original.registerVehicle.shipping.person.fullName ?? '', true),
+		cell: ({ row }) => toCapitalize(row.original.registerVehicle?.shipping?.person?.fullName ?? '', true),
 	},
 	{
 		accessorKey: 'registerVehicle.shipping.vehicle.plate',
 		header: 'Placa',
+		cell: ({ row }) => row.original.registerVehicle?.shipping?.vehicle?.plate ?? '',
 	},
 	{
 		accessorKey: 'registerVehicle.shipping.vehicle.vehicleDetail.vehicleType.name',
 		header: 'Tipo Vehículo',
-		cell: ({ row }) => toCapitalize(row.original.registerVehicle.shipping.vehicle.vehicleDetail.vehicleType.name ?? '', true),
+		cell: ({ row }) => toCapitalize(row.original.registerVehicle?.shipping?.vehicle?.vehicleDetail?.vehicleType?.name ?? '', true),
 	},
 	{
 		accessorKey: 'species.name',
