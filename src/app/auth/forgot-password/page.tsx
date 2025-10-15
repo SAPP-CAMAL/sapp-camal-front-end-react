@@ -26,7 +26,7 @@ import { forgotPasswordService } from "@/features/security/server/db/security.qu
 import Link from "next/link";
 
 const formSchema = z.object({
-  email: z.email(),
+  email: z.email('Por favor, introduzca un correo electrónico válido.'),
 });
 
 export default function ForgetPasswordPage() {

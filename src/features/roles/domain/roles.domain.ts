@@ -8,8 +8,8 @@ export type CreateRoleBody = {
 export type SearchParamsRole = Partial<CreateRoleBody> & {
     page?: number
     limit?: number
-    status?: boolean,
-    isLogin?: boolean
+    status?: string,
+    isLogin?: string
 }
 
 export type Role = {
