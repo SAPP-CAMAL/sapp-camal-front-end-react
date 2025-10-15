@@ -41,15 +41,6 @@ export function RegisterDisinfectantDataForm() {
 			<form onSubmit={form.handleSubmit(handleRegisterDisinfectantData)}>
 				<div className='px-2 py-4 flex justify-between items-center'>
 					<h2 className='text-lg'>Datos de Desinfección</h2>
-
-					<div className='space-x-2'>
-						{isEditing && (
-							<Button type='button' variant='outline' onClick={handleRemoveSelected}>
-								<XIcon />
-								Cancelar
-							</Button>
-						)}
-					</div>
 				</div>
 
 				{/* Is Editing */}
@@ -95,12 +86,7 @@ export function RegisterDisinfectantDataForm() {
 						/>
 					</div>
 
-					<ShipperDataCard
-						shipper={selectedShipper}
-						onSetShipper={handleSetShipper}
-						addShipper={addShipper}
-						addVehicle={addVehicle}
-					/>
+					<ShipperDataCard shipper={selectedShipper} onSetShipper={handleSetShipper} addShipper={addShipper} addVehicle={addVehicle} />
 
 					{/* Search shippers input */}
 					{!selectedShipper && (
@@ -278,10 +264,18 @@ export function RegisterDisinfectantDataForm() {
 				</div>
 
 				<div className='px-2 py-4 flex justify-end'>
-					<Button type='submit' disabled={form.formState.isSubmitting}>
-						<Save />
-						{btnValue}
-					</Button>
+					<div className='space-x-2'>
+						{isEditing && (
+							<Button type='button' variant='outline' onClick={handleRemoveSelected}>
+								<XIcon />
+								Cancelar
+							</Button>
+						)}
+						<Button type='submit' disabled={form.formState.isSubmitting}>
+							<Save />
+							{btnValue}
+						</Button>
+					</div>
 				</div>
 			</form>
 		</Form>

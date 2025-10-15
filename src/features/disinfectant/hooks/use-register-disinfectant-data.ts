@@ -9,7 +9,11 @@ import { useShippersList } from '@/features/shipping/hooks';
 import { DailyRegisterFormData } from '@/features/disinfectant/domain';
 import { CreateDetailRegisterVehicle, UpdateDetailRegisterVehicle } from '@/features/vehicles/domain';
 import { useDailyDisinfectionRegisterContext } from './use-daily-disinfection-register-context';
-import { createRegisterVehicleService, updateRegisterVehicleService } from '@/features/vehicles/server/db/detail-register-vehicle.service';
+import {
+	createRegisterVehicleService,
+	updateDetailRegisterVehicleService,
+	updateRegisterVehicleService,
+} from '@/features/vehicles/server/db/detail-register-vehicle.service';
 import { DETAIL_REGISTER_VEHICLE_TAG } from '@/features/vehicles/constants';
 import { updateCertificateService } from '@/features/certificate/server/db/certificate.service';
 import { ShipperBasicData } from '@/features/shipping/domain';
@@ -83,6 +87,7 @@ export const useRegisterDisinfectantData = () => {
 
 		form.reset({
 			id: dailyDisinfectionRegister?.id,
+			idRegisterVehicle: dailyDisinfectionRegister?.idRegisterVehicle,
 			dosage: dailyDisinfectionRegister?.dosage ?? '',
 			disinfectant: dailyDisinfectionRegister?.disinfectant.id.toString() ?? '',
 			admissionApplicationTime: dailyDisinfectionRegister?.timeStar ?? getCurrentTime(),
@@ -161,7 +166,8 @@ export const useRegisterDisinfectantData = () => {
 					...(timeEnd && { timeEnd }),
 				};
 
-				await updateRegisterVehicleService(data.id, requestData);
+				if (data.idRegisterVehicle) await updateRegisterVehicleService(data.idRegisterVehicle, { idShipping: shipper.id });
+				await updateDetailRegisterVehicleService(data.id, requestData);
 
 				toast.success('Registro actualizado exitosamente');
 			} else {
