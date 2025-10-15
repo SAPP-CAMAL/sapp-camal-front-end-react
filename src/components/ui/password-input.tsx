@@ -14,7 +14,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, InputProps>(
       props.value === "" || props.value === undefined || props.disabled;
 
     return (
-      <div className="relative">
+      <div className="flex items-center justify-between gap-2">
         <Input
           type={showPassword ? "text" : "password"}
           className={cn("hide-password-toggle pr-10", className)}
@@ -25,7 +25,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, InputProps>(
           type="button"
           variant="ghost"
           size="sm"
-          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+          className="h-full right-0 top-0 px-3 py-2 hover:bg-transparent"
           onClick={() => setShowPassword((prev) => !prev)}
           disabled={disabled}
         >
@@ -35,7 +35,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, InputProps>(
             <EyeOffIcon className="h-4 w-4" aria-hidden="true" />
           )}
           <span className="sr-only">
-            {showPassword ? "Hide password" : "Show password"}
+            {showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
           </span>
         </Button>
 

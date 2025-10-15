@@ -1,12 +1,11 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { ShieldIcon } from "lucide-react";
 import { TableRoles } from "./table-roles";
 import { useQuery } from "@tanstack/react-query";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { getRolesService } from "./server/db/roles.service";
-import { FileTextIcon, ShieldIcon, SquarePenIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { NewRol } from "./components/new-role";
 import { UpdateRol } from "./components/update-rol";
 import { toCapitalize } from "@/lib/toCapitalize";
@@ -32,7 +31,7 @@ export function RolesManagement() {
         limit: searchParams.limit,
         ...(!!searchParams.name && { name: searchParams.name }),
         ...(searchParams.status !== "*" && {
-          status: Boolean(searchParams.status),
+          status: searchParams.status,
         }),
       }),
   });
