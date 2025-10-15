@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useDailyDisinfectionRegisterContext } from '../hooks/use-daily-disinfection-register-context';
 import { RegisterVehicleTimeOut } from './register-vehicle-time-out';
+import { toCapitalize } from '../../../lib/toCapitalize';
 
 const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
@@ -26,18 +27,22 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
 		accessorKey: 'registerVehicle.shipping.person.fullName',
 		header: 'Chofer',
+		cell: ({ row }) => toCapitalize(row.original.registerVehicle?.shipping?.person?.fullName ?? '', true),
 	},
 	{
 		accessorKey: 'registerVehicle.shipping.vehicle.plate',
 		header: 'Placa',
+		cell: ({ row }) => row.original.registerVehicle?.shipping?.vehicle?.plate ?? '',
 	},
 	{
 		accessorKey: 'registerVehicle.shipping.vehicle.vehicleDetail.vehicleType.name',
 		header: 'Tipo Vehículo',
+		cell: ({ row }) => toCapitalize(row.original.registerVehicle?.shipping?.vehicle?.vehicleDetail?.vehicleType?.name ?? '', true),
 	},
 	{
 		accessorKey: 'species.name',
 		header: 'Especies',
+		cell: ({ row }) => toCapitalize(row.original.species.name ?? '', true),
 	},
 	{
 		accessorKey: 'disinfectant.name',
@@ -99,7 +104,7 @@ export function DailyDisinfectionLogTable() {
 				<div className='flex items-center gap-3'>
 					<span className='whitespace-nowrap'>Filtrar por fecha</span>
 					<Input value={searchParams.date} type='date' onChange={e => setSearchParams({ date: e.target.value })} />
-					<Button >
+					<Button>
 						<FileText />
 						Generar Reporte
 					</Button>
@@ -153,7 +158,7 @@ export function DailyDisinfectionLogTable() {
 					Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()} páginas (filtrado por fecha: {searchParams.date})
 				</span>
 
-				<Button variant='outline' disabled={!table.getCanPreviousPage()} onClick={() => table.nextPage()}>
+				<Button variant='outline' disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
 					Siguiente
 					<ChevronRight className='w-4 h-4' />
 				</Button>

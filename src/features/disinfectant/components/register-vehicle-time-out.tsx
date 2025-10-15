@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { setRegisterVehicleTimeOut } from '@/features/vehicles/server/db/detail-register-vehicle.service';
 import { useQueryClient } from '@tanstack/react-query';
 import { DETAIL_REGISTER_VEHICLE_TAG } from '@/features/vehicles/constants';
+import { Button } from '@/components/ui/button';
 
 export const RegisterVehicleTimeOut = ({ id }: { id: number | string }) => {
 	const queryClient = useQueryClient();
@@ -29,13 +30,13 @@ export const RegisterVehicleTimeOut = ({ id }: { id: number | string }) => {
 		<div className='flex items-center gap-2'>
 			<Tooltip>
 				<TooltipTrigger asChild>
-					<button
-						className='flex items-center justify-center w-6 h-6 bg-green-600 hover:bg-green-700 text-white rounded transition-colors duration-200'
+					<Button
+						className='flex items-center justify-center w-6 h-6 text-white bg-primary rounded transition-colors duration-200'
 						type='button'
 						onClick={handleRegisterTimeOut}
 					>
-						<Save className='w-3 h-3' />
-					</button>
+						<Save className='w-3 h-3 ' />
+					</Button>
 				</TooltipTrigger>
 				<TooltipContent side='top' align='center'>
 					Registrar hora de salida

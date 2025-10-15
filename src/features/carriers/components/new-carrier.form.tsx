@@ -45,7 +45,10 @@ import {
 import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 import { capitalizeText } from "@/lib/utils";
 import { getDetailVehicleByTransportIdService } from "@/features/vehicles/server/db/vehicle-detail.service";
-import { TransportType, Vehicle } from "@/features/vehicles/domain/vehicle-detail-service";
+import {
+  TransportType,
+  Vehicle,
+} from "@/features/vehicles/domain/vehicle-detail-service";
 import {
   createShippingService,
   updateShippingService,
@@ -59,6 +62,7 @@ interface NewCarrierProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 export function NewCarrier({
@@ -67,8 +71,10 @@ export function NewCarrier({
   trigger,
   onOpenChange,
   open,
+  onSuccess,
 }: NewCarrierProps) {
   const catalogueTransportsType = useCatalogue("TTR");
+  const catalogueVehiclesType = useCatalogue("TVH");
   const [selectedTransportIds, setSelectedTransportIds] = useState<number[]>(
     []
   );
@@ -191,6 +197,7 @@ export function NewCarrier({
       setVehiclesList([]);
       onOpenChange?.(false);
       form.setValue("open", false);
+      onSuccess?.();
     } catch (error: any) {
       let errorMessage = "Error al actualizar";
       if (error.response?.data?.message) {
@@ -615,8 +622,10 @@ export function NewCarrier({
                                 Vehículos disponibles para{" "}
                                 {getTransportName(transportId).toLowerCase()}:
                               </span>{" "}
-                              {vehicleTypes[transportId]
-                                .map((vehicle) => toCapitalize(vehicle.name ?? '', true))
+                              {catalogueVehiclesType.data?.data
+                                .map((vehicle) =>
+                                  toCapitalize(vehicle.name ?? "", true)
+                                )
                                 .join(", ")}
                             </Label>
                           ) : null}
@@ -628,7 +637,7 @@ export function NewCarrier({
                   {showCreateVehicle && (
                     <CreateVehicleForm
                       onCancel={handleCancelVehicle}
-                      vehicleTypes={getAllVehicleTypes()}
+                      vehicleTypes={catalogueVehiclesType.data?.data ?? []}
                       onGetVehicleById={onSubmit}
                     />
                   )}

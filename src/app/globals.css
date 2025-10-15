@@ -466,37 +466,63 @@ button[class*="variant-ghost"]:hover:not([data-sidebar] button):not([role="tab"]
 }
 
 /* ========================================
-   CHECKBOXES - FONDO BLANCO
+   CHECKBOXES - FONDO BLANCO CUANDO NO ESTÁ MARCADO - FORZADO
    ======================================== */
-/* Checkbox sin marcar - fondo blanco forzado */
-input[type="checkbox"],
-[data-slot="checkbox"],
-button[role="checkbox"],
-div[class*="border-primary"][class*="rounded-sm"]:not([class*="bg-primary"]) {
-  background-color: white !important;
-  border: 2px solid var(--border) !important;
-  transition: all 0.2s ease;
+/* Checkbox sin marcar - FORZAR fondo blanco completamente */
+button[data-slot="checkbox"]:not([data-state="checked"]),
+button[data-slot="checkbox"]:not([data-state="checked"]):hover,
+button[data-slot="checkbox"]:not([data-state="checked"]):focus,
+button[data-slot="checkbox"]:not([data-state="checked"]):active,
+[data-slot="checkbox"]:not([data-state="checked"]),
+[data-slot="checkbox"]:not([data-state="checked"]):hover,
+[data-slot="checkbox"]:not([data-state="checked"]):focus,
+[data-slot="checkbox"]:not([data-state="checked"]):active,
+input[type="checkbox"]:not(:checked),
+button[role="checkbox"]:not([data-state="checked"]) {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  background-image: none !important;
+  border: 2px solid hsl(var(--border)) !important;
 }
 
 /* Hover en checkbox sin marcar */
-input[type="checkbox"]:hover:not(:checked),
-[data-slot="checkbox"]:hover:not([data-state="checked"]),
-button[role="checkbox"]:hover:not([data-state="checked"]) {
-  border-color: var(--primary) !important;
-  background-color: white !important;
+button[data-slot="checkbox"]:not([data-state="checked"]):hover,
+[data-slot="checkbox"]:not([data-state="checked"]):hover {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border-color: hsl(var(--primary)) !important;
 }
 
-/* Checkbox marcado - fondo verde */
-input[type="checkbox"]:checked,
+/* Checkbox marcado - fondo verde y check blanco */
+button[data-slot="checkbox"][data-state="checked"],
+button[data-slot="checkbox"][data-state="checked"]:hover,
+button[data-slot="checkbox"][data-state="checked"]:focus,
 [data-slot="checkbox"][data-state="checked"],
+[data-slot="checkbox"][data-state="checked"]:hover,
+[data-slot="checkbox"][data-state="checked"]:focus,
+input[type="checkbox"]:checked,
 button[role="checkbox"][data-state="checked"] {
-  background-color: var(--primary) !important;
-  border-color: var(--primary) !important;
+  background-color: hsl(var(--primary)) !important;
+  background: hsl(var(--primary)) !important;
+  background-image: none !important;
+  border-color: hsl(var(--primary)) !important;
 }
 
-/* Asegurar que el indicador (checkmark) sea visible */
-[data-slot="checkbox-indicator"] {
-  color: white !important;
+/* FORZAR el indicador (checkmark) blanco cuando está marcado */
+button[data-slot="checkbox"][data-state="checked"] *,
+[data-slot="checkbox"][data-state="checked"] *,
+button[data-slot="checkbox"][data-state="checked"] svg,
+[data-slot="checkbox"][data-state="checked"] svg,
+button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"],
+[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Ocultar el check cuando NO está marcado */
+button[data-slot="checkbox"]:not([data-state="checked"]) [data-slot="checkbox-indicator"],
+[data-slot="checkbox"]:not([data-state="checked"]) [data-slot="checkbox-indicator"] {
+  display: none !important;
 }
 
 /* Fix específico para multi-select y command items */
@@ -892,6 +918,13 @@ span[class*="rounded-full"] {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.03em;
+  }
+
+  /* Excluir estilos de gradiente en la página de login */
+  [data-login-page] h1 {
+    background: none;
+    -webkit-text-fill-color: inherit;
+    color: black !important;
   }
 
   h2 {
@@ -1291,4 +1324,29 @@ button[data-slot="tooltip-trigger"],
 [data-slot="dialog-content"] button:not([data-slot="select-trigger"]) {
   position: relative;
   z-index: 1;
+}
+
+/* ========================================
+   CLASES ADICIONALES
+   ======================================== */
+.text-black-important {
+  color: black !important;
+}
+
+/* ========================================
+   CHECKBOX FIX FINAL - MÁXIMA PRIORIDAD
+   ======================================== */
+/* Este debe ser el último CSS para tener máxima prioridad */
+button[data-slot="checkbox"],
+[data-slot="checkbox"] {
+  background-color: white !important;
+  background-image: none !important;
+  background: white !important;
+}
+
+button[data-slot="checkbox"][data-state="checked"],
+[data-slot="checkbox"][data-state="checked"] {
+  background-color: hsl(var(--primary)) !important;
+  background-image: none !important;
+  background: hsl(var(--primary)) !important;
 }

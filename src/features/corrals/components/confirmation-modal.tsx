@@ -66,7 +66,7 @@ export function ConfirmationModal({
 
         <div className="space-y-4">
           {/* Transfer flow visualization */}
-          <div className="flex items-center justify-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+          <div className="flex items-center justify-center gap-3 p-3 bg-muted/40 rounded-lg border">
             <div className="text-center">
               <div className="p-2 bg-blue-100 rounded-full mb-1">
                 <Building className="h-4 w-4 text-blue-600" />
@@ -93,22 +93,22 @@ export function ConfirmationModal({
           </div>
 
           {/* Transfer summary - Enhanced */}
-          <div className="relative overflow-hidden rounded-xl border-2 border-sidebar-primary-200 bg-purple-50/60">
+          <div className="relative overflow-hidden rounded-xl border-2 border-sidebar-primary-200 bg-muted/40">
             <div className="absolute top-2 right-2">
-              <div className="p-1 bg-purple-200 rounded-full">
-                <Info className="h-3 w-3 text-purple-700" />
+              <div className="p-1  rounded-full">
+                <Info className="h-3 w-3 text-muted-700" />
               </div>
             </div>
             
             <div className="p-4">
-              <h4 className="flex items-center gap-2 font-bold text-purple-800 mb-3">
+              <h4 className="flex items-center gap-2 font-semibold text-gray-700 mb-3">
                 <AlertCircle className="h-4 w-4" />
                 Resumen de transferencia
               </h4>
               
               <div className="space-y-3">
                 {/* Brand info */}
-                <div className="flex items-center gap-2 p-2 bg-white/60 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2 p-2 bg-white/60 rounded-lg border border-muted-200">
                   <CheckCheckIcon className="h-4 w-4 text-blue-600" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">{confirmationModal.brand.nameBrand}</p>

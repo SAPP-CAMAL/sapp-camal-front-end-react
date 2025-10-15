@@ -112,6 +112,8 @@ export function PeopleTable<TData, TValue>({
             onValueChange={(value) => {
               meta?.setSearchParams({
                 isEmployee: value === "true" ? "true" : "false",
+                page: 1,
+                limit: 10
               });
             }}
             defaultValue={"*"}
@@ -126,7 +128,7 @@ export function PeopleTable<TData, TValue>({
             </SelectContent>
           </Select>
           <Select
-            onValueChange={(value) => meta?.setSearchParams({ status: value })}
+            onValueChange={(value) => meta?.setSearchParams({ status: value, page: 1, limit: 10 })}
             defaultValue={"todos"}
           >
             <SelectTrigger className="w-62">

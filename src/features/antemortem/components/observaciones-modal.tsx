@@ -131,7 +131,7 @@ export function ObservacionesModal({
           ) : (
             <div className="space-y-3">
               {/* Contador de animales */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+              <div className="bg-muted/40 border border-blue-200 rounded-lg p-3 sm:p-4 shadow-sm">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-2">
                     <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
@@ -169,7 +169,7 @@ export function ObservacionesModal({
                 return (
                   <Card 
                     key={obs.code}
-                    className="overflow-hidden border-l-4 border-l-blue-500 hover:shadow-md transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
+                    className="overflow-hidden border-l-4 border-l-gray-300 hover:shadow-md transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="p-3 sm:p-4">
@@ -179,7 +179,7 @@ export function ObservacionesModal({
                             #{obs.code}
                           </Badge>
                           {getMarcaName(obs.code) && (
-                            <Badge variant="outline" className="bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-300 font-semibold text-xs px-2.5 py-1 gap-1.5">
+                            <Badge variant="outline" className="bg-gradient-to-r from-purple-50 to-red-50 text-purple-700 border-purple-300 font-semibold text-xs px-2.5 py-1 gap-1.5">
                               <Tag className="h-3 w-3" />
                               {obs.brandName}
                             </Badge>
@@ -224,7 +224,7 @@ export function ObservacionesModal({
                             <FileText className="h-3 w-3" />
                             Observaciones
                           </p>
-                          <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                          <div className="bg-muted/40 border border-muted/60 rounded-md p-3">
                             <p className="text-sm text-gray-700 leading-relaxed">
                               {isExpanded ? obs.observationsText : observationPreview}
                             </p>
@@ -244,7 +244,7 @@ export function ObservacionesModal({
                               <Badge 
                                 key={idx}
                                 variant="secondary"
-                                className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs px-2 py-1"
+                                className=" text-emerald-600 border border-primary text-xs px-2 py-1"
                               >
                                 {opinion}
                               </Badge>
@@ -257,7 +257,7 @@ export function ObservacionesModal({
                       {isExpanded && hasDeathInfo && (obs.deathCause || obs.deathUse !== undefined || obs.deathConfiscation !== undefined) && (
                         <>
                           <Separator className="my-3" />
-                          <div className="bg-red-50 border border-red-200 rounded-md p-3 space-y-2">
+                          <div className="bg-muted/40 rounded-md p-3 space-y-2">
                             <p className="text-xs font-semibold text-red-700 uppercase flex items-center gap-1 mb-2">
                               <Skull className="h-3 w-3" />
                               Información de Muerte

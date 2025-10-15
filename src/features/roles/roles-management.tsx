@@ -53,14 +53,14 @@ export function RolesManagement() {
           </div>
         </div>
         <div className="flex gap-x-2">
-          <Button variant={"outline"}>
+          {/* <Button variant={"outline"}>
             <FileTextIcon />
             Exportar
           </Button>
           <Button variant={"outline"}>
             <SquarePenIcon />
             Exportar
-          </Button>
+          </Button> */}
           <NewRol />
         </div>
       </section>
@@ -71,7 +71,7 @@ export function RolesManagement() {
             header: "Nombre",
             cell: ({ row }) => (
               <div className="flex items-center gap-x-2">
-                <p className="bg-gray-900 h-2 w-2 rounded-full" />
+                {/* <p className="bg-gray-900 h-2 w-2 rounded-full" /> */}
                 {toCapitalize(row.original.name, true)}
               </div>
             ),
@@ -97,7 +97,7 @@ export function RolesManagement() {
             header: "Acciones",
             cell: ({ row }) => {
               return (
-                <div>
+                <div className="flex justify-center">
                   <UpdateRol role={row.original} />
                 </div>
               );

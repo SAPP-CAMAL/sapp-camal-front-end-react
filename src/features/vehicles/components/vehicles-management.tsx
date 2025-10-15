@@ -143,7 +143,7 @@ export function VehiclesManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ transportType: Number(value) });
+                  setSearchParams({ transportType: Number(value), page: 1 });
                 }}
                 defaultValue={"*"}
               >
@@ -172,7 +172,7 @@ export function VehiclesManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ vehicleType: Number(value) });
+                  setSearchParams({ vehicleType: Number(value), page: 1 });
                 }}
                 defaultValue={"*"}
               >

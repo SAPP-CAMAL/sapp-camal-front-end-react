@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toCapitalize } from "@/lib/toCapitalize";
+import { useState } from "react";
 
 export function CarriersManagement({}) {
   const searchCarriersParams = useSearchParams();
@@ -178,7 +179,7 @@ export function CarriersManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ transportType: Number(value) });
+                  setSearchParams({ transportType: Number(value), page: 1 });
                 }}
                 defaultValue={"*"}
               >
@@ -207,7 +208,7 @@ export function CarriersManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ shippingStatus: value });
+                  setSearchParams({ shippingStatus: value, page: 1 });
                 }}
                 defaultValue={"*"}
               >
@@ -228,7 +229,7 @@ export function CarriersManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ vehicleStatus: value });
+                  setSearchParams({ vehicleStatus: value, page: 1 });
                 }}
                 defaultValue={"*"}
               >
@@ -262,19 +263,20 @@ export function CarriersManagement({}) {
             accessorFn: (row) => row.vehicle,
             cell: ({ row }) => {
               const vehicle = row.original.vehicle;
-              let value = toCapitalize(vehicle.vehicleDetail?.vehicleType?.name ?? '')
+              let value = toCapitalize(
+                vehicle.vehicleDetail?.vehicleType?.name ?? ""
+              );
 
               if (vehicle.color) value += ` • ${vehicle.color}`;
-              if (vehicle.manufactureYear) value += ` • ${vehicle.manufactureYear}`;
+              if (vehicle.manufactureYear)
+                value += ` • ${vehicle.manufactureYear}`;
 
               return (
                 <div className="flex flex-col">
                   <span className="font-medium">
                     {vehicle.brand} {vehicle.model}
                   </span>
-                  <span className="text-sm text-muted-foreground">
-                    {value}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{value}</span>
                 </div>
               );
             },
@@ -332,21 +334,20 @@ export function CarriersManagement({}) {
           {
             header: "Acciones",
             cell: ({ row }) => {
+              const [open, setOpen] = useState(false);
               return (
                 <div className="flex items-center space-x-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Ellipsis className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem disabled>
-                        <EditIcon className="h-4 w-4 mr-2" />
-                        Editar Transportista (Próximamente)
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button variant={"outline"} onClick={() => setOpen(true)}>
+                    <EditIcon className="h-4 w-4" />
+                    Editar
+                  </Button>
+                  <NewCarrier
+                    shipping={row.original}
+                    isUpdate={true}
+                    open={open}
+                    onOpenChange={setOpen}
+                    onSuccess={() => query.refetch()}
+                  />
                 </div>
               );
             },

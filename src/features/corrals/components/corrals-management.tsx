@@ -1787,8 +1787,8 @@ const reloadStatusByDate = async () => {
                         return (
                           <Card
                             key={uniqueKey}
-                            className={`relative border-4 border-gray-800 rounded-lg ${
-                              isClosed ? "bg-gray-50" : "bg-white"
+                            className={`relative border-3 border-gray-800 rounded-lg ${
+                              isClosed ? "bg-gray-50 border-gray-800/60" : "bg-white"
                             }`}
                           >
                             <CardHeader className="pb-3 pt-2 px-4">
@@ -1919,7 +1919,7 @@ const reloadStatusByDate = async () => {
                       <Card
                         key={uniqueKey}
                         className={`relative border-3 border-gray-800 rounded-lg ${
-                          isClosed ? "bg-gray-50" : "bg-white"
+                          isClosed ? "bg-gray-50 border-gray-800/60" : "bg-white"
                         }`}
                       >
                         <CardHeader className="pb-3 pt-2 px-4">

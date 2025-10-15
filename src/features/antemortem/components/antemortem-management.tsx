@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, Save, Loader2, X, GripVertical, Venus, Mars, BringToFront } from "lucide-react";
+import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, Save, Loader2, X, GripVertical, Venus, Mars, BringToFront, CircleCheckBig } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { QuantitySelector } from "@/components/quantity-selector";
 import { format } from "date-fns";
@@ -511,10 +511,10 @@ export function AntemortemManagement() {
               <TableHead className="text-center border font-bold border-l-0"> <Hash className="inline-block w-4 h-4 mb-1 mr-2" />CORRAL</TableHead>
               <TableHead className="text-center border font-bold"> <Hash className="inline-block w-4 h-4 mb-1 mr-2" />MARCAS</TableHead>
               <TableHead className="text-center border font-bold"> <Eye className="inline-block w-4 h-4 mb-1 mr-2" />OBSERVACIONES</TableHead>
-              {showArgollas && <TableHead className="text-center border font-bold"> <Coins className="inline-block w-4 h-4 mb-1 mr-2 text-amber-600" />ARGOLLAS</TableHead>}
-              <TableHead className="text-center border font-bold"><User className="inline-block w-4 h-4 mb-1 mr-2 text-blue-600" />MACHOS</TableHead>
-              <TableHead className="text-center border font-bold"><User className="inline-block w-4 h-4 mb-1 mr-2 text-rose-600" />HEMBRAS</TableHead>
-              <TableHead className="text-center border font-bold"> <Users className="inline-block w-4 h-4 mb-1 mr-2" />TOTAL</TableHead>
+              {showArgollas && <TableHead className="text-center border font-bold"> <BringToFront className="inline-block w-4 h-4 mb-1 mr-2 text-white" />ARGOLLAS</TableHead>}
+              <TableHead className="text-center border font-bold"><Venus className="inline-block w-4 h-4 mb-1 mr-2 text-white" />MACHOS</TableHead>
+              <TableHead className="text-center border font-bold"><Mars className="inline-block w-4 h-4 mb-1 mr-2 text-white" />HEMBRAS</TableHead>
+              <TableHead className="text-center border font-bold"> <CircleCheckBig className="inline-block w-4 h-4 mb-1 mr-2" />TOTAL</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -556,10 +556,12 @@ export function AntemortemManagement() {
                       admissionDate={format(fecha, "yyyy-MM-dd")}
                       marcasInfo={r.marcasInfo}
                     >
-                      <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Ver observaciones
-                      </Button>
+                        <div className="flex justify-center">
+                        <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700 justify-center items-center">
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver observaciones
+                        </Button>
+                        </div>
                     </ObservacionesModal>
                   ) : (
                     <span className="text-muted-foreground">Sin observaciones</span>
@@ -591,7 +593,7 @@ export function AntemortemManagement() {
                             size="sm"
                             onClick={() => handleSaveArgollas(r)}
                             disabled={savingArgollasCorral === r.corral}
-                            className="h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-700 text-white"
+                            className="h-8 w-8 p-0 bg-primary hover:bg-primary/80 text-white"
                             title="Guardar argollas"
                           >
                             {savingArgollasCorral === r.corral ? (
@@ -681,7 +683,7 @@ export function AntemortemManagement() {
               }
             }}
           >
-            <div className="px-2 py-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 drag-handle cursor-move">
+            <div className="px-2 py-1.5 bg-primary drag-handle cursor-move">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-0.5">
                   <GripVertical className="h-2.5 w-2.5 text-white/70" />

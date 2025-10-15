@@ -31,18 +31,18 @@ export const RegisterDisinfectantPageHeader = () => {
 				observations: registerVehicle.commentary,
 				transportedSpecie: registerVehicle.species.id,
 				shipper: {
-					personId: shipperResponse.person.id,
+					personId: shipperResponse.person?.id,
 					id: shipperResponse.id,
-					firstName: shipperResponse.person.firstName ?? '',
-					lastName: shipperResponse.person.lastName ?? '',
-					identification: shipperResponse.person.identification ?? '',
-					identificationTypeId: shipperResponse.person.identificationTypeId.toString() ?? '',
-					plate: shipperResponse.vehicle.plate ?? '',
-					transportType: shipperResponse.vehicle.vehicleDetail.transportType.name ?? '',
-					transportTypeId: shipperResponse.vehicle.vehicleDetail.transportType.id.toString() ?? '',
-					vehicleId: shipperResponse.vehicle.vehicleDetail.id.toString() ?? '',
-					vehicleType: shipperResponse.vehicle.vehicleDetail.vehicleType.name ?? '',
-					vehicleTypeId: shipperResponse.vehicle.vehicleDetail.vehicleType.id.toString() ?? '',
+					firstName: shipperResponse.person?.firstName ?? '',
+					lastName: shipperResponse.person?.lastName ?? '',
+					identification: shipperResponse.person?.identification ?? '',
+					identificationTypeId: shipperResponse.person?.identificationTypeId?.toString() ?? '',
+					plate: shipperResponse.vehicle?.plate ?? '',
+					transportType: shipperResponse.vehicle?.vehicleDetail?.transportType?.name ?? '',
+					transportTypeId: shipperResponse.vehicle?.vehicleDetail?.transportType?.id?.toString() ?? '',
+					vehicleId: shipperResponse.vehicle?.vehicleDetail?.id?.toString() ?? '',
+					vehicleType: shipperResponse.vehicle?.vehicleDetail?.vehicleType?.name ?? '',
+					vehicleTypeId: shipperResponse.vehicle?.vehicleDetail?.vehicleType?.id?.toString() ?? '',
 				},
 				fullName: '',
 				identification: '',
@@ -67,7 +67,7 @@ export const RegisterDisinfectantPageHeader = () => {
 			<div className='flex justify-end items-center gap-2'>
 				{/* Remove certificate button */}
 				{selectedCertificate && (
-					<Button variant='destructive' onClick={() => handleRemoveSelectedCertificate()}>
+					<Button variant='ghost' onClick={() => handleRemoveSelectedCertificate()}>
 						<FileX />
 						Quitar Certificado Escaneado
 					</Button>
@@ -76,7 +76,7 @@ export const RegisterDisinfectantPageHeader = () => {
 				{/* QR Certificate Modal */}
 				<QrCertificateModal
 					renderSuccessButton={({ qrData, closeModal }) => (
-						<Button type='button' className='bg-green-600 hover:bg-green-700' onClick={() => handleSuccessButton(qrData, closeModal)}>
+						<Button type='button' variant='default' onClick={() => handleSuccessButton(qrData, closeModal)}>
 							<CircleCheckBig />
 							Finalizar
 						</Button>
