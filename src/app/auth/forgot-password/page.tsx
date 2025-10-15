@@ -94,7 +94,7 @@ export default function ForgetPasswordPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <Link
                     href="/auth/login"
-                    className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5 bg-primary-foreground shadow-xs flex items-center justify-center"
+                    className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5 bg-primary-foreground shadow-xs flex items-center justify-center text-sm"
                   >
                     Cancelar
                   </Link>
