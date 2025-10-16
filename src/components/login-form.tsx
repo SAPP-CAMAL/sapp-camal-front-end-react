@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "sonner";
 import { loginAction } from "@/features/security/server/actions/security.actions";
 
 export function LoginForm({
@@ -46,9 +47,23 @@ export function LoginForm({
       console.log("Tokens stored, redirecting...");
 
       router.push("/dashboard/people");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      alert("Hubo un error al iniciar sesión");
+      
+      let errorMessage = "Hubo un error al iniciar sesión. Por favor, intente nuevamente.";
+      
+      try {
+        if (error?.response) {
+          const errorData = await error.response.json();
+          errorMessage = errorData?.message || errorMessage;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+      } catch (parseError) {
+        console.error("Error parsing error response:", parseError);
+      }
+      
+      toast.error(errorMessage);
     }
   });
 
