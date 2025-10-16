@@ -43,19 +43,17 @@ export function LoginForm({
         window.cookieStore.set("refreshToken", resp.data.refreshToken),
         window.cookieStore.set("user", JSON.stringify(resp.data)),
       ]);
-
       console.log("Tokens stored, redirecting...");
-
       router.push("/dashboard/people");
     } catch (error: any) {
       console.error("Login error:", error);
       
       let errorMessage = "Hubo un error al iniciar sesión. Por favor, intente nuevamente.";
-      
       try {
         if (error?.response) {
           const errorData = await error.response.json();
-          errorMessage = errorData?.message || errorMessage;
+          errorMessage =
+          errorData?.message || errorMessage;
         } else if (error?.message) {
           errorMessage = error.message;
         }
