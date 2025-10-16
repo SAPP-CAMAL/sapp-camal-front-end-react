@@ -46,7 +46,7 @@ export function RoleSwitcher() {
             >
               <div className="bg-primary text-primary-foreground flex items-center justify-center rounded-lg overflow-hidden w-10 h-10">
                 <Image
-                  src="/images/sapp-b-vertical.png"
+                  src="/images/sapp-b-vertical.svg"
                   alt="Logo Camal"
                   className="h-full w-auto object-contain"
                   width={100}

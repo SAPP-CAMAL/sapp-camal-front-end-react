@@ -88,7 +88,7 @@ export function LoginForm({
             <div className="flex flex-col items-center mb-6">
               <div className="mb-4 bg-gradient-to-br bg-primary p-3 rounded-2xl shadow-lg">
                 <Image
-                  src="/images/sapp-b-vertical.png"
+                  src="/images/sapp-b-vertical.svg"
                   alt="SAPP"
                   width={60}
                   height={60}
