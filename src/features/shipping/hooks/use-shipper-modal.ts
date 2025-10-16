@@ -79,6 +79,7 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 					vehicleType: updatedShipper.vehicle.vehicleDetail.vehicleType.name,
 					transportTypeId: updatedShipper.vehicle.vehicleDetail.transportType.id.toString(),
 					transportType: updatedShipper.vehicle.vehicleDetail.transportType.name,
+					fullName: `${updatedShipper.person.firstName} ${updatedShipper.person.lastName}`,
 				});
 
 				toast.success('Transportista creado exitosamente');
@@ -108,6 +109,7 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 					vehicleType: updatedShipper.vehicle.vehicleDetail.vehicleType.name,
 					transportTypeId: updatedShipper.vehicle.vehicleDetail.transportType.id.toString(),
 					transportType: updatedShipper.vehicle.vehicleDetail.transportType.name,
+					fullName: `${updatedShipper.person.firstName} ${updatedShipper.person.lastName}`,
 				});
 
 				toast.success('Agregado transportista exitosamente');
@@ -136,6 +138,7 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 					vehicleType: updatedShipper.vehicle.vehicleDetail.vehicleType.name,
 					transportTypeId: updatedShipper.vehicle.vehicleDetail.transportType.id.toString(),
 					transportType: updatedShipper.vehicle.vehicleDetail.transportType.name,
+					fullName: `${updatedShipper.person.firstName} ${updatedShipper.person.lastName}`,
 				});
 
 				toast.success('Transportista actualizado exitosamente');
@@ -158,6 +161,7 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 					vehicleType: updatedShipper.vehicle.vehicleDetail.vehicleType.name,
 					transportTypeId: updatedShipper.vehicle.vehicleDetail.transportType.id.toString(),
 					transportType: updatedShipper.vehicle.vehicleDetail.transportType.name,
+					fullName: `${updatedShipper.person.firstName} ${updatedShipper.person.lastName}`,
 				});
 
 				toast.success('Transportista actualizado exitosamente');

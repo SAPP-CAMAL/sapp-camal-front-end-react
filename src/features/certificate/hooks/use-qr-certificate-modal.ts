@@ -10,6 +10,7 @@ import {
 } from '@/features/certificate/server/db/certificate.service';
 import { Origin } from '@/features/origin/domain';
 import { useAllOrigins } from '@/features/origin/hooks';
+import { isBefore, startOfDay } from 'date-fns';
 
 type QrState = 'active' | 'loading' | 'invalid' | 'saving';
 
@@ -76,9 +77,8 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 	};
 
 	/**
-	 * Save valid scanned qr certificate data in db
-	 * @param data Represents the detected codes
-	 *
+	 * Scan a valid QR code.
+	 * @param data Represents the detected codes from the QR scanner.
 	 */
 	const handleScanQrData = async (data: IDetectedBarcode[]) => {
 		setQrState('loading');
@@ -118,7 +118,10 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		try {
 			const placeOrigin = ('origin' in parsedQrData && parsedQrData.origin) || '';
 			const originAreaCode = ('originAreaCode' in parsedQrData && parsedQrData.originAreaCode) || 'N/A';
-			const destinationAreaCode = ('destinationAreaCode' in parsedQrData && parsedQrData.destinationAreaCode) || 'N/A';
+			const destinationAreaCode =
+				('destinationAreaCode' in parsedQrData && parsedQrData.destinationAreaCode) ||
+				('destination' in parsedQrData && parsedQrData.destination) ||
+				'N/A';
 
 			const scannedQr = {
 				id: NaN,
@@ -150,6 +153,21 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		if (!qrModalState.qrData) return toast.error('Por favor escanee un código QR válido');
 		if (!qrModalState.selectedOrigin) return toast.error('Por favor seleccione una procedencia');
 		setQrState('saving');
+
+		// Validate the issue date
+		const issueDate = new Date(qrModalState.qrData.issueDate);
+		if (isNaN(issueDate.getTime())) {
+			setQrState('active');
+			return toast.error('La fecha de emisión no es válida');
+		}
+
+		const currentDate = startOfDay(new Date());
+		const expirationDate = startOfDay(issueDate);
+
+		if (isBefore(expirationDate, currentDate)) {
+			setQrState('active');
+			return toast.error('El certificado ha caducado. No se puede procesar un certificado vencido.');
+		}
 
 		try {
 			const request = {

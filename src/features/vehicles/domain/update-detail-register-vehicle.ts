@@ -8,3 +8,12 @@ export interface UpdateDetailRegisterVehicleResponse extends UpdateDetailRegiste
 	userUpdated: number;
 	updatedAt: string;
 }
+
+export interface UpdateRegisterVehicle {
+	idShipping: number;
+	idSlaughterhouse: number;
+	dateRegister: Date;
+	checkinTime: string;
+	checkoutTime: string;
+	status: boolean;
+}

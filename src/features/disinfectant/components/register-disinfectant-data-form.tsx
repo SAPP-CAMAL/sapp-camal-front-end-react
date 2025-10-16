@@ -30,6 +30,7 @@ export function RegisterDisinfectantDataForm() {
 		addVehicle,
 		selectedCertificatePlate,
 		showCreateShippingFromSomeFields,
+		handleSetShipper,
 		handleSearchFields,
 		handleRemoveSelected,
 		handleRegisterDisinfectantData,
@@ -40,20 +41,6 @@ export function RegisterDisinfectantDataForm() {
 			<form onSubmit={form.handleSubmit(handleRegisterDisinfectantData)}>
 				<div className='px-2 py-4 flex justify-between items-center'>
 					<h2 className='text-lg'>Datos de Desinfección</h2>
-
-					<div className='space-x-2'>
-						{isEditing && (
-							<Button type='button' variant='outline' onClick={handleRemoveSelected}>
-								<XIcon />
-								Cancelar
-							</Button>
-						)}
-
-						<Button type='submit' disabled={form.formState.isSubmitting}>
-							<Save />
-							{btnValue}
-						</Button>
-					</div>
 				</div>
 
 				{/* Is Editing */}
@@ -89,7 +76,7 @@ export function RegisterDisinfectantDataForm() {
 								firstName: form.watch('fullName') || '',
 								identification: form.watch('identification') || '',
 							}}
-							onSetShipper={shipper => form.setValue('shipper', shipper)}
+							onSetShipper={handleSetShipper}
 							triggerButton={
 								<Button>
 									<Plus />
@@ -99,12 +86,7 @@ export function RegisterDisinfectantDataForm() {
 						/>
 					</div>
 
-					<ShipperDataCard
-						shipper={selectedShipper}
-						onSetShipper={shipper => form.setValue('shipper', shipper)}
-						addShipper={addShipper}
-						addVehicle={addVehicle}
-					/>
+					<ShipperDataCard shipper={selectedShipper} onSetShipper={handleSetShipper} addShipper={addShipper} addVehicle={addVehicle} />
 
 					{/* Search shippers input */}
 					{!selectedShipper && (
@@ -128,7 +110,7 @@ export function RegisterDisinfectantDataForm() {
 					{isShippersLoading && <BasicResultsCard className='text-sm' title='Buscando transportistas...' />}
 
 					{/* Shippers list */}
-					{showShippersList && <ShipperListCard onSelectShipper={shipper => form.setValue('shipper', shipper)} shippers={shippers} />}
+					{showShippersList && <ShipperListCard onSelectShipper={handleSetShipper} shippers={shippers} />}
 
 					{showCreateShippingFromSomeFields && (
 						<BasicResultsCard className='text-sm' title='No se encontraron transportistas con el nombre, identificación o placa proporcionados.' />
@@ -279,6 +261,21 @@ export function RegisterDisinfectantDataForm() {
 							</FormItem>
 						)}
 					/>
+				</div>
+
+				<div className='px-2 py-4 flex justify-end'>
+					<div className='space-x-2'>
+						{isEditing && (
+							<Button type='button' variant='outline' onClick={handleRemoveSelected}>
+								<XIcon />
+								Cancelar
+							</Button>
+						)}
+						<Button type='submit' disabled={form.formState.isSubmitting}>
+							<Save />
+							{btnValue}
+						</Button>
+					</div>
 				</div>
 			</form>
 		</Form>

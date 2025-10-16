@@ -6,6 +6,7 @@ import {
 	DetailRegisterVehicleByDate,
 	UpdateDetailRegisterVehicle,
 	UpdateDetailRegisterVehicleResponse,
+	UpdateRegisterVehicle,
 } from '@/features/vehicles/domain';
 
 export const createRegisterVehicleService = async (idShipping: number | string, registerVehicle: CreateDetailRegisterVehicle) => {
@@ -16,9 +17,17 @@ export const createRegisterVehicleService = async (idShipping: number | string, 
 		.json<CreateDetailRegisterVehicleResponse>();
 };
 
-export const updateRegisterVehicleService = async (idRegisterVehicle: number | string, registerVehicle: UpdateDetailRegisterVehicle) => {
+export const updateDetailRegisterVehicleService = async (idDetailRegisterVehicle: number | string, registerVehicle: UpdateDetailRegisterVehicle) => {
 	return http
-		.patch('v1/1.0.0/detail-register-vehicle/' + idRegisterVehicle.toString(), {
+		.patch('v1/1.0.0/detail-register-vehicle/' + idDetailRegisterVehicle.toString(), {
+			json: registerVehicle,
+		})
+		.json<UpdateDetailRegisterVehicleResponse>();
+};
+
+export const updateRegisterVehicleService = async (idRegisterVehicle: number | string, registerVehicle: Partial<UpdateRegisterVehicle>) => {
+	return http
+		.patch('v1/1.0.0/register-vehicle/' + idRegisterVehicle.toString(), {
 			json: registerVehicle,
 		})
 		.json<UpdateDetailRegisterVehicleResponse>();

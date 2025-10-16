@@ -184,6 +184,7 @@ export const useStep1Certificate = () => {
 				vehicleType: shipperResponse.data.vehicle.vehicleDetail.vehicleType.name,
 				transportTypeId: shipperResponse.data.vehicle.vehicleDetail.transportType.id.toString(),
 				transportType: shipperResponse.data.vehicle.vehicleDetail.transportType.name,
+				fullName: `${shipperResponse.data.person.firstName} ${shipperResponse.data.person.lastName}`,
 			};
 
 			handleSetSelectedShipper(shipper);
