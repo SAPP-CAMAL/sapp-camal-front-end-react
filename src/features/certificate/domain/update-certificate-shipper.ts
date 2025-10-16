@@ -1,0 +1,4 @@
+export interface UpdateCertificateShipperRequest {
+	shippingsId: number;
+	code: string;
+}

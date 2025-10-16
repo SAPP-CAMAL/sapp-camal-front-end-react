@@ -127,7 +127,7 @@ export const Step3Transport = () => {
 						{/* Observaciones */}
 						<FormField
 							control={form.control}
-							name='description'
+							name='commentary'
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Observaciones (opcional)</FormLabel>

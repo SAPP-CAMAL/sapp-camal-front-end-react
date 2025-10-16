@@ -10,7 +10,7 @@ import { useStep1Certificate } from '@/features/reception/hooks';
 import { QrCertificateModal } from '@/features/certificate/components';
 import { AccordionContent, AccordionItem } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { SearchShippersInput, ShipperModal } from '@/features/shipping/components';
+import { ChangeShipperModal, SearchShippersInput, ShipperModal } from '@/features/shipping/components';
 import { BasicAnimalAdmissionAccordionHeader } from '../basic-animal-admission-accordion-header';
 import { CreateUpdateCertificateModal } from '@/features/certificate/components/create-update-certificate-modal';
 
@@ -206,16 +206,49 @@ export const Step1Certificate = () => {
 							paragraph={`${selectedShipper.identification} • ${selectedShipper.plate} • ${toCapitalize(selectedShipper.vehicleType)}`}
 							onRemove={isFromQR ? undefined : handleRemoveSelectedShipper}
 							editButton={
-								<ShipperModal
-									shipperData={selectedShipper}
-									onSetShipper={shipper => handleSetSelectedShipper(shipper!)}
-									triggerButton={
-										<Button variant='ghost' >
-											<Edit />
-											Editar
-										</Button>
-									}
-								/>
+								selectedCertificate ? (
+									<ChangeShipperModal
+										certificateId={selectedCertificate.id}
+										certificateCode={selectedCertificate.code}
+										onShipperChanged={registerVehicle => {
+											const shipping = registerVehicle.registerVehicle?.shipping;
+											if (shipping) {
+												handleSetSelectedShipper({
+													id: shipping.id,
+													personId: shipping.person.id,
+													firstName: shipping.person.firstName ?? '',
+													lastName: shipping.person.lastName ?? '',
+													fullName: shipping.person.fullName ?? '',
+													identification: shipping.person.identification ?? '',
+													identificationTypeId: shipping.person.identificationTypeId?.toString() ?? '',
+													plate: shipping.vehicle.plate,
+													vehicleId: shipping.vehicle.id.toString(),
+													vehicleTypeId: shipping.vehicle.vehicleDetail.vehicleType.id.toString(),
+													vehicleType: shipping.vehicle.vehicleDetail.vehicleType.name,
+													transportTypeId: shipping.vehicle.vehicleDetail.transportType.id.toString(),
+													transportType: shipping.vehicle.vehicleDetail.transportType.name,
+												});
+											}
+										}}
+										triggerButton={
+											<Button variant='ghost'>
+												<Edit />
+												Editar
+											</Button>
+										}
+									/>
+								) : (
+									<ShipperModal
+										shipperData={selectedShipper}
+										onSetShipper={shipper => handleSetSelectedShipper(shipper!)}
+										triggerButton={
+											<Button variant='ghost'>
+												<Edit />
+												Editar
+											</Button>
+										}
+									/>
+								)
 							}
 							isSelected
 						/>
