@@ -55,6 +55,7 @@ import {
 } from "../server/carriers.service";
 import { Separator } from "@/components/ui/separator";
 import { toCapitalize } from "@/lib/toCapitalize";
+import { BasicResultsCard } from "@/features/reception/components";
 
 interface NewCarrierProps {
   shipping?: any;
@@ -110,7 +111,7 @@ export function NewCarrier({
     Record<number, boolean>
   >({});
   const query = useQuery<ResponsePeopleByFilter>({
-    queryKey: ["people", searchParams],
+    queryKey: ["people", searchParams, filterFullName, filterIdentification],
     queryFn: () =>
       getPeopleByFilterService({
         page: searchParams.page,
@@ -118,7 +119,7 @@ export function NewCarrier({
         ...(filterIdentification != "" && {
           identificacion: filterIdentification,
         }),
-        ...(filterFullName.length > 2 && {
+        ...(filterFullName.length >= 1 && {
           fullName: filterFullName,
         }),
       }),
@@ -136,6 +137,13 @@ export function NewCarrier({
       }),
     enabled: false,
   });
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      query.refetch();
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [filterFullName]);
 
   const onSubmit = async (vehicleId: number) => {
     try {
@@ -700,42 +708,30 @@ export function NewCarrier({
 
                       <Separator className="my-4" />
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">Estado:</span>
-                          <Badge
-                            className="text-sm px-3 py-1 rounded-full"
-                            variant={isActive ? "tertiary" : "outline"}
+                      <div className="col-span-2">
+                        <label className="font-semibold text-sm">
+                          Estado del Usuario
+                        </label>
+                        <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
+                          <button
+                            type="button"
+                            onClick={handleToggleStatus}
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors w-full justify-between"
                           >
-                            {isActive ? "Activo" : "Inactivo"}
-                          </Badge>
+                            <span
+                              className={
+                                isActive ? "font-bold" : "text-gray-400"
+                              }
+                            >
+                              {isActive ? "Activo" : "Inactivo"}
+                            </span>
+                            {isActive ? (
+                              <ToggleRightIcon className="w-8 h-8 text-primary" />
+                            ) : (
+                              <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
+                            )}
+                          </button>
                         </div>
-
-                        <button
-                          onClick={handleToggleStatus}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-none transition-colors"
-                        >
-                          <span
-                            className={`${
-                              !isActive ? "font-bold" : "text-gray-400"
-                            }`}
-                          >
-                            Inactivo
-                          </span>
-                          {isActive ? (
-                            <ToggleRightIcon className="w-8 h-8 text-green-500" />
-                          ) : (
-                            <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
-                          )}
-
-                          <span
-                            className={`${
-                              isActive ? "font-bold" : "text-gray-400"
-                            }`}
-                          >
-                            Activo
-                          </span>
-                        </button>
                       </div>
                     </div>
                   </div>

@@ -12,7 +12,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Save, Tag, ToggleLeftIcon, ToggleRightIcon } from "lucide-react";
+import {
+  Plus,
+  Save,
+  Tag,
+  ToggleLeftIcon,
+  ToggleRightIcon,
+  X,
+} from "lucide-react";
 import { Form } from "@/components/ui/form";
 import {
   Card,
@@ -76,6 +83,7 @@ export function UpdateBrands({
   );
   const [newBrandSpecies, setNewBrandSpecies] = useState<Specie[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNewBrandCard, setShowNewBrandCard] = useState(false);
   const [brandNames, setBrandNames] = useState<Record<number, string>>(() =>
     introductor.brands.reduce((acc, brand) => {
       acc[brand.id] = brand.name;
@@ -177,7 +185,6 @@ export function UpdateBrands({
           status: true,
         })),
       });
-      await updateBrandsStatus(brandId, isActive[brandId]);
 
       toast.success(`Marca "${brandName}" actualizada exitosamente`);
       handleCloseModal();
@@ -194,12 +201,33 @@ export function UpdateBrands({
     onRefresh();
   };
 
-  const handleToggleStatus = (brandId: number) => {
+  const handleToggleStatus = async (brandId: number) => {
+    const newStatus = !isActive[brandId];
+
     setIsActive((prev) => ({
       ...prev,
-      [brandId]: !prev[brandId],
+      [brandId]: newStatus,
     }));
+
+    try {
+      await updateBrandsStatus(brandId, newStatus);
+      toast.success(
+        newStatus
+          ? "Marca activada exitosamente."
+          : "Marca inactivada exitosamente."
+      );
+      handleCloseModal();
+    } catch (error) {
+      setIsActive((prev) => ({
+        ...prev,
+        [brandId]: !newStatus,
+      }));
+
+      toast.error("No se pudo actualizar el estado de la marca.");
+      console.error(error);
+    }
   };
+
   useEffect(() => {
     if (introductor?.brands?.length) {
       const initialStatus = introductor.brands.reduce((acc, brand) => {
@@ -253,195 +281,252 @@ export function UpdateBrands({
           <form className="space-y-8">
             <div className="space-y-4">
               <label className="font-semibold">Marcas Existentes:</label>
+
               {introductor.brands?.length > 0 ? (
                 <div className="space-y-4">
-                  {introductor.brands.map((brand) => (
-                    <Card key={brand.id} className="w-full">
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          Nombre de la Marca
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              className="flex items-center gap-2"
-                              onClick={() => handleUpdateBrand(brand.id)}
-                              disabled={isSubmitting}
-                            >
-                              <Save size={16} />
-                              Guardar
-                            </Button>
+                  {introductor.brands.map((brand) => {
+                    const brandIsActive = isActive[brand.id];
 
-                            <Button
-                              type="button"
-                              onClick={() => handleToggleStatus(brand.id)}
-                              variant="outline"
-                            >
-                              <span
-                                className={
-                                  isActive[brand.id]
-                                    ? "font-bold"
-                                    : "text-gray-400"
+                    return (
+                      <Card
+                        key={brand.id}
+                        className={`w-full transition-all ${
+                          !brandIsActive ? "opacity-60 pointer-events-none" : ""
+                        }`}
+                      >
+                        <CardHeader>
+                          <CardTitle className="flex items-center justify-between">
+                            Nombre de la Marca
+                            <div className="flex gap-2">
+                              {/* Botón Guardar */}
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="flex items-center gap-2"
+                                onClick={() => handleUpdateBrand(brand.id)}
+                                disabled={isSubmitting || !brandIsActive}
+                              >
+                                <Save size={16} />
+                                Guardar
+                              </Button>
+
+                              <Button
+                                type="button"
+                                onClick={() => handleToggleStatus(brand.id)}
+                                variant={
+                                  brandIsActive ? "outline" : "secondary"
                                 }
+                                disabled={isSubmitting}
                               >
-                                {isActive[brand.id] ? "Activo" : "Inactivo"}
-                              </span>
-                              {isActive[brand.id] ? (
-                                <ToggleRightIcon className="w-8 h-8 text-primary" />
-                              ) : (
-                                <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
-                              )}
-                            </Button>
-                          </div>
-                        </CardTitle>
-                      </CardHeader>
-
-                      <CardContent className="space-y-4">
-                        <Input
-                          type="text"
-                          value={
-                            brandNames.hasOwnProperty(brand.id)
-                              ? brandNames[brand.id]
-                              : brand.name
-                          }
-                          className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100"
-                          onChange={(e) =>
-                            handleBrandNameChange(brand.id, e.target.value)
-                          }
-                        />
-
-                        <div>
-                          <label className="font-semibold block mb-2">
-                            Especies *
-                          </label>
-                          <div className="flex flex-wrap gap-4">
-                            {species.map((specie) => (
-                              <Label
-                                key={specie.id}
-                                className="flex items-center gap-x-2 cursor-pointer"
-                              >
-                                <Checkbox
-                                  checked={selectedSpecies[brand.id]?.some(
-                                    (s) => s.id === specie.id
-                                  )}
-                                  onCheckedChange={(checked: boolean) =>
-                                    handleCheckboxChange(
-                                      brand.id,
-                                      specie,
-                                      checked
-                                    )
+                                <span
+                                  className={
+                                    brandIsActive
+                                      ? "font-bold"
+                                      : "text-gray-400"
                                   }
-                                />
-                                {specie.name}
-                              </Label>
-                            ))}
-                          </div>
-                        </div>
-
-                        {selectedSpecies[brand.id] &&
-                          selectedSpecies[brand.id].length > 0 && (
-                            <div className="p-3 bg-gray-50 rounded-lg border">
-                              <span className="font-bold">
-                                {brandNames[brand.id] || brand.name}:
-                              </span>
-                              <span className="ml-2">
-                                [
-                                {selectedSpecies[brand.id]
-                                  .map((s) => s.name?.toUpperCase())
-                                  .join(", ")}
-                                ]
-                              </span>
+                                >
+                                  {brandIsActive ? "Activo" : "Inactivo"}
+                                </span>
+                                {brandIsActive ? (
+                                  <ToggleRightIcon className="w-8 h-8 text-primary" />
+                                ) : (
+                                  <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
+                                )}
+                              </Button>
                             </div>
-                          )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                          </CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="space-y-4">
+                          <Input
+                            type="text"
+                            value={
+                              brandNames.hasOwnProperty(brand.id)
+                                ? brandNames[brand.id]
+                                : brand.name
+                            }
+                            className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100"
+                            onChange={(e) =>
+                              handleBrandNameChange(brand.id, e.target.value)
+                            }
+                            disabled={!brandIsActive || isSubmitting}
+                          />
+
+                          <div>
+                            <label className="font-semibold block mb-2">
+                              Especies *
+                            </label>
+                            <div className="flex flex-wrap gap-4">
+                              {species.map((specie) => (
+                                <Label
+                                  key={specie.id}
+                                  className={`flex items-center gap-x-2 cursor-pointer ${
+                                    !brandIsActive
+                                      ? "cursor-not-allowed opacity-70"
+                                      : ""
+                                  }`}
+                                >
+                                  <Checkbox
+                                    checked={selectedSpecies[brand.id]?.some(
+                                      (s) => s.id === specie.id
+                                    )}
+                                    onCheckedChange={(checked: boolean) =>
+                                      handleCheckboxChange(
+                                        brand.id,
+                                        specie,
+                                        checked
+                                      )
+                                    }
+                                    disabled={!brandIsActive || isSubmitting}
+                                  />
+                                  {specie.name}
+                                </Label>
+                              ))}
+                            </div>
+                          </div>
+
+                          {selectedSpecies[brand.id] &&
+                            selectedSpecies[brand.id].length > 0 && (
+                              <div className="p-3 bg-gray-50 rounded-lg border">
+                                <span className="font-bold">
+                                  {brandNames[brand.id] || brand.name}:
+                                </span>
+                                <span className="ml-2">
+                                  [
+                                  {selectedSpecies[brand.id]
+                                    .map((s) => s.name?.toUpperCase())
+                                    .join(", ")}
+                                  ]
+                                </span>
+                              </div>
+                            )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-gray-500">No hay marcas registradas</p>
               )}
             </div>
 
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle className="flex gap-2 items-center">
-                  <Plus />
-                  Nueva Marca
-                </CardTitle>
-                <CardDescription>
-                  Ingresa el nombre de la marca y selecciona las especies
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="font-semibold block mb-2">
-                    Nombre de la Marca *
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Ej: Finca San José, Marca ABC, etc."
-                    className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100"
-                    value={form.watch("description") ?? ""}
-                    onChange={(e) => {
-                      form.setValue("description", e.target.value, {
-                        shouldValidate: true,
-                      });
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold block mb-2">Especies *</label>
-                  <div className="flex flex-wrap gap-4">
-                    {species.map((specie) => (
-                      <Label
-                        key={specie.id}
-                        className="flex items-center gap-x-2 cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={newBrandSpecies.some(
-                            (s) => s.id === specie.id
-                          )}
-                          onCheckedChange={(checked: boolean) => {
-                            handleNewBrandCheckboxChange(specie, checked);
-                          }}
-                        />
-                        {specie.name}
-                      </Label>
-                    ))}
-                  </div>
-                </div>
-
-                {newBrandSpecies.length > 0 && (
-                  <div className="p-3 bg-gray-50 rounded-lg border">
-                    <span className="font-bold">Nueva marca:</span>
-                    <span className="ml-2">
-                      [
-                      {newBrandSpecies
-                        .map((s) => s.name?.toUpperCase())
-                        .join(", ")}
-                      ]
-                    </span>
-                  </div>
-                )}
-
+            <div className="space-y-6">
+              {!showNewBrandCard && (
                 <Button
-                  type="button"
-                  className="w-full mt-4"
-                  onClick={() => handleSaveBrands()}
+                  onClick={() => setShowNewBrandCard(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? (
-                    "Guardando..."
-                  ) : (
-                    <>
-                      <Save size={16} className="mr-2" />
-                      Guardar Marca
-                    </>
-                  )}
+                  <Plus size={16} />
+                  Nueva Marca
                 </Button>
-              </CardContent>
-            </Card>
+              )}
+
+              {showNewBrandCard && (
+                <Card className="w-full animate-fade-in">
+                  <CardHeader className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="flex gap-2 items-center">
+                        <Plus />
+                        Nueva Marca
+                      </CardTitle>
+                      <CardDescription>
+                        Ingresa el nombre de la marca y selecciona las especies
+                      </CardDescription>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowNewBrandCard(false)}
+                      disabled={isSubmitting}
+                    >
+                      <X size={18} />
+                    </Button>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="font-semibold block mb-2">
+                        Nombre de la Marca *
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Ej: Finca San José, Marca ABC, etc."
+                        className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100"
+                        value={form.watch("description") ?? ""}
+                        onChange={(e) =>
+                          form.setValue("description", e.target.value, {
+                            shouldValidate: true,
+                          })
+                        }
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-semibold block mb-2">
+                        Especies *
+                      </label>
+                      <div className="flex flex-wrap gap-4">
+                        {species.map((specie) => (
+                          <Label
+                            key={specie.id}
+                            className={`flex items-center gap-x-2 cursor-pointer ${
+                              isSubmitting
+                                ? "opacity-60 cursor-not-allowed"
+                                : ""
+                            }`}
+                          >
+                            <Checkbox
+                              checked={newBrandSpecies.some(
+                                (s) => s.id === specie.id
+                              )}
+                              onCheckedChange={(checked: boolean) =>
+                                handleNewBrandCheckboxChange(specie, checked)
+                              }
+                              disabled={isSubmitting}
+                            />
+                            {specie.name}
+                          </Label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {newBrandSpecies.length > 0 && (
+                      <div className="p-3 bg-gray-50 rounded-lg border">
+                        <span className="font-bold">Nueva marca:</span>
+                        <span className="ml-2">
+                          [
+                          {newBrandSpecies
+                            .map((s) => s.name?.toUpperCase())
+                            .join(", ")}
+                          ]
+                        </span>
+                      </div>
+                    )}
+
+                    <Button
+                      type="button"
+                      className="w-full mt-4"
+                      onClick={() => handleSaveBrands()}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        "Guardando..."
+                      ) : (
+                        <>
+                          <Save size={16} className="mr-2" />
+                          Guardar Marca
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
             <div className="flex justify-end gap-x-2">
               <Button

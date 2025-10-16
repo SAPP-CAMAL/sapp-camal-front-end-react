@@ -28,6 +28,11 @@ import { capitalizeText } from "@/lib/utils";
 import { getVehicleByFilterService } from "../server/db/vehicle.service";
 import NewVehicleForm from "./new-vehicle.form";
 import { toCapitalize } from "@/lib/toCapitalize";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function VehiclesManagement({}) {
   const searchCarriersParams = useSearchParams();
@@ -40,8 +45,8 @@ export function VehiclesManagement({}) {
       limit: parseAsInteger.withDefault(10),
       plate: parseAsString.withDefault(""),
       brand: parseAsString.withDefault(""),
-      transportType: parseAsInteger.withDefault(0),
-      vehicleType: parseAsInteger.withDefault(0),
+      transportTypeId: parseAsInteger.withDefault(0),
+      vehicleTypeId: parseAsInteger.withDefault(0),
     },
     {
       history: "push",
@@ -54,9 +59,10 @@ export function VehiclesManagement({}) {
         page: searchParams.page,
         limit: searchParams.limit,
         ...(searchParams.plate != "" && { plate: searchParams.plate }),
-        ...(searchParams.transportType != 0 && {
-          transportTypeId: searchParams.transportType,
-          vehicleTypeId: searchParams.vehicleType,
+        ...(searchParams.brand != "" && { brand: searchParams.brand }),
+        ...(searchParams.transportTypeId != 0 && {
+          transportTypeId: searchParams.transportTypeId,
+          vehicleTypeId: searchParams.vehicleTypeId,
         }),
       }),
   });
@@ -143,7 +149,7 @@ export function VehiclesManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ transportType: Number(value), page: 1 });
+                  setSearchParams({ transportTypeId: Number(value), page: 1 });
                 }}
                 defaultValue={"*"}
               >
@@ -172,7 +178,7 @@ export function VehiclesManagement({}) {
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ vehicleType: Number(value), page: 1 });
+                  setSearchParams({ vehicleTypeId: Number(value), page: 1 });
                 }}
                 defaultValue={"*"}
               >
@@ -302,7 +308,6 @@ export function VehiclesManagement({}) {
                         className="flex items-center gap-1"
                       >
                         <Edit className="h-4 w-4" />
-                        Editar
                       </Button>
                     }
                   />
