@@ -24,7 +24,15 @@ import { Label } from "@/components/ui/label";
 import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 import { validateDocumentTypeService } from "../server/db/people.service";
 
-export function NewPeopleFields({ isUpdate = false }: { isUpdate?: boolean }) {
+export function NewPeopleFields({
+  isUpdate = false,
+  updatePersonButton,
+  updatePositionsButton,
+}: {
+  isUpdate?: boolean;
+  updatePersonButton?: React.ReactNode;
+  updatePositionsButton?: React.ReactNode;
+}) {
   const catalogueCharges = useCatalogue("CARGOS");
   const catalogueIdentityTypes = useCatalogue("TID");
   const catalogueGenders = useCatalogue("GEN");
@@ -272,6 +280,8 @@ export function NewPeopleFields({ isUpdate = false }: { isUpdate?: boolean }) {
         )}
       />
 
+      {updatePersonButton}
+
       <div className="border-t border-gray-200 col-span-2">
         <div className="flex gap-x-2 mt-4">
           <FormField
@@ -455,6 +465,7 @@ export function NewPeopleFields({ isUpdate = false }: { isUpdate?: boolean }) {
                 })
               )}
             </div>
+            {updatePositionsButton}
           </div>
         )}
       </div>
