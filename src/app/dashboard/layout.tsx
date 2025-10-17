@@ -23,7 +23,14 @@ export default async function DashboardLayout({
     redirect("/auth/login");
   }
 
-  const menus = await getAdministrationMenusService();
+  let menus;
+  try {
+    menus = await getAdministrationMenusService();
+  } catch (error) {
+    console.error("Error fetching menus:", error);
+    // Proporcionar un valor por defecto si falla
+    menus = { data: [] };
+  }
 
   return (
     <SidebarProvider>

@@ -62,14 +62,12 @@ export function NewUser() {
     >
       <DialogTrigger asChild>
         <Button>
-          <PlusIcon />
+          <PlusIcon className="h-4 w-4" />
           Nuevo Usuario
         </Button>
       </DialogTrigger>
-      <DialogContent 
-      className="max-h-screen overflow-y-auto min-w-[60vw]"
-      >
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col max-w-3xl">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Nuevo Usuario</DialogTitle>
           <DialogDescription>
             Complete la información del usuario. Los campos marcados con (*) son
@@ -79,10 +77,14 @@ export function NewUser() {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8 grid grid-cols-2 gap-2"
+            className="flex flex-col flex-1 overflow-hidden"
           >
-            <NewUserFields />
-            <div className="flex justify-end col-span-2">
+            <div className="overflow-y-auto flex-1 px-1 -mx-1">
+              <div className="space-y-4 grid grid-cols-2 gap-4 pb-4">
+                <NewUserFields />
+              </div>
+            </div>
+            <div className="flex justify-end pt-4 border-t mt-4 flex-shrink-0">
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Guardando..." : "Guardar"}
               </Button>

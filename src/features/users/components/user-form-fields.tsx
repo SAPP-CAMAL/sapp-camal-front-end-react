@@ -63,23 +63,26 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
 
   return (
     <>
-      <CardContent className="space-y-4 col-span-2 mx-0 px-0 pb-8 border-b-2">
+      <CardContent className="space-y-4 col-span-2 mx-0 px-0 pb-6 border-b">
         {isUpdate ? null : !selectedPerson ? (
           <>
-            <label className="font-semibold">Buscar Persona</label>
+            <label className="font-semibold text-sm">Buscar Persona</label>
 
-            <div className="grid grid-cols-2 gap-x-2 w-full">
-              <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="space-y-2 relative">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel className="text-xs text-muted-foreground">
+                        Buscar por nombre
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="text"
-                          placeholder="Buscar por nombre"
-                          className="w-full border border-gray-300 rounded-md shadow-sm"
+                          placeholder="Nombre completo..."
+                          className="w-full"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -96,7 +99,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                 />
 
                 {fullName.length > 2 && activeField === "name" && (
-                  <div className="w-full">
+                  <div className="absolute z-50 w-full top-full mt-1">
                     <PersonSearch
                       // @ts-ignore
                       data={peopleData?.data?.data ?? []}
@@ -107,17 +110,20 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <FormField
                   control={form.control}
                   name="identification"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel className="text-xs text-muted-foreground">
+                        Buscar por identificación
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="text"
-                          placeholder="Número de Identificación"
-                          className="w-full border border-gray-300 rounded-md shadow-sm"
+                          placeholder="Número de identificación..."
+                          className="w-full"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -135,7 +141,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
 
                 {identification.length > 2 &&
                   activeField === "identification" && (
-                    <div className="w-full">
+                    <div className="absolute z-50 w-full top-full mt-1">
                       <PersonSearch
                         // @ts-ignore
                         data={peopleData?.data?.data ?? []}
@@ -154,20 +160,6 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
               onRemove={handleRemovePerson}
               showEmail={false}
             />
-            {/* <Button
-              type="button"
-              className="w-full mt-4"
-              onClick={handleSaveIntroductor}
-            >
-              {isSubmitting ? (
-                "Guardando..."
-              ) : (
-                <>
-                  <Save />
-                  Guardar Introductor
-                </>
-              )}
-            </Button> */}
           </>
         )}
       </CardContent>
@@ -272,17 +264,17 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
             <FormLabel>Roles *</FormLabel>
             <FormControl>
               <MultiSelect
-                className="h-8"
                 options={
                   query.data?.data?.map((role) => ({
                     value: role.id.toString(),
                     label: role.name,
                   })) ?? []
                 }
-                // value={field.value}
                 defaultValue={field.value}
                 onValueChange={field.onChange}
                 placeholder="Seleccionar Roles..."
+                maxCount={2}
+                singleLine={false}
               />
             </FormControl>
             <FormMessage />

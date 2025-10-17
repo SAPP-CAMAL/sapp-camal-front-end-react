@@ -933,10 +933,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                       .filter(Boolean)}
                     {selectedValues.length > responsiveSettings.maxCount && (
                       <Badge
+                        variant="secondary"
                         className={cn(
-                          "bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
+                          "bg-muted text-muted-foreground hover:bg-muted/80 border-border font-medium",
                           getBadgeAnimationClass(),
-                          multiSelectVariants({ variant }),
                           responsiveSettings.compactMode &&
                             "text-xs px-1.5 py-0.5",
                           singleLine && "flex-shrink-0 whitespace-nowrap",
@@ -949,12 +949,12 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           animationDelay: `${animationConfig?.delay || 0}s`,
                         }}
                       >
-                        {`+ ${
+                        {`+${
                           selectedValues.length - responsiveSettings.maxCount
-                        } more`}
+                        } más`}
                         <XCircle
                           className={cn(
-                            "ml-2 h-4 w-4 cursor-pointer",
+                            "ml-2 h-3.5 w-3.5 cursor-pointer hover:text-foreground transition-colors",
                             responsiveSettings.compactMode && "ml-1 h-3 w-3"
                           )}
                           onClick={(event) => {
@@ -1015,29 +1015,32 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               getPopoverAnimationClass(),
               screenSize === "mobile" && "w-[85vw] max-w-[280px]",
               screenSize === "tablet" && "w-[70vw] max-w-md",
-              screenSize === "desktop" && "min-w-[300px]",
+              screenSize === "desktop" && "min-w-[350px]",
               popoverClassName
             )}
             style={{
               animationDuration: `${animationConfig?.duration || animation}s`,
               animationDelay: `${animationConfig?.delay || 0}s`,
               maxWidth: `min(${widthConstraints.maxWidth}, 85vw)`,
-              maxHeight: screenSize === "mobile" ? "70vh" : "60vh",
+              maxHeight: screenSize === "mobile" ? "70vh" : "400px",
               touchAction: "manipulation",
             }}
             align="start"
             onEscapeKeyDown={() => setIsPopoverOpen(false)}
           >
-            <Command>
+            <Command className="flex flex-col h-full">
               {searchable && (
-                <CommandInput
-                  placeholder="buscar roles..."
-                  onKeyDown={handleInputKeyDown}
-                  value={searchValue}
-                  onValueChange={setSearchValue}
-                  aria-label="Search through available options"
-                  aria-describedby={`${multiSelectId}-search-help`}
-                />
+                <div className="flex-shrink-0 border-b bg-muted/30 px-3 py-2.5">
+                  <CommandInput
+                    placeholder="Buscar roles..."
+                    onKeyDown={handleInputKeyDown}
+                    value={searchValue}
+                    onValueChange={setSearchValue}
+                    aria-label="Search through available options"
+                    aria-describedby={`${multiSelectId}-search-help`}
+                    className="h-9 border-0 focus:ring-0 focus:outline-none shadow-none placeholder:text-muted-foreground/60"
+                  />
+                </div>
               )}
               {searchable && (
                 <div id={`${multiSelectId}-search-help`} className="sr-only">
@@ -1046,7 +1049,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               )}
               <CommandList
                 className={cn(
-                  "max-h-[40vh] overflow-y-auto multiselect-scrollbar",
+                  "flex-1 overflow-y-auto multiselect-scrollbar",
                   screenSize === "mobile" && "max-h-[50vh]",
                   "overscroll-behavior-y-contain"
                 )}

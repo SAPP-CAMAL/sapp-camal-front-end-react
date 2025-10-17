@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { toCapitalize } from '@/lib/toCapitalize';
 import { mapToAnimalAdmissions } from '../utils';
@@ -50,6 +50,7 @@ export const useStep1Certificate = () => {
 	} = useReceptionContext();
 
 	const [searchState, setSearchState] = useState<Step1State>(initialState);
+	const [showNoResultsMessage, setShowNoResultsMessage] = useState(false);
 
 	const { identification, fullName, plate, certificateNumber } = searchState;
 
@@ -75,7 +76,24 @@ export const useStep1Certificate = () => {
 	};
 
 	const isSomeFieldsWithValue = [identification.value, fullName.value, plate.value].some(field => field.length > 0);
-	const showShippersList = isSomeFieldsWithValue && !selectedShipper && shippers.length > 0;
+	const showShippersList = isSomeFieldsWithValue && !selectedShipper;
+	const isLoadingShippers = [searchState.plate, searchState.fullName, searchState.identification].some(field => field.state === 'loading');
+
+	// Efecto para mostrar mensaje de "no encontrado" después de 5 segundos
+	useEffect(() => {
+		if (!isSomeFieldsWithValue || selectedShipper || isLoadingShippers) {
+			setShowNoResultsMessage(false);
+			return;
+		}
+
+		const timer = setTimeout(() => {
+			if (shippers.length === 0 && !selectedShipper) {
+				setShowNoResultsMessage(true);
+			}
+		}, 100);
+
+		return () => clearTimeout(timer);
+	}, [isSomeFieldsWithValue, selectedShipper, isLoadingShippers, shippers.length]);
 
 	const handleSuccessButton = async (qrData: Certificate | null, closeModal: () => void) => {
 		closeModal?.();
@@ -197,8 +215,6 @@ export const useStep1Certificate = () => {
 			accordionState: { isOpen: !step1Accordion.isOpen, state: step1Accordion.state === 'completed' ? 'completed' : 'enabled' },
 		});
 
-	const isLoadingShippers = [searchState.plate, searchState.fullName, searchState.identification].some(field => field.state === 'loading');
-
 	let isLoadingText = 'Cargando ';
 
 	if (searchState.plate.state === 'loading') isLoadingText += 'placa ';
@@ -230,6 +246,7 @@ export const useStep1Certificate = () => {
 		step1Accordion,
 		searchParams: searchState,
 		showShippersList,
+		showNoResultsMessage,
 		isLoadingShippers,
 		isLoadingText,
 		certificateQuery,

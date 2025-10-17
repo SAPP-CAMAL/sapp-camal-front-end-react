@@ -101,20 +101,10 @@ export function CarriersManagement({}) {
     <div>
       <section className="mb-4 flex justify-between">
         <div>
-          <h1 className="font-semibold text-xl">Transportistas</h1>
+          <h2 className="font-semibold text-xl">Transportistas</h2>
           <p className="text-gray-600 text-sm mt-1">
             Gestión de transportistas y vehículos registrados en el sistema
           </p>
-        </div>
-        <div>
-          <NewCarrier
-            trigger={
-              <Button>
-                <PlusIcon className="h-4 w-4" />
-                Nuevo Transportista
-              </Button>
-            }
-          />
         </div>
       </section>
       <Card className="mb-4">
@@ -231,7 +221,16 @@ export function CarriersManagement({}) {
           </div>
         </CardContent>
       </Card>
-
+   <div className="flex justify-end ml-auto mb-3">
+          <NewCarrier
+            trigger={
+              <Button>
+                <PlusIcon className="h-4 w-4" />
+                Nuevo Transportista
+              </Button>
+            }
+          />
+        </div>
       <CarriersTable
         columns={[
           {
@@ -319,6 +318,7 @@ export function CarriersManagement({}) {
                     <TooltipTrigger asChild>
                       <Button variant="outline" onClick={() => setOpen(true)}>
                         <EditIcon />
+                        Editar
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent

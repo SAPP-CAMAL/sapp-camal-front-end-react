@@ -172,6 +172,7 @@ export function UpdatePerson({ person }: { person: any }) {
           <DialogTrigger asChild>
             <Button variant={"outline"}>
               <EditIcon />
+              Editar
             </Button>
           </DialogTrigger>
         </TooltipTrigger>

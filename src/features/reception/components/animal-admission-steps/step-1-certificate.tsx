@@ -22,6 +22,7 @@ export const Step1Certificate = () => {
 		selectedCertificate,
 		searchParams,
 		showShippersList,
+		showNoResultsMessage,
 		step1Accordion,
 		isLoadingShippers,
 		isLoadingText,
@@ -279,36 +280,47 @@ export const Step1Certificate = () => {
 
 					{showShippersList && !isFromQR && (
 						<>
-							{/* Results */}
-							<Label className='opacity-50'>Transportistas encontrados:</Label>
-							<div className='grid gap-2 max-h-48 overflow-y-auto'>
-								{shippers.map(shipper => (
-									<BasicResultsCard
-										key={shipper.id}
-										title={shipper.person.fullName}
-										paragraph={`${shipper.person.identification} • ${shipper.vehicle.plate} • ${toCapitalize(
-											shipper.vehicle.vehicleDetail.vehicleType.name
-										)}`}
-										onSelect={() =>
-											handleSetSelectedShipper({
-												id: shipper.id,
-												personId: shipper.person.id,
-												firstName: shipper.person.firstName,
-												lastName: shipper.person.lastName,
-												fullName: shipper.person.fullName,
-												identification: shipper.person.identification,
-												identificationTypeId: shipper.person.identificationTypeId.toString(),
-												plate: shipper.vehicle.plate,
-												vehicleId: shipper.vehicle.id.toString(),
-												vehicleTypeId: shipper.vehicle.vehicleDetail.vehicleType.id.toString(),
-												vehicleType: shipper.vehicle.vehicleDetail.vehicleType.name,
-												transportTypeId: shipper.vehicle.vehicleDetail.transportType.id.toString(),
-												transportType: shipper.vehicle.vehicleDetail.transportType.name,
-											})
-										}
+							{shippers.length > 0 ? (
+								<>
+									{/* Results */}
+									<Label className='opacity-50'>Transportistas encontrados:</Label>
+									<div className='grid gap-2 max-h-48 overflow-y-auto'>
+										{shippers.map(shipper => (
+											<BasicResultsCard
+												key={shipper.id}
+												title={shipper.person.fullName}
+												paragraph={`${shipper.person.identification} • ${shipper.vehicle.plate} • ${toCapitalize(
+													shipper.vehicle.vehicleDetail.vehicleType.name
+												)}`}
+												onSelect={() =>
+													handleSetSelectedShipper({
+														id: shipper.id,
+														personId: shipper.person.id,
+														firstName: shipper.person.firstName,
+														lastName: shipper.person.lastName,
+														fullName: shipper.person.fullName,
+														identification: shipper.person.identification,
+														identificationTypeId: shipper.person.identificationTypeId.toString(),
+														plate: shipper.vehicle.plate,
+														vehicleId: shipper.vehicle.id.toString(),
+														vehicleTypeId: shipper.vehicle.vehicleDetail.vehicleType.id.toString(),
+														vehicleType: shipper.vehicle.vehicleDetail.vehicleType.name,
+														transportTypeId: shipper.vehicle.vehicleDetail.transportType.id.toString(),
+														transportType: shipper.vehicle.vehicleDetail.transportType.name,
+													})
+												}
+											/>
+										))}
+									</div>
+								</>
+							) : (
+								showNoResultsMessage && (
+									<BasicResultsCard 
+										title='No se encontraron transportistas' 
+										paragraph='Intente con otro nombre, cédula o placa' 
 									/>
-								))}
-							</div>
+								)
+							)}
 						</>
 					)}
 
