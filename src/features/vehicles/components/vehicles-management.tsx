@@ -80,23 +80,10 @@ export function VehiclesManagement({}) {
     <div>
       <section className="mb-4 flex justify-between">
         <div>
-          <h1 className="font-semibold text-xl">Vehículos</h1>
+          <h2>Vehículos</h2>
           <p className="text-gray-600 text-sm mt-1">
             Gestión de vehículos registrados en el sistema
           </p>
-        </div>
-        <div>
-          <NewVehicleForm
-            vehicleTypes={catalogueVehiclesType.data?.data ?? []}
-            transportsTypes={catalogueTransportsType.data?.data ?? []}
-            onSuccess={() => query.refetch()}
-            trigger={
-              <Button>
-                <PlusIcon className="h-4 w-4" />
-                Nuevo Vehículo
-              </Button>
-            }
-          />
         </div>
       </section>
       <Card className="mb-4">
@@ -198,7 +185,19 @@ export function VehiclesManagement({}) {
           </div>
         </CardContent>
       </Card>
-
+      <div className="flex justify-end ml-auto mb-3">
+        <NewVehicleForm
+          vehicleTypes={catalogueVehiclesType.data?.data ?? []}
+          transportsTypes={catalogueTransportsType.data?.data ?? []}
+          onSuccess={() => query.refetch()}
+          trigger={
+            <Button>
+              <PlusIcon className="h-4 w-4" />
+              Nuevo Vehículo
+            </Button>
+          }
+        />
+      </div>
       <VehicleTable
         columns={[
           {

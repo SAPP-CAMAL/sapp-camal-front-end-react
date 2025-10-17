@@ -126,7 +126,7 @@ export function SpeciesMenu({
                 <DropdownMenuSub key={specie.id}>
                   <DropdownMenuSubTrigger className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className={`h-4 w-4 rounded-full border ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+                      <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
                         {isSelected && <Check className="h-3 w-3 text-white" />}
                       </div>
                       <span>{specie.name}</span>
@@ -140,7 +140,7 @@ export function SpeciesMenu({
                       onClick={() => handleSpeciesSelect(specie.name as Species)}
                       className="flex items-center gap-2"
                     >
-                      <div className={`h-4 w-4 rounded-full border ${isSelected && !selectedFinishType ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+                      <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected && !selectedFinishType ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
                         {isSelected && !selectedFinishType && <Check className="h-3 w-3 text-white" />}
                       </div>
                       <span>Todos los tipos</span>
@@ -158,7 +158,7 @@ export function SpeciesMenu({
                         }}
                         className="flex items-center gap-2"
                       >
-                        <div className={`h-4 w-4 rounded-full border ${isSelected && selectedFinishType === finishType.id ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+                        <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected && selectedFinishType === finishType.id ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
                           {isSelected && selectedFinishType === finishType.id && <Check className="h-3 w-3 text-white" />}
                         </div>
                         <span>{finishType.name}</span>
@@ -174,7 +174,7 @@ export function SpeciesMenu({
                   onClick={() => handleSpeciesSelect(specie.name as Species)}
                   className="flex items-center gap-2"
                 >
-                  <div className={`h-4 w-4 rounded-full border ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+                  <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
                     {isSelected && <Check className="h-3 w-3 text-white" />}
                   </div>
                   <span>{specie.name}</span>

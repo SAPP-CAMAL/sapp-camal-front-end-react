@@ -32,5 +32,15 @@ export async function getModulesWithMenusService(): Promise<ResponseModuleWithMe
 }
 
 export async function getAdministrationMenusService() {
-    return httpSSR.get("v1/1.0.0/administration/menu").json<ResponseMenuService>()
+    try {
+        return await httpSSR.get("v1/1.0.0/administration/menu").json<ResponseMenuService>()
+    } catch (error) {
+        console.error("Error fetching administration menus:", error);
+        // Retornar estructura vacía en caso de error
+        return { 
+            code: 500, 
+            message: "Error al obtener menús", 
+            data: [] 
+        } as ResponseMenuService;
+    }
 }

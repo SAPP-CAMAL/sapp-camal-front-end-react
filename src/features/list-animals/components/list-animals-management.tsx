@@ -211,7 +211,7 @@ export function ListAnimalsManagement() {
   const MobileCard = ({ item }: { item: any }) => (
     <Card className="mb-4">
       <CardContent className="p-4 space-y-3">
-        {/* Header con fecha y CSM */}
+        {/* Header con fecha y CZPM-M */}
         <div className="flex justify-between items-start border-b pb-3">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -225,7 +225,7 @@ export function ListAnimalsManagement() {
             </div>
           </div>
           <Badge variant="outline" className="text-xs">
-            CSM: {item.certificate?.code || "N/A"}
+            CZPM-M: {item.certificate?.code || "N/A"}
           </Badge>
         </div>
 
@@ -595,7 +595,9 @@ export function ListAnimalsManagement() {
                       <span className="block text-xs font-semibold">
                         No. de
                       </span>
-                      <span className="block text-xs font-semibold">CSM</span>
+                      <span className="block text-xs font-semibold">
+                        CZPM-M
+                      </span>
                     </TableHead>
                     <TableHead className="w-32 whitespace-normal leading-tight text-center">
                       <span className="block text-xs font-semibold">

@@ -138,7 +138,7 @@ export function ListTransportManagement() {
   const MobileCard = ({ item }: { item: any }) => (
     <Card className="mb-4">
       <CardContent className="p-4 space-y-3">
-        {/* Header con fecha y CSM */}
+        {/* Header con fecha y CZPM-M */}
         <div className="flex justify-between items-start border-b pb-3">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -149,7 +149,7 @@ export function ListTransportManagement() {
             </div>
           </div>
           <Badge variant="outline" className="text-xs">
-            CSM: {item.code || "N/A"}
+            CZPM-M: {item.code || "N/A"}
           </Badge>
         </div>
 
@@ -305,7 +305,7 @@ export function ListTransportManagement() {
                 htmlFor="code"
                 className="text-xs text-muted-foreground font-medium"
               >
-                Código CSM
+                Código CZPM-M
               </label>
               <div className="relative">
                 <Hash className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -479,7 +479,7 @@ export function ListTransportManagement() {
                       </span>
                     </TableHead>
                     <TableHead className="w-32 whitespace-normal leading-tight text-center">
-                      <span className="block text-xs font-semibold">CSM</span>
+                      <span className="block text-xs font-semibold">CZPM-M</span>
                     </TableHead>
                     <TableHead className="w-40 whitespace-normal leading-tight text-center">
                       <span className="block text-xs font-semibold">

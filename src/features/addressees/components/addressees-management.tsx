@@ -77,22 +77,10 @@ export function AddresseesManagement({}) {
     <div>
       <section className="mb-4 flex justify-between">
         <div>
-          <h1 className="font-semibold text-xl">Destinatarios</h1>
+          <h2 className="font-semibold text-xl">Destinatarios</h2>
           <p className="text-gray-600 text-sm mt-1">
             Gestión de destinatarios registrados en el sistema
           </p>
-        </div>
-        <div>
-          <NewAddresseesForm
-            provinces={provinces?.data ?? []}
-            onSuccess={() => query.refetch()}
-            trigger={
-              <Button>
-                <PlusIcon className="h-4 w-4" />
-                Nuevo Destinatario
-              </Button>
-            }
-          />
         </div>
       </section>
       <Card className="mb-4">
@@ -167,7 +155,18 @@ export function AddresseesManagement({}) {
           </div>
         </CardContent>
       </Card>
-
+      <div className="flex justify-end ml-auto mb-3">
+        <NewAddresseesForm
+          provinces={provinces?.data ?? []}
+          onSuccess={() => query.refetch()}
+          trigger={
+            <Button>
+              <PlusIcon className="h-4 w-4" />
+              Nuevo Destinatario
+            </Button>
+          }
+        />
+      </div>
       <AddresseesTable
         columns={[
           {
@@ -177,7 +176,7 @@ export function AddresseesManagement({}) {
               return (
                 <div className="flex flex-col">
                   <span className="font-medium text-sm">
-                    {toCapitalize(row.original.fullName ?? '', true) ?? "—"}
+                    {toCapitalize(row.original.fullName ?? "", true) ?? "—"}
                   </span>
                   <span className="text-gray-600 text-xs">
                     {row.original.email ?? "—"}{" "}
@@ -199,10 +198,12 @@ export function AddresseesManagement({}) {
               return (
                 <div className="flex flex-col">
                   <span className="font-medium text-sm">
-                    {toCapitalize(address.canton ?? '', true) ?? "—"} - {toCapitalize(address.province ?? '', true) ?? "—"}
+                    {toCapitalize(address.canton ?? "", true) ?? "—"} -{" "}
+                    {toCapitalize(address.province ?? "", true) ?? "—"}
                   </span>
                   <span className="text-gray-600 text-xs">
-                    {toCapitalize(address.parish ?? '', true) ?? "—"} - {toCapitalize(address.firstStree ?? '', true) ?? "—"}
+                    {toCapitalize(address.parish ?? "", true) ?? "—"} -{" "}
+                    {toCapitalize(address.firstStree ?? "", true) ?? "—"}
                   </span>
                 </div>
               );

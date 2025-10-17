@@ -37,20 +37,15 @@ export const NavigationGuard = ({ children }: NavigationGuardProps) => {
 		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
 	}, [hasUnsavedWork]);
 
-	// Interceptar navegación interna (clicks en el menú y links)
 	useEffect(() => {
 		const handleClick = (e: MouseEvent) => {
-			// Solo interceptar si hay trabajo sin guardar
 			if (!hasUnsavedWork) return;
 
 			const target = e.target as HTMLElement;
-			// Buscar el link más cercano (puede estar en un parent)
 			const link = target.closest('a[href], button[type="button"]');
 
-			// Si es un link
 			if (link && link instanceof HTMLAnchorElement) {
 				const href = link.getAttribute('href');
-				// Interceptar si es una navegación a otra página (no hash, no mismo path)
 				if (href && href !== pathname && !href.startsWith('#') && href.startsWith('/')) {
 					e.preventDefault();
 					e.stopPropagation();
@@ -60,8 +55,6 @@ export const NavigationGuard = ({ children }: NavigationGuardProps) => {
 				}
 			}
 		};
-
-		// Usar capture phase para interceptar antes que otros handlers
 		document.addEventListener('click', handleClick, { capture: true });
 		return () => document.removeEventListener('click', handleClick, { capture: true });
 	}, [hasUnsavedWork, pathname]);
@@ -70,12 +63,10 @@ export const NavigationGuard = ({ children }: NavigationGuardProps) => {
 		setIsNavigating(true);
 		setShowExitDialog(false);
 		
-		// Navegar a la URL de destino si existe
 		if (targetUrl) {
 			router.push(targetUrl);
 			setTargetUrl(null);
 		} else {
-			// Si no hay URL, ir hacia atrás
 			router.back();
 		}
 	};
@@ -89,7 +80,6 @@ export const NavigationGuard = ({ children }: NavigationGuardProps) => {
 		<>
 			{children}
 
-			{/* Dialog de confirmación al intentar salir */}
 			<Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
 				<DialogContent>
 					<DialogHeader>

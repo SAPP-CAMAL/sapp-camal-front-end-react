@@ -97,18 +97,17 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 		<>
 			<Dialog open={open} onOpenChange={setOpen}>
 				<DialogTrigger asChild>{triggerButton}</DialogTrigger>
-				<DialogContent className='w-[98vw] h-[95vh] flex flex-col p-0' style={{ maxWidth: '98vw' }}>
-					<DialogHeader className='px-6 pt-6 pb-4 border-b'>
-						<DialogTitle className='text-2xl font-bold'>Cambiar Transportista del Certificado</DialogTitle>
-						<DialogDescription className='text-base mt-2'>
+				<DialogContent className='max-w-5xl w-[95vw] max-h-[90vh] flex flex-col p-0'>
+					<DialogHeader className='px-4 pt-4 pb-3 border-b'>
+						<DialogTitle className='text-xl font-bold'>Cambiar Transportista del Certificado</DialogTitle>
+						<DialogDescription className='text-sm mt-1'>
 							Seleccione un transportista de la lista de registros diarios. Haga clic en una fila para seleccionar.
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className='flex-1 overflow-y-auto px-6 py-4'>
-						<div className='space-y-6'>
-							{/* Filtro por fecha con mejor diseño */}
-							<div className='bg-muted/50 p-4 rounded-lg border'>
+					<div className='flex-1 overflow-y-auto px-4 py-3'>
+						<div className='space-y-4'>
+							{/* <div className='bg-muted/50 p-4 rounded-lg border'>
 								<div className='flex items-center gap-4'>
 									<label className='text-sm font-medium whitespace-nowrap'>Filtrar por fecha:</label>
 									<Input 
@@ -121,9 +120,8 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 										{query.data.data.length} {query.data.data.length === 1 ? 'registro' : 'registros'} encontrados
 									</div>
 								</div>
-							</div>
+							</div> */}
 
-							{/* Tabla de transportistas con scroll interno */}
 							<div className='border rounded-lg overflow-hidden shadow-sm'>
 								<div className='overflow-x-auto'>
 									<Table>
@@ -131,7 +129,7 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 											{table.getHeaderGroups().map(headerGroup => (
 												<TableRow key={headerGroup.id}>
 													{headerGroup.headers.map(header => (
-														<TableHead key={header.id} className='font-semibold text-foreground h-12'>
+														<TableHead key={header.id} className='font-semibold text-foreground h-10 text-sm'>
 															{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
 														</TableHead>
 													))}
@@ -152,11 +150,11 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 												table.getRowModel().rows.map(row => (
 													<TableRow
 														key={row.id}
-														className='cursor-pointer hover:bg-primary/5 transition-colors duration-150 h-14'
+														className='cursor-pointer hover:bg-primary/5 transition-colors duration-150'
 														onClick={() => handleSelectRow(row.original)}
 													>
 														{row.getVisibleCells().map(cell => (
-															<TableCell key={cell.id} className='py-3'>
+															<TableCell key={cell.id} className='py-2 text-sm'>
 																{flexRender(cell.column.columnDef.cell, cell.getContext())}
 															</TableCell>
 														))}
