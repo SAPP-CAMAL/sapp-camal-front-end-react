@@ -33,7 +33,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { CreateVehicleForm } from "./new-vehicle.form";
-import { parseAsInteger, useQueryStates } from "nuqs";
 import { getPeopleByFilterService } from "@/features/people/server/db/people.service";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +54,7 @@ import {
 } from "../server/carriers.service";
 import { Separator } from "@/components/ui/separator";
 import { toCapitalize } from "@/lib/toCapitalize";
-import { BasicResultsCard } from "@/features/reception/components";
+import { useDebouncedCallback } from "use-debounce";
 
 interface NewCarrierProps {
   shipping?: any;
@@ -82,15 +81,9 @@ export function NewCarrier({
   const [filterFullName, setfilterFullName] = useState("");
   const [filterIdentification, setfilterIdentification] = useState("");
 
-  const [searchParams, setSearchParams] = useQueryStates(
-    {
-      page: parseAsInteger.withDefault(1),
-      limit: parseAsInteger.withDefault(10),
-    },
-    {
-      history: "push",
-    }
-  );
+  const [debouncedFullName, setDebouncedFullName] = useState("");
+  const [debouncedIdentification, setDebouncedIdentification] = useState("");
+  const [debouncedPlate, setDebouncedPlate] = useState("");
 
   const defaultValues = {
     open: false,
@@ -110,40 +103,49 @@ export function NewCarrier({
   const [loadingVehicles, setLoadingVehicles] = useState<
     Record<number, boolean>
   >({});
+
+  const updateDebouncedFullName = useDebouncedCallback((value: string) => {
+    setDebouncedFullName(value);
+  }, 500);
+
+  const updateDebouncedIdentification = useDebouncedCallback(
+    (value: string) => {
+      setDebouncedIdentification(value);
+    },
+    500
+  );
+
+  const updateDebouncedPlate = useDebouncedCallback((value: string) => {
+    setDebouncedPlate(value);
+  }, 500);
+
   const query = useQuery<ResponsePeopleByFilter>({
-    queryKey: ["people", searchParams, filterFullName, filterIdentification],
+    queryKey: ["people", debouncedFullName, debouncedIdentification],
     queryFn: () =>
       getPeopleByFilterService({
-        page: searchParams.page,
-        limit: searchParams.limit,
-        ...(filterIdentification != "" && {
-          identificacion: filterIdentification,
+        ...(debouncedIdentification.trim() !== "" && {
+          identificacion: debouncedIdentification,
         }),
-        ...(filterFullName.length >= 1 && {
-          fullName: filterFullName,
+        ...(debouncedFullName.trim().length >= 2 && {
+          fullName: debouncedFullName,
         }),
       }),
-    enabled: false,
+    enabled:
+      debouncedFullName.trim().length >= 2 ||
+      debouncedIdentification.trim().length >= 3,
   });
 
   const queryVehicle = useQuery({
-    queryKey: ["vehicle", searchParams],
+    queryKey: ["vehicle", debouncedPlate],
     queryFn: () =>
       getVehicleByFilterService({
-        page: searchParams.page,
-        limit: searchParams.limit,
-        ...(filterPlate.trim().length >= 3 && { plate: filterPlate.trim() }),
+        ...(debouncedPlate.trim().length >= 3 && {
+          plate: debouncedPlate.trim(),
+        }),
         status: true,
       }),
-    enabled: false,
+    enabled: debouncedPlate.trim().length >= 3,
   });
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      query.refetch();
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [filterFullName]);
 
   const onSubmit = async (vehicleId: number) => {
     try {
@@ -176,6 +178,7 @@ export function NewCarrier({
       setSelectedTransportIds([]);
       setVehiclesList([]);
       form.setValue("open", false);
+      onSuccess?.();
     } catch (error: any) {
       console.error("Error creating shippings:", error);
 
@@ -236,19 +239,6 @@ export function NewCarrier({
   };
 
   useEffect(() => {
-    const hasSearch =
-      filterFullName.trim() !== "" || filterIdentification.trim() !== "";
-    if (hasSearch) {
-      query.refetch();
-    } else {
-      setSelectedPerson(null);
-    }
-    if (filterPlate.trim() !== "") {
-      queryVehicle.refetch();
-    }
-  }, [filterFullName, filterIdentification, filterPlate]);
-
-  useEffect(() => {
     const fetchAllVehicleTypes = async () => {
       for (const transportId of selectedTransportIds) {
         if (!vehicleTypes[transportId]) {
@@ -290,12 +280,6 @@ export function NewCarrier({
     }
   }, [queryVehicle?.data?.data?.items]);
 
-  useEffect(() => {
-    if (query?.data?.data?.items) {
-      setPersonData(query.data.data.items);
-    }
-  }, [query?.data?.data?.items]);
-
   const handleCheckboxChange = (catalogueId: number, isChecked: boolean) => {
     if (isChecked) {
       setSelectedTransportIds((prev) => [...prev, catalogueId]);
@@ -316,10 +300,6 @@ export function NewCarrier({
     }
   };
 
-  const getAllVehicleTypes = (): TransportType[] => {
-    return Object.values(vehicleTypes).flat();
-  };
-
   const handlePlateInput = (value: string) => {
     let formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (formatted.length > 7) {
@@ -329,16 +309,51 @@ export function NewCarrier({
       formatted = formatted.slice(0, 3) + "-" + formatted.slice(3);
     }
     setFilterPlate(formatted);
+    updateDebouncedPlate(formatted);
+    if (formatted.trim().length < 3) {
+      setVehiclesList([]);
+    }
   };
+
+  useEffect(() => {
+    if (query?.data?.data?.items) {
+      setPersonData(query.data.data.items);
+    } else if (
+      (debouncedFullName.trim() === "" &&
+        debouncedIdentification.trim() === "") ||
+      query.data?.data?.items?.length === 0
+    ) {
+      setPersonData([]);
+    }
+  }, [query?.data?.data?.items, debouncedFullName, debouncedIdentification]);
+
+  useEffect(() => {
+    if (
+      debouncedFullName.trim().length < 2 &&
+      debouncedIdentification.trim().length < 3
+    ) {
+      setPersonData([]);
+      setSelectedPerson(null);
+      return;
+    }
+
+    if (query?.data?.data?.items) {
+      setPersonData(query.data.data.items);
+    }
+  }, [query?.data?.data?.items, debouncedFullName, debouncedIdentification]);
+
+  useEffect(() => {
+    if (queryVehicle?.data?.data?.items && debouncedPlate.trim().length >= 3) {
+      setVehiclesList(queryVehicle.data.data.items);
+    } else if (debouncedPlate.trim().length < 3) {
+      setVehiclesList([]);
+    }
+  }, [queryVehicle?.data?.data?.items, debouncedPlate]);
 
   return (
     <Dialog
       open={open ?? form.watch("open")}
       onOpenChange={(newOpen) => {
-        setSearchParams({
-          page: 1,
-          limit: 10,
-        });
         setFilterPlate("");
         setVehiclesList([]);
         setSelectedTransportIds([]);
@@ -391,7 +406,9 @@ export function NewCarrier({
                           className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
                           value={filterFullName}
                           onChange={(e) => {
-                            setfilterFullName(e.target.value);
+                            const value = e.target.value;
+                            setfilterFullName(value);
+                            updateDebouncedFullName(value);
                           }}
                         />
                       </div>
@@ -406,7 +423,9 @@ export function NewCarrier({
                           className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
                           value={filterIdentification}
                           onChange={(e) => {
-                            setfilterIdentification(e.target.value);
+                            const value = e.target.value;
+                            setfilterIdentification(value);
+                            updateDebouncedIdentification(value);
                           }}
                         />
                       </div>
@@ -747,10 +766,6 @@ export function NewCarrier({
             variant={"outline"}
             disabled={form.formState.isSubmitting}
             onClick={() => {
-              setSearchParams({
-                page: 1,
-                limit: 10,
-              });
               setFilterPlate("");
               setSelectedPerson(null);
               setSelectedTransportIds([]);

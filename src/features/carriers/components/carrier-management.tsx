@@ -52,6 +52,7 @@ export function CarriersManagement({}) {
     },
     {
       history: "push",
+      clearOnDefault: true,
     }
   );
   const query = useQuery({
@@ -77,6 +78,8 @@ export function CarriersManagement({}) {
           vehicleStatus: searchParams.vehicleStatus === "true",
         }),
       }),
+    enabled: searchParams !== null,
+    staleTime: 1000,
   });
 
   const debounceFullName = useDebouncedCallback(
@@ -181,16 +184,16 @@ export function CarriersManagement({}) {
                 Tipo de transporte
               </label>
               <Select
+                value={String(searchParams.transportTypeId)}
                 onValueChange={(value) => {
                   setSearchParams({ transportTypeId: Number(value), page: 1 });
                 }}
-                defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="Seleccione el tipo de transporte" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="*">Todos los tipos</SelectItem>
+                  <SelectItem value="0">Todos los tipos</SelectItem>
                   {catalogueTransportsType.data?.data.map(
                     (transport, index) => (
                       <SelectItem
@@ -210,31 +213,10 @@ export function CarriersManagement({}) {
                 Estado Transportista
               </label>
               <Select
+                value={searchParams.shippingStatus}
                 onValueChange={(value) => {
                   setSearchParams({ shippingStatus: value, page: 1 });
                 }}
-                defaultValue={"*"}
-              >
-                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="Seleccione un estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={"*"}>Todos los estados</SelectItem>
-                  <SelectItem value={"true"}>Activo</SelectItem>
-                  <SelectItem value={"false"}>Inactivo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col w-full">
-              <label className="mb-1 text-sm font-medium text-gray-700">
-                Estado Vehículo
-              </label>
-              <Select
-                onValueChange={(value) => {
-                  setSearchParams({ vehicleStatus: value, page: 1 });
-                }}
-                defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="Seleccione un estado" />
