@@ -51,8 +51,17 @@ export function UpdateIntroductor({ introductor, onRefresh, introducerRolId }: u
 			onRefresh();
 			setOpen(false);
 		} catch (error: any) {
-			const { data } = await error.response.json();
-			toast.error('Error al actualizar introductor');
+			console.error("Error al actualizar introductor:", error);
+			if (error.response) {
+				try {
+					const { data } = await error.response.json();
+					toast.error(data || 'Error al actualizar introductor');
+				} catch {
+					toast.error('Error al actualizar introductor');
+				}
+			} else {
+				toast.error('Error de conexión. Por favor, intente nuevamente.');
+			}
 		}
 	});
 	return (

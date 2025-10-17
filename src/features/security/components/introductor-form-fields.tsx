@@ -109,8 +109,17 @@ export function IntroductorFormFields({
       setIntroducerId(introductor.data.items[0].id);
       setIsSuccess(true);
     } catch (error: any) {
-      const { data } = await error.response.json();
-      toast.error(data);
+      console.error("Error al crear introductor:", error);
+      if (error.response) {
+        try {
+          const { data } = await error.response.json();
+          toast.error(data || "Error al crear el introductor");
+        } catch {
+          toast.error("Error al crear el introductor");
+        }
+      } else {
+        toast.error("Error de conexión. Por favor, intente nuevamente.");
+      }
     }
   };
   const handleSaveBrands = async () => {
