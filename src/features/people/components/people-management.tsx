@@ -189,10 +189,7 @@ export function PeopleManagement({}) {
             accessorKey: "fullName",
             header: "Nombre Completo",
             cell: ({ row }) => (
-              <div className="flex items-center gap-x-2">
-                <div>{toCapitalize(row.original.firstName ?? "", true)}</div>
-                <div>{toCapitalize(row.original.lastName ?? "", true)}</div>
-              </div>
+              <div>{toCapitalize(row.original.fullName ?? "", true)}</div>
             ),
           },
           {
