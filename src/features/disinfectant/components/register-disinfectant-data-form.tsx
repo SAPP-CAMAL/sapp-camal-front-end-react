@@ -1,6 +1,7 @@
 'use client';
 
-import { Plus, Save, Search, XIcon } from 'lucide-react';
+import React from 'react';
+import { Clock, Plus, Save, Search, XIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,19 @@ export function RegisterDisinfectantDataForm() {
 		handleRemoveSelected,
 		handleRegisterDisinfectantData,
 	} = useRegisterDisinfectantData();
+
+	// Actualizar la hora automáticamente cada minuto
+	React.useEffect(() => {
+		if (isEditing) return; // No actualizar si está editando
+		
+		const getCurrentTime = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+		
+		const interval = setInterval(() => {
+			form.setValue('admissionApplicationTime', getCurrentTime());
+		}, 60000); // Actualizar cada minuto
+
+		return () => clearInterval(interval);
+	}, [form, isEditing]);
 
 	return (
 		<Form {...form}>
@@ -212,7 +226,10 @@ export function RegisterDisinfectantDataForm() {
 							<FormItem>
 								<FormLabel>Hora de Aplicación de Ingreso</FormLabel>
 								<FormControl>
-									<Input className='bg-secondary' type='time' {...field} />
+									<div className='relative'>
+										<Clock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5' />
+										<Input className='bg-secondary pl-10' type='time' {...field} readOnly disabled={!isEditing} />
+									</div>
 								</FormControl>
 								<FormMessage />
 							</FormItem>

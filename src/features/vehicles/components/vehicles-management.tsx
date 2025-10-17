@@ -151,7 +151,7 @@ export function VehiclesManagement({}) {
                         key={index}
                         value={String(transport.catalogueId)}
                       >
-                        {capitalizeText(transport.name)}
+                        {transport.name.toUpperCase()}
                       </SelectItem>
                     )
                   )}
@@ -176,7 +176,7 @@ export function VehiclesManagement({}) {
                   <SelectItem value="*">Todos los vehículos</SelectItem>
                   {catalogueVehiclesType.data?.data.map((vehicle, index) => (
                     <SelectItem key={index} value={String(vehicle.catalogueId)}>
-                      {capitalizeText(vehicle.name)}
+                      {vehicle.name.toUpperCase()}
                     </SelectItem>
                   ))}
                 </SelectContent>
