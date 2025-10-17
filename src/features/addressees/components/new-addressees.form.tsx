@@ -429,7 +429,7 @@ export default function NewAddresseesForm({
                     <SelectItem value="*">Todos los cantones</SelectItem>
                     {cantons?.data?.map((canton, index) => (
                       <SelectItem key={index} value={String(canton.id)}>
-                        {capitalizeText(canton.name)}
+                        {canton.name.toUpperCase()}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -451,7 +451,7 @@ export default function NewAddresseesForm({
                     <SelectItem value="*">Todas las parroquias</SelectItem>
                     {parishes?.data?.map((parish, index) => (
                       <SelectItem key={index} value={String(parish.id)}>
-                        {capitalizeText(parish.name)}
+                        {parish.name.toUpperCase()}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -492,7 +492,7 @@ export default function NewAddresseesForm({
 
           <Button
             onClick={handleSubmit}
-            className="bg-black hover:bg-gray-800"
+            className="bg-primary hover:bg-gray-800"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
