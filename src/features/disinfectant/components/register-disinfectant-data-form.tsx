@@ -37,7 +37,7 @@ export function RegisterDisinfectantDataForm() {
 		handleRegisterDisinfectantData,
 	} = useRegisterDisinfectantData();
 
-	// Actualizar la hora automáticamente cada minuto
+	// Actualizar la hora automáticamente cada segundo
 	React.useEffect(() => {
 		if (isEditing) return; // No actualizar si está editando
 		
@@ -45,7 +45,7 @@ export function RegisterDisinfectantDataForm() {
 		
 		const interval = setInterval(() => {
 			form.setValue('admissionApplicationTime', getCurrentTime());
-		}, 60000); // Actualizar cada minuto
+		}, 1000); // Actualizar cada segundo
 
 		return () => clearInterval(interval);
 	}, [form, isEditing]);

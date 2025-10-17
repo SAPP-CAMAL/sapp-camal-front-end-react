@@ -407,7 +407,7 @@ export default function NewAddresseesForm({
                     <SelectItem value="*">Todas las provincias</SelectItem>
                     {provinces?.map((province, index) => (
                       <SelectItem key={index} value={String(province.id)}>
-                        {capitalizeText(province.name)}
+                        {province.name.toUpperCase()}
                       </SelectItem>
                     ))}
                   </SelectContent>
