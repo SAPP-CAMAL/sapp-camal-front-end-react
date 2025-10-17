@@ -65,9 +65,9 @@ export default function NewAddresseesForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterFullName, setFilterFullName] = useState("");
   const [filterIdentification, setFilterIdentification] = useState("");
-  const [provinceId, setProvinceId] = useState<string | undefined>();
-  const [cantonId, setCantonId] = useState<string | undefined>();
-  const [parishId, setParishId] = useState<string | undefined>();
+  const [provinceId, setProvinceId] = useState<string>("*");
+  const [cantonId, setCantonId] = useState<string>("*");
+  const [parishId, setParishId] = useState<string>("*");
   const [address, setAddress] = useState("");
   const [personData, setPersonData] = useState<Person[]>([]);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
@@ -245,9 +245,9 @@ export default function NewAddresseesForm({
   const resetForm = () => {
     setFilterFullName("");
     setFilterIdentification("");
-    setProvinceId(undefined);
-    setCantonId(undefined);
-    setParishId(undefined);
+    setProvinceId("*");
+    setCantonId("*");
+    setParishId("*");
     setAddress("");
     setSelectedPerson(null);
     setPersonData([]);
