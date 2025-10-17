@@ -45,7 +45,7 @@ export function RegisterDisinfectantDataForm() {
 		
 		const interval = setInterval(() => {
 			form.setValue('admissionApplicationTime', getCurrentTime());
-		}, 1000); // Actualizar cada segundo
+		}, 30000); // Actualizar cada 30 segundos
 
 		return () => clearInterval(interval);
 	}, [form, isEditing]);
