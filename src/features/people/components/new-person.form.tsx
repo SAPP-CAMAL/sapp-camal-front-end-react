@@ -49,7 +49,6 @@ export function NewPerson() {
         lastName: data.lastName,
         address: data.address,
         affiliationDate: new Date(),
-        fullName: data.lastName + " " + data.firstName,
         status: data.status === "true",
       });
 
@@ -73,8 +72,17 @@ export function NewPerson() {
 
       toast.success("Persona creada exitosamente");
     } catch (error: any) {
-      const { data } = await error.response.json();
-      toast.error(data);
+      console.error("Error al crear persona:", error);
+      if (error.response) {
+        try {
+          const { data } = await error.response.json();
+          toast.error(data || "Error al crear la persona");
+        } catch {
+          toast.error("Error al crear la persona");
+        }
+      } else {
+        toast.error("Error de conexión. Por favor, intente nuevamente.");
+      }
     }
   };
 
