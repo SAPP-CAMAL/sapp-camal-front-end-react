@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Car, Loader2 } from "lucide-react";
+import { Car, Loader2, ToggleLeftIcon, ToggleRightIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   createVehicleService,
@@ -66,6 +66,7 @@ export default function NewVehicleForm({
 }: NewVehicleFormProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isActive, setIsActive] = useState(initialData?.status);
   const [vehicleData, setVehicleData] = useState<VehicleData>({
     plate: "",
     vehicleTypeId: "",
@@ -92,6 +93,9 @@ export default function NewVehicleForm({
     }
   }, [isUpdate, initialData]);
 
+  const handleToggleStatus = () => {
+    setIsActive(!isActive);
+  };
   const handleInputChange = (field: keyof VehicleData, value: any) => {
     setVehicleData((prev) => ({ ...prev, [field]: value }));
   };
@@ -123,7 +127,7 @@ export default function NewVehicleForm({
           model: vehicleData.model.trim(),
           color: vehicleData.color.trim(),
           manufactureYear: Number(vehicleData.year),
-          status: vehicleData.status,
+          status: isActive ?? vehicleData.status,
         });
         toast.success("Vehículo actualizado correctamente");
       } else {
@@ -229,22 +233,24 @@ export default function NewVehicleForm({
                   <Label className="text-sm font-medium">
                     Estado <span className="text-red-500">*</span>
                   </Label>
-                  <Select
-                    value={vehicleData.status ? "activo" : "inactivo"}
-                    onValueChange={(value) =>
-                      handleInputChange("status", value === "activo")
-                    }
-                    required
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger className="h-9 w-full">
-                      <SelectValue placeholder="Seleccione el estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="activo">Activo</SelectItem>
-                      <SelectItem value="inactivo">Inactivo</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
+                    <button
+                      type="button"
+                      onClick={handleToggleStatus}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors w-full justify-between"
+                    >
+                      <span
+                        className={isActive ? "font-bold" : "text-gray-400"}
+                      >
+                        {isActive ? "Activo" : "Inactivo"}
+                      </span>
+                      {isActive ? (
+                        <ToggleRightIcon className="w-8 h-8 text-primary" />
+                      ) : (
+                        <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
 

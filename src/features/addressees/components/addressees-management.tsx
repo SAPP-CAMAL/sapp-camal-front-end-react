@@ -29,6 +29,11 @@ import { useProvinces } from "@/features/provinces/hooks/use-provinces";
 import { format } from "date-fns";
 import NewAddresseesForm from "./new-addressees.form";
 import { toCapitalize } from "@/lib/toCapitalize";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function AddresseesManagement({}) {
   const searchAddresseesParams = useSearchParams();
@@ -242,18 +247,26 @@ export function AddresseesManagement({}) {
             cell: ({ row }) => {
               return (
                 <div className="flex items-center space-x-2">
-                  <NewAddresseesForm
-                    provinces={provinces?.data ?? []}
-                    onSuccess={() => query.refetch()}
-                    isUpdate={true}
-                    trigger={
-                      <Button variant={"outline"}>
-                        <EditIcon className="h-4 w-4" />
-                        Editar
-                      </Button>
-                    }
-                    addresseeData={row.original}
-                  />
+                  <div className="flex gap-2">
+                    <Tooltip>
+                      <NewAddresseesForm
+                        provinces={provinces?.data ?? []}
+                        onSuccess={() => query.refetch()}
+                        isUpdate={true}
+                        addresseeData={row.original}
+                        trigger={
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon">
+                              <EditIcon className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                        }
+                      />
+                      <TooltipContent side="top" sideOffset={5}>
+                        Editar Destinatario
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
               );
             },

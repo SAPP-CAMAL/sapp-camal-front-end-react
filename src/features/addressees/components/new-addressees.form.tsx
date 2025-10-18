@@ -16,12 +16,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Car, Check, Loader2, MapPin, SearchIcon, User } from "lucide-react";
-import { toast } from "sonner";
 import {
-  createVehicleService,
-  updateVehicleService,
-} from "@/features/vehicles/server/db/vehicle.service";
+  Car,
+  Check,
+  Loader2,
+  MapPin,
+  SearchIcon,
+  ToggleLeftIcon,
+  ToggleRightIcon,
+  User,
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -32,11 +37,9 @@ import {
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { ResponseProvinces } from "@/features/provinces/server/provinces.service";
-import { capitalizeText } from "@/lib/utils";
 import { useParishesByCantonId } from "@/features/provinces/hooks/use-parishes";
 import { useCantonsByProvinceId } from "@/features/provinces/hooks/use-cantons";
 import { Person, ResponsePeopleByFilter } from "@/features/people/domain";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 import {
   createAdresseesService,
   updateAdresseesService,
@@ -45,6 +48,7 @@ import { getPeopleByFilterService } from "@/features/people/server/db/people.ser
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Addressees } from "../domain";
+import { useDebouncedCallback } from "use-debounce";
 
 interface NewAddresseesFormProps {
   provinces: ResponseProvinces[];
@@ -70,7 +74,10 @@ export default function NewAddresseesForm({
   const [parishId, setParishId] = useState<string>("*");
   const [address, setAddress] = useState("");
   const [personData, setPersonData] = useState<Person[]>([]);
+  const [isActive, setIsActive] = useState(addresseeData?.status);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [debouncedFullName, setDebouncedFullName] = useState("");
+  const [debouncedIdentification, setDebouncedIdentification] = useState("");
 
   const { data: cantons, isLoading: cantonsLoading } = useCantonsByProvinceId(
     Number(provinceId)
@@ -155,18 +162,31 @@ export default function NewAddresseesForm({
     setAddress(data.addresses?.[0]?.firstStree || "");
   };
 
+  const updateDebouncedFullName = useDebouncedCallback((value: string) => {
+    setDebouncedFullName(value);
+  }, 500);
+
+  const updateDebouncedIdentification = useDebouncedCallback(
+    (value: string) => {
+      setDebouncedIdentification(value);
+    },
+    500
+  );
+
   const query = useQuery<ResponsePeopleByFilter>({
-    queryKey: ["people"],
+    queryKey: ["people", debouncedFullName, debouncedIdentification],
     queryFn: () =>
       getPeopleByFilterService({
-        ...(filterIdentification != "" && {
-          identificacion: filterIdentification,
+        ...(debouncedIdentification.trim() !== "" && {
+          identificacion: debouncedIdentification,
         }),
-        ...(filterFullName.length > 2 && {
-          fullName: filterFullName,
+        ...(debouncedFullName.trim().length >= 2 && {
+          fullName: debouncedFullName,
         }),
       }),
-    enabled: false,
+    enabled:
+      debouncedFullName.trim().length >= 2 ||
+      debouncedIdentification.trim().length >= 3,
   });
 
   useEffect(() => {
@@ -176,18 +196,27 @@ export default function NewAddresseesForm({
   }, [query?.data?.data?.items]);
 
   useEffect(() => {
-    if (isUpdate && selectedPerson) {
+    if (
+      debouncedFullName.trim().length < 2 &&
+      debouncedIdentification.trim().length < 3
+    ) {
+      setPersonData([]);
+      setSelectedPerson(null);
       return;
     }
 
-    const hasSearch =
-      filterFullName.trim() !== "" || filterIdentification.trim() !== "";
-    if (hasSearch) {
-      query.refetch();
-    } else {
-      setSelectedPerson(null);
+    if (query?.data?.data?.items) {
+      setPersonData(query.data.data.items);
     }
-  }, [filterFullName, filterIdentification]);
+  }, [query?.data?.data?.items, debouncedFullName, debouncedIdentification]);
+
+  useEffect(() => {
+    updateDebouncedFullName(filterFullName);
+  }, [filterFullName]);
+
+  useEffect(() => {
+    updateDebouncedIdentification(filterIdentification);
+  }, [filterIdentification]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,7 +244,7 @@ export default function NewAddresseesForm({
           parishId: Number(parishId),
           addressId: addresseeData?.addresses?.[0]?.id || 1,
           firstStreet: address,
-          status: true,
+          status: isActive ?? true,
         });
         toast.success("Destinatario actualizado correctamente");
       } else {
@@ -251,6 +280,10 @@ export default function NewAddresseesForm({
     setAddress("");
     setSelectedPerson(null);
     setPersonData([]);
+  };
+
+  const handleToggleStatus = () => {
+    setIsActive(!isActive);
   };
 
   return (
@@ -306,6 +339,7 @@ export default function NewAddresseesForm({
                     value={filterFullName}
                     onChange={(e) => {
                       setFilterFullName(e.target.value);
+                      updateDebouncedFullName(e.target.value);
                     }}
                     disabled={isUpdate}
                   />
@@ -322,6 +356,7 @@ export default function NewAddresseesForm({
                     value={filterIdentification}
                     onChange={(e) => {
                       setFilterIdentification(e.target.value);
+                      updateDebouncedIdentification(e.target.value);
                     }}
                     disabled={isUpdate}
                   />
@@ -391,6 +426,27 @@ export default function NewAddresseesForm({
           </CardHeader>
 
           <CardContent>
+            {isUpdate && (
+              <div className="w-full mb-4">
+                <Label className="text-sm font-medium">Estado</Label>
+                <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
+                  <button
+                    type="button"
+                    onClick={handleToggleStatus}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors w-full justify-between"
+                  >
+                    <span className={isActive ? "font-bold" : "text-gray-400"}>
+                      {isActive ? "Activo" : "Inactivo"}
+                    </span>
+                    {isActive ? (
+                      <ToggleRightIcon className="w-8 h-8 text-primary" />
+                    ) : (
+                      <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
               <div className="flex flex-col w-full">
                 <label className="mb-1 text-sm font-medium text-gray-700">
@@ -399,6 +455,7 @@ export default function NewAddresseesForm({
                 <Select
                   onValueChange={(value) => setProvinceId(value)}
                   value={provinceId || "*"}
+                  disabled={isUpdate && !isActive}
                 >
                   <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <SelectValue placeholder="Seleccione la provincia" />
@@ -421,6 +478,7 @@ export default function NewAddresseesForm({
                 <Select
                   onValueChange={(value) => setCantonId(value)}
                   value={cantonId || "*"}
+                  disabled={isUpdate && !isActive}
                 >
                   <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <SelectValue placeholder="Seleccione el cantón" />
@@ -443,6 +501,7 @@ export default function NewAddresseesForm({
                 <Select
                   onValueChange={(value) => setParishId(value)}
                   value={parishId || "*"}
+                  disabled={isUpdate && !isActive}
                 >
                   <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <SelectValue placeholder="Seleccione la parroquia" />
@@ -467,7 +526,7 @@ export default function NewAddresseesForm({
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Calle, número, referencias, etc."
-                disabled={isSubmitting}
+                disabled={isSubmitting || (isUpdate && !isActive)}
                 required
               />
               <p className="text-sm text-gray-500 mt-1">

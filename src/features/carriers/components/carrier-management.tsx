@@ -221,16 +221,16 @@ export function CarriersManagement({}) {
           </div>
         </CardContent>
       </Card>
-   <div className="flex justify-end ml-auto mb-3">
-          <NewCarrier
-            trigger={
-              <Button>
-                <PlusIcon className="h-4 w-4" />
-                Nuevo Transportista
-              </Button>
-            }
-          />
-        </div>
+      <div className="flex justify-end ml-auto mb-3">
+        <NewCarrier
+          trigger={
+            <Button>
+              <PlusIcon className="h-4 w-4" />
+              Nuevo Transportista
+            </Button>
+          }
+        />
+      </div>
       <CarriersTable
         columns={[
           {
@@ -318,7 +318,6 @@ export function CarriersManagement({}) {
                     <TooltipTrigger asChild>
                       <Button variant="outline" onClick={() => setOpen(true)}>
                         <EditIcon />
-                        Editar
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent
