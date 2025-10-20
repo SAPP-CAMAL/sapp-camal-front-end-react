@@ -19,7 +19,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { getPersonByIdentificationOrFullNameService } from "@/features/people/server/db/people.service";
-import { getAllRolesService } from "@/features/roles/server/db/roles.service";
+import { getUserRolesService } from "@/features/roles/server/db/roles.service";
 
 export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
   const [selectedPerson, setSelectedPerson] = useState<UserPerson | null>(null);
@@ -40,8 +40,8 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
   });
 
   const query = useQuery({
-    queryKey: ["roles"],
-    queryFn: () => getAllRolesService(),
+    queryKey: ["user-roles"],
+    queryFn: () => getUserRolesService(),
   });
 
   const form = useFormContext();
@@ -177,7 +177,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
           <FormItem>
             <FormLabel>Correo Electrónico *</FormLabel>
             <FormControl>
-              <Input type="email" {...field} className="border-gray-200" />
+              <Input type="email" {...field} value={field.value || ""} className="border-gray-200" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -196,7 +196,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
           <FormItem>
             <FormLabel>Nombre de Usuario *</FormLabel>
             <FormControl>
-              <Input {...field} className="border-gray-200" />
+              <Input {...field} value={field.value || ""} className="border-gray-200" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -270,7 +270,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                     label: role.name,
                   })) ?? []
                 }
-                defaultValue={field.value}
+                defaultValue={field.value || []}
                 onValueChange={field.onChange}
                 placeholder="Seleccionar Roles..."
                 maxCount={2}

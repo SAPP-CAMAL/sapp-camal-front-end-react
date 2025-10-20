@@ -29,18 +29,30 @@ export function UpdateUserForm({ userId }: { userId: number }) {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const form = useForm();
+  const form = useForm<{
+    personId: string;
+    email: string;
+    userName: string;
+    roles: string[];
+  }>({
+    defaultValues: {
+      personId: "",
+      email: "",
+      userName: "",
+      roles: [],
+    },
+  });
 
   useEffect(() => {
     if (isOpen && userId) {
       getUserByIdService(userId).then((resp) => {
         const defaultValues = {
           personId: "",
-          email: resp.data.email,
-          userName: resp.data.userName,
+          email: resp.data.email || "",
+          userName: resp.data.userName || "",
           roles: resp.data.userRoles
             .map((userRole) => userRole.role?.id?.toString())
-            .filter(Boolean), // 👈 Devuelve ["1", "2", "3"]
+            .filter((id): id is string => Boolean(id)), // 👈 Devuelve ["1", "2", "3"]
         };
         // console.log({ defaultValues });
         form.reset(defaultValues);
@@ -48,29 +60,40 @@ export function UpdateUserForm({ userId }: { userId: number }) {
     }
   }, [isOpen, userId, form]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: {
+    personId: string;
+    email: string;
+    userName: string;
+    roles: string[];
+  }) => {
     try {
-      const defaultRoles = form.formState.defaultValues?.roles;
-      const allRoles = data.roles;
+      const defaultRoles = (form.formState.defaultValues?.roles ?? []).filter((r): r is string => typeof r === 'string');
+      const allRoles = (data.roles ?? []).filter((r): r is string => typeof r === 'string');
       const newRoles = allRoles
-        .filter((r: string) => !defaultRoles.includes(r))
-        .map((r: any) => ({ id: Number(r), status: true }));
+        .filter((r) => !defaultRoles.includes(r))
+        .map((r) => ({ id: Number(r), status: true }));
 
       const oldRoles = defaultRoles
-        .filter((r: string) => !allRoles.includes(r))
-        .map((role: any) => ({ id: Number(role), status: false }));
+        .filter((r) => !allRoles.includes(r))
+        .map((role) => ({ id: Number(role), status: false }));
 
-      await updateUserAction(userId, {
-        ...(form.formState.dirtyFields.email && {
-          email: data.email,
-        }),
-        ...(form.formState.dirtyFields.userName && {
-          userName: data.userName,
-        }),
-        ...(form.formState.dirtyFields.roles && {
-          roles: [...newRoles, ...oldRoles],
-        }),
-      });
+      const updateData: Partial<{
+        email: string;
+        userName: string;
+        roles: Array<{ id: number; status: boolean }>;
+      }> = {};
+
+      if (form.formState.dirtyFields.email) {
+        updateData.email = data.email;
+      }
+      if (form.formState.dirtyFields.userName) {
+        updateData.userName = data.userName;
+      }
+      if (form.formState.dirtyFields.roles) {
+        updateData.roles = [...newRoles, ...oldRoles];
+      }
+
+      await updateUserAction(userId, updateData);
 
       await queryClient.invalidateQueries({
         queryKey: ["users"],
@@ -107,9 +130,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
           Editar Usuario
         </TooltipContent>
       </Tooltip>
-      <DialogContent 
-      className="max-h-[90vh] overflow-hidden flex flex-col max-w-3xl"
-      >
+      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col max-w-3xl">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Actualizar Usuario</DialogTitle>
           <DialogDescription>
@@ -128,9 +149,9 @@ export function UpdateUserForm({ userId }: { userId: number }) {
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-4 border-t mt-4 flex-shrink-0">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setIsOpen(false)}
                 disabled={form.formState.isSubmitting}
               >

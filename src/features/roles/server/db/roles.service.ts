@@ -20,3 +20,7 @@ export function deleteRoleService(roleId: number) {
 export function getAllRolesService(): Promise<ResponseRolesServiceAll> {
     return http.get("v1/1.0.0/roles/all").json()
 }
+
+export function getUserRolesService(): Promise<ResponseRolesServiceAll> {
+    return http.get("v1/1.0.0/roles/users").json()
+}
