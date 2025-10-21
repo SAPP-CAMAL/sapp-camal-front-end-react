@@ -413,7 +413,7 @@ export function AntemortemManagement() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start lg:justify-end gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-600 w-full sm:w-auto">
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary w-full sm:w-auto">
                     <FileText className="h-4 w-4" />
                     <span className="mx-2">Generar Reporte</span>
                     <ChevronDown className="h-4 w-4" />
@@ -446,8 +446,8 @@ export function AntemortemManagement() {
           <CardTitle className="text-3xl font-semibold text-emerald-600">{totals.total}</CardTitle>
           <span className="text-sm text-muted-foreground">TOTAL ANIMALES</span>
         </div>
-        <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
-          <div className="h-6 w-6 rounded-full bg-emerald-600"></div>
+        <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
+          <div className="h-6 w-6 rounded-full bg-primary"></div>
         </div>
         </CardHeader>
       </Card>

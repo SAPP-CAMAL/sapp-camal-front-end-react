@@ -316,7 +316,7 @@ export function ListAnimalsManagement() {
             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
               {item.species?.name || "N/A"}
             </Badge>
-            <Badge className="bg-emerald-600">
+            <Badge className="bg-primary">
               {item.brand?.name || "N/A"}
             </Badge>
           </div>
