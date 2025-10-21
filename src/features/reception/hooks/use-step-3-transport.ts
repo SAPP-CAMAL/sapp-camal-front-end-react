@@ -35,7 +35,15 @@ export const useStep3Transport = () => {
 	const arrivalConditions = arrivalConditionsQuery.data.data.filter(condition => condition.status);
 
 	const handleSaveTransport = async (data: AnimalTransportForm) => {
-		if (!selectedCertificate) return toast.error('No se encontró el certificado seleccionado');
+		if (!selectedCertificate) {
+			toast.error('No se encontró el certificado seleccionado');
+			return;
+		}
+
+		if (!isCompleted) {
+			toast.error('Debe completar el paso 2 (registro de animales) antes de finalizar.');
+			return;
+		}
 
 		let { id } = data;
 
@@ -52,14 +60,16 @@ export const useStep3Transport = () => {
 			if (id) await updateConditionTransport(id.toString(), request);
 			else id = (await saveConditionTransport(request)).data.id;
 
-			handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: true, state: 'completed' } });
+			handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: false, state: 'completed' } });
 
 			form.reset(defaultValues);
 
-			if (!isCompleted) toast.error('Debe completar el paso 2 para finalizar el ingreso.');
-			else handleResetState();
-
-			toast.success('Información de transporte guardada');
+			toast.success('¡Ingreso de animales completado exitosamente!');
+			
+			// Resetear el estado después de un breve delay para que el usuario vea el mensaje de éxito
+			setTimeout(() => {
+				handleResetState();
+			}, 1500);
 		} catch (error) {
 			toast.error('Error al guardar la información de transporte');
 		}

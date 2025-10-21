@@ -30,10 +30,30 @@ export const useStep2Animals = () => {
 	const isCompleted = totalAnimals === +(selectedCertificate?.quantity || 0);
 
 	const handleNextStep3 = async () => {
-		if (totalAnimals < selectedCertificate?.quantity!) toast.info('Aún faltan animales por registrar');
+		// Validar que haya al menos un animal registrado
+		if (totalAnimals === 0) {
+			toast.error('Debe registrar al menos un animal para continuar');
+			return;
+		}
+
+		// Validar que el paso 2 esté completado (total de animales coincida con el certificado)
+		if (!isCompleted) {
+			toast.error(`Debe completar el registro de todos los animales. Faltan ${selectedCertificate?.quantity! - totalAnimals} animales.`);
+			return;
+		}
+
+		// Validar que no haya formularios abiertos sin guardar
+		const hasOpenForms = animalAdmissionList.some(admission => admission.isOpen);
+		if (hasOpenForms) {
+			toast.error('Debe guardar o cancelar todos los ingresos abiertos antes de continuar');
+			return;
+		}
+
+		// Si todo está bien, avanzar al paso 3
 		handleSetAccordionState({ name: 'step1Accordion', accordionState: { isOpen: false, state: 'completed' } });
-		handleSetAccordionState({ name: 'step2Accordion', accordionState: { isOpen: false, state: isCompleted ? 'completed' : 'enabled' } });
+		handleSetAccordionState({ name: 'step2Accordion', accordionState: { isOpen: false, state: 'completed' } });
 		handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: true, state: 'enabled' } });
+		toast.success('Paso 2 completado. Ahora complete las condiciones de transporte.');
 	};
 
 	const handleRemoveAnimalAdmission = async (randomId: string) => {

@@ -960,7 +960,7 @@ export function SignosClinicosModal({
                           >
                             <Checkbox 
                               id={`disposal-${type}`}
-                              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 h-5 w-5"
+                              className="data-[state=checked]:bg-primary data-[state=checked]:border-emerald-600 h-5 w-5"
                               checked={current.disposalType === type}
                               onCheckedChange={() => setDisposal(type)}
                             />

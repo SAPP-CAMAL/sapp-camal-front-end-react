@@ -92,7 +92,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 	const animalSexQuery = useAllAnimalSex();
 	const speciesQuery = useAllSpecies();
 
-	const brands = brandsQuery.data.filter(brand => brand.status);
+	const brands = brandsQuery.data?.filter(brand => brand.status);
 	const corralTypes = corralTypesQuery.data.data.filter(corralType => corralType.status);
 	const species = speciesQuery.data.data.filter(specie => specie.status);
 	const productiveStages = productiveStagesQuery.data.data.filter(stage => stage.status);
@@ -304,7 +304,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 	const showEmptyBrandsAlert =
 		!!(searchParams.introducerName || searchParams.introducerIdentification || searchParams.introducerBrand) &&
 		!brandsQuery.isFetching &&
-		brands.length === 0;
+		brands?.length === 0;
 
 	const totalFormAnimals = +form.watch('females') + +form.watch('males');
 
