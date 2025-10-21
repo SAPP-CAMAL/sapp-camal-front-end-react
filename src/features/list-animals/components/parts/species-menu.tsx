@@ -39,11 +39,14 @@ export function SpeciesMenu({
   const selectedSpecies = selected[0] || null;
   
   // Encontrar la especie PORCINO y sus finish types
-  const porcinoSpecie = speciesList.find(specie => 
-    specie.id === 3 || 
-    specie.name.toUpperCase().includes('PORCINO') || 
-    specie.name.toUpperCase().includes('CERDO')
-  );
+  const porcinoSpecie = speciesList.find(specie => {
+    const name = (specie.name || '').toString();
+    return (
+      specie.id === 3 ||
+      name.toUpperCase().includes('PORCINO') ||
+      name.toUpperCase().includes('CERDO')
+    );
+  });
   
   const availableFinishTypes = porcinoSpecie?.finishType || [];
 
@@ -117,8 +120,9 @@ export function SpeciesMenu({
           )}
           
           {speciesList.map((specie) => {
-            const isSelected = selected.includes(specie.name as Species);
-            const isPorcino = specie.name.toUpperCase().includes('PORCINO');
+            const specieName = (specie.name || '') as string;
+            const isSelected = selected.includes(specieName as Species);
+            const isPorcino = specieName.toUpperCase().includes('PORCINO');
             
             // Si es PORCINO y tiene finish types, mostrar como submenu
             if (isPorcino && availableFinishTypes.length > 0) {
