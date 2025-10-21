@@ -47,6 +47,7 @@ export function NewPerson() {
         mobileNumber: data.mobileNumber,
         firstName: data.firstName,
         lastName: data.lastName,
+        fullName: `${data.firstName ?? ''} ${data.lastName ?? ''}`,
         address: data.address,
         affiliationDate: new Date(),
         status: data.status === "true",
