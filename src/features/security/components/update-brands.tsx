@@ -394,7 +394,7 @@ export function UpdateBrands({
                                 <span className="ml-2">
                                   [
                                   {selectedSpecies[brand.id]
-                                    .map((s) => s.name?.toUpperCase())
+                                    .map((s) => (s.name ?? "").toUpperCase())
                                     .join(", ")}
                                   ]
                                 </span>
@@ -501,7 +501,7 @@ export function UpdateBrands({
                         <span className="ml-2">
                           [
                           {newBrandSpecies
-                            .map((s) => s.name?.toUpperCase())
+                            .map((s) => (s.name ?? "").toUpperCase())
                             .join(", ")}
                           ]
                         </span>

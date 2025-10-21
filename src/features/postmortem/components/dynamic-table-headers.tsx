@@ -89,7 +89,7 @@ export function DynamicTableHeaders({
               className={`${colors.bg} text-gray-900 font-semibold text-center text-sm`}
               colSpan={group.diseases.length}
             >
-              {group.product.toUpperCase()}
+              {(group.product ?? "").toUpperCase()}
             </TableHead>
           );
         })}
