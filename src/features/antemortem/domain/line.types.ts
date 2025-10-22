@@ -1,5 +1,3 @@
-// Interfaces para la API de líneas v1/1.0.0/line/all
-
 export interface Specie {
   id: number;
   name: string;

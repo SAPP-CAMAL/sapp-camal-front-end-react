@@ -122,7 +122,7 @@ export default function NewVehicleForm({
       if (isUpdate && initialData?.id) {
         await updateVehicleService(initialData.id, {
           vehicleDetailId: Number(vehicleData.vehicleTypeId),
-          plate: vehicleData.plate.toUpperCase(),
+          plate: (vehicleData.plate ?? "").toUpperCase(),
           brand: vehicleData.brand.trim(),
           model: vehicleData.model.trim(),
           color: vehicleData.color.trim(),
@@ -133,7 +133,7 @@ export default function NewVehicleForm({
       } else {
         await createVehicleService({
           vehicleDetailId: Number(vehicleData.vehicleTypeId),
-          plate: vehicleData.plate.toUpperCase().replace(/-/g, ""),
+          plate: (vehicleData.plate ?? "").toUpperCase().replace(/-/g, ""),
           brand: vehicleData.brand.trim(),
           model: vehicleData.model.trim(),
           color: vehicleData.color.trim(),

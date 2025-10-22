@@ -145,7 +145,7 @@ export const CreateUpdateAnimalAdmissionForm = ({ animalAdmissionData, className
 							{/* Introducers/Brands list */}
 							<div className='grid gap-2 max-h-48 overflow-y-auto'>
 								{showBrandsList &&
-									brands.map(brand => (
+									brands?.map(brand => (
 										<BasicResultsCard
 											key={brand.id}
 											leftBlockClass='flex items-center justify-start gap-2'
@@ -626,7 +626,7 @@ export const CreateUpdateAnimalAdmissionForm = ({ animalAdmissionData, className
 								triggerBtn={
 									<Button
 										variant='ghost'
-										className='bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white'
+										className='bg-primary hover:bg-primary hover:text-white text-white'
 										disabled={form.formState.isSubmitting}
 									>
 										<Save />

@@ -1,0 +1,339 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Loader2, Info, Save } from "lucide-react";
+import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
+
+type BodyPart = {
+  id: string;
+  name: string;
+  selected: boolean;
+  weight: string;
+};
+
+type AnimalPartSelection = {
+  animalId: string;
+  selected: boolean;
+  bodyParts: BodyPart[];
+};
+
+type PartialConfiscationModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (selectedCount: number) => void;
+  introductor: string;
+  localizacion: string;
+  certId: number | null;
+};
+
+// Partes del cuerpo disponibles
+const BODY_PARTS = [
+  { id: "MPI", name: "MPI" },
+  { id: "MPD", name: "MPD" },
+  { id: "MAD", name: "MAD" },
+  { id: "MAI", name: "MAI" },
+  { id: "Cuello", name: "Cuello" },
+  { id: "Cruz", name: "Cruz" },
+  { id: "Dorso", name: "Dorso" },
+  { id: "Lomo", name: "Lomo" },
+  { id: "Grupa", name: "Grupa" },
+  { id: "Costilla", name: "Costilla" },
+  { id: "Vientre", name: "Vientre" },
+];
+
+export function PartialConfiscationModal({
+  isOpen,
+  onClose,
+  onSave,
+  introductor,
+  localizacion,
+  certId,
+}: PartialConfiscationModalProps) {
+  const { data: animalsData, isLoading } = useAnimalsByBrand(certId);
+
+  const [animalSelections, setAnimalSelections] = useState<
+    AnimalPartSelection[]
+  >([]);
+
+  useEffect(() => {
+    if (animalsData?.data) {
+      setAnimalSelections(
+        animalsData.data.map((animal) => ({
+          animalId: animal.id.toString(),
+          selected: false,
+          bodyParts: BODY_PARTS.map((part) => ({
+            ...part,
+            selected: false,
+            weight: "",
+          })),
+        }))
+      );
+    }
+  }, [animalsData]);
+
+  const handleAnimalToggle = (animalId: string) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? { ...animal, selected: !animal.selected }
+          : animal
+      )
+    );
+  };
+
+  const handleBodyPartToggle = (animalId: string, partId: string) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? {
+              ...animal,
+              bodyParts: animal.bodyParts.map((part) =>
+                part.id === partId
+                  ? { ...part, selected: !part.selected }
+                  : part
+              ),
+            }
+          : animal
+      )
+    );
+  };
+
+  const handleBodyPartWeight = (
+    animalId: string,
+    partId: string,
+    weight: string
+  ) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? {
+              ...animal,
+              bodyParts: animal.bodyParts.map((part) =>
+                part.id === partId ? { ...part, weight } : part
+              ),
+            }
+          : animal
+      )
+    );
+  };
+
+  const handleCancel = () => {
+    if (animalsData?.data) {
+      setAnimalSelections(
+        animalsData.data.map((animal) => ({
+          animalId: animal.id.toString(),
+          selected: false,
+          bodyParts: BODY_PARTS.map((part) => ({
+            ...part,
+            selected: false,
+            weight: "",
+          })),
+        }))
+      );
+    }
+    onClose();
+  };
+
+  const handleSaveAll = () => {
+    const selectedCount = animalSelections.filter((a) => a.selected).length;
+    onSave(selectedCount);
+    onClose();
+  };
+
+  const selectedCount = animalSelections.filter((a) => a.selected).length;
+
+  const getSelectedPartsInfo = (animalId: string) => {
+    const animal = animalSelections.find((a) => a.animalId === animalId);
+    if (!animal) return null;
+
+    const selectedParts = animal.bodyParts.filter(
+      (part) => part.selected && part.weight
+    );
+    if (selectedParts.length === 0) return null;
+
+    return selectedParts;
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleCancel}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center">
+              <Info className="h-4 w-4 text-teal-600" />
+            </div>
+            Gestión de Animales – Decomiso parcial
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Header Info */}
+        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div>
+            <div className="text-sm font-medium text-gray-700">
+              Introductor:
+            </div>
+            <div className="text-sm text-gray-600">{introductor}</div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-700">
+              Localización:
+            </div>
+            <div className="text-sm text-teal-600 font-medium">
+              {localizacion}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-700">Patología:</div>
+            <div className="text-sm text-gray-600">Decomiso parcial</div>
+          </div>
+        </div>
+
+        {/* Lista de Animales */}
+        <div className="space-y-2">
+          <h3 className="font-semibold text-sm">
+            Animales Disponibles ({selectedCount} seleccionados)
+          </h3>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+              <span className="ml-2 text-sm text-gray-600">
+                Cargando animales...
+              </span>
+            </div>
+          ) : !animalsData?.data || animalsData.data.length === 0 ? (
+            <div className="text-center py-8 text-sm text-gray-500">
+              No hay animales disponibles para esta marca
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[500px] overflow-y-auto scrollbar-hide">
+              {animalsData.data.map((animal) => {
+                const animalId = animal.id.toString();
+                const animalSelection = animalSelections.find(
+                  (a) => a.animalId === animalId
+                );
+                if (!animalSelection) return null;
+
+                return (
+                  <div
+                    key={animal.id}
+                    className="border rounded-lg p-4 space-y-3 bg-white"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={animalSelection.selected}
+                        onCheckedChange={() => handleAnimalToggle(animalId)}
+                        id={`animal-${animal.id}`}
+                      />
+                      <label
+                        htmlFor={`animal-${animal.id}`}
+                        className="flex items-center gap-3 cursor-pointer flex-1"
+                      >
+                        <div className="flex items-center justify-center w-16 h-12 bg-gray-100 rounded-lg">
+                          <span className="font-mono text-sm font-semibold">
+                            {animal.code}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-600">
+                          Animal #{animal.code}
+                        </span>
+                      </label>
+                    </div>
+
+                    {animalSelection.selected && (
+                      <div className="ml-14 space-y-3">
+                        <div className="text-xs font-medium text-gray-700">
+                          Partes Afectadas y Peso (kg) *
+                        </div>
+
+                        {/* Grid de partes del cuerpo */}
+                        <div className="grid grid-cols-2 gap-3">
+                          {animalSelection.bodyParts.map((part) => (
+                            <div
+                              key={part.id}
+                              className="flex items-center gap-2 p-2 border rounded-lg bg-gray-50"
+                            >
+                              <Checkbox
+                                checked={part.selected}
+                                onCheckedChange={() =>
+                                  handleBodyPartToggle(animalId, part.id)
+                                }
+                                id={`${animalId}-${part.id}`}
+                              />
+                              <label
+                                htmlFor={`${animalId}-${part.id}`}
+                                className="text-sm font-medium cursor-pointer flex-shrink-0 min-w-[60px]"
+                              >
+                                {part.name}
+                              </label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="kg"
+                                value={part.weight}
+                                onChange={(e) =>
+                                  handleBodyPartWeight(
+                                    animalId,
+                                    part.id,
+                                    e.target.value
+                                  )
+                                }
+                                disabled={!part.selected}
+                                className="h-8 text-sm flex-1"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Resumen de partes seleccionadas - fuera de ml-14 */}
+                    {animalSelection.selected && getSelectedPartsInfo(animalId) && (
+                      <div className="p-3 bg-gray-100 rounded text-sm text-gray-700 border-t">
+                        <div className="font-medium text-gray-600 mb-2">
+                          Partes seleccionadas:
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {getSelectedPartsInfo(animalId)?.map((part) => (
+                            <div key={part.id} className="font-semibold text-gray-800">
+                              {part.name}: {part.weight}kg
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleCancel}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSaveAll}
+            disabled={selectedCount === 0}
+            className="bg-teal-600 hover:bg-teal-700"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Guardar ({selectedCount} animales)
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

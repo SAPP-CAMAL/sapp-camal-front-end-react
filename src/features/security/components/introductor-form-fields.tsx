@@ -382,7 +382,7 @@ export function IntroductorFormFields({
                     >
                       <div className="text-sm">
                         <span className="font-bold">{brand.name}</span>[
-                        {brand.species.join(", ").toUpperCase()}]
+                        {(brand.species ?? []).join(", ").toUpperCase()}]
                       </div>
                     </div>
                   ))}
@@ -510,7 +510,7 @@ export function SuccessView({ person }: SuccessViewProps) {
       .split(" ")
       .map((name) => name.charAt(0))
       .join("")
-      .toUpperCase()
+  .toUpperCase()
       .slice(0, 3);
   };
 

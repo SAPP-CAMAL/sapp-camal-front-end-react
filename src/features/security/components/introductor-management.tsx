@@ -260,8 +260,16 @@ export function IntroductorManagement() {
 								<Avatar>
 									{/* <AvatarImage src='https://github.com/shadcnxxx.png' /> */}
 									<AvatarFallback className='bg-gray-100 p-2 rounded-full'>
-										{row.original.fullName.split(' ')[0][0].toUpperCase()}
-										{row.original.fullName.split(' ')[1][0].toUpperCase()}
+																				{(
+																					((row.original.fullName ?? "").split(
+																						' '
+																					)[0] || "")[0] || ""
+																				).toUpperCase()}
+																				{(
+																					((row.original.fullName ?? "").split(
+																						' '
+																					)[1] || "")[0] || ""
+																				).toUpperCase()}
 									</AvatarFallback>
 								</Avatar>
 								<div>

@@ -19,7 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CalendarIcon, Download, Settings, ChevronDown } from "lucide-react";
+import {
+  CalendarIcon,
+  Download,
+  Settings,
+  ChevronDown,
+  BookText,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import {
@@ -35,90 +41,266 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-// Mock data para introductores
-const introductores = [
-  {
-    id: "1",
-    nombre: "Ganadería San José",
-    marca: "SJ",
-    certificado: "CERT-2024-001",
-    animales: "5-10",
-  },
-  {
-    id: "2",
-    nombre: "Finca El Paraíso",
-    marca: "EP",
-    certificado: "CERT-2024-002",
-    animales: "8-15",
-  },
-  {
-    id: "3",
-    nombre: "Ranch Los Alamos",
-    marca: "LA",
-    certificado: "CERT-2024-003",
-    animales: "3-8",
-  },
-  {
-    id: "4",
-    nombre: "Hacienda Santa María",
-    marca: "SM",
-    certificado: "CERT-2024-004",
-    animales: "10-20",
-  },
-  {
-    id: "5",
-    nombre: "Estancia La Esperanza",
-    marca: "LE",
-    certificado: "CERT-2024-005",
-    animales: "6-12",
-  },
-];
-
-type IntroductorRow = {
-  id: string;
-  introductor: (typeof introductores)[0] | null;
-  values: number[];
-};
+import { AnimalSelectionModal } from "./animal-selection-modal";
+import { TotalConfiscationModal } from "./total-confiscation-modal";
+import { PartialConfiscationModal } from "./partial-confiscation-modal";
+import { DynamicTableHeaders } from "./dynamic-table-headers";
+import { CorralTypeFilters } from "./corral-type-filters";
+import { useLines } from "../hooks/use-lines";
+import { useSpeciesDisease } from "../hooks/use-species-disease";
+import { useCertificates } from "../hooks/use-certificates";
+import { groupDiseasesByProduct } from "../server/db/species-disease.service";
+import { getIntroductoresFromCertificates } from "../server/db/certificates.service";
+import type {
+  Introductor,
+  IntroductorRow,
+  ModalState,
+  ColumnConfig,
+} from "../domain/postmortem.types";
+import type {
+  CorralTypeFilter,
+  GetCertificatesRequest,
+} from "../domain/certificates.types";
+import { useMemo, useEffect } from "react";
 
 export function PostmortemManagement() {
   const [rows, setRows] = useState<IntroductorRow[]>([
-    { id: "row-1", introductor: introductores[0], values: Array(18).fill(0) },
-    { id: "row-2", introductor: null, values: Array(18).fill(0) },
-    { id: "row-3", introductor: null, values: Array(18).fill(0) },
-    { id: "row-4", introductor: null, values: Array(18).fill(0) },
-    { id: "row-5", introductor: null, values: Array(18).fill(0) },
+    { id: "row-1", introductor: null, values: Array(50).fill(0) }, // Inicializar con más columnas
   ]);
 
   const [openPopover, setOpenPopover] = useState<string | null>(null);
+  const [selectedLineId, setSelectedLineId] = useState<string>("");
+  const [selectedSpecieId, setSelectedSpecieId] = useState<number | null>(4); // Bovinos por defecto (idSpecie = 4)
+  const [slaughterDate, setSlaughterDate] = useState<string>(
+    format(new Date(), "yyyy-MM-dd")
+  );
+  const [corralTypeFilter, setCorralTypeFilter] =
+    useState<CorralTypeFilter>("TODOS");
 
-  const handleIntroductorSelect = (
-    rowId: string,
-    introductor: (typeof introductores)[0]
-  ) => {
-    setRows((prev) =>
-      prev.map((row) => (row.id === rowId ? { ...row, introductor } : row))
-    );
+  const [modalState, setModalState] = useState<ModalState>({
+    isOpen: false,
+    rowId: null,
+    columnIndex: null,
+    localizacion: "",
+    patologia: "",
+  });
+
+  const [totalConfiscationModalState, setTotalConfiscationModalState] =
+    useState({
+      isOpen: false,
+      rowId: null as string | null,
+    });
+
+  const [partialConfiscationModalState, setPartialConfiscationModalState] =
+    useState({
+      isOpen: false,
+      rowId: null as string | null,
+    });
+
+  // Construir request para certificados
+  const certificatesRequest: GetCertificatesRequest | null = useMemo(() => {
+    if (!selectedSpecieId || !slaughterDate) return null;
+
+    const request: GetCertificatesRequest = {
+      slaughterDate,
+      idSpecies: selectedSpecieId,
+    };
+
+    if (corralTypeFilter === "NORMAL") {
+      request.type = "NOR";
+    } else if (corralTypeFilter === "EMERGENCIA") {
+      request.type = "EME";
+    }
+
+    return request;
+  }, [selectedSpecieId, slaughterDate, corralTypeFilter]);
+
+  // Obtener líneas desde la API
+  const { data: lines, isLoading: isLoadingLines } = useLines();
+
+  // Seleccionar Bovinos por defecto cuando se carguen las líneas
+  useEffect(() => {
+    if (lines && lines.length > 0 && !selectedLineId) {
+      const bovinosLine = lines.find((line) =>
+        line.description.toLowerCase().includes("bovino")
+      );
+      if (bovinosLine) {
+        setSelectedLineId(bovinosLine.id.toString());
+        setSelectedSpecieId(bovinosLine.idSpecie);
+      }
+    }
+  }, [lines, selectedLineId]);
+
+  // Obtener enfermedades por especie
+  const { data: speciesDiseaseData, isLoading: isLoadingDiseases } =
+    useSpeciesDisease(selectedSpecieId);
+
+  // Obtener certificados y marcas
+  const { data: certificatesData, isLoading: isLoadingCertificates } =
+    useCertificates(certificatesRequest);
+
+  // Obtener introductores desde los certificados
+  const introductores = useMemo(() => {
+    if (!certificatesData?.data) return [];
+    return getIntroductoresFromCertificates(certificatesData.data);
+  }, [certificatesData]);
+
+  // Calcular contadores para los filtros
+  const filterCounts = useMemo(() => {
+    if (!certificatesData?.data) {
+      return { todos: 0, normal: 0, emergencia: 0 };
+    }
+
+    const normal = certificatesData.data.filter(
+      (cert) => cert.corralType.code === "NOR"
+    ).length;
+    const emergencia = certificatesData.data.filter(
+      (cert) => cert.corralType.code === "EME"
+    ).length;
+
+    return {
+      todos: certificatesData.data.length,
+      normal,
+      emergencia,
+    };
+  }, [certificatesData]);
+
+  // Agrupar enfermedades por producto
+  const groupedColumns = useMemo(() => {
+    if (!speciesDiseaseData?.data) return [];
+    return groupDiseasesByProduct(speciesDiseaseData.data);
+  }, [speciesDiseaseData]);
+
+  // Generar configuración de columnas dinámicamente
+  const dynamicColumnConfig = useMemo(() => {
+    const config: ColumnConfig[] = [];
+    groupedColumns.forEach((group) => {
+      group.diseases.forEach((disease) => {
+        config.push({
+          localizacion: group.product,
+          patologia: disease.name,
+        });
+      });
+    });
+    return config;
+  }, [groupedColumns]);
+
+  // Actualizar filas cuando cambia la configuración de columnas
+  // +3 para TOTAL, Decomiso Total y Decomiso Parcial
+  useMemo(() => {
+    if (dynamicColumnConfig.length > 0) {
+      setRows((prev) =>
+        prev.map((row) => ({
+          ...row,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        }))
+      );
+    }
+  }, [dynamicColumnConfig.length]);
+
+  const handleIntroductorSelect = (rowId: string, introductor: Introductor) => {
+    setRows((prev) => {
+      const updatedRows = prev.map((row) =>
+        row.id === rowId ? { ...row, introductor } : row
+      );
+
+      // Verificar si todas las filas tienen un introductor seleccionado
+      const allRowsHaveIntroductor = updatedRows.every(
+        (row) => row.introductor !== null
+      );
+
+      // Si todas las filas tienen introductor, agregar una nueva fila vacía
+      if (allRowsHaveIntroductor) {
+        const newRowId = `row-${updatedRows.length + 1}`;
+        const columnCount = (dynamicColumnConfig.length || 19) + 3; // +3 para TOTAL y PRODUCTOS
+        updatedRows.push({
+          id: newRowId,
+          introductor: null,
+          values: Array(columnCount).fill(0),
+        });
+      }
+
+      return updatedRows;
+    });
     setOpenPopover(null);
   };
 
-  const handleValueChange = (rowId: string, index: number, value: string) => {
-    const numValue = parseInt(value) || 0;
-    setRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              values: row.values.map((v, i) => (i === index ? numValue : v)),
-            }
-          : row
-      )
-    );
+  const handleCellClick = (
+    rowId: string,
+    columnIndex: number,
+    columnType: "disease" | "total-confiscation" | "partial-confiscation"
+  ) => {
+    const row = rows.find((r) => r.id === rowId);
+    if (!row || !row.introductor) return;
+
+    if (columnType === "total-confiscation") {
+      setTotalConfiscationModalState({
+        isOpen: true,
+        rowId,
+      });
+      return;
+    }
+
+    if (columnType === "partial-confiscation") {
+      setPartialConfiscationModalState({
+        isOpen: true,
+        rowId,
+      });
+      return;
+    }
+
+    // Para columnas de enfermedades
+    const config = dynamicColumnConfig[columnIndex];
+    if (!config || config.isTotal) return;
+
+    setModalState({
+      isOpen: true,
+      rowId,
+      columnIndex,
+      localizacion: config.localizacion,
+      patologia: config.patologia,
+    });
   };
 
-  const calculateTotal = (values: number[]) => {
-    return values.reduce((sum, val) => sum + val, 0);
+  const handleSaveAnimals = (selectedCount: number) => {
+    if (modalState.rowId !== null && modalState.columnIndex !== null) {
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === modalState.rowId
+            ? {
+                ...row,
+                values: row.values.map((v, i) =>
+                  i === modalState.columnIndex ? selectedCount : v
+                ),
+              }
+            : row
+        )
+      );
+    }
   };
+
+  const handleCloseModal = () => {
+    setModalState({
+      isOpen: false,
+      rowId: null,
+      columnIndex: null,
+      localizacion: "",
+      patologia: "",
+    });
+  };
+
+  const currentIntroductor = modalState.rowId
+    ? rows.find((r) => r.id === modalState.rowId)?.introductor
+    : null;
+
+  const totalConfiscationIntroductor = totalConfiscationModalState.rowId
+    ? rows.find((r) => r.id === totalConfiscationModalState.rowId)?.introductor
+    : null;
+
+  const partialConfiscationIntroductor = partialConfiscationModalState.rowId
+    ? rows.find((r) => r.id === partialConfiscationModalState.rowId)
+        ?.introductor
+    : null;
 
   return (
     <div className="space-y-4 p-4">
@@ -150,20 +332,45 @@ export function PostmortemManagement() {
                 id="fecha-postmortem"
                 type="date"
                 className="w-full bg-white transition-colors focus:bg-white pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                defaultValue={format(new Date(), "yyyy-MM-dd")}
+                value={slaughterDate}
+                onChange={(e) => setSlaughterDate(e.target.value)}
               />
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Label className="min-w-40 inline-flex">Línea de Producción</Label>
-            <Select defaultValue="ovinos">
+            <Select
+              value={selectedLineId}
+              onValueChange={(value) => {
+                setSelectedLineId(value);
+                const selectedLine = lines?.find(
+                  (line) => line.id.toString() === value
+                );
+                if (selectedLine) {
+                  setSelectedSpecieId(selectedLine.idSpecie);
+                }
+              }}
+              disabled={isLoadingLines}
+            >
               <SelectTrigger className="max-w-64">
                 <SelectValue placeholder="Selecciona una línea" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ovinos">Línea de Ovinos</SelectItem>
-                <SelectItem value="bovinos">Línea de Bovinos</SelectItem>
-                <SelectItem value="caprinos">Línea de Caprinos</SelectItem>
+                {isLoadingLines ? (
+                  <SelectItem value="loading" disabled>
+                    Cargando líneas...
+                  </SelectItem>
+                ) : lines && lines.length > 0 ? (
+                  lines.map((line) => (
+                    <SelectItem key={line.id} value={line.id.toString()}>
+                      {line.description}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-lines" disabled>
+                    No hay líneas disponibles
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -175,7 +382,8 @@ export function PostmortemManagement() {
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="i-lucide-clipboard-list text-muted-foreground" />
-            <h2 className="text-base font-medium">
+            <h2 className="text-base font-medium flex gap-1">
+              <BookText className="h-4 w-4 mt-1 text-primary" />
               Registro de Decomisos por Patologías
             </h2>
           </div>
@@ -199,126 +407,36 @@ export function PostmortemManagement() {
           </div>
         </div>
 
-        <div className="overflow-x-auto border rounded-lg">
-          <Table className="min-w-[1600px]">
-            {/* Fila principal de SUBPRODUCTOS Y PRODUCTOS */}
-            <TableHeader className="sticky top-0 z-20">
-              <TableRow className="border-b-2">
-                <TableHead
-                  rowSpan={3}
-                  className="min-w-[280px] bg-gray-100 align-middle sticky left-0 z-30 border-r-2 text-center font-bold text-gray-900"
-                >
-                  INTRODUCTOR
-                </TableHead>
-                <TableHead
-                  className="bg-blue-100 text-gray-900 font-bold text-center border-r"
-                  colSpan={13}
-                >
-                  SUBPRODUCTOS
-                </TableHead>
-                <TableHead
-                  className="bg-purple-100 text-gray-900 font-bold text-center border-r"
-                  colSpan={2}
-                >
-                  PRODUCTOS
-                </TableHead>
-                <TableHead
-                  className="bg-orange-100 text-gray-900 font-bold text-center"
-                  rowSpan={3}
-                >
-                  TOTAL
-                </TableHead>
-              </TableRow>
+        {/* Filtros de tipo de corral */}
+        <CorralTypeFilters
+          selectedFilter={corralTypeFilter}
+          onFilterChange={setCorralTypeFilter}
+          counts={filterCounts}
+        />
 
-              {/* Fila de grupos de patologías */}
-              <TableRow className="border-b">
-                <TableHead
-                  className="bg-green-100 text-gray-900 font-semibold text-center text-xs border-r"
-                  colSpan={7}
-                >
-                  HÍGADO
-                </TableHead>
-                <TableHead
-                  className="bg-blue-100 text-gray-900 font-semibold text-center text-xs border-r"
-                  colSpan={6}
-                >
-                  PULMÓN
-                </TableHead>
-                <TableHead
-                  className="bg-purple-100 text-gray-900 font-semibold text-center text-xs"
-                  rowSpan={2}
-                >
-                  Decomiso Total
-                </TableHead>
-                <TableHead
-                  className="bg-purple-100 text-gray-900 font-semibold text-center text-xs border-r"
-                  rowSpan={2}
-                >
-                  Decomiso Parcial
-                </TableHead>
-              </TableRow>
-
-              {/* Fila de columnas individuales */}
-              <TableRow className="border-b-2">
-                {/* Hígado */}
-                <TableHead className="bg-green-50 text-gray-900 text-center text-xs font-medium">
-                  Distomatosis
-                </TableHead>
-                <TableHead className="bg-green-50 text-gray-900 text-center text-xs font-medium">
-                  Absceso Hep.
-                </TableHead>
-                <TableHead className="bg-green-50 text-gray-900 text-center text-xs font-medium">
-                  Adherencia
-                </TableHead>
-                <TableHead className="bg-green-50 text-gray-900 text-center text-xs font-medium">
-                  Telangiectasia
-                </TableHead>
-                <TableHead className="bg-green-50 text-gray-900 text-center text-xs font-medium">
-                  Cirrosis
-                </TableHead>
-                <TableHead className="bg-green-50 text-gray-900 text-center text-xs font-medium">
-                  Esteatósis
-                </TableHead>
-                <TableHead className="bg-green-50 text-gray-900 text-center text-xs font-medium border-r">
-                  Fibrosis
-                </TableHead>
-                {/* Pulmón */}
-                <TableHead className="bg-blue-50 text-gray-900 text-center text-xs font-medium">
-                  Neumonía
-                </TableHead>
-                <TableHead className="bg-blue-50 text-gray-900 text-center text-xs font-medium">
-                  Hemorragias
-                </TableHead>
-                <TableHead className="bg-blue-50 text-gray-900 text-center text-xs font-medium">
-                  Enfisema
-                </TableHead>
-                <TableHead className="bg-blue-50 text-gray-900 text-center text-xs font-medium">
-                  Edema
-                </TableHead>
-                <TableHead className="bg-blue-50 text-gray-900 text-center text-xs font-medium">
-                  Corazón
-                </TableHead>
-                <TableHead className="bg-blue-50 text-gray-900 text-center text-xs font-medium border-r">
-                  Intestino
-                </TableHead>
-              </TableRow>
+        <div className="overflow-x-auto border rounded-lg bg-white">
+          <Table className="min-w-[1200px] bg-white">
+            <TableHeader className="sticky top-0 z-20 [&_th]:!text-gray-900">
+              <DynamicTableHeaders
+                groupedColumns={groupedColumns}
+                isLoading={isLoadingDiseases}
+              />
             </TableHeader>
 
             <TableBody>
               {rows.map((row) => {
-                const total = calculateTotal(row.values);
                 return (
                   <TableRow key={row.id} className="hover:bg-gray-50/50">
-                    <TableCell className="sticky left-0 z-20 bg-background border-r-2 p-3">
+                    <TableCell className="sticky left-0 z-20 bg-white border-r-2 p-2 w-[200px]">
                       {row.introductor ? (
-                        <div className="space-y-1.5">
-                          <div className="font-semibold text-base text-gray-900">
+                        <div className="space-y-0.5 text-left">
+                          <div className="font-semibold text-xs text-black leading-tight">
                             {row.introductor.nombre}
                           </div>
-                          <div className="text-sm text-gray-600 space-y-0.5">
-                            <div>Marca: {row.introductor.marca}</div>
-                            <div>Cert: {row.introductor.certificado}</div>
-                            <div>Animales: {row.introductor.animales}</div>
+                          <div className="text-[10px] text-gray-600 space-y-0">
+                            <div>M: {row.introductor.marca}</div>
+                            <div>C: {row.introductor.certificado}</div>
+                            <div>A: {row.introductor.animales}</div>
                           </div>
                           <Popover
                             open={openPopover === row.id}
@@ -330,11 +448,9 @@ export function PostmortemManagement() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 w-full justify-between text-xs mt-1 hover:bg-gray-100"
+                                className="h-5 w-full justify-center text-xs mt-0.5 hover:bg-gray-100 p-0"
                               >
-                                <span className="flex items-center gap-1">
-                                  <ChevronDown className="h-3 w-3" />
-                                </span>
+                                <ChevronDown className="h-3 w-3" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent
@@ -376,14 +492,14 @@ export function PostmortemManagement() {
                           </Popover>
                         </div>
                       ) : (
-                        <div className="space-y-1.5">
-                          <div className="text-sm text-gray-400">
-                            Seleccionar introductor...
+                        <div className="space-y-0.5 text-left">
+                          <div className="text-[10px] text-gray-400 leading-tight">
+                            Seleccionar...
                           </div>
-                          <div className="text-sm text-gray-400 space-y-0.5">
-                            <div>Marca: --</div>
-                            <div>Cert: --</div>
-                            <div>Animales: --</div>
+                          <div className="text-[10px] text-gray-400 space-y-0">
+                            <div>M: --</div>
+                            <div>C: --</div>
+                            <div>A: --</div>
                           </div>
                           <Popover
                             open={openPopover === row.id}
@@ -394,9 +510,9 @@ export function PostmortemManagement() {
                             <PopoverTrigger asChild>
                               <Button
                                 variant="ghost"
-                                className="h-7 w-full justify-center hover:bg-gray-100"
+                                className="h-5 w-full justify-center hover:bg-gray-100 p-0"
                               >
-                                <ChevronDown className="h-4 w-4" />
+                                <ChevronDown className="h-3 w-3" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent
@@ -440,42 +556,72 @@ export function PostmortemManagement() {
                       )}
                     </TableCell>
 
-                    {/* Todas las columnas de datos (13 subproductos) */}
-                    {row.values.slice(0, 13).map((value, i) => (
-                      <TableCell key={`col-${i}`} className="p-1 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={value || ""}
-                          onChange={(e) =>
-                            handleValueChange(row.id, i, e.target.value)
-                          }
-                          className="h-8 w-14 text-center border-gray-200 focus:border-blue-400 focus:ring-blue-400"
-                          placeholder="-"
-                        />
-                      </TableCell>
-                    ))}
+                    {/* Columnas de enfermedades */}
+                    {row.values
+                      .slice(0, dynamicColumnConfig.length)
+                      .map((value, i) => {
+                        return (
+                          <TableCell
+                            key={`col-${i}`}
+                            className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
+                            onClick={() =>
+                              handleCellClick(row.id, i, "disease")
+                            }
+                          >
+                            {value > 0 ? (
+                              <div className="flex items-center justify-center">
+                                <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
+                                  {value}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-gray-400 text-xs">-</div>
+                            )}
+                          </TableCell>
+                        );
+                      })}
 
-                    {/* Productos (2) - Decomiso Total y Parcial */}
-                    {row.values.slice(13, 15).map((value, i) => (
-                      <TableCell key={`prod-${i}`} className="p-1 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={value || ""}
-                          onChange={(e) =>
-                            handleValueChange(row.id, i + 13, e.target.value)
-                          }
-                          className="h-8 w-14 text-center border-gray-200 focus:border-purple-400 focus:ring-purple-400"
-                          placeholder="-"
-                        />
-                      </TableCell>
-                    ))}
-
-                    {/* Total */}
-                    <TableCell className="text-center font-bold text-base bg-orange-50 border-l-2">
-                      {total > 0 ? total : "-"}
+                    {/* Columna TOTAL (suma de todas las enfermedades) */}
+                    <TableCell className="p-0.5 text-center bg-orange-50 font-bold">
+                      {(() => {
+                        const total = row.values
+                          .slice(0, dynamicColumnConfig.length)
+                          .reduce((sum, v) => sum + v, 0);
+                        return total > 0 ? total : "-";
+                      })()}
                     </TableCell>
+
+                    {/* Columnas de PRODUCTOS (Decomiso Total y Parcial) */}
+                    {row.values
+                      .slice(
+                        dynamicColumnConfig.length,
+                        dynamicColumnConfig.length + 2
+                      )
+                      .map((value, i) => {
+                        const columnType =
+                          i === 0
+                            ? "total-confiscation"
+                            : "partial-confiscation";
+                        return (
+                          <TableCell
+                            key={`prod-${i}`}
+                            className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
+                            onClick={() =>
+                              handleCellClick(row.id, 0, columnType)
+                            }
+                          >
+                            {value > 0 ? (
+                              <div className="flex items-center justify-center">
+                                <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
+                                  {value}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-gray-400 text-xs">-</div>
+                            )}
+                          </TableCell>
+                        );
+                      })}
                   </TableRow>
                 );
               })}
@@ -483,6 +629,85 @@ export function PostmortemManagement() {
           </Table>
         </div>
       </Card>
+
+      {/* Modal de Selección de Animales (para enfermedades) */}
+      <AnimalSelectionModal
+        isOpen={modalState.isOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveAnimals}
+        introductor={
+          currentIntroductor
+            ? `${currentIntroductor.nombre} (${currentIntroductor.marca})`
+            : ""
+        }
+        localizacion={modalState.localizacion}
+        patologia={modalState.patologia}
+        certId={currentIntroductor?.certId ?? null}
+      />
+
+      {/* Modal de Decomiso Total */}
+      <TotalConfiscationModal
+        isOpen={totalConfiscationModalState.isOpen}
+        onClose={() =>
+          setTotalConfiscationModalState({ isOpen: false, rowId: null })
+        }
+        onSave={(count) => {
+          if (totalConfiscationModalState.rowId) {
+            setRows((prev) =>
+              prev.map((row) =>
+                row.id === totalConfiscationModalState.rowId
+                  ? {
+                      ...row,
+                      values: row.values.map((v, i) =>
+                        i === dynamicColumnConfig.length ? count : v
+                      ),
+                    }
+                  : row
+              )
+            );
+          }
+          setTotalConfiscationModalState({ isOpen: false, rowId: null });
+        }}
+        introductor={
+          totalConfiscationIntroductor
+            ? `${totalConfiscationIntroductor.nombre} (${totalConfiscationIntroductor.marca})`
+            : ""
+        }
+        localizacion="CANAL"
+        certId={totalConfiscationIntroductor?.certId ?? null}
+      />
+
+      {/* Modal de Decomiso Parcial */}
+      <PartialConfiscationModal
+        isOpen={partialConfiscationModalState.isOpen}
+        onClose={() =>
+          setPartialConfiscationModalState({ isOpen: false, rowId: null })
+        }
+        onSave={(count) => {
+          if (partialConfiscationModalState.rowId) {
+            setRows((prev) =>
+              prev.map((row) =>
+                row.id === partialConfiscationModalState.rowId
+                  ? {
+                      ...row,
+                      values: row.values.map((v, i) =>
+                        i === dynamicColumnConfig.length + 1 ? count : v
+                      ),
+                    }
+                  : row
+              )
+            );
+          }
+          setPartialConfiscationModalState({ isOpen: false, rowId: null });
+        }}
+        introductor={
+          partialConfiscationIntroductor
+            ? `${partialConfiscationIntroductor.nombre} (${partialConfiscationIntroductor.marca})`
+            : ""
+        }
+        localizacion="CANAL"
+        certId={partialConfiscationIntroductor?.certId ?? null}
+      />
     </div>
   );
 }

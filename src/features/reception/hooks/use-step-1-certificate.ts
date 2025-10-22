@@ -4,7 +4,6 @@ import { useDebouncedCallback } from 'use-debounce';
 import { toCapitalize } from '@/lib/toCapitalize';
 import { mapToAnimalAdmissions } from '../utils';
 import { ShipperBasicData } from '@/features/shipping/domain';
-import { useShippersList } from '@/features/shipping/hooks';
 import { Certificate } from '@/features/certificate/domain';
 import { useReceptionContext } from './use-reception-context';
 import { useCertificateByCode } from '@/features/certificate/hooks';
@@ -15,6 +14,7 @@ import {
 } from '@/features/shipping/server/db/shipping.service';
 import { getCertBrandByCertificateId } from '@/features/setting-certificate-brand/server/db/setting-cert-brand.service';
 import { getConditionTransportByCertificateId } from '@/features/condition-transport/server/db/condition-transport.service';
+import { useGetRegisterVehicleByDate } from '@/features/vehicles/hooks';
 
 type state = 'enabled' | 'loading';
 interface Step1State {
@@ -50,18 +50,46 @@ export const useStep1Certificate = () => {
 	} = useReceptionContext();
 
 	const [searchState, setSearchState] = useState<Step1State>(initialState);
-	const [showNoResultsMessage, setShowNoResultsMessage] = useState(false);
 
-	const { identification, fullName, plate, certificateNumber } = searchState;
+	const { certificateNumber } = searchState;
 
-	const searchFilters = {
-		identification: identification.searchValue,
-		fullName: fullName.searchValue,
-		plate: plate.searchValue,
-	};
-	const query = useShippersList(searchFilters);
+	// Get today's date for shippers
+	const currentDate = new Date().toISOString().split('T')[0];
+	const registerVehicleQuery = useGetRegisterVehicleByDate(currentDate);
 
-	const shippers = query.data.data.items.filter(shipper => shipper.status);
+	// Map register vehicles to shippers format
+	const shippers = registerVehicleQuery.data.data
+		.filter(item => item.registerVehicle?.shipping)
+		.map(item => {
+			const shipping = item.registerVehicle!.shipping!;
+			return {
+				id: shipping.id,
+				person: {
+					id: shipping.person.id,
+					firstName: shipping.person.firstName ?? '',
+					lastName: shipping.person.lastName ?? '',
+					fullName: shipping.person.fullName ?? '',
+					identification: shipping.person.identification ?? '',
+					identificationTypeId: shipping.person.identificationTypeId ?? 0,
+				},
+				vehicle: {
+					id: shipping.vehicle.id,
+					plate: shipping.vehicle.plate,
+					vehicleDetail: {
+						vehicleType: {
+							id: shipping.vehicle.vehicleDetail.vehicleType.id,
+							name: shipping.vehicle.vehicleDetail.vehicleType.name,
+						},
+						transportType: {
+							id: shipping.vehicle.vehicleDetail.transportType.id,
+							name: shipping.vehicle.vehicleDetail.transportType.name,
+						},
+					},
+				},
+				status: true,
+			};
+		});
+
 	const certificateQuery = useCertificateByCode(certificateNumber.searchValue);
 	const certificate = certificateQuery.data?.data;
 
@@ -75,25 +103,7 @@ export const useStep1Certificate = () => {
 		setSearchState(prev => ({ ...prev, [field]: { value, searchValue: '', state: 'loading' } }));
 	};
 
-	const isSomeFieldsWithValue = [identification.value, fullName.value, plate.value].some(field => field.length > 0);
-	const showShippersList = isSomeFieldsWithValue && !selectedShipper;
-	const isLoadingShippers = [searchState.plate, searchState.fullName, searchState.identification].some(field => field.state === 'loading');
 
-	// Efecto para mostrar mensaje de "no encontrado" después de 5 segundos
-	useEffect(() => {
-		if (!isSomeFieldsWithValue || selectedShipper || isLoadingShippers) {
-			setShowNoResultsMessage(false);
-			return;
-		}
-
-		const timer = setTimeout(() => {
-			if (shippers.length === 0 && !selectedShipper) {
-				setShowNoResultsMessage(true);
-			}
-		}, 100);
-
-		return () => clearTimeout(timer);
-	}, [isSomeFieldsWithValue, selectedShipper, isLoadingShippers, shippers.length]);
 
 	const handleSuccessButton = async (qrData: Certificate | null, closeModal: () => void) => {
 		closeModal?.();
@@ -184,7 +194,11 @@ export const useStep1Certificate = () => {
 			if (registerVehicle.species) handleSetSelectedSpecie(registerVehicle.species);
 		} catch (error) {}
 
-		if (!certificate?.shippingsId) return;
+		// Si el certificado no tiene transportista asociado, limpiar el transportista seleccionado
+		if (!certificate?.shippingsId) {
+			handleRemoveSelectedShipper();
+			return;
+		}
 
 		try {
 			const shipperResponse = await getShippersByIdService(certificate.shippingsId);
@@ -206,7 +220,10 @@ export const useStep1Certificate = () => {
 			};
 
 			handleSetSelectedShipper(shipper);
-		} catch (error) {}
+		} catch (error) {
+			// Si hay error al obtener el transportista, también limpiarlo
+			handleRemoveSelectedShipper();
+		}
 	};
 
 	const handleChangeStep1 = () =>
@@ -214,14 +231,6 @@ export const useStep1Certificate = () => {
 			name: 'step1Accordion',
 			accordionState: { isOpen: !step1Accordion.isOpen, state: step1Accordion.state === 'completed' ? 'completed' : 'enabled' },
 		});
-
-	let isLoadingText = 'Cargando ';
-
-	if (searchState.plate.state === 'loading') isLoadingText += 'placa ';
-	if (searchState.fullName.state === 'loading') isLoadingText += 'nombre ';
-	if (searchState.identification.state === 'loading') isLoadingText += 'cédula ';
-
-	isLoadingText += '...';
 
 	const successMsg = [];
 
@@ -237,6 +246,12 @@ export const useStep1Certificate = () => {
 			`Transportista: ${selectedShipper?.identification} • ${selectedShipper?.plate} • ${toCapitalize(selectedShipper?.vehicleType ?? '')}`
 		);
 
+	// Wrapper para limpiar también el transportista al eliminar el certificado
+	const handleRemoveCertificate = () => {
+		handleRemoveSelectedCertificate();
+		handleRemoveSelectedShipper();
+	};
+
 	return {
 		// data
 		shippers,
@@ -245,16 +260,13 @@ export const useStep1Certificate = () => {
 		selectedCertificate,
 		step1Accordion,
 		searchParams: searchState,
-		showShippersList,
-		showNoResultsMessage,
-		isLoadingShippers,
-		isLoadingText,
 		certificateQuery,
 		successMsg,
 		isFromQR,
+		isLoadingShippers: registerVehicleQuery.isLoading,
 
 		// state handlers
-		handleRemoveSelectedCertificate,
+		handleRemoveSelectedCertificate: handleRemoveCertificate,
 		handleSetSelectedCertificate,
 		handleSetSelectedShipper,
 		handleRemoveSelectedShipper,
