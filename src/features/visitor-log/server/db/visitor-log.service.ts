@@ -4,7 +4,7 @@ import { http } from "@/lib/ky";
 
 export function getVisitorLogByFilterService(body: VisitorLogFilterBody) {
     return http
-        .post("v1/1.0.0/visitor-log/shipping-by-filter", {
+        .post("v1/1.0.0/visitor-log/by-filters", {
             json: body
         })
         .json<CommonHttpResponsePagination<VisitorLogFilterResponse>>();

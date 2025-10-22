@@ -36,7 +36,7 @@ import {
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
+import { es } from "date-fns/locale";
 export function VisitorLogManagement() {
   const visitorLogParams = useSearchParams();
   const [searchParams, setSearchParams] = useQueryStates(
@@ -179,12 +179,56 @@ export function VisitorLogManagement() {
             header: "Motivo de Visita",
           },
           {
-            accessorKey: "entryTime",
             header: "Fecha de Entrada",
+            cell: ({ row }) => {
+              const date = new Date(row.original.entryTime);
+
+              const parts = new Intl.DateTimeFormat("es-EC", {
+                timeZone: "America/Guayaquil",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              }).formatToParts(date);
+
+              const get = (type: string) =>
+                parts.find((p) => p.type === type)?.value;
+
+              const formatted = `${get("year")}-${get("month")}-${get(
+                "day"
+              )} ${get("hour")}:${get("minute")} ${get(
+                "dayPeriod"
+              )?.toLowerCase()}`;
+              return formatted;
+            },
           },
           {
-            accessorKey: "exitTime",
             header: "Fecha de Salida",
+            cell: ({ row }) => {
+              const date = new Date(row.original.exitTime);
+
+              const parts = new Intl.DateTimeFormat("es-EC", {
+                timeZone: "America/Guayaquil",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              }).formatToParts(date);
+
+              const get = (type: string) =>
+                parts.find((p) => p.type === type)?.value;
+
+              const formatted = `${get("year")}-${get("month")}-${get(
+                "day"
+              )} ${get("hour")}:${get("minute")} ${get(
+                "dayPeriod"
+              )?.toLowerCase()}`;
+              return formatted;
+            },
           },
           {
             accessorKey: "observation",
