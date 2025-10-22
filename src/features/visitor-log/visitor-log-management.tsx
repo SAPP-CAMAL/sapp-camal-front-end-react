@@ -295,7 +295,6 @@ export function SelectCompany({
     queryFn: () => getAllVisitorCompanies(),
   });
 
-  // Opciones formateadas para mostrar RUC + nombre
   const options = query.data?.data.map((company) => ({
     id: company.id.toString(),
     label: `${company.ruc}-${company.name}`,
@@ -303,10 +302,8 @@ export function SelectCompany({
     name: company.name,
   }));
 
-  // Selección actual
   const selectedOption = options?.find((o) => o.id === value);
 
-  // Filtrar según búsqueda
   const filteredOptions = options?.filter((o) =>
     o.label.toLowerCase().includes(search.toLowerCase())
   );

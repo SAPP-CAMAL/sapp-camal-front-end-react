@@ -39,6 +39,11 @@ export function NewVisitorLogForm() {
     try {
       console.log({ data });
 
+      if(!data.savedPerson){
+        return toast.error("Debe seleccionar una persona");
+      }
+
+
       await createVisitorLogService({
         idPerson: Number(data.personId),
         idCompany: Number(data.idCompany),

@@ -25,3 +25,9 @@ export function createVisitorLogService(body: CreateVisitorLogBody) {
         })
         .json<CommonHttpResponseSingle<VisitorLogFilterResponse>>();
 }
+
+export function deleteVisitorLogService(id: number) {
+    return http
+        .delete(`v1/1.0.0/visitor-log/${id}`)
+        .json();
+}

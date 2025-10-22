@@ -104,7 +104,7 @@ export function VisitorLogFormFields() {
             Busca y selecciona la persona que será registrada como Visitante
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-1">
+        <CardContent className="space-y-2">
           {!selectedPerson ? (
             <>
               <label className="font-semibold">Buscar Persona</label>
@@ -198,14 +198,14 @@ export function VisitorLogFormFields() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-6">
         <FormField
           control={form.control}
           name="idCompany"
           rules={{
             required: {
               value: true,
-              message: "El campo motivo de visita es requerido",
+              message: "El campo empresa es requerido",
             },
           }}
           render={({ field }) => (
