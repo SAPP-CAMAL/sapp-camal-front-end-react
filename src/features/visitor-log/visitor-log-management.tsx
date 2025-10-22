@@ -33,10 +33,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { es } from "date-fns/locale";
 export function VisitorLogManagement() {
   const visitorLogParams = useSearchParams();
   const [searchParams, setSearchParams] = useQueryStates(
@@ -54,7 +53,7 @@ export function VisitorLogManagement() {
   );
 
   const query = useQuery({
-    queryKey: ["people", searchParams],
+    queryKey: ["visitor-log", searchParams],
     queryFn: () =>
       getVisitorLogByFilterService({
         page: searchParams.page,
@@ -158,6 +157,7 @@ export function VisitorLogManagement() {
                 Empresa
               </label>
               <SelectCompany
+                value={searchParams.idCompany}
                 onChangeValue={(idCompany) => {
                   setSearchParams({
                     idCompany: idCompany ? idCompany?.toString() : "",
@@ -281,34 +281,35 @@ export function VisitorLogManagement() {
 }
 
 export function SelectCompany({
+  value,
   onChangeValue,
 }: {
-  onChangeValue: (idCompany?: number) => void;
+  value?: string;
+  onChangeValue: (idCompany?: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
+  const [search, setSearch] = useState("");
 
   const query = useQuery({
     queryKey: ["visitor-company"],
     queryFn: () => getAllVisitorCompanies(),
   });
 
+  // Opciones formateadas para mostrar RUC + nombre
   const options = query.data?.data.map((company) => ({
-    value: `${company.ruc}-${company.name}`,
+    id: company.id.toString(),
     label: `${company.ruc}-${company.name}`,
+    ruc: company.ruc,
+    name: company.name,
   }));
 
-  useEffect(() => {
-    if (!!value) {
-      const company = query.data?.data.find(
-        (company) => company.ruc === value.split("-")[0]
-      );
+  // Selección actual
+  const selectedOption = options?.find((o) => o.id === value);
 
-      onChangeValue(company?.id);
-    } else {
-      onChangeValue(undefined);
-    }
-  }, [value]);
+  // Filtrar según búsqueda
+  const filteredOptions = options?.filter((o) =>
+    o.label.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -319,31 +320,39 @@ export function SelectCompany({
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {value
-            ? options?.find((option) => option.value === value)?.label
-            : "Selecciona una empresa..."}
+          {selectedOption ? selectedOption.label : "Selecciona una empresa..."}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[240px] p-0">
         <Command>
-          <CommandInput placeholder="Buscar por empresa..." />
+          <CommandInput
+            placeholder="Buscar por empresa..."
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>Empresa no encontrada.</CommandEmpty>
             <CommandGroup>
-              {options?.map((option) => (
+              {filteredOptions?.map((option) => (
                 <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue);
+                  key={option.id}
+                  value={option.label}
+                  onSelect={() => {
+                    if (value === option.id) {
+                      // Si ya está seleccionado, limpiar
+                      onChangeValue(undefined);
+                    } else {
+                      onChangeValue(option.id); // Selección normal
+                    }
                     setOpen(false);
+                    setSearch(""); // Limpiar búsqueda
                   }}
                 >
                   <CheckIcon
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === option.value ? "opacity-100" : "opacity-0"
+                      value === option.id ? "opacity-100" : "opacity-0"
                     )}
                   />
                   {option.label}

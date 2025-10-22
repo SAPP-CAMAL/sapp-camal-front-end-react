@@ -8,6 +8,16 @@ export interface VisitorLogFilterBody {
     idCompany?: number;
 }
 
+export interface CreateVisitorLogBody {
+    idPerson: number,
+    idCompany: number,
+    visitPurpose: string,
+    entryTime?: string,
+    exitTime?: string
+    observation?: string,
+    status: boolean
+}
+
 export interface VisitorLogFilterResponse {
     id: number;
     visitPurpose: string;
@@ -42,12 +52,12 @@ interface Person {
 
 
 export interface VisitorCompany {
-  id: number;
-  idCompanyType: number;
-  ruc: string;
-  name: string;
-  phone: null | string;
-  email: null | string;
-  address: null | string;
-  status: boolean;
+    id: number;
+    idCompanyType: number;
+    ruc: string;
+    name: string;
+    phone: null | string;
+    email: null | string;
+    address: null | string;
+    status: boolean;
 }

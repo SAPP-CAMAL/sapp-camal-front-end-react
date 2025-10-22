@@ -1,7 +1,13 @@
-"use client";
-
-import { Button } from "@/components/ui/button";
-import { PlusIcon, XIcon } from "lucide-react";
+import { useFormContext } from "react-hook-form";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   FormControl,
   FormField,
@@ -10,465 +16,415 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useFieldArray, useFormContext } from "react-hook-form";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { CircleCheckBig, User, X } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+  UserPerson,
+  ResponseUserPersonSearchService,
+} from "@/features/security/domain";
+import { getUserPersonByFilterService } from "@/features/security/server/db/security.queries";
+import { SelectCompany } from "../visitor-log-management";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
-// import { validateDocumentTypeService } from "../server/db/people.service";
+import { NewPerson } from "@/features/people/components/new-person.form";
 
-export function NewVisitorLogFields({
-  isUpdate = false,
-  updatePersonButton,
-  updatePositionsButton,
-}: {
-  isUpdate?: boolean;
-  updatePersonButton?: React.ReactNode;
-  updatePositionsButton?: React.ReactNode;
-}) {
-  const catalogueCharges = useCatalogue("CARGOS");
-  const catalogueIdentityTypes = useCatalogue("TID");
-  const catalogueGenders = useCatalogue("GEN");
-
+export type BrandCreating = {
+  id: number;
+  name: string;
+  species: string[];
+};
+export function VisitorLogFormFields() {
   const form = useFormContext();
-  const positionsFiledArray = useFieldArray({
-    control: form.control,
-    name: "positions",
+  const selectedPerson = form.watch("savedPerson");
+  // const [selectedPerson, setSelectedPerson] = useState<UserPerson | null>(null);
+  const [activeField, setActiveField] = useState<
+    "name" | "identification" | null
+  >(null);
+  const [name, setName] = useState("");
+  const [identification, setIdentification] = useState("");
+  // const [savedPerson, setSavedPerson] = useState<UserPerson | null>(null);
+
+  const peopleData = useQuery<ResponseUserPersonSearchService>({
+    queryKey: ["people", name, identification],
+    queryFn: () =>
+      getUserPersonByFilterService({
+        ...(name.length > 2 && { fullName: name }),
+        identification: identification,
+      }),
+    enabled: !!name || !!identification,
   });
 
-  const isPersonalCamal = form.watch("slaughterhouse");
+  // const isFormComplete = useMemo(() => {
+  //   const description = form?.watch("description");
+  //   return !!description?.trim() && !!selectedSpecies?.length;
+  // }, [form?.watch("description"), selectedSpecies]);
 
-  const defaultPositions = isUpdate
-    ? form.formState?.defaultValues?.positions?.map((position: any) =>
-        Number(position.catalogueId)
-      )
-    : [];
+  const handleSelectPerson = (person: UserPerson) => {
+    // setSelectedPerson(person);
+    // setSavedPerson(person);
+    setActiveField(null);
+    form.setValue("personId", person?.personId?.toString());
+    form.setValue("savedPerson", person);
+  };
 
-  const currentPositions = [
-    ...positionsFiledArray.fields.map((position: any) =>
-      Number(position.catalogueId)
-    ),
-    defaultPositions,
-  ];
+  const handleRemovePerson = () => {
+    // setSelectedPerson(null);
+
+    form.setValue("savedPerson", null);
+    form.setValue("name", "");
+    form.setValue("identification", "");
+    setName("");
+    setIdentification("");
+    setActiveField(null);
+  };
 
   return (
-    <>
-      <FormField
-        control={form.control}
-        name="identificationType"
-        rules={{
-          required: {
-            value: true,
-            message: "El tipo de identificación es requerido",
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Tipo de Identificación *</FormLabel>
-            <Select
-              onValueChange={(value) => {
-                field.onChange(value);
-                form.setValue("identification", "");
-              }}
-              defaultValue={field.value}
-            >
-              <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccione un tipo de identificación" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {catalogueIdentityTypes.data?.data.map(
-                  (identityType, index) => (
-                    <SelectItem
-                      key={index}
-                      value={String(identityType.catalogueId)}
-                    >
-                      {identityType.name}
-                    </SelectItem>
-                  )
-                )}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="identification"
-        rules={{
-          required: {
-            value: true,
-            message: "El número de documento es requerido",
-          },
-          validate: {
-            validateDocumentTypeService: async (value, formData) => {
-              const currentValue = catalogueIdentityTypes?.data?.data.find(
-                (data) =>
-                  data.catalogueId === Number(formData.identificationType)
-              );
-
-              const isCedula = currentValue?.code === "CED";
-              const isRUCJ = currentValue?.code === "RUCJ";
-              const isRUCN = currentValue?.code === "RUCN";
-
-              if (!currentValue) return false;
-
-              if (isCedula && value.length !== 10)
-                return "El número de documento debe tener 10 caracteres";
-              if (isRUCJ && value.length !== 9)
-                return "El número de documento debe tener 9 caracteres";
-
-              if (isRUCN && value.length !== 13)
-                return "El número de documento debe tener 13 caracteres";
-
-              try {
-                // await validateDocumentTypeService(currentValue.code, value);
-                return true;
-              } catch (error: any) {
-                const { message } = await error.response.json();
-                return message;
-              }
-            },
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Número de Documento *</FormLabel>
-            <FormControl>
-              <Input {...field} className="border-gray-200" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="genderId"
-        rules={{
-          required: {
-            value: true,
-            message: "El género es requerido",
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Género *</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccione un género" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {catalogueGenders.data?.data.map((gender, index) => (
-                  <SelectItem key={index} value={String(gender.catalogueId)}>
-                    {gender.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="mobileNumber"
-        rules={{
-          required: {
-            value: true,
-            message: "El campo número de teléfono es requerido",
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Número de Teléfono *</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="firstName"
-        rules={{
-          required: {
-            value: true,
-            message: "El campo nombres es requerido",
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Nombres *</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="lastName"
-        rules={{
-          required: {
-            value: true,
-            message: "El campo apellidos es requerido",
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Apellidos *</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="status"
-        rules={{
-          required: {
-            value: true,
-            message: "El campo de estado es requerido",
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Estado *</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccione un Estado" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="true">Activo</SelectItem>
-                <SelectItem value="false">Inactivo</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="address"
-        render={({ field }) => (
-          <FormItem className="col-span-2">
-            <FormLabel>Dirección Domiciliaria</FormLabel>
-            <FormControl>
-              <Textarea {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {updatePersonButton}
-
-      <div className="border-t border-gray-200 col-span-2">
-        <div className="flex gap-x-2 mt-4">
-          <FormField
-            control={form.control}
-            name="slaughterhouse"
-            render={({ field }) => (
-              <FormItem className="col-span-2 flex gap-x-2">
-                <FormControl>
-                  <Checkbox
-                    id="camal-1"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel htmlFor="camal-1">Es personal del Camal</FormLabel>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {isPersonalCamal && (
-          <div className="bg-gray-50 border border-gray-200 px-4 mt-4 rounded-md">
-            <div className="flex justify-between my-2">
-              <Label>Cargos del Personal del Camal</Label>
-              <Button
-                type="button"
-                onClick={() =>
-                  positionsFiledArray.append({
-                    catalogueId: "",
-                    suitable: false,
-                    suitableWithLimitatios: "",
-                    observations: "",
-                  })
-                }
-                disabled={positionsFiledArray.fields.length === 1}
-              >
-                <PlusIcon />
-                Agregar Cargo
-              </Button>
+    <div className="space-y-4">
+      <Card className="">
+        <CardHeader>
+          <CardTitle className="flex gap-2 items-center">
+            <div className="flex justify-between items-center w-full">
+              <div className="flex flex-col gap-1">
+                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">
+                  1
+                </div>
+                <span className="">Buscar Persona</span>
+              </div>
+              <div>
+                <NewPerson />
+              </div>
             </div>
-            <div className="h-96 overflow-y-auto flex flex-col gap-3">
-              {positionsFiledArray.fields.length === 0 ? (
-                <p className="text-sm text-center my-6">
-                  No hay cargos asignados. Haga clic en &quot;Agregar
-                  Cargo&quot; para añadir uno.
-                </p>
-              ) : (
-                positionsFiledArray.fields.map((position, index) => {
-                  return (
-                    <div
-                      className="border rounded-md p-3 bg-white"
-                      key={position.id}
-                    >
-                      <section className="flex justify-between">
-                        <Label>Cargo del personal del Camal</Label>
-                        <Button
-                          variant="link"
-                          type="button"
-                          onClick={() => positionsFiledArray.remove(index)}
-                        >
-                          <XIcon className="text-red-500" />
-                        </Button>
-                      </section>
-                      <div className="space-y-4 mt-4">
-                        <FormField
-                          control={form.control}
-                          name={`positions.${index}.catalogueId`}
-                          rules={{
-                            required: {
-                              value: true,
-                              message: "El cargo es requerido",
-                            },
-                          }}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nombre del Cargo</FormLabel>
-                              <Select
-                                onValueChange={(value) => {
-                                  // console.log(value, position);
+          </CardTitle>
+          <CardDescription>
+            Busca y selecciona la persona que será registrada como Visitante
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {!selectedPerson ? (
+            <>
+              <label className="font-semibold">Buscar Persona</label>
 
-                                  // // @ts-ignore
-                                  // if(position.catalogueId) return field.onChange(value);
+              <div className="grid grid-cols-2 gap-x-2 w-full">
+                <div className="space-y-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="Buscar por nombre"
+                            className="w-full border border-gray-300 rounded-md shadow-sm"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setName(e.target.value);
+                              setActiveField("name");
+                              form.setValue("identification", "");
+                              setIdentification("");
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                                  // positionsFiledArray.update(index, {
-                                  //   catalogueId: Number(value),
-                                  //   suitable: false,
-                                  //   suitableLimitations: "",
-                                  //   suitableObservation: "",
-                                  // });
+                  {name.length > 2 && activeField === "name" && (
+                    <div className="w-full">
+                      <PersonSearch
+                        data={peopleData?.data?.data ?? []}
+                        activeField={activeField}
+                        onSelectPerson={handleSelectPerson}
+                      />
+                    </div>
+                  )}
+                </div>
 
-                                  return field.onChange(value);
-                                }}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione un cargo" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {catalogueCharges.data?.data.map(
-                                    (charge, index) => (
-                                      <SelectItem
-                                        key={index}
-                                        disabled={currentPositions.includes(
-                                          charge.catalogueId
-                                        )}
-                                        value={String(charge.catalogueId)}
-                                      >
-                                        {charge.name}
-                                      </SelectItem>
-                                    )
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`positions.${index}.suitable`}
-                          render={({ field }) => (
-                            <FormItem className="flex items-center space-x-2">
-                              <FormControl>
-                                <Checkbox
-                                  id={`suitable-${index}`}
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <FormLabel htmlFor={`suitable-${index}`}>
-                                Apto para este cargo
-                              </FormLabel>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`positions.${index}.suitableLimitations`}
-                          rules={{
-                            required: {
-                              value: true,
-                              message: "El campo de limitaciones es requerido",
-                            },
-                          }}
-                          render={({ field }) => (
-                            <FormItem className="col-span-2">
-                              <FormLabel>Apto con Limitaciones</FormLabel>
-                              <FormControl>
-                                <Textarea {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`positions.${index}.suitableObservation`}
-                          rules={{
-                            required: {
-                              value: true,
-                              message: "El campo de observaciones es requerido",
-                            },
-                          }}
-                          render={({ field }) => (
-                            <FormItem className="col-span-2">
-                              <FormLabel>Observaciones de Aptitud</FormLabel>
-                              <FormControl>
-                                <Textarea {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                <div className="space-y-1">
+                  <FormField
+                    control={form.control}
+                    name="identification"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="Número de Identificación"
+                            className="w-full border border-gray-300 rounded-md shadow-sm"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setIdentification(e.target.value);
+                              setActiveField("identification");
+                              form.setValue("name", "");
+                              setName("");
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {identification.length > 2 &&
+                    activeField === "identification" && (
+                      <div className="w-full">
+                        <PersonSearch
+                          data={peopleData?.data?.data ?? []}
+                          activeField={activeField}
+                          onSelectPerson={handleSelectPerson}
                         />
                       </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-            {updatePositionsButton}
-          </div>
-        )}
+                    )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <SelectedPersonCard
+                person={selectedPerson}
+                onRemove={handleRemovePerson}
+                showEmail={false}
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="idCompany"
+          rules={{
+            required: {
+              value: true,
+              message: "El campo motivo de visita es requerido",
+            },
+          }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Empresa *</FormLabel>
+              <FormControl>
+                <SelectCompany
+                  value={field.value}
+                  onChangeValue={(idCompany) => {
+                    field.onChange(idCompany ?? "");
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="visitPurpose"
+          rules={{
+            required: {
+              value: true,
+              message: "El campo motivo de visita es requerido",
+            },
+          }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Motivo de Visita *</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="entryTime"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hora de Entrada</FormLabel>
+              <FormControl>
+                <Input type="datetime-local" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="exitTime"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hora de Salida</FormLabel>
+              <FormControl>
+                <Input type="datetime-local" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="observation"
+          render={({ field }) => (
+            <FormItem className="col-span-2">
+              <FormLabel>Observación</FormLabel>
+              <FormControl>
+                <Textarea {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
-    </>
+    </div>
+  );
+}
+
+interface PersonSearchProps {
+  data: UserPerson[];
+  activeField: "name" | "identification" | null;
+  onSelectPerson: (person: UserPerson) => void;
+}
+
+export function PersonSearch({
+  data,
+  activeField,
+  onSelectPerson,
+}: PersonSearchProps) {
+  if (!activeField) return null;
+
+  return (
+    <Command className="rounded-lg border shadow-md w-full ">
+      {" "}
+      <CommandList>
+        <CommandGroup
+          heading={
+            activeField === "name"
+              ? "Resultados por nombre"
+              : "Resultados por identificación"
+          }
+        >
+          {data.length === 0 && (
+            <CommandItem disabled>No se encontraron resultados</CommandItem>
+          )}
+          {data.map((person, idx) => (
+            <CommandItem
+              key={idx}
+              value={person.fullName}
+              onSelect={() => onSelectPerson(person)}
+              className="cursor-pointer hover:bg-gray-50"
+            >
+              <div className="flex flex-col">
+                <span className="font-medium">{person.fullName}</span>
+                <span className="text-xs text-gray-500">{person.email}</span>
+              </div>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  );
+}
+
+interface SelectedPersonCardProps {
+  person: UserPerson;
+  onRemove: () => void;
+  showEmail?: boolean;
+}
+
+export function SelectedPersonCard({
+  person,
+  onRemove,
+  showEmail = true,
+}: SelectedPersonCardProps) {
+  return (
+    <div className="w-full">
+      <div>
+        <label className="font-semibold text-sm">Persona Seleccionada</label>
+        <div className="rounded-xl px-3 py-2 bg-muted border mt-2 flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+              <User size={16} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate">{person.fullName}</p>
+              <p className="text-sm text-muted-foreground truncate">
+                {person.identification}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onRemove}
+            className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+            aria-label="Remover persona seleccionada"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+      {showEmail && (
+        <>
+          <Separator />
+          <div>
+            <label className="font-semibold text-sm">
+              Correo Electrónico *
+            </label>
+            <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
+              <p className="text-sm text-muted-foreground truncate">
+                {person.email}
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+interface SuccessViewProps {
+  person: UserPerson | null;
+}
+
+export function SuccessView({ person }: SuccessViewProps) {
+  if (!person) return null;
+
+  const getInitials = (fullName: string) => {
+    return fullName
+      .split(" ")
+      .map((name) => name.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 3);
+  };
+
+  return (
+    <CardContent className="space-y-4 py-8">
+      <div className="flex items-center gap-2 text-green-600">
+        <CircleCheckBig size={20} className="text-green-600" />
+        <h3 className="font-semibold text-lg">Crear Introductor</h3>
+      </div>
+
+      <p className="text-gray-600">Introductor creado exitosamente</p>
+
+      <div className="bg-green-50 border border-green-300 rounded-lg p-4 flex items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-sm font-medium">
+          {getInitials(person.fullName)}
+        </div>
+        <div className="flex-1">
+          <h4 className="font-semibold text-green-800">{person.fullName}</h4>
+          <div className="text-sm text-green-600 space-y-1">
+            <p>{person.email || "anamaria.gonzalez@empresa.com"}</p>
+          </div>
+        </div>
+      </div>
+    </CardContent>
   );
 }

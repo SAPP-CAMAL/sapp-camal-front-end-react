@@ -15,70 +15,63 @@ import { useForm } from "react-hook-form";
 // import { createPersonService } from "../server/db/people.service";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { createEmployeeService } from "@/features/employees/server/db/employees.services";
-import { NewVisitorLogFields } from "./new-visitor-log-fields.form";
+import { VisitorLogFormFields } from "./new-visitor-log-fields.form";
+import { createVisitorLogService } from "../server/db/visitor-log.service";
+import { useState } from "react";
 
 export function NewVisitorLogForm() {
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
 
   const defaultValues = {
-    open: false,
-    identificationType: "",
-    identification: "",
-    genderId: "",
-    mobileNumber: "",
-    firstName: "",
-    lastName: "",
-    slaughterhouse: false,
-    positions: [],
-    address: "",
-    status: "true",
+    personId: "",
+    idCompany: "",
+    visitPurpose: "",
+    entryTime: "",
+    exitTime: "",
+    observation: "",
+    savedPerson: null,
   };
 
   const form = useForm({ defaultValues });
 
   const onSubmit = async (data: any) => {
     try {
-      // const person = await createPersonService({
-      //   code: "",
-      //   identification: data.identification,
-      //   identificationTypeId: Number(data.identificationType),
-      //   genderId: Number(data.genderId),
-      //   mobileNumber: data.mobileNumber,
-      //   firstName: data.firstName,
-      //   lastName: data.lastName,
-      //   address: data.address,
-      //   affiliationDate: new Date(),
-      //   status: data.status === "true",
-      // });
+      console.log({ data });
 
-      // const employeeMap = data?.positions.map((position: any) => {
-      //   return createEmployeeService({
-      //     personId: person.data.id,
-      //     positionId: Number(position.catalogueId),
-      //     suitable: position.suitable,
-      //     suitableLimitations: position.suitableLimitations,
-      //     suitableObservation: position.suitableObservation,
-      //   });
-      // });
+      await createVisitorLogService({
+        idPerson: Number(data.personId),
+        idCompany: Number(data.idCompany),
+        visitPurpose: data.visitPurpose,
+        ...(!!data.entryTime && {
+          entryTime: data.entryTime,
+        }),
+        ...(!!data.exitTime && {
+          exitTime: data.exitTime,
+        }),
+        ...(!!data.observation && {
+          observation: data.observation,
+        }),
+        status: true,
+      });
 
-      // await Promise.all(employeeMap);
+      await queryClient.refetchQueries({
+        queryKey: ["visitor-log"],
+      });
 
       form.reset(defaultValues);
 
-      await queryClient.invalidateQueries({
-        queryKey: ["people"],
-      });
+      setOpen(false);
 
-      toast.success("Persona creada exitosamente");
+      toast.success("Registro de Visita creado exitosamente");
     } catch (error: any) {
       console.error("Error al crear persona:", error);
       if (error.response) {
         try {
           const { data } = await error.response.json();
-          toast.error(data || "Error al crear la persona");
+          toast.error(data || "Error al crear la visita");
         } catch {
-          toast.error("Error al crear la persona");
+          toast.error("Error al crear el registro de visita");
         }
       } else {
         toast.error("Error de conexión. Por favor, intente nuevamente.");
@@ -88,18 +81,21 @@ export function NewVisitorLogForm() {
 
   return (
     <Dialog
-      open={form.watch("open")}
-      onOpenChange={(open) => form.setValue("open", open)}
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) form.reset();
+      }}
     >
       <DialogTrigger asChild>
         <Button>
           <PlusIcon />
-          Nueva Persona
+          Nueva Visita
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[80vw]">
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
         <DialogHeader>
-          <DialogTitle>Nueva Persona</DialogTitle>
+          <DialogTitle>Nueva Visita</DialogTitle>
           <DialogDescription>
             Complete la información de la persona. Los campos marcados con (*)
             son obligatorios.
@@ -108,9 +104,9 @@ export function NewVisitorLogForm() {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8 grid grid-cols-2 gap-2"
+            className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <NewVisitorLogFields />
+            <VisitorLogFormFields />
             <div className="flex justify-end col-span-2">
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Guardando..." : "Guardar"}
