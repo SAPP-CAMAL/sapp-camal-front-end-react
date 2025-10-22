@@ -31,3 +31,11 @@ export function deleteVisitorLogService(id: number) {
         .delete(`v1/1.0.0/visitor-log/${id}`)
         .json();
 }
+
+export function upateVisitorLogService(id: number, body: CreateVisitorLogBody) {
+    return http
+        .patch(`v1/1.0.0/visitor-log/${id}`, {
+            json: body
+        })
+        .json();
+}

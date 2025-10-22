@@ -36,6 +36,7 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { UpdateVisitorLogDialog } from "./components/update-visitor-log.form";
 export function VisitorLogManagement() {
   const visitorLogParams = useSearchParams();
   const [searchParams, setSearchParams] = useQueryStates(
@@ -253,7 +254,12 @@ export function VisitorLogManagement() {
           {
             header: "Acciones",
             cell: ({ row }) => {
-              return <div>{/* <UpdatePerson person={row.original} /> */}</div>;
+              console.log(row.original)
+              return (
+                <div>
+                  <UpdateVisitorLogDialog visitor={row.original} />
+                </div>
+              );
             },
           },
         ]}
