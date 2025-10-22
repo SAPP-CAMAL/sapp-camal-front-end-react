@@ -66,7 +66,7 @@ export function NewUser() {
           Nuevo Usuario
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col max-w-3xl">
+      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col min-w-[45vw]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Nuevo Usuario</DialogTitle>
           <DialogDescription>

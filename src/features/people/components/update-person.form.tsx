@@ -240,7 +240,7 @@ export function UpdatePerson({ person }: { person: any }) {
         </TooltipContent>
       </Tooltip>
 
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[80vw]">
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
         <DialogHeader>
           <DialogTitle>Editar Persona</DialogTitle>
           <DialogDescription>
