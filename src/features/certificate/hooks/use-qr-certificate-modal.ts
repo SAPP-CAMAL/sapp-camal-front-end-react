@@ -10,7 +10,7 @@ import {
 } from '@/features/certificate/server/db/certificate.service';
 import { Origin } from '@/features/origin/domain';
 import { useAllOrigins } from '@/features/origin/hooks';
-import { isBefore, startOfDay } from 'date-fns';
+import { isBefore, parseISO, startOfDay } from 'date-fns';
 
 type QrState = 'active' | 'loading' | 'invalid' | 'saving';
 
@@ -155,7 +155,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		setQrState('saving');
 
 		// Validate the issue date
-		const issueDate = new Date(qrModalState.qrData.issueDate);
+		const issueDate = parseISO(qrModalState.qrData.issueDate);
 		if (isNaN(issueDate.getTime())) {
 			setQrState('active');
 			return toast.error('La fecha de emisión no es válida');
