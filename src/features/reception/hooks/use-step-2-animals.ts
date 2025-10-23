@@ -122,7 +122,9 @@ export const useStep2Animals = () => {
 
 			const corrals = (await getCorralsByTypeAndGroup(corralTypeId, corralGroupId))?.data ?? [];
 
-			const corralsStatus = (await getStatusCorralsByDate(new Date().toISOString().split('T')[0]))?.data ?? [];
+			const today = new Date();
+		const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+		const corralsStatus = (await getStatusCorralsByDate(todayStr))?.data ?? [];
 
 			let availableCorrals = corrals
 				.filter(corral => !corralsStatus.find(status => status.idCorrals === corral.id))

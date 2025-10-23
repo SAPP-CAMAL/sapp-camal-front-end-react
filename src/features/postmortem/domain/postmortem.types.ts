@@ -23,11 +23,13 @@ export type ModalState = {
   columnIndex: number | null;
   localizacion: string;
   patologia: string;
+  idSpeciesDisease?: number; // ID de la enfermedad
 };
 
 export type ColumnConfig = {
   localizacion: string;
   patologia: string;
+  idSpeciesDisease?: number; // ID de la enfermedad para guardar
   isTotal?: boolean;
 };
 

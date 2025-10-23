@@ -24,7 +24,6 @@ export const getCertificatesService = async (
 
         return response;
     } catch (error) {
-        console.error("Error fetching certificates:", error);
         throw error;
     }
 };

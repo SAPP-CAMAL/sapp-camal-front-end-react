@@ -105,7 +105,8 @@ const readUrlMetadata = async (url: string): Promise<URLMetadata> => {
 
 	sizeMB = +sizeMB.toFixed(1);
 
-	let name = 'video-' + new Date().toISOString().split('T').at(0);
+	const today = new Date();
+	let name = 'video-' + `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
 	if (url.startsWith('http')) {
 		const urlObj = new URL(url);

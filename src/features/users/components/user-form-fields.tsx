@@ -84,8 +84,9 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                           placeholder="Nombre completo..."
                           className="w-full"
                           {...field}
+                          value={field.value ?? ""}
                           onChange={(e) => {
-                            field.onChange(e);
+                            field.onChange(e.target.value);
                             setFullName(e.target.value);
                             setActiveField("name");
                             form.setValue("identification", "");
@@ -125,8 +126,9 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
                           placeholder="Número de identificación..."
                           className="w-full"
                           {...field}
+                          value={field.value ?? ""}
                           onChange={(e) => {
-                            field.onChange(e);
+                            field.onChange(e.target.value);
                             setIdentification(e.target.value);
                             setActiveField("identification");
                             form.setValue("name", "");
@@ -177,7 +179,13 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
           <FormItem>
             <FormLabel>Correo Electrónico *</FormLabel>
             <FormControl>
-              <Input type="email" {...field} value={field.value || ""} className="border-gray-200" />
+              <Input 
+                type="email" 
+                {...field} 
+                value={field.value ?? ""} 
+                onChange={(e) => field.onChange(e.target.value)}
+                className="border-gray-200" 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -196,7 +204,12 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
           <FormItem>
             <FormLabel>Nombre de Usuario *</FormLabel>
             <FormControl>
-              <Input {...field} value={field.value || ""} className="border-gray-200" />
+              <Input 
+                {...field} 
+                value={field.value ?? ""} 
+                onChange={(e) => field.onChange(e.target.value)}
+                className="border-gray-200" 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -217,7 +230,12 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
               <FormItem>
                 <FormLabel>Contraseña *</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input 
+                    type="password"
+                    {...field} 
+                    value={field.value ?? ""} 
+                    onChange={(e) => field.onChange(e.target.value)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -242,7 +260,12 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
               <FormItem>
                 <FormLabel>Confirmar Contraseña *</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input 
+                    type="password"
+                    {...field} 
+                    value={field.value ?? ""} 
+                    onChange={(e) => field.onChange(e.target.value)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

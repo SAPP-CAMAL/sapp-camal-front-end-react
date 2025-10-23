@@ -116,8 +116,8 @@ export function UpdateUserForm({ userId }: { userId: number }) {
           <DialogTrigger asChild>
             <Button size="sm" variant="outline" className="p-0">
               <EditIcon className="h-4 w-4" />
-              <span className="sr-only">Editar usuario</span>
-              Editar
+              {/* <span className="sr-only">Editar usuario</span>
+              Editar */}
             </Button>
           </DialogTrigger>
         </TooltipTrigger>
