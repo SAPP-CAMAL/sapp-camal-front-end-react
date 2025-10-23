@@ -277,7 +277,7 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
             </div>
 
             <div className="flex gap-2 flex-wrap">
-              <Badge className="bg-green-500 text-white px-3 py-1 rounded-full whitespace-nowrap">Disponibles: {totals.disponibles}</Badge>
+              <Badge className="bg-primary text-white px-3 py-1 rounded-full whitespace-nowrap">Disponibles: {totals.disponibles}</Badge>
               <Badge className="bg-red-500 text-white px-3 py-1 rounded-full whitespace-nowrap">Ocupados: {totals.ocupados}</Badge>
               <Badge className="bg-blue-500 text-white px-3 py-1 rounded-full whitespace-nowrap">
                 Animales:

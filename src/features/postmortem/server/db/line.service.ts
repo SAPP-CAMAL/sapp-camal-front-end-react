@@ -17,7 +17,6 @@ export const getAllLinesService = async (): Promise<GetAllLinesResponse> => {
 
     return response;
   } catch (error) {
-    console.error("Error fetching all lines:", error);
     throw error;
   }
 };
@@ -37,7 +36,6 @@ export const getActiveLinesService = async (): Promise<LineItem[]> => {
     // Filtrar líneas activas
     return response.data.filter((line) => line.status === true);
   } catch (error) {
-    console.error("Error fetching active lines:", error);
     return [];
   }
 };

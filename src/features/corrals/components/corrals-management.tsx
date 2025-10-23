@@ -56,7 +56,9 @@ import { removeStatusCorralVideoById, saveStatusCorralVideoById } from "@/featur
 import { readMultipleVideoFiles, readVideoFileMetadata } from "@/lib/read-video-metadata";
 
 
-const currentDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+// Obtener fecha actual en zona horaria local para evitar desfases
+const today = new Date();
+const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`; // YYYY-MM-DD
 
 export function CorralsManagement() {
   // Initialize with default value to avoid hydration mismatch
@@ -614,7 +616,8 @@ const reloadStatusByDate = async () => {
         selectedTab === 'porcinos' ? 2 :
         selectedTab === 'ovinos-caprinos' ? 3 : 1
       );
-      const slaughterDate = new Date().toISOString().split('T')[0];
+      const slaughterDateObj = new Date();
+      const slaughterDate = `${slaughterDateObj.getFullYear()}-${String(slaughterDateObj.getMonth() + 1).padStart(2, '0')}-${String(slaughterDateObj.getDate()).padStart(2, '0')}`;
 
       // Use the ID directly from BrandDetail (no need to fetch it)
       const settingCertBrandId = originalBrand.id;
@@ -2111,8 +2114,8 @@ const reloadStatusByDate = async () => {
           onAddVideos={handleAddFiles}
           onRemove={handleRemoveVideo}
           onSave={saveVideosForCorral}
-          canDeleteItems={statusByDateMap[videoTargetCorralId ?? '']?.closeCorral === false && selectedDate.toISOString().split("T")[0] === currentDate}
-          canSaveItems={(statusByDateMap[videoTargetCorralId ?? '']?.closeCorral === false && !pendingVideos.some((v) => !v.valid.isValid)) && selectedDate.toISOString().split("T")[0] === currentDate}
+          canDeleteItems={statusByDateMap[videoTargetCorralId ?? '']?.closeCorral === false && `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}` === currentDate}
+          canSaveItems={(statusByDateMap[videoTargetCorralId ?? '']?.closeCorral === false && !pendingVideos.some((v) => !v.valid.isValid)) && `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}` === currentDate}
         />
       </div>
 

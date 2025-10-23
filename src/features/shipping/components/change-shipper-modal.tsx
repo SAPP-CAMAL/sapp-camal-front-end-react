@@ -54,8 +54,9 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 	const [selectedRegisterVehicle, setSelectedRegisterVehicle] = useState<DetailRegisterVehicleByDate | null>(null);
 	const [isUpdating, setIsUpdating] = useState(false);
 
-	// Fecha actual para el filtro
-	const currentDate = new Date().toISOString().split('T').at(0)!;
+	// Fecha actual para el filtro (usando zona horaria local)
+	const today = new Date();
+	const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 	const [date, setDate] = useState(currentDate);
 
 	const query = useGetRegisterVehicleByDate(date);

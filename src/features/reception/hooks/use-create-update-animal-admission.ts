@@ -41,8 +41,9 @@ export type AnimalAdmissionForm = {
 	selectedProductiveStages: (ProductiveStage & { quantity: number })[];
 };
 
+const today = new Date();
 const defaultValues: AnimalAdmissionForm = {
-	date: new Date().toISOString(),
+	date: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`,
 	males: 0,
 	females: 0,
 	selectedProductiveStages: [],
@@ -173,7 +174,9 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 
 			const corrals = (await getCorralsByTypeAndGroup(corralTypeId.toString(), groupId.toString()))?.data ?? [];
 
-			const corralsStatus = (await getStatusCorralsByDate(new Date().toISOString().split('T')[0]))?.data ?? [];
+			const today = new Date();
+		const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+		const corralsStatus = (await getStatusCorralsByDate(todayStr))?.data ?? [];
 
 			availableCorrals = corrals
 				.filter(corral => !corralsStatus.find(status => status.idCorrals === corral.id))
@@ -264,10 +267,14 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 
 	const handleSetDate = () => {
 		const corral = form.watch('corralType')?.description?.toLowerCase();
+		
+		const formatLocalDateTime = (date: Date): string => {
+			return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+		};
 
-		if (corral?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase())) return form.setValue('date', new Date().toISOString());
+		if (corral?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase())) return form.setValue('date', formatLocalDateTime(new Date()));
 
-		form.setValue('date', add(new Date(), { days: 1 }).toISOString());
+		form.setValue('date', formatLocalDateTime(add(new Date(), { days: 1 })));
 	};
 
 	const handleUpdateSelectedProductiveStages = (stageId: string | number, quantity: number) => {

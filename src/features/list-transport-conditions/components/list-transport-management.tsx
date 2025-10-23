@@ -58,6 +58,14 @@ export function ListTransportManagement() {
     null
   );
   const isMobile = useIsMobile();
+  
+  // Estado local para los valores de los inputs (para escritura fluida)
+  const [inputValues, setInputValues] = useState({
+    code: "",
+    fullName: "",
+    identification: "",
+    plate: "",
+  });
 
   // Función para manejar cambios en los filtros
   const handleFilterChange = useCallback(
@@ -94,15 +102,21 @@ export function ListTransportManagement() {
   // Función de búsqueda con debounce
   const handleSearch = useCallback(
     (value: string, field: keyof ListAnimalsFilters) => {
+      // Actualizar el valor del input inmediatamente para escritura fluida
+      setInputValues(prev => ({
+        ...prev,
+        [field]: value
+      }));
+      
       // Limpiar timeout anterior
       if (searchTimeout) {
         clearTimeout(searchTimeout);
       }
 
-      // Nuevo timeout para debounce
+      // Nuevo timeout para debounce - actualizar filtros después de 500ms
       const timeout = setTimeout(() => {
         handleFilterChange(field, value);
-      }, 800);
+      }, 500);
 
       setSearchTimeout(timeout);
     },
@@ -121,6 +135,12 @@ export function ListTransportManagement() {
   // Función para limpiar los filtros
   const clearFilters = useCallback(() => {
     setFilters(initialFilters);
+    setInputValues({
+      code: "",
+      fullName: "",
+      identification: "",
+      plate: "",
+    });
   }, [initialFilters]);
 
   const totals = useMemo(
@@ -313,7 +333,7 @@ export function ListTransportManagement() {
                   id="code"
                   type="text"
                   className="w-full bg-muted transition-colors focus:bg-background pl-8"
-                  value={filters.code || ""}
+                  value={inputValues.code}
                   onChange={(e) => handleSearch(e.target.value, "code")}
                   placeholder="Buscar por código..."
                 />
@@ -334,7 +354,7 @@ export function ListTransportManagement() {
                   id="fullName"
                   type="text"
                   className="w-full bg-muted transition-colors focus:bg-background pl-8"
-                  value={filters.fullName || ""}
+                  value={inputValues.fullName}
                   onChange={(e) => handleSearch(e.target.value, "fullName")}
                   placeholder="Buscar por nombre..."
                 />
@@ -355,7 +375,7 @@ export function ListTransportManagement() {
                   id="identification"
                   type="text"
                   className="w-full bg-muted transition-colors focus:bg-background pl-8"
-                  value={filters.identification || ""}
+                  value={inputValues.identification}
                   onChange={(e) => handleSearch(e.target.value, "identification")}
                   placeholder="Buscar por CI..."
                 />
@@ -376,7 +396,7 @@ export function ListTransportManagement() {
                   id="plate"
                   type="text"
                   className="w-full bg-muted transition-colors focus:bg-background pl-8"
-                  value={filters.plate || ""}
+                  value={inputValues.plate}
                   onChange={(e) => handleSearch(e.target.value, "plate")}
                   placeholder="Buscar por placa..."
                 />

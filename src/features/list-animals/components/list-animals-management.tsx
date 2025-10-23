@@ -100,10 +100,10 @@ export function ListAnimalsManagement() {
 
         const filters = {
           entryDate: fechaIngreso
-            ? fechaIngreso.toISOString().split("T")[0]
+            ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
             : getCurrentDate(),
           slaughterDate: fechaFaenamiento
-            ? fechaFaenamiento.toISOString().split("T")[0]
+            ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
             : null,
           idSpecie:
             selectedSpecieIds && selectedSpecieIds.length > 0
@@ -191,12 +191,12 @@ export function ListAnimalsManagement() {
       0
     ),
     totalFaenamiento: apiData.reduce((acc, item) => {
-      const targetDate = fechaFaenamiento
-        ? new Date(fechaFaenamiento).toISOString().slice(0, 10)
-        : new Date().toISOString().slice(0, 10);
+      const targetDateObj = fechaFaenamiento || new Date();
+      const targetDate = `${targetDateObj.getFullYear()}-${String(targetDateObj.getMonth() + 1).padStart(2, '0')}-${String(targetDateObj.getDate()).padStart(2, '0')}`;
 
-      const itemSlaughter = item.slaughterDate
-        ? new Date(item.slaughterDate).toISOString().slice(0, 10)
+      const itemSlaughterDate = item.slaughterDate ? new Date(item.slaughterDate) : null;
+      const itemSlaughter = itemSlaughterDate
+        ? `${itemSlaughterDate.getFullYear()}-${String(itemSlaughterDate.getMonth() + 1).padStart(2, '0')}-${String(itemSlaughterDate.getDate()).padStart(2, '0')}`
         : null;
 
       if (itemSlaughter && itemSlaughter === targetDate) {
@@ -390,7 +390,7 @@ export function ListAnimalsManagement() {
                   className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   value={
                     fechaIngreso
-                      ? fechaIngreso.toISOString().slice(0, 10)
+                      ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
                       : getCurrentDate()
                   }
                   onChange={(e) => {
@@ -423,7 +423,7 @@ export function ListAnimalsManagement() {
                   className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   value={
                     fechaFaenamiento
-                      ? fechaFaenamiento.toISOString().slice(0, 10)
+                      ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
                       : ""
                   }
                   onChange={(e) => {
