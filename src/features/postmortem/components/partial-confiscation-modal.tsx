@@ -31,6 +31,7 @@ type AnimalPartSelection = {
   animalId: string;
   selected: boolean;
   bodyParts: BodyPartSelection[];
+  hasTotalConfiscation?: boolean; // Flag para bloquear si tiene decomiso total
 };
 
 type PartialConfiscationModalProps = {
@@ -50,17 +51,18 @@ export function PartialConfiscationModal({
   localizacion,
   certId,
 }: PartialConfiscationModalProps) {
-  const { data: animalsData, isLoading: isLoadingAnimals } = useAnimalsByBrand(certId);
+  const { data: animalsData, isLoading: isLoadingAnimals } =
+    useAnimalsByBrand(certId);
   const { data: bodyPartsData, isLoading: isLoadingBodyParts } = useBodyParts();
   const { mutate: savePostmortem, isPending: isSaving } = useSavePostmortem();
-  
+
   // Obtener datos guardados de postmortem
   const { data: postmortemData } = usePostmortemByBrand(certId);
 
   // Verificar si ya existen datos guardados de decomiso parcial
   const hasExistingData = useMemo(() => {
     if (!postmortemData?.data) return false;
-    
+
     return postmortemData.data.some((item) =>
       item.productPostmortem.some((prod) => prod.isTotalConfiscation === false)
     );
@@ -73,7 +75,7 @@ export function PartialConfiscationModal({
   // Ordenar partes del cuerpo: primero Miembros, luego Áreas
   const sortedBodyParts = useMemo(() => {
     if (!bodyPartsData?.data) return [];
-    
+
     return [...bodyPartsData.data].sort((a, b) => {
       // Primero ordenar por tipo (Miembro = 1, Área = 2)
       if (a.idPartType !== b.idPartType) {
@@ -87,14 +89,20 @@ export function PartialConfiscationModal({
   useEffect(() => {
     if (animalsData?.data && sortedBodyParts.length > 0) {
       const selections = animalsData.data.map((animal) => {
-        // Buscar si este animal ya tiene datos guardados de decomiso parcial
+        // Buscar si este animal ya tiene datos guardados de postmortem
         const savedData = postmortemData?.data?.find(
           (item) => item.idDetailsSpeciesCertificate === animal.id
         );
-        
-        const savedProducts = savedData?.productPostmortem.filter(
-          (prod) => prod.isTotalConfiscation === false
-        ) || [];
+
+        // Verificar si tiene decomiso total (esto bloquea el animal)
+        const hasTotalConfiscation = savedData?.productPostmortem?.some(
+          (prod) => prod.isTotalConfiscation === true
+        );
+
+        const savedProducts =
+          savedData?.productPostmortem.filter(
+            (prod) => prod.isTotalConfiscation === false
+          ) || [];
 
         const bodyParts = sortedBodyParts.map((part) => {
           const savedPart = savedProducts.find(
@@ -114,9 +122,10 @@ export function PartialConfiscationModal({
           animalId: animal.id.toString(),
           selected: savedProducts.length > 0,
           bodyParts,
+          hasTotalConfiscation, // Agregar flag para bloquear
         };
       });
-      
+
       setAnimalSelections(selections);
     }
   }, [animalsData, sortedBodyParts, postmortemData]);
@@ -190,7 +199,7 @@ export function PartialConfiscationModal({
 
   const handleSaveAll = () => {
     const selectedAnimals = animalSelections.filter((a) => a.selected);
-    
+
     if (selectedAnimals.length === 0) {
       toast.error("Debe seleccionar al menos un animal");
       return;
@@ -205,7 +214,9 @@ export function PartialConfiscationModal({
     });
 
     if (invalidAnimals.length > 0) {
-      toast.error("Cada animal seleccionado debe tener al menos una parte con peso");
+      toast.error(
+        "Cada animal seleccionado debe tener al menos una parte con peso"
+      );
       return;
     }
 
@@ -237,7 +248,9 @@ export function PartialConfiscationModal({
           onSuccess: () => {
             savedCount++;
             if (savedCount === totalAnimals) {
-              toast.success(`Se guardaron ${totalAnimals} animales correctamente`);
+              toast.success(
+                `Se guardaron ${totalAnimals} animales correctamente`
+              );
               onSave(totalAnimals);
               onClose();
             }
@@ -327,26 +340,42 @@ export function PartialConfiscationModal({
                 return (
                   <div
                     key={animal.id}
-                    className="border rounded-lg p-4 space-y-3 bg-white"
+                    className={`border rounded-lg p-4 space-y-3 ${
+                      animalSelection.hasTotalConfiscation
+                        ? "bg-red-50 border-red-200 opacity-60"
+                        : "bg-white"
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       <Checkbox
                         checked={animalSelection.selected}
                         onCheckedChange={() => handleAnimalToggle(animalId)}
                         id={`animal-${animal.id}`}
+                        disabled={animalSelection.hasTotalConfiscation}
                       />
                       <label
                         htmlFor={`animal-${animal.id}`}
-                        className="flex items-center gap-3 cursor-pointer flex-1"
+                        className={`flex items-center gap-3 flex-1 ${
+                          animalSelection.hasTotalConfiscation
+                            ? "cursor-not-allowed"
+                            : "cursor-pointer"
+                        }`}
                       >
                         <div className="flex items-center justify-center w-16 h-12 bg-gray-100 rounded-lg">
                           <span className="font-mono text-sm font-semibold">
                             {animal.code}
                           </span>
                         </div>
-                        <span className="text-sm text-gray-600">
-                          Animal #{animal.code}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-600">
+                            Animal #{animal.code}
+                          </span>
+                          {animalSelection.hasTotalConfiscation && (
+                            <span className="text-xs text-red-600 font-medium">
+                              ⚠️ Decomiso Total - No disponible
+                            </span>
+                          )}
+                        </div>
                       </label>
                     </div>
 
@@ -399,20 +428,24 @@ export function PartialConfiscationModal({
                     )}
 
                     {/* Resumen de partes seleccionadas - fuera de ml-14 */}
-                    {animalSelection.selected && getSelectedPartsInfo(animalId) && (
-                      <div className="p-3 bg-gray-100 rounded text-sm text-gray-700 border-t">
-                        <div className="font-medium text-gray-600 mb-2">
-                          Partes seleccionadas:
+                    {animalSelection.selected &&
+                      getSelectedPartsInfo(animalId) && (
+                        <div className="p-3 bg-gray-100 rounded text-sm text-gray-700 border-t">
+                          <div className="font-medium text-gray-600 mb-2">
+                            Partes seleccionadas:
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            {getSelectedPartsInfo(animalId)?.map((part) => (
+                              <div
+                                key={part.id}
+                                className="font-semibold text-gray-800"
+                              >
+                                {part.code}: {part.weight}kg
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          {getSelectedPartsInfo(animalId)?.map((part) => (
-                            <div key={part.id} className="font-semibold text-gray-800">
-                              {part.code}: {part.weight}kg
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 );
               })}
@@ -437,7 +470,8 @@ export function PartialConfiscationModal({
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                {hasExistingData ? "Actualizar" : "Guardar"} ({selectedCount} animales)
+                {hasExistingData ? "Actualizar" : "Guardar"} ({selectedCount}{" "}
+                animales)
               </>
             )}
           </Button>

@@ -287,7 +287,7 @@ export function VehiclesManagement({}) {
                       id: row.original.id,
                       plate: row.original.plate,
                       vehicleTypeId: String(
-                        row.original.vehicleDetail?.vehicleType?.id ?? ""
+                        row.original.vehicleDetailId ?? ""
                       ),
                       brand: row.original.brand ?? "",
                       model: row.original.model ?? "",

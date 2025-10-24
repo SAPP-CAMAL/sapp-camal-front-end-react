@@ -60,30 +60,39 @@ export const useStep1Certificate = () => {
 
 	// Map register vehicles to shippers format
 	const shippers = registerVehicleQuery.data.data
-		.filter(item => item.registerVehicle?.shipping)
+		.filter(item => {
+			// Verificar que todos los objetos necesarios existan
+			return item.registerVehicle?.shipping?.person && 
+			       item.registerVehicle?.shipping?.vehicle?.vehicleDetail?.vehicleType &&
+			       item.registerVehicle?.shipping?.vehicle?.vehicleDetail?.transportType;
+		})
 		.map(item => {
 			const shipping = item.registerVehicle!.shipping!;
+			const person = shipping.person;
+			const vehicle = shipping.vehicle;
+			const vehicleDetail = vehicle.vehicleDetail;
+			
 			return {
 				id: shipping.id,
 				person: {
-					id: shipping.person.id,
-					firstName: shipping.person.firstName ?? '',
-					lastName: shipping.person.lastName ?? '',
-					fullName: shipping.person.fullName ?? '',
-					identification: shipping.person.identification ?? '',
-					identificationTypeId: shipping.person.identificationTypeId ?? 0,
+					id: person?.id ?? 0,
+					firstName: person?.firstName ?? '',
+					lastName: person?.lastName ?? '',
+					fullName: person?.fullName ?? '',
+					identification: person?.identification ?? '',
+					identificationTypeId: person?.identificationTypeId ?? 0,
 				},
 				vehicle: {
-					id: shipping.vehicle.id,
-					plate: shipping.vehicle.plate,
+					id: vehicle?.id ?? 0,
+					plate: vehicle?.plate ?? '',
 					vehicleDetail: {
 						vehicleType: {
-							id: shipping.vehicle.vehicleDetail.vehicleType.id,
-							name: shipping.vehicle.vehicleDetail.vehicleType.name,
+							id: vehicleDetail?.vehicleType?.id ?? 0,
+							name: vehicleDetail?.vehicleType?.name ?? '',
 						},
 						transportType: {
-							id: shipping.vehicle.vehicleDetail.transportType.id,
-							name: shipping.vehicle.vehicleDetail.transportType.name,
+							id: vehicleDetail?.transportType?.id ?? 0,
+							name: vehicleDetail?.transportType?.name ?? '',
 						},
 					},
 				},

@@ -70,8 +70,12 @@ export function UpdateUserForm({ userId }: { userId: number }) {
     code?: string;
   }) => {
     try {
-      const defaultRoles = (form.formState.defaultValues?.roles ?? []).filter((r): r is string => typeof r === 'string');
-      const allRoles = (data.roles ?? []).filter((r): r is string => typeof r === 'string');
+      const defaultRoles = (form.formState.defaultValues?.roles ?? []).filter(
+        (r): r is string => typeof r === "string"
+      );
+      const allRoles = (data.roles ?? []).filter(
+        (r): r is string => typeof r === "string"
+      );
       const newRoles = allRoles
         .filter((r) => !defaultRoles.includes(r))
         .map((r) => ({ id: Number(r), status: true }));

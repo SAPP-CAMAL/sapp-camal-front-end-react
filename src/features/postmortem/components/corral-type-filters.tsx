@@ -18,7 +18,8 @@ export function CorralTypeFilters({
 }: CorralTypeFiltersProps) {
   const filters: { label: string; value: CorralTypeFilter; count: number }[] = [
     { label: "TODOS", value: "TODOS", count: counts.todos },
-    { label: "NORMAL", value: "NORMAL", count: counts.normal },
+    // TODO: Descomentar cuando el filtro NORMAL esté listo
+    // { label: "NORMAL", value: "NORMAL", count: counts.normal },
     { label: "EMERGENCIA", value: "EMERGENCIA", count: counts.emergencia },
   ];
 
