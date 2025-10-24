@@ -1,6 +1,17 @@
 import { IDetectedBarcode } from '@yudiel/react-qr-scanner';
-import { QrCertificateTypes, QrCertificateVariant1, QrCertificateVariant2, QrCertificateVariant3 } from '@/features/certificate/domain';
-import { qrCertificateLabelsVariant1, qrCertificateLabelsVariant2, qrCertificateLabelsVariant3 } from '@/features/certificate/constants';
+import {
+	QrCertificateTypes,
+	QrCertificateVariant1,
+	QrCertificateVariant2,
+	QrCertificateVariant3,
+	QrCertificateVariant4,
+} from '@/features/certificate/domain';
+import {
+	qrCertificateLabelsVariant1,
+	qrCertificateLabelsVariant2,
+	qrCertificateLabelsVariant3,
+	qrCertificateLabelsVariant4,
+} from '@/features/certificate/constants';
 
 export const parseQrCertificateData = (data: IDetectedBarcode[]): QrCertificateTypes => {
 	const rawData = data.at(0)?.rawValue ?? '';
@@ -15,6 +26,8 @@ export const parseQrCertificateData = (data: IDetectedBarcode[]): QrCertificateT
 
 	const isVariant2 = !!parsedData[qrCertificateLabelsVariant2.csmiNumber.toLowerCase()];
 
+	const isVariant3 = !!parsedData[qrCertificateLabelsVariant3.certificateNumber.toLowerCase()];
+
 	let parsedQrData: QrCertificateTypes;
 
 	if (isVariant1) {
@@ -23,7 +36,7 @@ export const parseQrCertificateData = (data: IDetectedBarcode[]): QrCertificateT
 			authorizedTo: parsedData[qrCertificateLabelsVariant1.authorizedTo.toLowerCase()],
 			destinationAreaCode: parsedData[qrCertificateLabelsVariant1.destinationAreaCode.toLowerCase()],
 			originAreaCode: parsedData[qrCertificateLabelsVariant1.originAreaCode.toLowerCase()],
-			totalProducts: +parsedData[qrCertificateLabelsVariant1.totalProducts.toLowerCase()],
+			totalProducts: +parsedData[qrCertificateLabelsVariant1.totalProducts.toLowerCase()].replace(',', '.'),
 			validUntil: parsedData[qrCertificateLabelsVariant1.validUntil.toLowerCase()],
 			vehicle: parsedData[qrCertificateLabelsVariant1.vehicle.toLowerCase()],
 		} as QrCertificateVariant1;
@@ -37,7 +50,7 @@ export const parseQrCertificateData = (data: IDetectedBarcode[]): QrCertificateT
 			authorizedTo: parsedData[qrCertificateLabelsVariant2.authorizedTo.toLowerCase()],
 			destinationAreaCode: parsedData[qrCertificateLabelsVariant2.destinationAreaCode.toLowerCase()],
 			originAreaCode: parsedData[qrCertificateLabelsVariant2.originAreaCode.toLowerCase()],
-			totalProducts: +parsedData[qrCertificateLabelsVariant2.totalProducts.toLowerCase()],
+			totalProducts: +parsedData[qrCertificateLabelsVariant2.totalProducts.toLowerCase()].replace(',', '.'),
 			validUntil: parsedData[qrCertificateLabelsVariant2.validUntil.toLowerCase()],
 			vehicle: parsedData[qrCertificateLabelsVariant2.vehicle.toLowerCase()],
 		} as QrCertificateVariant2;
@@ -45,14 +58,28 @@ export const parseQrCertificateData = (data: IDetectedBarcode[]): QrCertificateT
 		return parsedQrData;
 	}
 
+	if (isVariant3) {
+		parsedQrData = {
+			certificateNumber: parsedData[qrCertificateLabelsVariant3.certificateNumber.toLowerCase()],
+			origin: parsedData[qrCertificateLabelsVariant3.origin.toLowerCase()],
+			destination: parsedData[qrCertificateLabelsVariant3.destination.toLowerCase()],
+			totalProducts: +parsedData[qrCertificateLabelsVariant3.totalProducts.toLowerCase()].replace(',', '.'),
+			validUntil: parsedData[qrCertificateLabelsVariant3.validUntil.toLowerCase()],
+			vehicle: parsedData[qrCertificateLabelsVariant3.vehicle.toLowerCase()],
+		} as QrCertificateVariant3;
+
+		return parsedQrData;
+	}
+
 	parsedQrData = {
-		certificateNumber: parsedData[qrCertificateLabelsVariant3.certificateNumber.toLowerCase()],
-		origin: parsedData[qrCertificateLabelsVariant3.origin.toLowerCase()],
-		destination: parsedData[qrCertificateLabelsVariant3.destination.toLowerCase()],
-		totalProducts: +parsedData[qrCertificateLabelsVariant3.totalProducts.toLowerCase()],
-		validUntil: parsedData[qrCertificateLabelsVariant3.validUntil.toLowerCase()],
-		vehicle: parsedData[qrCertificateLabelsVariant3.vehicle.toLowerCase()],
-	} as QrCertificateVariant3;
+		czpmmNumber: parsedData[qrCertificateLabelsVariant4.czpmmNumber.toLowerCase()],
+		authorizedTo: parsedData[qrCertificateLabelsVariant4.authorizedTo.toLowerCase()],
+		originAreaCode: parsedData[qrCertificateLabelsVariant4.originAreaCode.toLowerCase()],
+		destinationAreaCode: parsedData[qrCertificateLabelsVariant4.destinationAreaCode.toLowerCase()],
+		totalProducts: +parsedData[qrCertificateLabelsVariant4.totalProducts.toLowerCase()].replace(',', '.'),
+		validUntil: parsedData[qrCertificateLabelsVariant4.validUntil.toLowerCase()],
+		vehicle: parsedData[qrCertificateLabelsVariant4.vehicle.toLowerCase()],
+	} as QrCertificateVariant4;
 
 	return parsedQrData;
 };

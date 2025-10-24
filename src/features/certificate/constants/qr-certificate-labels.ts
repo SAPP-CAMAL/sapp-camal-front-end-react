@@ -69,3 +69,28 @@ export const qrCertificateLabelsVariant3 = {
 	validUntil: 'Fecha Fin Vigencia',
 	vehicle: 'Placa Transporte',
 } as const;
+
+/**
+ * Labels for QR Certificate Variant 4.
+ *
+ * Example of a QR certificate using these labels:
+ *
+ * - CZPM-M:  06-3747039
+ * - AUTORIZADO_A: 0602563447
+ * - CODIGO_AREA_ORIGEN: 060650
+ * - CODIGO_AREA_DESTINO: 060162
+ * - TOTAL_PRODUCTOS: 2,00
+ * - TOTAL_SUBPRODUCTOS: 0,00
+ * - VALIDO_HASTA: 24/10/2025 8:45:00
+ * - VEHICULO: UBT-0791
+ */
+export const qrCertificateLabelsVariant4 = {
+	czpmmNumber: 'CZPM-M',
+	authorizedTo: 'AUTORIZADO_A',
+	originAreaCode: 'CODIGO_AREA_ORIGEN',
+	destinationAreaCode: 'CODIGO_AREA_DESTINO',
+	totalProducts: 'TOTAL_PRODUCTOS',
+	totalSubProducts: 'TOTAL_SUBPRODUCTOS',
+	validUntil: 'VALIDO_HASTA',
+	vehicle: 'VEHICULO',
+} as const;

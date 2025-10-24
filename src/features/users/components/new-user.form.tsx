@@ -40,6 +40,7 @@ export function NewUser() {
         userName: data.userName,
         password: data.password,
         roles: data.roles.map(Number),
+        ...(data.code && { code: data.code } )
       });
 
       form.reset(defaultValues);
@@ -66,7 +67,7 @@ export function NewUser() {
           Nuevo Usuario
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col min-w-[45vw]">
+      <DialogContent className="max-h-[95vh] overflow-hidden flex flex-col max-w-3xl">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Nuevo Usuario</DialogTitle>
           <DialogDescription>

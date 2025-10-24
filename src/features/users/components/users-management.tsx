@@ -153,7 +153,7 @@ export function UsersManagement() {
       </Card>
 
       <section className="mb-4 flex justify-between">
-       
+
 <div className="flex gap-2 justify-end ml-auto">
           <NewUser />
         </div>
@@ -167,10 +167,6 @@ export function UsersManagement() {
           {
             accessorKey: "email",
             header: "Correo Electrónico",
-          },
-          {
-            accessorKey: "person.code",
-            header: "Código",
           },
           {
             accessorKey: "person.identification",
