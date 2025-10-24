@@ -88,7 +88,8 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		const code =
 			('czpmNumber' in parsedQrData && parsedQrData.czpmNumber) ||
 			('csmiNumber' in parsedQrData && parsedQrData.csmiNumber) ||
-			('certificateNumber' in parsedQrData && parsedQrData.certificateNumber);
+			('certificateNumber' in parsedQrData && parsedQrData.certificateNumber) ||
+			('czpmmNumber' in parsedQrData && parsedQrData.czpmmNumber);
 
 		if (!code) {
 			setQrState('invalid');
