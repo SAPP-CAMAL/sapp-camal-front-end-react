@@ -17,7 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { NewUserFields } from "./user-form-fields";
 import { getUserByIdService } from "@/features/security/server/db/security.queries";
 import { useEffect, useState } from "react";
-import { updateUserAction } from "../server/db/actions.users";
+import { updateUserAction, usersForUpdate } from "../server/db/actions.users";
 import {
   Tooltip,
   TooltipContent,
@@ -46,17 +46,17 @@ export function UpdateUserForm({ userId }: { userId: number }) {
 
   useEffect(() => {
     if (isOpen && userId) {
-      getUserByIdService(userId).then((resp) => {
+      usersForUpdate(userId).then((resp) => {
         const defaultValues = {
           personId: "",
           email: resp.data.email || "",
           userName: resp.data.userName || "",
           roles: resp.data.userRoles
-            .map((userRole) => userRole.role?.id?.toString())
+            .map((userRole) => userRole.roleId.toString())
             .filter((id): id is string => Boolean(id)), // 👈 Devuelve ["1", "2", "3"]
-          code: resp.data?.code,
+          code: resp.data?.veterinarian?.code ,
         };
-        // console.log({ defaultValues });
+
         form.reset(defaultValues);
       });
     }

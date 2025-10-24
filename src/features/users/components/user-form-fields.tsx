@@ -275,12 +275,12 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
 					<FormField
 						control={form.control}
 						name='code'
-						// rules={{
-						// 	required: {
-						// 		value: true,
-						// 		message: 'El código del veterinario es requerido',
-						// 	},
-						// }}
+						rules={{
+							required: {
+								value: true,
+								message: 'El código del veterinario es requerido',
+							},
+						}}
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>Código del veterinario</FormLabel>

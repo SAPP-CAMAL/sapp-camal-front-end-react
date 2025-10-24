@@ -185,7 +185,6 @@ export interface GetUserByIdService {
   person: Person;
   userRoles: any[];
   introducer: IntroducerGetUser;
-  code?: string;
 }
 
 interface IntroducerGetUser {
