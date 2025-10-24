@@ -34,6 +34,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
     email: string;
     userName: string;
     roles: string[];
+    code?: string;
   }>({
     defaultValues: {
       personId: "",
@@ -53,6 +54,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
           roles: resp.data.userRoles
             .map((userRole) => userRole.role?.id?.toString())
             .filter((id): id is string => Boolean(id)), // 👈 Devuelve ["1", "2", "3"]
+          code: resp.data?.code,
         };
         // console.log({ defaultValues });
         form.reset(defaultValues);
@@ -65,6 +67,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
     email: string;
     userName: string;
     roles: string[];
+    code?: string;
   }) => {
     try {
       const defaultRoles = (form.formState.defaultValues?.roles ?? []).filter((r): r is string => typeof r === 'string');
@@ -81,6 +84,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
         email: string;
         userName: string;
         roles: Array<{ id: number; status: boolean }>;
+        code?: string;
       }> = {};
 
       if (form.formState.dirtyFields.email) {
@@ -92,8 +96,11 @@ export function UpdateUserForm({ userId }: { userId: number }) {
       if (form.formState.dirtyFields.roles) {
         updateData.roles = [...newRoles, ...oldRoles];
       }
+      if (form.formState.dirtyFields.code) {
+        updateData.code = data.code;
+      }
 
-      await updateUserAction(userId, updateData);
+      if (Object.keys(updateData).length > 0) await updateUserAction(userId, updateData);
 
       await queryClient.invalidateQueries({
         queryKey: ["users"],
@@ -102,7 +109,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
       form.reset({});
       setIsOpen(false);
 
-      toast.success("Usuario creado exitosamente");
+      toast.success("Usuario actualizado exitosamente");
     } catch (error: any) {
       const resp = await error.response.json();
       toast.error(`Error: ${JSON.stringify(resp?.errors ?? resp.message)}`);

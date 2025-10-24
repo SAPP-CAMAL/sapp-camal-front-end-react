@@ -15,6 +15,7 @@ export type SearchParamsRole = Partial<CreateRoleBody> & {
 export type Role = {
     id: number,
     name: string,
+    code: string,
     description: string | null,
     isLogin: boolean,
     isStaff: boolean,
