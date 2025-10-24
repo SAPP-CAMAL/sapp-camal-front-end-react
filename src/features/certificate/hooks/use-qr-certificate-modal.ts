@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { IDetectedBarcode } from '@yudiel/react-qr-scanner';
 import { Certificate } from '../domain';
-import { parseQrCertificateData } from '../utils';
+import { formatCertificateDate, parseQrCertificateData } from '../utils';
 import {
 	getCertificateByCodeService,
 	saveScannedCertificateService,
@@ -156,10 +156,11 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		setQrState('saving');
 
 		// Validate the issue date
-		const issueDate = parseISO(qrModalState.qrData.issueDate);
-		if (isNaN(issueDate.getTime())) {
+		const issueDate = formatCertificateDate(qrModalState.qrData.issueDate);
+
+		if (!issueDate) {
 			setQrState('active');
-			return toast.error('La fecha de emisión no es válida');
+			return toast.error('La fecha de caducidad no es válida');
 		}
 
 		const currentDate = startOfDay(new Date());
@@ -174,7 +175,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 			const request = {
 				code: qrModalState.qrData.code,
 				placeOrigin: qrModalState.qrData.placeOrigin || 'N/A',
-				issueDate: qrModalState.qrData.issueDate,
+				issueDate: issueDate.toISOString().split('T')[0],
 				quantity: qrModalState.qrData.quantity,
 				plateVehicle: qrModalState.qrData.plateVehicle,
 				authorizedTo: qrModalState.qrData.authorizedTo,

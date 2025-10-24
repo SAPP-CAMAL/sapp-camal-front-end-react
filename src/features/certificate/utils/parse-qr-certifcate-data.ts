@@ -36,8 +36,8 @@ export const parseQrCertificateData = (data: IDetectedBarcode[]): QrCertificateT
 			authorizedTo: parsedData[qrCertificateLabelsVariant1.authorizedTo.toLowerCase()],
 			destinationAreaCode: parsedData[qrCertificateLabelsVariant1.destinationAreaCode.toLowerCase()],
 			originAreaCode: parsedData[qrCertificateLabelsVariant1.originAreaCode.toLowerCase()],
-			totalProducts: +parsedData[qrCertificateLabelsVariant1.totalProducts.toLowerCase()].replace(',', '.'),
-			validUntil: parsedData[qrCertificateLabelsVariant1.validUntil.toLowerCase()],
+			totalProducts: +parsedData[qrCertificateLabelsVariant1.totalProducts.toLowerCase()].replaceAll(',', '.'),
+			validUntil: parsedData[qrCertificateLabelsVariant1.validUntil.toLowerCase()].replaceAll('/', '-'),
 			vehicle: parsedData[qrCertificateLabelsVariant1.vehicle.toLowerCase()],
 		} as QrCertificateVariant1;
 
@@ -50,8 +50,8 @@ export const parseQrCertificateData = (data: IDetectedBarcode[]): QrCertificateT
 			authorizedTo: parsedData[qrCertificateLabelsVariant2.authorizedTo.toLowerCase()],
 			destinationAreaCode: parsedData[qrCertificateLabelsVariant2.destinationAreaCode.toLowerCase()],
 			originAreaCode: parsedData[qrCertificateLabelsVariant2.originAreaCode.toLowerCase()],
-			totalProducts: +parsedData[qrCertificateLabelsVariant2.totalProducts.toLowerCase()].replace(',', '.'),
-			validUntil: parsedData[qrCertificateLabelsVariant2.validUntil.toLowerCase()],
+			totalProducts: +parsedData[qrCertificateLabelsVariant2.totalProducts.toLowerCase()].replaceAll(',', '.'),
+			validUntil: parsedData[qrCertificateLabelsVariant2.validUntil.toLowerCase()].replaceAll('/', '-'),
 			vehicle: parsedData[qrCertificateLabelsVariant2.vehicle.toLowerCase()],
 		} as QrCertificateVariant2;
 
@@ -63,8 +63,8 @@ export const parseQrCertificateData = (data: IDetectedBarcode[]): QrCertificateT
 			certificateNumber: parsedData[qrCertificateLabelsVariant3.certificateNumber.toLowerCase()],
 			origin: parsedData[qrCertificateLabelsVariant3.origin.toLowerCase()],
 			destination: parsedData[qrCertificateLabelsVariant3.destination.toLowerCase()],
-			totalProducts: +parsedData[qrCertificateLabelsVariant3.totalProducts.toLowerCase()].replace(',', '.'),
-			validUntil: parsedData[qrCertificateLabelsVariant3.validUntil.toLowerCase()],
+			totalProducts: +parsedData[qrCertificateLabelsVariant3.totalProducts.toLowerCase()].replaceAll(',', '.'),
+			validUntil: parsedData[qrCertificateLabelsVariant3.validUntil.toLowerCase()].replaceAll('/', '-'),
 			vehicle: parsedData[qrCertificateLabelsVariant3.vehicle.toLowerCase()],
 		} as QrCertificateVariant3;
 
@@ -76,8 +76,8 @@ export const parseQrCertificateData = (data: IDetectedBarcode[]): QrCertificateT
 		authorizedTo: parsedData[qrCertificateLabelsVariant4.authorizedTo.toLowerCase()],
 		originAreaCode: parsedData[qrCertificateLabelsVariant4.originAreaCode.toLowerCase()],
 		destinationAreaCode: parsedData[qrCertificateLabelsVariant4.destinationAreaCode.toLowerCase()],
-		totalProducts: +parsedData[qrCertificateLabelsVariant4.totalProducts.toLowerCase()].replace(',', '.'),
-		validUntil: parsedData[qrCertificateLabelsVariant4.validUntil.toLowerCase()],
+		totalProducts: +parsedData[qrCertificateLabelsVariant4.totalProducts.toLowerCase()].replaceAll(',', '.'),
+		validUntil: parsedData[qrCertificateLabelsVariant4.validUntil.toLowerCase()].replaceAll('/', '-'),
 		vehicle: parsedData[qrCertificateLabelsVariant4.vehicle.toLowerCase()],
 	} as QrCertificateVariant4;
 
