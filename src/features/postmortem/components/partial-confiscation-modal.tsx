@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,10 +13,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Loader2, Info, Save } from "lucide-react";
 import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
+import { useBodyParts } from "../hooks/use-body-parts";
+import { useSavePostmortem } from "../hooks/use-save-postmortem";
+import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
+import type { ProductPostmortem } from "../domain/save-postmortem.types";
+import { toast } from "sonner";
 
-type BodyPart = {
-  id: string;
-  name: string;
+type BodyPartSelection = {
+  id: number;
+  code: string;
+  description: string;
   selected: boolean;
   weight: string;
 };
@@ -24,7 +30,7 @@ type BodyPart = {
 type AnimalPartSelection = {
   animalId: string;
   selected: boolean;
-  bodyParts: BodyPart[];
+  bodyParts: BodyPartSelection[];
 };
 
 type PartialConfiscationModalProps = {
@@ -36,21 +42,6 @@ type PartialConfiscationModalProps = {
   certId: number | null;
 };
 
-// Partes del cuerpo disponibles
-const BODY_PARTS = [
-  { id: "MPI", name: "MPI" },
-  { id: "MPD", name: "MPD" },
-  { id: "MAD", name: "MAD" },
-  { id: "MAI", name: "MAI" },
-  { id: "Cuello", name: "Cuello" },
-  { id: "Cruz", name: "Cruz" },
-  { id: "Dorso", name: "Dorso" },
-  { id: "Lomo", name: "Lomo" },
-  { id: "Grupa", name: "Grupa" },
-  { id: "Costilla", name: "Costilla" },
-  { id: "Vientre", name: "Vientre" },
-];
-
 export function PartialConfiscationModal({
   isOpen,
   onClose,
@@ -59,27 +50,78 @@ export function PartialConfiscationModal({
   localizacion,
   certId,
 }: PartialConfiscationModalProps) {
-  const { data: animalsData, isLoading } = useAnimalsByBrand(certId);
+  const { data: animalsData, isLoading: isLoadingAnimals } = useAnimalsByBrand(certId);
+  const { data: bodyPartsData, isLoading: isLoadingBodyParts } = useBodyParts();
+  const { mutate: savePostmortem, isPending: isSaving } = useSavePostmortem();
+  
+  // Obtener datos guardados de postmortem
+  const { data: postmortemData } = usePostmortemByBrand(certId);
+
+  // Verificar si ya existen datos guardados de decomiso parcial
+  const hasExistingData = useMemo(() => {
+    if (!postmortemData?.data) return false;
+    
+    return postmortemData.data.some((item) =>
+      item.productPostmortem.some((prod) => prod.isTotalConfiscation === false)
+    );
+  }, [postmortemData]);
 
   const [animalSelections, setAnimalSelections] = useState<
     AnimalPartSelection[]
   >([]);
 
+  // Ordenar partes del cuerpo: primero Miembros, luego Áreas
+  const sortedBodyParts = useMemo(() => {
+    if (!bodyPartsData?.data) return [];
+    
+    return [...bodyPartsData.data].sort((a, b) => {
+      // Primero ordenar por tipo (Miembro = 1, Área = 2)
+      if (a.idPartType !== b.idPartType) {
+        return a.idPartType - b.idPartType;
+      }
+      // Dentro del mismo tipo, ordenar por ID
+      return a.id - b.id;
+    });
+  }, [bodyPartsData]);
+
   useEffect(() => {
-    if (animalsData?.data) {
-      setAnimalSelections(
-        animalsData.data.map((animal) => ({
+    if (animalsData?.data && sortedBodyParts.length > 0) {
+      const selections = animalsData.data.map((animal) => {
+        // Buscar si este animal ya tiene datos guardados de decomiso parcial
+        const savedData = postmortemData?.data?.find(
+          (item) => item.idDetailsSpeciesCertificate === animal.id
+        );
+        
+        const savedProducts = savedData?.productPostmortem.filter(
+          (prod) => prod.isTotalConfiscation === false
+        ) || [];
+
+        const bodyParts = sortedBodyParts.map((part) => {
+          const savedPart = savedProducts.find(
+            (prod) => prod.idBodyPart === part.id
+          );
+
+          return {
+            id: part.id,
+            code: part.code,
+            description: part.description,
+            selected: !!savedPart,
+            weight: savedPart ? savedPart.weight : "",
+          };
+        });
+
+        return {
           animalId: animal.id.toString(),
-          selected: false,
-          bodyParts: BODY_PARTS.map((part) => ({
-            ...part,
-            selected: false,
-            weight: "",
-          })),
-        }))
-      );
+          selected: savedProducts.length > 0,
+          bodyParts,
+        };
+      });
+      
+      setAnimalSelections(selections);
     }
-  }, [animalsData]);
+  }, [animalsData, sortedBodyParts, postmortemData]);
+
+  const isLoading = isLoadingAnimals || isLoadingBodyParts;
 
   const handleAnimalToggle = (animalId: string) => {
     setAnimalSelections((prev) =>
@@ -91,7 +133,7 @@ export function PartialConfiscationModal({
     );
   };
 
-  const handleBodyPartToggle = (animalId: string, partId: string) => {
+  const handleBodyPartToggle = (animalId: string, partId: number) => {
     setAnimalSelections((prev) =>
       prev.map((animal) =>
         animal.animalId === animalId
@@ -110,7 +152,7 @@ export function PartialConfiscationModal({
 
   const handleBodyPartWeight = (
     animalId: string,
-    partId: string,
+    partId: number,
     weight: string
   ) => {
     setAnimalSelections((prev) =>
@@ -128,13 +170,15 @@ export function PartialConfiscationModal({
   };
 
   const handleCancel = () => {
-    if (animalsData?.data) {
+    if (animalsData?.data && sortedBodyParts.length > 0) {
       setAnimalSelections(
         animalsData.data.map((animal) => ({
           animalId: animal.id.toString(),
           selected: false,
-          bodyParts: BODY_PARTS.map((part) => ({
-            ...part,
+          bodyParts: sortedBodyParts.map((part) => ({
+            id: part.id,
+            code: part.code,
+            description: part.description,
             selected: false,
             weight: "",
           })),
@@ -145,9 +189,65 @@ export function PartialConfiscationModal({
   };
 
   const handleSaveAll = () => {
-    const selectedCount = animalSelections.filter((a) => a.selected).length;
-    onSave(selectedCount);
-    onClose();
+    const selectedAnimals = animalSelections.filter((a) => a.selected);
+    
+    if (selectedAnimals.length === 0) {
+      toast.error("Debe seleccionar al menos un animal");
+      return;
+    }
+
+    // Validar que cada animal seleccionado tenga al menos una parte con peso
+    const invalidAnimals = selectedAnimals.filter((animal) => {
+      const partsWithWeight = animal.bodyParts.filter(
+        (part) => part.selected && part.weight
+      );
+      return partsWithWeight.length === 0;
+    });
+
+    if (invalidAnimals.length > 0) {
+      toast.error("Cada animal seleccionado debe tener al menos una parte con peso");
+      return;
+    }
+
+    // Guardar cada animal seleccionado
+    let savedCount = 0;
+    const totalAnimals = selectedAnimals.length;
+
+    selectedAnimals.forEach((animal) => {
+      const selectedParts = animal.bodyParts.filter(
+        (part) => part.selected && part.weight
+      );
+
+      const productsPostmortem: ProductPostmortem[] = selectedParts.map(
+        (part) => ({
+          idBodyPart: part.id,
+          weight: parseFloat(part.weight),
+          isTotalConfiscation: false, // Decomiso parcial
+          status: true,
+        })
+      );
+
+      savePostmortem(
+        {
+          idDetailsSpeciesCertificate: parseInt(animal.animalId),
+          status: true,
+          productsPostmortem,
+        },
+        {
+          onSuccess: () => {
+            savedCount++;
+            if (savedCount === totalAnimals) {
+              toast.success(`Se guardaron ${totalAnimals} animales correctamente`);
+              onSave(totalAnimals);
+              onClose();
+            }
+          },
+          onError: () => {
+            toast.error(`Error al guardar animal ${animal.animalId}`);
+          },
+        }
+      );
+    });
   };
 
   const selectedCount = animalSelections.filter((a) => a.selected).length;
@@ -166,7 +266,7 @@ export function PartialConfiscationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center">
@@ -272,9 +372,9 @@ export function PartialConfiscationModal({
                               />
                               <label
                                 htmlFor={`${animalId}-${part.id}`}
-                                className="text-sm font-medium cursor-pointer flex-shrink-0 min-w-[60px]"
+                                className="text-sm font-medium cursor-pointer flex-shrink-0 min-w-[70px]"
                               >
-                                {part.name}
+                                {part.code}
                               </label>
                               <Input
                                 type="number"
@@ -307,7 +407,7 @@ export function PartialConfiscationModal({
                         <div className="flex flex-col gap-1">
                           {getSelectedPartsInfo(animalId)?.map((part) => (
                             <div key={part.id} className="font-semibold text-gray-800">
-                              {part.name}: {part.weight}kg
+                              {part.code}: {part.weight}kg
                             </div>
                           ))}
                         </div>
@@ -321,16 +421,25 @@ export function PartialConfiscationModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
+          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
             Cancelar
           </Button>
           <Button
             onClick={handleSaveAll}
-            disabled={selectedCount === 0}
+            disabled={selectedCount === 0 || isSaving}
             className="bg-teal-600 hover:bg-teal-700"
           >
-            <Save className="h-4 w-4 mr-2" />
-            Guardar ({selectedCount} animales)
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {hasExistingData ? "Actualizando..." : "Guardando..."}
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                {hasExistingData ? "Actualizar" : "Guardar"} ({selectedCount} animales)
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

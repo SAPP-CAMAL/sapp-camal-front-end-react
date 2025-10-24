@@ -48,9 +48,17 @@ import { DynamicTableHeaders } from "./dynamic-table-headers";
 import { CorralTypeFilters } from "./corral-type-filters";
 import { useLines } from "../hooks/use-lines";
 import { useSpeciesDisease } from "../hooks/use-species-disease";
+import { usePostmortemByFilters } from "../hooks/use-postmortem-by-filters";
 import { useCertificates } from "../hooks/use-certificates";
 import { groupDiseasesByProduct } from "../server/db/species-disease.service";
 import { getIntroductoresFromCertificates } from "../server/db/certificates.service";
+import {
+  countAnimalsWithDisease,
+  countAnimalsWithTotalConfiscation,
+  countAnimalsWithPartialConfiscation,
+  getIntroductorIdsWithPostmortem,
+  getLocalDateString,
+} from "../utils/postmortem-helpers";
 import type {
   Introductor,
   IntroductorRow,
@@ -72,7 +80,7 @@ export function PostmortemManagement() {
   const [selectedLineId, setSelectedLineId] = useState<string>("");
   const [selectedSpecieId, setSelectedSpecieId] = useState<number | null>(4); // Bovinos por defecto (idSpecie = 4)
   const [slaughterDate, setSlaughterDate] = useState<string>(
-    format(new Date(), "yyyy-MM-dd")
+    getLocalDateString() // Usar función que maneja zona horaria local correctamente
   );
   const [corralTypeFilter, setCorralTypeFilter] =
     useState<CorralTypeFilter>("TODOS");
@@ -139,6 +147,17 @@ export function PostmortemManagement() {
   const { data: certificatesData, isLoading: isLoadingCertificates } =
     useCertificates(certificatesRequest);
 
+  // Obtener datos de postmortem guardados
+  const postmortemFiltersRequest = useMemo(() => {
+    if (!selectedSpecieId || !slaughterDate) return null;
+    return {
+      slaughterDate,
+      idSpecies: selectedSpecieId,
+    };
+  }, [selectedSpecieId, slaughterDate]);
+
+  const { data: postmortemData } = usePostmortemByFilters(postmortemFiltersRequest);
+
   // Obtener introductores desde los certificados
   const introductores = useMemo(() => {
     if (!certificatesData?.data) return [];
@@ -179,6 +198,7 @@ export function PostmortemManagement() {
         config.push({
           localizacion: group.product,
           patologia: disease.name,
+          idSpeciesDisease: disease.id, // Agregar el ID de la enfermedad
         });
       });
     });
@@ -197,6 +217,50 @@ export function PostmortemManagement() {
       );
     }
   }, [dynamicColumnConfig.length]);
+
+  // Pre-cargar filas con introductores que tienen datos de postmortem
+  useEffect(() => {
+    if (introductores.length > 0 && dynamicColumnConfig.length > 0) {
+      const introductorIdsWithData = getIntroductorIdsWithPostmortem(postmortemData?.data);
+      
+      if (introductorIdsWithData.length > 0) {
+        // Filtrar solo los introductores que están en la lista actual (según filtro de tipo)
+        const filteredIntroductorIds = introductorIdsWithData.filter((certId) =>
+          introductores.some((intro) => intro.certId === certId)
+        );
+
+        if (filteredIntroductorIds.length > 0) {
+          const newRows: IntroductorRow[] = filteredIntroductorIds.map((certId, index) => {
+            const introductor = introductores.find((intro) => intro.certId === certId);
+            return {
+              id: `row-${index + 1}`,
+              introductor: introductor || null,
+              values: Array(dynamicColumnConfig.length + 3).fill(0),
+            };
+          });
+
+          // Agregar una fila vacía al final
+          newRows.push({
+            id: `row-${newRows.length + 1}`,
+            introductor: null,
+            values: Array(dynamicColumnConfig.length + 3).fill(0),
+          });
+
+          setRows(newRows);
+          return;
+        }
+      }
+
+      // Si no hay datos de postmortem, mostrar una fila vacía
+      setRows([
+        {
+          id: "row-1",
+          introductor: null,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        },
+      ]);
+    }
+  }, [postmortemData, introductores, dynamicColumnConfig.length]);
 
   const handleIntroductorSelect = (rowId: string, introductor: Introductor) => {
     setRows((prev) => {
@@ -259,6 +323,7 @@ export function PostmortemManagement() {
       columnIndex,
       localizacion: config.localizacion,
       patologia: config.patologia,
+      idSpeciesDisease: config.idSpeciesDisease,
     });
   };
 
@@ -314,11 +379,11 @@ export function PostmortemManagement() {
       </div>
 
       {/* Filtros */}
-      <Card className="p-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="flex items-center gap-3">
-            <Label className="min-w-40">Fecha de Inspección</Label>
-            <div className="relative w-[200px]">
+      <Card className="p-3 sm:p-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <Label className="sm:min-w-40 text-sm">Fecha de Inspección</Label>
+            <div className="relative w-full sm:w-[200px]">
               <CalendarIcon
                 className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                 onClick={() => {
@@ -337,8 +402,8 @@ export function PostmortemManagement() {
               />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Label className="min-w-40 inline-flex">Línea de Producción</Label>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <Label className="sm:min-w-40 inline-flex text-sm">Línea de Producción</Label>
             <Select
               value={selectedLineId}
               onValueChange={(value) => {
@@ -352,7 +417,7 @@ export function PostmortemManagement() {
               }}
               disabled={isLoadingLines}
             >
-              <SelectTrigger className="max-w-64">
+              <SelectTrigger className="w-full sm:max-w-64">
                 <SelectValue placeholder="Selecciona una línea" />
               </SelectTrigger>
               <SelectContent>
@@ -378,31 +443,76 @@ export function PostmortemManagement() {
       </Card>
 
       {/* Tabla de Decomisos */}
-      <Card className="p-4">
-        <div className="mb-3 flex items-center justify-between">
+      <Card className="p-2 sm:p-4">
+        <div className="mb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="i-lucide-clipboard-list text-muted-foreground" />
-            <h2 className="text-base font-medium flex gap-1">
-              <BookText className="h-4 w-4 mt-1 text-primary" />
+            <BookText className="h-4 w-4 text-primary flex-shrink-0" />
+            <h2 className="text-sm sm:text-base font-medium">
               Registro de Decomisos por Patologías
             </h2>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <Popover open={openPopover === "add-new"} onOpenChange={(open) => setOpenPopover(open ? "add-new" : null)}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-teal-600 hover:bg-teal-700 text-white flex-1 sm:flex-none"
+                >
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  Agregar Introductor
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[90vw] sm:w-[400px] p-0" align="end">
+                <Command>
+                  <CommandInput placeholder="Buscar por nombre o marca..." className="h-9" />
+                  <CommandList>
+                    <CommandEmpty>No se encontraron introductores.</CommandEmpty>
+                    <CommandGroup>
+                      {introductores.map((intro) => (
+                        <CommandItem
+                          key={intro.id}
+                          onSelect={() => {
+                            // Agregar nueva fila con este introductor
+                            const newRowId = `row-${rows.length + 1}`;
+                            setRows((prev) => [
+                              ...prev,
+                              {
+                                id: newRowId,
+                                introductor: intro,
+                                values: Array(dynamicColumnConfig.length + 3).fill(0),
+                              },
+                            ]);
+                            setOpenPopover(null);
+                          }}
+                          className="flex flex-col items-start py-3"
+                        >
+                          <div className="font-medium">{intro.nombre}</div>
+                          <div className="text-xs text-muted-foreground">
+                            Marca: {intro.marca} | Cert: {intro.certificado} | Animales: {intro.animales}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="outline"
               size="sm"
-              className="text-teal-600 border-teal-600 bg-white hover:bg-teal-50"
+              className="text-teal-600 border-teal-600 bg-white hover:bg-teal-50 hidden sm:flex"
             >
               <Settings className="h-4 w-4 mr-1" />
-              Configuración de Reportes
+              <span className="hidden lg:inline">Configuración</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="text-teal-600 border-teal-600 bg-white hover:bg-teal-50"
+              className="text-teal-600 border-teal-600 bg-white hover:bg-teal-50 flex-1 sm:flex-none"
             >
               <Download className="h-4 w-4 mr-1" />
-              Generar Reportes
+              <span className="hidden sm:inline">Reportes</span>
             </Button>
           </div>
         </div>
@@ -414,8 +524,8 @@ export function PostmortemManagement() {
           counts={filterCounts}
         />
 
-        <div className="overflow-x-auto border rounded-lg bg-white">
-          <Table className="min-w-[1200px] bg-white">
+        <div className="overflow-x-auto border rounded-lg bg-white -mx-2 sm:mx-0">
+          <Table className="min-w-[1200px] bg-white text-xs sm:text-sm">
             <TableHeader className="sticky top-0 z-20 [&_th]:!text-gray-900">
               <DynamicTableHeaders
                 groupedColumns={groupedColumns}
@@ -427,13 +537,13 @@ export function PostmortemManagement() {
               {rows.map((row) => {
                 return (
                   <TableRow key={row.id} className="hover:bg-gray-50/50">
-                    <TableCell className="sticky left-0 z-20 bg-white border-r-2 p-2 w-[200px]">
+                    <TableCell className="sticky left-0 z-20 bg-white border-r-2 p-1 sm:p-2 w-[150px] sm:w-[200px]">
                       {row.introductor ? (
                         <div className="space-y-0.5 text-left">
-                          <div className="font-semibold text-xs text-black leading-tight">
+                          <div className="font-semibold text-[10px] sm:text-xs text-black leading-tight">
                             {row.introductor.nombre}
                           </div>
-                          <div className="text-[10px] text-gray-600 space-y-0">
+                          <div className="text-[9px] sm:text-[10px] text-gray-600 space-y-0">
                             <div>M: {row.introductor.marca}</div>
                             <div>C: {row.introductor.certificado}</div>
                             <div>A: {row.introductor.animales}</div>
@@ -557,71 +667,92 @@ export function PostmortemManagement() {
                     </TableCell>
 
                     {/* Columnas de enfermedades */}
-                    {row.values
-                      .slice(0, dynamicColumnConfig.length)
-                      .map((value, i) => {
-                        return (
-                          <TableCell
-                            key={`col-${i}`}
-                            className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
-                            onClick={() =>
-                              handleCellClick(row.id, i, "disease")
-                            }
-                          >
-                            {value > 0 ? (
-                              <div className="flex items-center justify-center">
-                                <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
-                                  {value}
-                                </div>
+                    {dynamicColumnConfig.map((config, i) => {
+                      // Contar animales con esta enfermedad desde los datos de postmortem
+                      const count = row.introductor
+                        ? countAnimalsWithDisease(
+                            postmortemData?.data,
+                            row.introductor.certId,
+                            config.idSpeciesDisease!
+                          )
+                        : 0;
+
+                      return (
+                        <TableCell
+                          key={`col-${i}`}
+                          className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleCellClick(row.id, i, "disease")}
+                        >
+                          {count > 0 ? (
+                            <div className="flex items-center justify-center">
+                              <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
+                                {count}
                               </div>
-                            ) : (
-                              <div className="text-gray-400 text-xs">-</div>
-                            )}
-                          </TableCell>
-                        );
-                      })}
+                            </div>
+                          ) : (
+                            <div className="text-gray-400 text-xs">-</div>
+                          )}
+                        </TableCell>
+                      );
+                    })}
 
                     {/* Columna TOTAL (suma de todas las enfermedades) */}
                     <TableCell className="p-0.5 text-center bg-orange-50 font-bold">
                       {(() => {
-                        const total = row.values
-                          .slice(0, dynamicColumnConfig.length)
-                          .reduce((sum, v) => sum + v, 0);
+                        if (!row.introductor) return "-";
+                        
+                        // Sumar todos los animales con enfermedades
+                        const total = dynamicColumnConfig.reduce((sum, config) => {
+                          return (
+                            sum +
+                            countAnimalsWithDisease(
+                              postmortemData?.data,
+                              row.introductor!.certId,
+                              config.idSpeciesDisease!
+                            )
+                          );
+                        }, 0);
+                        
                         return total > 0 ? total : "-";
                       })()}
                     </TableCell>
 
                     {/* Columnas de PRODUCTOS (Decomiso Total y Parcial) */}
-                    {row.values
-                      .slice(
-                        dynamicColumnConfig.length,
-                        dynamicColumnConfig.length + 2
-                      )
-                      .map((value, i) => {
-                        const columnType =
-                          i === 0
-                            ? "total-confiscation"
-                            : "partial-confiscation";
-                        return (
-                          <TableCell
-                            key={`prod-${i}`}
-                            className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
-                            onClick={() =>
-                              handleCellClick(row.id, 0, columnType)
-                            }
-                          >
-                            {value > 0 ? (
+                    {[0, 1].map((i) => {
+                      const columnType =
+                        i === 0 ? "total-confiscation" : "partial-confiscation";
+                      
+                      // Contar animales con decomiso total o parcial
+                      const count = row.introductor
+                        ? i === 0
+                          ? countAnimalsWithTotalConfiscation(
+                              postmortemData?.data,
+                              row.introductor.certId
+                            )
+                          : countAnimalsWithPartialConfiscation(
+                              postmortemData?.data,
+                              row.introductor.certId
+                            )
+                        : 0;
+
+                      return (
+                        <TableCell
+                          key={`prod-${i}`}
+                          className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleCellClick(row.id, 0, columnType)}
+                        >
+                          {count > 0 ? (
                               <div className="flex items-center justify-center">
-                                <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
-                                  {value}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-gray-400 text-xs">-</div>
-                            )}
-                          </TableCell>
-                        );
-                      })}
+                            <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
+                              {count}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-gray-400 text-xs">-</div>
+                        )}
+                      </TableCell>
+                    );
+                  })}
                   </TableRow>
                 );
               })}
@@ -642,6 +773,7 @@ export function PostmortemManagement() {
         }
         localizacion={modalState.localizacion}
         patologia={modalState.patologia}
+        idSpeciesDisease={modalState.idSpeciesDisease ?? 0}
         certId={currentIntroductor?.certId ?? null}
       />
 

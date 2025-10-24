@@ -414,7 +414,8 @@ export const CreateUpdateAnimalAdmissionForm = ({ animalAdmissionData, className
 
 							{/* Corral Groups */}
 							{(!selectedSpecie?.name.toLowerCase().startsWith(SPECIES_CODE.PORCINO.toLowerCase()) ||
-								(selectedCorralGroups?.length !== 1 && isNormalCorral)) && (
+								// (selectedCorralGroups?.length !== 1 && isNormalCorral)) && (
+								((selectedCorralGroups?.length || 0) > 0 && isNormalCorral)) && (
 								<div className='flex flex-col gap-2'>
 									<FormField
 										control={form.control}

@@ -53,8 +53,9 @@ export const useStep1Certificate = () => {
 
 	const { certificateNumber } = searchState;
 
-	// Get today's date for shippers
-	const currentDate = new Date().toISOString().split('T')[0];
+	// Get today's date for shippers (usando zona horaria local)
+	const today = new Date();
+	const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 	const registerVehicleQuery = useGetRegisterVehicleByDate(currentDate);
 
 	// Map register vehicles to shippers format

@@ -26,7 +26,6 @@ export const getSpeciesDiseaseService = async (
 
     return response;
   } catch (error) {
-    console.error("Error fetching species diseases:", error);
     throw error;
   }
 };
@@ -44,7 +43,7 @@ export const groupDiseasesByProduct = (
   data.forEach((item) => {
     const productName = item.productDisease.product.description;
     const diseaseName = item.productDisease.disease.names;
-    const diseaseId = item.productDisease.disease.id;
+    const speciesDiseaseId = item.id; // ID de SpeciesDisease (el correcto para guardar)
     const productDiseaseId = item.productDisease.id;
 
     if (!productMap.has(productName)) {
@@ -55,7 +54,7 @@ export const groupDiseasesByProduct = (
     }
 
     productMap.get(productName)!.diseases.push({
-      id: diseaseId,
+      id: speciesDiseaseId, // Usar el ID de SpeciesDisease
       name: diseaseName,
       productDiseaseId,
     });

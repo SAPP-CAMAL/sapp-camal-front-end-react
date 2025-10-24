@@ -78,7 +78,9 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	},
 ];
 
-const currentDate = new Date().toISOString().split('T').at(0)!;
+// Obtener fecha actual en zona horaria local
+const today = new Date();
+const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
 export function DailyDisinfectionLogTable() {
 	const [searchParams, setSearchParams] = useQueryStates({ date: parseAsString.withDefault(currentDate) }, { history: 'push' });

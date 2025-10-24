@@ -14,6 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Info } from "lucide-react";
 import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
+import { useSavePostmortem } from "../hooks/use-save-postmortem";
+import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
+import type { ProductPostmortem } from "../domain/save-postmortem.types";
+import { toast } from "sonner";
 
 type AnimalWeight = {
   animalId: string;
@@ -39,20 +43,35 @@ export function TotalConfiscationModal({
   certId,
 }: TotalConfiscationModalProps) {
   const { data: animalsData, isLoading } = useAnimalsByBrand(certId);
+  const { mutate: savePostmortem, isPending: isSaving } = useSavePostmortem();
+  
+  // Obtener datos guardados de postmortem
+  const { data: postmortemData } = usePostmortemByBrand(certId);
   
   const [animalWeights, setAnimalWeights] = useState<AnimalWeight[]>([]);
 
   useEffect(() => {
     if (animalsData?.data) {
-      setAnimalWeights(
-        animalsData.data.map((animal) => ({
+      const weights = animalsData.data.map((animal) => {
+        // Buscar si este animal ya tiene datos guardados de decomiso total
+        const savedData = postmortemData?.data?.find(
+          (item) => item.idDetailsSpeciesCertificate === animal.id
+        );
+        
+        const savedProduct = savedData?.productPostmortem.find(
+          (prod) => prod.isTotalConfiscation === true
+        );
+
+        return {
           animalId: animal.id.toString(),
-          selected: false,
-          weight: "",
-        }))
-      );
+          selected: !!savedProduct,
+          weight: savedProduct ? savedProduct.weight : "",
+        };
+      });
+      
+      setAnimalWeights(weights);
     }
-  }, [animalsData]);
+  }, [animalsData, postmortemData]);
 
   const handleAnimalToggle = (animalId: string) => {
     setAnimalWeights((prev) =>
@@ -74,10 +93,46 @@ export function TotalConfiscationModal({
 
   const handleSaveAnimal = (animalId: string) => {
     const animal = animalWeights.find((a) => a.animalId === animalId);
-    if (animal && animal.weight) {
-      console.log(`Guardando animal ${animalId} con peso ${animal.weight} kg`);
-      // Aquí iría la lógica para guardar en la API
+    
+    if (!animal || !animal.weight) {
+      toast.error("Debe ingresar el peso de la canal");
+      return;
     }
+
+    const weight = parseFloat(animal.weight);
+    if (isNaN(weight) || weight <= 0) {
+      toast.error("El peso debe ser un número válido mayor a 0");
+      return;
+    }
+
+    // Para decomiso total, no se especifica idBodyPart, solo el peso total
+    const productsPostmortem: ProductPostmortem[] = [
+      {
+        idBodyPart: 0, // 0 indica decomiso total (toda la canal)
+        weight: weight,
+        isTotalConfiscation: true,
+        status: true,
+      },
+    ];
+
+    savePostmortem(
+      {
+        idDetailsSpeciesCertificate: parseInt(animalId),
+        status: true,
+        productsPostmortem,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Animal ${animalId} guardado correctamente`);
+          // Actualizar el contador en la tabla
+          const selectedCount = animalWeights.filter((a) => a.selected).length;
+          onSave(selectedCount);
+        },
+        onError: () => {
+          toast.error(`Error al guardar el animal ${animalId}`);
+        },
+      }
+    );
   };
 
   const handleCancel = () => {
@@ -97,7 +152,7 @@ export function TotalConfiscationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center">
@@ -210,10 +265,17 @@ export function TotalConfiscationModal({
                           <Button
                             size="sm"
                             onClick={() => handleSaveAnimal(animalId)}
-                            disabled={!animalWeight.weight}
+                            disabled={!animalWeight.weight || isSaving}
                             className="bg-teal-600 hover:bg-teal-700"
                           >
-                            Guardar
+                            {isSaving ? (
+                              <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                {animalWeight.selected ? "Actualizando..." : "Guardando..."}
+                              </>
+                            ) : (
+                              animalWeight.selected ? "Actualizar" : "Guardar"
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -226,7 +288,7 @@ export function TotalConfiscationModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
+          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
             Cancelar
           </Button>
         </DialogFooter>
