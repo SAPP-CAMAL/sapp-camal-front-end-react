@@ -98,7 +98,7 @@ export function NewPerson() {
           Nueva Persona
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[80vw]">
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
         <DialogHeader>
           <DialogTitle>Nueva Persona</DialogTitle>
           <DialogDescription>
