@@ -160,7 +160,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 
 		if (!issueDate) {
 			setQrState('active');
-			return toast.error('La fecha de caducidad no es válida');
+			return toast.error('La fecha de caducidad del certificado no es válida');
 		}
 
 		const currentDate = startOfDay(new Date());
