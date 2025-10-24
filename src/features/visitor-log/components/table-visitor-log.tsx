@@ -17,8 +17,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { useDebouncedCallback } from "use-debounce";
 import { Card, CardContent } from "@/components/ui/card";
 import { MetaPagination } from "@/features/people/domain";
 

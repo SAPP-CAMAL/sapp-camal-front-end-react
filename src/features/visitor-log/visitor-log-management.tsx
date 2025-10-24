@@ -10,7 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { CheckIcon, ChevronsUpDownIcon, SearchIcon } from "lucide-react";
+import {
+  Calendar,
+  CheckIcon,
+  ChevronsUpDownIcon,
+  IdCardIcon,
+  SearchIcon,
+} from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
 import { useSearchParams } from "next/navigation";
 import { TableVisitorLog } from "./components/table-visitor-log";
@@ -37,6 +43,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UpdateVisitorLogDialog } from "./components/update-visitor-log.form";
+import { RegisterExitTime } from "./components/register-exit-time";
 export function VisitorLogManagement() {
   const visitorLogParams = useSearchParams();
   const [searchParams, setSearchParams] = useQueryStates(
@@ -104,20 +111,32 @@ export function VisitorLogManagement() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            <div className="flex flex-col w-full">
-              <label className="mb-1 text-sm font-medium text-gray-700">
-                Buscar por fecha de registro
-              </label>
+            <div className="flex flex-col min-w-0">
+              <span className="mb-1 text-sm font-medium text-gray-700">
+                Fecha de Ingreso
+              </span>
               <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <Calendar
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
+                  onClick={() => {
+                    const input = document.getElementById(
+                      "fecha-ingreso"
+                    ) as HTMLInputElement;
+                    if (input) input.showPicker();
+                  }}
+                />
                 <Input
+                  id="fecha-ingreso"
                   type="date"
-                  placeholder="Buscar por fecha de registro"
-                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                  className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer h-10"
                   value={searchParams.registerDate}
-                  onChange={(e) =>
-                    setSearchParams({ registerDate: e.target.value, page: 1 })
-                  }
+                  onChange={(e) => {
+                    setSearchParams({
+                      registerDate: e.target.value,
+                      page: 1,
+                    });
+                  }}
+                  title="Selecciona la fecha de ingreso de los animales"
                 />
               </div>
             </div>
@@ -127,11 +146,11 @@ export function VisitorLogManagement() {
                 Buscar por identificación
               </label>
               <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <IdCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
                 <Input
                   type="text"
                   placeholder="Ingrese identificación"
-                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
                   defaultValue={visitorLogParams.get("identification") ?? ""}
                   onChange={(e) => debounceIdentification(e.target.value)}
                 />
@@ -146,7 +165,7 @@ export function VisitorLogManagement() {
                 <Input
                   type="text"
                   placeholder="Ingrese nombre completo"
-                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
                   defaultValue={visitorLogParams.get("fullname") ?? ""}
                   onChange={(e) => debounceFullname(e.target.value)}
                 />
@@ -185,7 +204,7 @@ export function VisitorLogManagement() {
               const date = new Date(row.original.entryTime);
 
               const parts = new Intl.DateTimeFormat("es-EC", {
-                timeZone: "America/Guayaquil",
+                // timeZone: "America/Guayaquil",
                 year: "numeric",
                 month: "2-digit",
                 day: "2-digit",
@@ -208,27 +227,31 @@ export function VisitorLogManagement() {
           {
             header: "Fecha de Salida",
             cell: ({ row }) => {
-              const date = new Date(row.original.exitTime);
+              if (row.original.exitTime) {
+                const date = new Date(row.original.exitTime);
 
-              const parts = new Intl.DateTimeFormat("es-EC", {
-                timeZone: "America/Guayaquil",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              }).formatToParts(date);
+                const parts = new Intl.DateTimeFormat("es-EC", {
+                  // timeZone: "America/Guayaquil",
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                }).formatToParts(date);
 
-              const get = (type: string) =>
-                parts.find((p) => p.type === type)?.value;
+                const get = (type: string) =>
+                  parts.find((p) => p.type === type)?.value;
 
-              const formatted = `${get("year")}-${get("month")}-${get(
-                "day"
-              )} ${get("hour")}:${get("minute")} ${get(
-                "dayPeriod"
-              )?.toLowerCase()}`;
-              return formatted;
+                const formatted = `${get("year")}-${get("month")}-${get(
+                  "day"
+                )} ${get("hour")}:${get("minute")} ${get(
+                  "dayPeriod"
+                )?.toLowerCase()}`;
+                return formatted;
+              }
+
+              return <RegisterExitTime id={row.original.id} />;
             },
           },
           {
@@ -254,7 +277,7 @@ export function VisitorLogManagement() {
           {
             header: "Acciones",
             cell: ({ row }) => {
-              console.log(row.original)
+              console.log(row.original);
               return (
                 <div>
                   <UpdateVisitorLogDialog visitor={row.original} />
@@ -321,7 +344,7 @@ export function SelectCompany({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="justify-between pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
         >
           {selectedOption ? selectedOption.label : "Selecciona una empresa..."}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />

@@ -1,5 +1,5 @@
 import { CommonHttpResponse, CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
-import { CreateVisitorLogBody, VisitorCompany, VisitorLogFilterBody, VisitorLogFilterResponse } from "../../domain";
+import { CreateVisitorLogBody, UpdateVisitorLogBody, VisitorCompany, VisitorLogFilterBody, VisitorLogFilterResponse } from "../../domain";
 import { http } from "@/lib/ky";
 
 export function getVisitorLogByFilterService(body: VisitorLogFilterBody) {
@@ -32,7 +32,7 @@ export function deleteVisitorLogService(id: number) {
         .json();
 }
 
-export function upateVisitorLogService(id: number, body: CreateVisitorLogBody) {
+export function upateVisitorLogService(id: number, body: UpdateVisitorLogBody) {
     return http
         .patch(`v1/1.0.0/visitor-log/${id}`, {
             json: body

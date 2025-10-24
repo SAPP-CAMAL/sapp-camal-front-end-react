@@ -18,6 +18,8 @@ export interface CreateVisitorLogBody {
     status: boolean
 }
 
+export type UpdateVisitorLogBody = Partial<CreateVisitorLogBody>;
+
 export interface VisitorLogFilterResponse {
     id: number;
     visitPurpose: string;
