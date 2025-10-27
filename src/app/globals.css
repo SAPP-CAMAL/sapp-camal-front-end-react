@@ -1619,3 +1619,36 @@ button[data-slot="checkbox"][data-state="checked"],
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
 }
+
+/* ========================================
+   ANIMACIONES PARA COLLAPSIBLE
+   ======================================== */
+@keyframes collapse-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapse-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+.animate-collapse-down {
+  animation: collapse-down 200ms ease-out;
+}
+
+.animate-collapse-up {
+  animation: collapse-up 200ms ease-out;
+}

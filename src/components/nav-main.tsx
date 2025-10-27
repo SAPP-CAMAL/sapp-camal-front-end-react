@@ -54,7 +54,7 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
-                <CollapsibleContent>
+                <CollapsibleContent className="transition-all duration-200">
                   <SidebarMenuSub>
                     {menu.children?.map((subItem) => {
                       const isActive = !!(subItem.url && pathname === subItem.url);
@@ -66,7 +66,7 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                             isActive={isActive}
                             data-active={isActive}
                           >
-                            <Link href={subItem.url ?? "#"}>
+                            <Link href={subItem.url ?? "#"} className="no-underline">
                               {/* {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />} */}
                               <DynamicLucideIcon
                                 name={(subItem?.icon as any) ?? "badge-info"}

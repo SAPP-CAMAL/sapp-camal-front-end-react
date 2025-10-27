@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatsCard } from "./parts/stats-card";
+import { CertificateFileManager } from "./parts/certificate-file-manager";
 import { ListAnimalsFilters } from "../domain/list-animals.interface";
 import {
   getListAnimalsByFiltersService,
@@ -96,6 +97,20 @@ export function ListTransportManagement() {
       }
     };
 
+    loadData();
+  }, [filters]);
+
+  // Recargar datos cuando se actualiza un archivo
+  const handleFileChange = useCallback(() => {
+    const loadData = async () => {
+      try {
+        const data = await getListAnimalsByFiltersService(filters);
+        setApiData(data);
+        toast.success("Datos actualizados");
+      } catch (error) {
+        console.error("Error recargando datos:", error);
+      }
+    };
     loadData();
   }, [filters]);
 
@@ -261,6 +276,17 @@ export function ListTransportManagement() {
               <div className="text-sm">{item.placeOrigin}</div>
             </div>
           )}
+
+          {/* Guías */}
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Guías</div>
+            <CertificateFileManager
+              certificateId={item.id}
+              issueDate={item.issueDate}
+              fileUrl={item.urlFile}
+              onFileChange={handleFileChange}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -525,12 +551,15 @@ export function ListTransportManagement() {
                         Condiciones de Transporte
                       </span>
                     </TableHead>
+                    <TableHead className="w-32 whitespace-normal text-center">
+                      <span className="text-xs font-semibold">Guías</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {apiData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-12">
+                      <TableCell colSpan={9} className="text-center py-12">
                         <div className="flex flex-col items-center gap-3">
                           <div className="rounded-full bg-muted p-3">
                             <Search className="h-6 w-6 text-muted-foreground" />
@@ -619,6 +648,14 @@ export function ListTransportManagement() {
                               Sin condiciones
                             </span>
                           )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <CertificateFileManager
+                            certificateId={item.id}
+                            issueDate={item.issueDate}
+                            fileUrl={item.urlFile}
+                            onFileChange={handleFileChange}
+                          />
                         </TableCell>
                       </TableRow>
                     ))
