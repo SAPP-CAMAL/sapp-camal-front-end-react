@@ -62,9 +62,6 @@ export const getHygieneControlByDateService = async (
     const response = await http
       .get(`v1/1.0.0/hygiene-control/by-date-register?dateRegister=${date}`)
       .json<HygieneControlResponse>(); 
-console.log({response});
-
-    // Mapeas solo el array que viene en data
     return mapHygieneControlData(response.data ?? []);
   } catch (error) {
     throw error;
