@@ -48,7 +48,8 @@ export type Person = {
     identificationType?: Gender;
     status?: boolean;
     isEmployee?: boolean;
-    email?:string
+    email?:string;
+    idEmployee?:number;
 }
 
 type Gender = {
