@@ -1,7 +1,7 @@
 import type { PostmortemFilterData } from "../domain/save-postmortem.types";
 
-// Re-exportar la función de fecha local desde lib para mantener compatibilidad
-export { getLocalDateString } from "@/lib/formatDate";
+// Re-exportar las funciones de fecha local desde lib para mantener compatibilidad
+export { getLocalDateString, parseLocalDateString } from "@/lib/formatDate";
 
 /**
  * Obtiene los IDs únicos de introductores que tienen datos de postmortem

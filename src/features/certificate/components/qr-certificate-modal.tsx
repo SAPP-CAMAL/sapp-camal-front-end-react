@@ -80,8 +80,8 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 										<div className='flex flex-col gap-2 p-3 border-secondary rounded-md border'>
 											{origins && origins.length > 0 ? (
 												origins.map(originOption => (
-													<label 
-														key={originOption.id} 
+													<label
+														key={originOption.id}
 														className='flex items-center gap-3 p-2 hover:bg-background rounded-md cursor-pointer transition-colors'
 													>
 														<input

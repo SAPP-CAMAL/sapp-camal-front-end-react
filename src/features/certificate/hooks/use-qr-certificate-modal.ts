@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { IDetectedBarcode } from '@yudiel/react-qr-scanner';
 import { Certificate } from '../domain';
-import { parseQrCertificateData } from '../utils';
+import { formatCertificateDate, parseQrCertificateData } from '../utils';
 import {
 	getCertificateByCodeService,
 	saveScannedCertificateService,
@@ -10,7 +10,7 @@ import {
 } from '@/features/certificate/server/db/certificate.service';
 import { Origin } from '@/features/origin/domain';
 import { useAllOrigins } from '@/features/origin/hooks';
-import { isBefore, startOfDay } from 'date-fns';
+import { isBefore, parseISO, startOfDay } from 'date-fns';
 
 type QrState = 'active' | 'loading' | 'invalid' | 'saving';
 
@@ -88,7 +88,8 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		const code =
 			('czpmNumber' in parsedQrData && parsedQrData.czpmNumber) ||
 			('csmiNumber' in parsedQrData && parsedQrData.csmiNumber) ||
-			('certificateNumber' in parsedQrData && parsedQrData.certificateNumber);
+			('certificateNumber' in parsedQrData && parsedQrData.certificateNumber) ||
+			('czpmmNumber' in parsedQrData && parsedQrData.czpmmNumber);
 
 		if (!code) {
 			setQrState('invalid');
@@ -155,10 +156,11 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		setQrState('saving');
 
 		// Validate the issue date
-		const issueDate = new Date(qrModalState.qrData.issueDate);
-		if (isNaN(issueDate.getTime())) {
+		const issueDate = formatCertificateDate(qrModalState.qrData.issueDate);
+
+		if (!issueDate) {
 			setQrState('active');
-			return toast.error('La fecha de emisión no es válida');
+			return toast.error('La fecha de caducidad del certificado no es válida');
 		}
 
 		const currentDate = startOfDay(new Date());
@@ -173,7 +175,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 			const request = {
 				code: qrModalState.qrData.code,
 				placeOrigin: qrModalState.qrData.placeOrigin || 'N/A',
-				issueDate: qrModalState.qrData.issueDate,
+				issueDate: issueDate.toISOString().split('T')[0],
 				quantity: qrModalState.qrData.quantity,
 				plateVehicle: qrModalState.qrData.plateVehicle,
 				authorizedTo: qrModalState.qrData.authorizedTo,

@@ -127,6 +127,7 @@ export interface PostmortemFilterData {
 export interface GetPostmortemByFiltersRequest {
   slaughterDate: string;
   idSpecies: number;
+  type?: string; // Tipo de corral: "NOR" o "EME"
 }
 
 export interface GetPostmortemByFiltersResponse {

@@ -15,7 +15,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
@@ -26,7 +25,6 @@ import {
   ChevronDown,
   BookText,
 } from "lucide-react";
-import { format } from "date-fns";
 import { useState } from "react";
 import {
   Command,
@@ -69,6 +67,7 @@ import type {
   CorralTypeFilter,
   GetCertificatesRequest,
 } from "../domain/certificates.types";
+import type { GetPostmortemByFiltersRequest } from "../domain/save-postmortem.types";
 import { useMemo, useEffect } from "react";
 
 export function PostmortemManagement() {
@@ -114,9 +113,11 @@ export function PostmortemManagement() {
       idSpecies: selectedSpecieId,
     };
 
-    if (corralTypeFilter === "NORMAL") {
-      request.type = "NOR";
-    } else if (corralTypeFilter === "EMERGENCIA") {
+    // TODO: Descomentar cuando el filtro NORMAL esté listo
+    // if (corralTypeFilter === "NORMAL") {
+    //   request.type = "NOR";
+    // } else
+    if (corralTypeFilter === "EMERGENCIA") {
       request.type = "EME";
     }
 
@@ -150,13 +151,23 @@ export function PostmortemManagement() {
   // Obtener datos de postmortem guardados
   const postmortemFiltersRequest = useMemo(() => {
     if (!selectedSpecieId || !slaughterDate) return null;
-    return {
+
+    const request: GetPostmortemByFiltersRequest = {
       slaughterDate,
       idSpecies: selectedSpecieId,
     };
-  }, [selectedSpecieId, slaughterDate]);
 
-  const { data: postmortemData } = usePostmortemByFilters(postmortemFiltersRequest);
+    // Agregar filtro de tipo de corral si aplica
+    if (corralTypeFilter === "EMERGENCIA") {
+      request.type = "EME";
+    }
+
+    return request;
+  }, [selectedSpecieId, slaughterDate, corralTypeFilter]);
+
+  const { data: postmortemData } = usePostmortemByFilters(
+    postmortemFiltersRequest
+  );
 
   // Obtener introductores desde los certificados
   const introductores = useMemo(() => {
@@ -220,38 +231,11 @@ export function PostmortemManagement() {
 
   // Pre-cargar filas con introductores que tienen datos de postmortem
   useEffect(() => {
-    if (introductores.length > 0 && dynamicColumnConfig.length > 0) {
-      const introductorIdsWithData = getIntroductorIdsWithPostmortem(postmortemData?.data);
-      
-      if (introductorIdsWithData.length > 0) {
-        // Filtrar solo los introductores que están en la lista actual (según filtro de tipo)
-        const filteredIntroductorIds = introductorIdsWithData.filter((certId) =>
-          introductores.some((intro) => intro.certId === certId)
-        );
+    // Si no hay configuración de columnas, no hacer nada
+    if (dynamicColumnConfig.length === 0) return;
 
-        if (filteredIntroductorIds.length > 0) {
-          const newRows: IntroductorRow[] = filteredIntroductorIds.map((certId, index) => {
-            const introductor = introductores.find((intro) => intro.certId === certId);
-            return {
-              id: `row-${index + 1}`,
-              introductor: introductor || null,
-              values: Array(dynamicColumnConfig.length + 3).fill(0),
-            };
-          });
-
-          // Agregar una fila vacía al final
-          newRows.push({
-            id: `row-${newRows.length + 1}`,
-            introductor: null,
-            values: Array(dynamicColumnConfig.length + 3).fill(0),
-          });
-
-          setRows(newRows);
-          return;
-        }
-      }
-
-      // Si no hay datos de postmortem, mostrar una fila vacía
+    // Si no hay introductores disponibles, mostrar fila vacía
+    if (introductores.length === 0) {
       setRows([
         {
           id: "row-1",
@@ -259,11 +243,80 @@ export function PostmortemManagement() {
           values: Array(dynamicColumnConfig.length + 3).fill(0),
         },
       ]);
+      return;
     }
+
+    // Obtener IDs de introductores con datos de postmortem
+    const introductorIdsWithData = getIntroductorIdsWithPostmortem(
+      postmortemData?.data
+    );
+
+    // Si no hay datos de postmortem, mostrar fila vacía
+    if (introductorIdsWithData.length === 0) {
+      setRows([
+        {
+          id: "row-1",
+          introductor: null,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        },
+      ]);
+      return;
+    }
+
+    // Filtrar solo los introductores que están en la lista actual (según filtro de tipo)
+    const filteredIntroductorIds = introductorIdsWithData.filter((certId) =>
+      introductores.some((intro) => intro.certId === certId)
+    );
+
+    // Si después de filtrar no hay coincidencias, mostrar fila vacía
+    if (filteredIntroductorIds.length === 0) {
+      setRows([
+        {
+          id: "row-1",
+          introductor: null,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        },
+      ]);
+      return;
+    }
+
+    // Crear filas con los introductores que tienen datos
+    const newRows: IntroductorRow[] = filteredIntroductorIds.map(
+      (certId, index) => {
+        const introductor = introductores.find(
+          (intro) => intro.certId === certId
+        );
+        return {
+          id: `row-${index + 1}`,
+          introductor: introductor || null,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        };
+      }
+    );
+
+    // Agregar una fila vacía al final
+    newRows.push({
+      id: `row-${newRows.length + 1}`,
+      introductor: null,
+      values: Array(dynamicColumnConfig.length + 3).fill(0),
+    });
+
+    setRows(newRows);
   }, [postmortemData, introductores, dynamicColumnConfig.length]);
 
   const handleIntroductorSelect = (rowId: string, introductor: Introductor) => {
     setRows((prev) => {
+      // Verificar si el introductor ya está seleccionado en otra fila
+      const isAlreadySelected = prev.some(
+        (row) =>
+          row.id !== rowId && row.introductor?.certId === introductor.certId
+      );
+
+      // Si ya está seleccionado, no hacer nada
+      if (isAlreadySelected) {
+        return prev;
+      }
+
       const updatedRows = prev.map((row) =>
         row.id === rowId ? { ...row, introductor } : row
       );
@@ -403,7 +456,9 @@ export function PostmortemManagement() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-            <Label className="sm:min-w-40 inline-flex text-sm">Línea de Producción</Label>
+            <Label className="sm:min-w-40 inline-flex text-sm">
+              Línea de Producción
+            </Label>
             <Select
               value={selectedLineId}
               onValueChange={(value) => {
@@ -452,7 +507,10 @@ export function PostmortemManagement() {
             </h2>
           </div>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <Popover open={openPopover === "add-new"} onOpenChange={(open) => setOpenPopover(open ? "add-new" : null)}>
+            <Popover
+              open={openPopover === "add-new"}
+              onOpenChange={(open) => setOpenPopover(open ? "add-new" : null)}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant="default"
@@ -465,34 +523,59 @@ export function PostmortemManagement() {
               </PopoverTrigger>
               <PopoverContent className="w-[90vw] sm:w-[400px] p-0" align="end">
                 <Command>
-                  <CommandInput placeholder="Buscar por nombre o marca..." className="h-9" />
+                  <CommandInput
+                    placeholder="Buscar por nombre o marca..."
+                    className="h-9"
+                  />
                   <CommandList>
-                    <CommandEmpty>No se encontraron introductores.</CommandEmpty>
+                    <CommandEmpty>
+                      No se encontraron introductores.
+                    </CommandEmpty>
                     <CommandGroup>
-                      {introductores.map((intro) => (
-                        <CommandItem
-                          key={intro.id}
-                          onSelect={() => {
-                            // Agregar nueva fila con este introductor
-                            const newRowId = `row-${rows.length + 1}`;
-                            setRows((prev) => [
-                              ...prev,
-                              {
-                                id: newRowId,
-                                introductor: intro,
-                                values: Array(dynamicColumnConfig.length + 3).fill(0),
-                              },
-                            ]);
-                            setOpenPopover(null);
-                          }}
-                          className="flex flex-col items-start py-3"
-                        >
-                          <div className="font-medium">{intro.nombre}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Marca: {intro.marca} | Cert: {intro.certificado} | Animales: {intro.animales}
-                          </div>
-                        </CommandItem>
-                      ))}
+                      {introductores.map((intro) => {
+                        // Verificar si este introductor ya está seleccionado en alguna fila
+                        const isAlreadySelected = rows.some(
+                          (r) => r.introductor?.certId === intro.certId
+                        );
+
+                        return (
+                          <CommandItem
+                            key={intro.id}
+                            onSelect={() => {
+                              if (!isAlreadySelected) {
+                                // Agregar nueva fila con este introductor
+                                const newRowId = `row-${rows.length + 1}`;
+                                setRows((prev) => [
+                                  ...prev,
+                                  {
+                                    id: newRowId,
+                                    introductor: intro,
+                                    values: Array(
+                                      dynamicColumnConfig.length + 3
+                                    ).fill(0),
+                                  },
+                                ]);
+                                setOpenPopover(null);
+                              }
+                            }}
+                            disabled={isAlreadySelected}
+                            className={`flex flex-col items-start py-3 ${
+                              isAlreadySelected
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
+                          >
+                            <div className="font-medium">
+                              {intro.nombre}
+                            
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Marca: {intro.marca} | Cert: {intro.certificado} |
+                              Animales: {intro.animales}
+                            </div>
+                          </CommandItem>
+                        );
+                      })}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -524,241 +607,329 @@ export function PostmortemManagement() {
           counts={filterCounts}
         />
 
-        <div className="overflow-x-auto border rounded-lg bg-white -mx-2 sm:mx-0">
-          <Table className="min-w-[1200px] bg-white text-xs sm:text-sm">
-            <TableHeader className="sticky top-0 z-20 [&_th]:!text-gray-900">
-              <DynamicTableHeaders
-                groupedColumns={groupedColumns}
-                isLoading={isLoadingDiseases}
-              />
-            </TableHeader>
+        {/* Mostrar loader mientras se cargan los datos */}
+        {isLoadingCertificates || isLoadingDiseases ? (
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <div className="relative">
+              <div className="h-12 w-12 rounded-full border-4 border-gray-200"></div>
+              <div className="absolute top-0 left-0 h-12 w-12 rounded-full border-4 border-teal-600 border-t-transparent animate-spin"></div>
+            </div>
+            <p className="text-sm text-gray-600">Cargando datos...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto border rounded-lg bg-white -mx-2 sm:mx-0">
+            <Table className="min-w-[1200px] bg-white text-xs sm:text-sm">
+              <TableHeader className="sticky top-0 z-20 [&_th]:!text-gray-900">
+                <DynamicTableHeaders
+                  groupedColumns={groupedColumns}
+                  isLoading={isLoadingDiseases}
+                />
+              </TableHeader>
 
-            <TableBody>
-              {rows.map((row) => {
-                return (
-                  <TableRow key={row.id} className="hover:bg-gray-50/50">
-                    <TableCell className="sticky left-0 z-20 bg-white border-r-2 p-1 sm:p-2 w-[150px] sm:w-[200px]">
-                      {row.introductor ? (
-                        <div className="space-y-0.5 text-left">
-                          <div className="font-semibold text-[10px] sm:text-xs text-black leading-tight">
-                            {row.introductor.nombre}
-                          </div>
-                          <div className="text-[9px] sm:text-[10px] text-gray-600 space-y-0">
-                            <div>M: {row.introductor.marca}</div>
-                            <div>C: {row.introductor.certificado}</div>
-                            <div>A: {row.introductor.animales}</div>
-                          </div>
-                          <Popover
-                            open={openPopover === row.id}
-                            onOpenChange={(open) =>
-                              setOpenPopover(open ? row.id : null)
-                            }
-                          >
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 w-full justify-center text-xs mt-0.5 hover:bg-gray-100 p-0"
-                              >
-                                <ChevronDown className="h-3 w-3" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-[400px] p-0"
-                              align="start"
-                            >
-                              <Command>
-                                <CommandInput
-                                  placeholder="Buscar por nombre o marca..."
-                                  className="h-9"
-                                />
-                                <CommandList>
-                                  <CommandEmpty>
-                                    No se encontraron introductores.
-                                  </CommandEmpty>
-                                  <CommandGroup>
-                                    {introductores.map((intro) => (
-                                      <CommandItem
-                                        key={intro.id}
-                                        onSelect={() =>
-                                          handleIntroductorSelect(row.id, intro)
-                                        }
-                                        className="flex flex-col items-start py-3"
-                                      >
-                                        <div className="font-medium">
-                                          {intro.nombre}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                          Marca: {intro.marca} | Cert:{" "}
-                                          {intro.certificado} | Animales:{" "}
-                                          {intro.animales}
-                                        </div>
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                      ) : (
-                        <div className="space-y-0.5 text-left">
-                          <div className="text-[10px] text-gray-400 leading-tight">
-                            Seleccionar...
-                          </div>
-                          <div className="text-[10px] text-gray-400 space-y-0">
-                            <div>M: --</div>
-                            <div>C: --</div>
-                            <div>A: --</div>
-                          </div>
-                          <Popover
-                            open={openPopover === row.id}
-                            onOpenChange={(open) =>
-                              setOpenPopover(open ? row.id : null)
-                            }
-                          >
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                className="h-5 w-full justify-center hover:bg-gray-100 p-0"
-                              >
-                                <ChevronDown className="h-3 w-3" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-[400px] p-0"
-                              align="start"
-                            >
-                              <Command>
-                                <CommandInput
-                                  placeholder="Buscar por nombre o marca..."
-                                  className="h-9"
-                                />
-                                <CommandList>
-                                  <CommandEmpty>
-                                    No se encontraron introductores.
-                                  </CommandEmpty>
-                                  <CommandGroup>
-                                    {introductores.map((intro) => (
-                                      <CommandItem
-                                        key={intro.id}
-                                        onSelect={() =>
-                                          handleIntroductorSelect(row.id, intro)
-                                        }
-                                        className="flex flex-col items-start py-3"
-                                      >
-                                        <div className="font-medium">
-                                          {intro.nombre}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                          Marca: {intro.marca} | Cert:{" "}
-                                          {intro.certificado} | Animales:{" "}
-                                          {intro.animales}
-                                        </div>
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                      )}
-                    </TableCell>
-
-                    {/* Columnas de enfermedades */}
-                    {dynamicColumnConfig.map((config, i) => {
-                      // Contar animales con esta enfermedad desde los datos de postmortem
-                      const count = row.introductor
-                        ? countAnimalsWithDisease(
+              <TableBody>
+                {rows.map((row) => {
+                  // Verificar si esta fila tiene datos guardados (contadores > 0)
+                  const hasPostmortemData = row.introductor
+                    ? dynamicColumnConfig.some(
+                        (config) =>
+                          countAnimalsWithDisease(
                             postmortemData?.data,
-                            row.introductor.certId,
+                            row.introductor!.certId,
                             config.idSpeciesDisease!
-                          )
-                        : 0;
+                          ) > 0
+                      ) ||
+                      countAnimalsWithTotalConfiscation(
+                        postmortemData?.data,
+                        row.introductor.certId
+                      ) > 0 ||
+                      countAnimalsWithPartialConfiscation(
+                        postmortemData?.data,
+                        row.introductor.certId
+                      ) > 0
+                    : false;
 
-                      return (
-                        <TableCell
-                          key={`col-${i}`}
-                          className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
-                          onClick={() => handleCellClick(row.id, i, "disease")}
-                        >
-                          {count > 0 ? (
-                            <div className="flex items-center justify-center">
-                              <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
-                                {count}
-                              </div>
+                  return (
+                    <TableRow key={row.id} className="hover:bg-gray-50/50">
+                      <TableCell className="sticky left-0 z-20 bg-white border-r-2 p-1 sm:p-2 w-[150px] sm:w-[200px]">
+                        {row.introductor ? (
+                          <div className="space-y-0.5 text-left">
+                            <div className="font-semibold text-[10px] sm:text-xs text-black leading-tight">
+                              {row.introductor.nombre}
                             </div>
-                          ) : (
-                            <div className="text-gray-400 text-xs">-</div>
-                          )}
-                        </TableCell>
-                      );
-                    })}
-
-                    {/* Columna TOTAL (suma de todas las enfermedades) */}
-                    <TableCell className="p-0.5 text-center bg-orange-50 font-bold">
-                      {(() => {
-                        if (!row.introductor) return "-";
-                        
-                        // Sumar todos los animales con enfermedades
-                        const total = dynamicColumnConfig.reduce((sum, config) => {
-                          return (
-                            sum +
-                            countAnimalsWithDisease(
-                              postmortemData?.data,
-                              row.introductor!.certId,
-                              config.idSpeciesDisease!
-                            )
-                          );
-                        }, 0);
-                        
-                        return total > 0 ? total : "-";
-                      })()}
-                    </TableCell>
-
-                    {/* Columnas de PRODUCTOS (Decomiso Total y Parcial) */}
-                    {[0, 1].map((i) => {
-                      const columnType =
-                        i === 0 ? "total-confiscation" : "partial-confiscation";
-                      
-                      // Contar animales con decomiso total o parcial
-                      const count = row.introductor
-                        ? i === 0
-                          ? countAnimalsWithTotalConfiscation(
-                              postmortemData?.data,
-                              row.introductor.certId
-                            )
-                          : countAnimalsWithPartialConfiscation(
-                              postmortemData?.data,
-                              row.introductor.certId
-                            )
-                        : 0;
-
-                      return (
-                        <TableCell
-                          key={`prod-${i}`}
-                          className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
-                          onClick={() => handleCellClick(row.id, 0, columnType)}
-                        >
-                          {count > 0 ? (
-                              <div className="flex items-center justify-center">
-                            <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
-                              {count}
+                            <div className="text-[9px] sm:text-[10px] text-gray-600 space-y-0">
+                              <div>M: {row.introductor.marca}</div>
+                              <div>C: {row.introductor.certificado}</div>
+                              <div>A: {row.introductor.animales}</div>
                             </div>
+                            {!hasPostmortemData && (
+                              <Popover
+                                open={openPopover === row.id}
+                                onOpenChange={(open) =>
+                                  setOpenPopover(open ? row.id : null)
+                                }
+                              >
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-full justify-center text-xs mt-0.5 hover:bg-gray-100 p-0"
+                                  >
+                                    <ChevronDown className="h-3 w-3" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-[400px] p-0"
+                                  align="start"
+                                >
+                                  <Command>
+                                    <CommandInput
+                                      placeholder="Buscar por nombre o marca..."
+                                      className="h-9"
+                                    />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        No se encontraron introductores.
+                                      </CommandEmpty>
+                                      <CommandGroup>
+                                        {introductores.map((intro) => {
+                                          // Verificar si este introductor ya está seleccionado en otra fila
+                                          const isAlreadySelected = rows.some(
+                                            (r) =>
+                                              r.id !== row.id &&
+                                              r.introductor?.certId ===
+                                                intro.certId
+                                          );
+
+                                          return (
+                                            <CommandItem
+                                              key={intro.id}
+                                              onSelect={() => {
+                                                if (!isAlreadySelected) {
+                                                  handleIntroductorSelect(
+                                                    row.id,
+                                                    intro
+                                                  );
+                                                }
+                                              }}
+                                              disabled={isAlreadySelected}
+                                              className={`flex flex-col items-start py-3 ${
+                                                isAlreadySelected
+                                                  ? "opacity-50 cursor-not-allowed"
+                                                  : ""
+                                              }`}
+                                            >
+                                              <div className="font-medium">
+                                                {intro.nombre}
+                                              
+                                              </div>
+                                              <div className="text-xs text-muted-foreground">
+                                                Marca: {intro.marca} | Cert:{" "}
+                                                {intro.certificado} | Animales:{" "}
+                                                {intro.animales}
+                                              </div>
+                                            </CommandItem>
+                                          );
+                                        })}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            )}
                           </div>
                         ) : (
-                          <div className="text-gray-400 text-xs">-</div>
+                          <div className="space-y-0.5 text-left">
+                            <div className="text-[10px] text-gray-400 leading-tight">
+                              Seleccionar...
+                            </div>
+                            <div className="text-[10px] text-gray-400 space-y-0">
+                              <div>M: --</div>
+                              <div>C: --</div>
+                              <div>A: --</div>
+                            </div>
+                            <Popover
+                              open={openPopover === row.id}
+                              onOpenChange={(open) =>
+                                setOpenPopover(open ? row.id : null)
+                              }
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="h-5 w-full justify-center hover:bg-gray-100 p-0"
+                                >
+                                  <ChevronDown className="h-3 w-3" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-[400px] p-0"
+                                align="start"
+                              >
+                                <Command>
+                                  <CommandInput
+                                    placeholder="Buscar por nombre o marca..."
+                                    className="h-9"
+                                  />
+                                  <CommandList>
+                                    <CommandEmpty>
+                                      No se encontraron introductores.
+                                    </CommandEmpty>
+                                    <CommandGroup>
+                                      {introductores.map((intro) => {
+                                        // Verificar si este introductor ya está seleccionado en otra fila
+                                        const isAlreadySelected = rows.some(
+                                          (r) =>
+                                            r.id !== row.id &&
+                                            r.introductor?.certId ===
+                                              intro.certId
+                                        );
+
+                                        return (
+                                          <CommandItem
+                                            key={intro.id}
+                                            onSelect={() => {
+                                              if (!isAlreadySelected) {
+                                                handleIntroductorSelect(
+                                                  row.id,
+                                                  intro
+                                                );
+                                              }
+                                            }}
+                                            disabled={isAlreadySelected}
+                                            className={`flex flex-col items-start py-3 ${
+                                              isAlreadySelected
+                                                ? "opacity-50 cursor-not-allowed"
+                                                : ""
+                                            }`}
+                                          >
+                                            <div className="font-medium">
+                                              {intro.nombre}
+                                              {/* {isAlreadySelected && (
+                                                <span className="ml-2 text-xs text-red-500">
+                                                  (Ya seleccionado)
+                                                </span>
+                                              )} */}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                              Marca: {intro.marca} | Cert:{" "}
+                                              {intro.certificado} | Animales:{" "}
+                                              {intro.animales}
+                                            </div>
+                                          </CommandItem>
+                                        );
+                                      })}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                         )}
                       </TableCell>
-                    );
-                  })}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+
+                      {/* Columnas de enfermedades */}
+                      {dynamicColumnConfig.map((config, i) => {
+                        // Contar animales con esta enfermedad desde los datos de postmortem
+                        const count = row.introductor
+                          ? countAnimalsWithDisease(
+                              postmortemData?.data,
+                              row.introductor.certId,
+                              config.idSpeciesDisease!
+                            )
+                          : 0;
+
+                        return (
+                          <TableCell
+                            key={`col-${i}`}
+                            className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
+                            onClick={() =>
+                              handleCellClick(row.id, i, "disease")
+                            }
+                          >
+                            {count > 0 ? (
+                              <div className="flex items-center justify-center">
+                                <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
+                                  {count}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-gray-400 text-xs">-</div>
+                            )}
+                          </TableCell>
+                        );
+                      })}
+
+                      {/* Columna TOTAL (suma de todas las enfermedades) */}
+                      <TableCell className="p-0.5 text-center bg-orange-50 font-bold">
+                        {(() => {
+                          if (!row.introductor) return "-";
+
+                          // Sumar todos los animales con enfermedades
+                          const total = dynamicColumnConfig.reduce(
+                            (sum, config) => {
+                              return (
+                                sum +
+                                countAnimalsWithDisease(
+                                  postmortemData?.data,
+                                  row.introductor!.certId,
+                                  config.idSpeciesDisease!
+                                )
+                              );
+                            },
+                            0
+                          );
+
+                          return total > 0 ? total : "-";
+                        })()}
+                      </TableCell>
+
+                      {/* Columnas de PRODUCTOS (Decomiso Total y Parcial) */}
+                      {[0, 1].map((i) => {
+                        const columnType =
+                          i === 0
+                            ? "total-confiscation"
+                            : "partial-confiscation";
+
+                        // Contar animales con decomiso total o parcial
+                        const count = row.introductor
+                          ? i === 0
+                            ? countAnimalsWithTotalConfiscation(
+                                postmortemData?.data,
+                                row.introductor.certId
+                              )
+                            : countAnimalsWithPartialConfiscation(
+                                postmortemData?.data,
+                                row.introductor.certId
+                              )
+                          : 0;
+
+                        return (
+                          <TableCell
+                            key={`prod-${i}`}
+                            className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
+                            onClick={() =>
+                              handleCellClick(row.id, 0, columnType)
+                            }
+                          >
+                            {count > 0 ? (
+                              <div className="flex items-center justify-center">
+                                <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
+                                  {count}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-gray-400 text-xs">-</div>
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </Card>
 
       {/* Modal de Selección de Animales (para enfermedades) */}

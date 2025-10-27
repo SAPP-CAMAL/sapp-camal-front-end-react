@@ -44,31 +44,32 @@ export function TotalConfiscationModal({
 }: TotalConfiscationModalProps) {
   const { data: animalsData, isLoading } = useAnimalsByBrand(certId);
   const { mutate: savePostmortem, isPending: isSaving } = useSavePostmortem();
-  
+
   // Obtener datos guardados de postmortem
   const { data: postmortemData } = usePostmortemByBrand(certId);
-  
+
   const [animalWeights, setAnimalWeights] = useState<AnimalWeight[]>([]);
 
   useEffect(() => {
     if (animalsData?.data) {
       const weights = animalsData.data.map((animal) => {
-        // Buscar si este animal ya tiene datos guardados de decomiso total
+        // Buscar si este animal ya tiene datos guardados de postmortem
         const savedData = postmortemData?.data?.find(
           (item) => item.idDetailsSpeciesCertificate === animal.id
         );
-        
-        const savedProduct = savedData?.productPostmortem.find(
+
+        // Buscar si tiene decomiso total guardado
+        const savedTotalConfiscation = savedData?.productPostmortem?.find(
           (prod) => prod.isTotalConfiscation === true
         );
 
         return {
           animalId: animal.id.toString(),
-          selected: !!savedProduct,
-          weight: savedProduct ? savedProduct.weight : "",
+          selected: !!savedTotalConfiscation,
+          weight: savedTotalConfiscation ? savedTotalConfiscation.weight : "",
         };
       });
-      
+
       setAnimalWeights(weights);
     }
   }, [animalsData, postmortemData]);
@@ -93,7 +94,7 @@ export function TotalConfiscationModal({
 
   const handleSaveAnimal = (animalId: string) => {
     const animal = animalWeights.find((a) => a.animalId === animalId);
-    
+
     if (!animal || !animal.weight) {
       toast.error("Debe ingresar el peso de la canal");
       return;
@@ -152,7 +153,7 @@ export function TotalConfiscationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center">
@@ -271,10 +272,24 @@ export function TotalConfiscationModal({
                             {isSaving ? (
                               <>
                                 <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                {animalWeight.selected ? "Actualizando..." : "Guardando..."}
+                                Guardando...
                               </>
                             ) : (
-                              animalWeight.selected ? "Actualizar" : "Guardar"
+                              // Verificar si ya existe data guardada para mostrar "Actualizar" o "Guardar"
+                              (() => {
+                                const savedData = postmortemData?.data?.find(
+                                  (item) =>
+                                    item.idDetailsSpeciesCertificate ===
+                                    parseInt(animalId)
+                                );
+                                const hasTotalConfiscation =
+                                  savedData?.productPostmortem?.some(
+                                    (prod) => prod.isTotalConfiscation === true
+                                  );
+                                return hasTotalConfiscation
+                                  ? "Actualizar"
+                                  : "Guardar";
+                              })()
                             )}
                           </Button>
                         </div>
