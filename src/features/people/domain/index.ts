@@ -69,10 +69,7 @@ export type FilterPeople = {
 }
 
 
-export type ResponseValidateDocumentType = {
-    isValid: boolean;
-    message: string;
-}
+export type ResponseValidateDocumentType = CommonHttpResponseSingle<{ isValid: boolean; message: string; }>;
 
 export type ResponseCreatePerson = {
     code: number
@@ -100,3 +97,26 @@ interface FindPersonByIdentificationOrFullName {
 
 
 export type ResponseFindPersonByIdentificationOrFullName = CommonHttpResponse<FindPersonByIdentificationOrFullName>
+
+
+
+export interface PersonValidateDocumentResponse {
+    identityCard:       string;
+    fullName:           string;
+    firstName:          string;
+    lastName:           string;
+    gender:             string;
+    dateOfBirth:        string;
+    civilStatus:        string;
+    conyuge:            string;
+    nationality:        string;
+    identificationDate: string;
+    residencePlace:     string;
+    residenceStreet:    string;
+    residenceNumber:    string;
+    motherName:         string;
+    fatherName:         string;
+    birthPlace:         string;
+    educationLevel:     string;
+    profession:         string;
+}
