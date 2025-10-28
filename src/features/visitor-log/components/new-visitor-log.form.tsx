@@ -109,14 +109,12 @@ export function NewVisitorLogForm() {
                 (*) son obligatorios.
               </DialogDescription>
             </div>
-            <div className="">
-              <NewPerson 
-                isUpdateVisitorLog
-              />
-              <NewCompany />
-            </div>
           </div>
         </DialogHeader>
+        <div className="flex justify-end">
+          <NewPerson isUpdateVisitorLog />
+          <NewCompany />
+        </div>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
