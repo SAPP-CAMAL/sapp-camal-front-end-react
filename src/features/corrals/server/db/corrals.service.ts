@@ -53,7 +53,10 @@ export function getLineService(id: number): Promise<ResponseLine> {
 
 export async function getLineByTypeService(lineaType: LineaType): Promise<ResponseLine> {
   try {
-    // Get all active lines from API
+    // Get the correct ID for the line type
+    const targetId = getLineaIdFromType(lineaType);
+    
+    // Try to get all lines first
     const response = await http.get("v1/1.0.0/line/all", {
       next: {
         tags: ["corrals", "lines"],
@@ -61,19 +64,42 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
     }).json<{ code: number; message: string; data: any[] }>();
 
     if (response.code !== 200 || !response.data || response.data.length === 0) {
-      const id = getLineaIdFromType(lineaType);
-      return getLineService(id);
+      // Fallback to direct ID query
+      return getLineService(targetId);
     }
 
     // Filter active lines
     const activeLines = response.data.filter((line: any) => line.status === true);
 
     if (activeLines.length === 0) {
-      const id = getLineaIdFromType(lineaType);
-      return getLineService(id);
+      // Fallback to direct ID query
+      return getLineService(targetId);
     }
 
-    // Map lineaType to search term in description
+    // PRIORITY 1: Find by exact ID match (most reliable)
+    const lineById = activeLines.find((line: any) => line.id === targetId);
+    
+    if (lineById) {
+      return {
+        code: 200,
+        message: "Success",
+        data: lineById
+      };
+    }
+
+    // PRIORITY 2: If ID not found, try by specie ID
+    const specieId = targetId; // In this system, line ID = specie ID
+    const lineBySpecieId = activeLines.find((line: any) => line.idSpecie === specieId);
+    
+    if (lineBySpecieId) {
+      return {
+        code: 200,
+        message: "Success",
+        data: lineBySpecieId
+      };
+    }
+
+    // PRIORITY 3: Search by text as last resort
     let searchTerm: string;
     switch (lineaType) {
       case "bovinos":
@@ -89,10 +115,17 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
         searchTerm = "bovino";
     }
 
-    // Find the line that matches the lineaType based on description
-    const matchingLine = activeLines.find((line: any) =>
-      line.description && line.description.toLowerCase().includes(searchTerm)
-    );
+    const matchingLine = activeLines.find((line: any) => {
+      const description = (line.description || '').toLowerCase();
+      const name = (line.name || '').toLowerCase();
+      const specieName = (line.specie?.name || '').toLowerCase();
+      const specieDescription = (line.specie?.description || '').toLowerCase();
+      
+      return description.includes(searchTerm) || 
+             name.includes(searchTerm) ||
+             specieName.includes(searchTerm) ||
+             specieDescription.includes(searchTerm);
+    });
 
     if (matchingLine) {
       return {
@@ -102,24 +135,8 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
       };
     }
 
-    // If not found by description, try by ID as fallback
-    const targetId = getLineaIdFromType(lineaType);
-    const lineById = activeLines.find((line: any) => line.id === targetId);
-
-    if (lineById) {
-      return {
-        code: 200,
-        message: "Success",
-        data: lineById
-      };
-    }
-
-    // If still not found, return the first active line as last resort
-    return {
-      code: 200,
-      message: "Success",
-      data: activeLines[0]
-    };
+    // FINAL FALLBACK: Use direct ID query
+    return getLineService(targetId);
 
   } catch (error) {
     console.error(`Error fetching line for type ${lineaType}:`, error);

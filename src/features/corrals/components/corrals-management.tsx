@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -61,9 +61,10 @@ const today = new Date();
 const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`; // YYYY-MM-DD
 
 export function CorralsManagement() {
-  // Initialize with default value to avoid hydration mismatch
+  // Always initialize with bovinos to avoid hydration mismatch
   const [selectedTab, setSelectedTab] = useState<LineaType>("bovinos");
   const [isClientMounted, setIsClientMounted] = useState(false);
+  const [forceReload, setForceReload] = useState(0);
 
   // Load from localStorage after component mounts (client-side only)
   useEffect(() => {
@@ -73,6 +74,17 @@ export function CorralsManagement() {
       if (saved && ['bovinos', 'porcinos', 'ovinos-caprinos'].includes(saved)) {
         setSelectedTab(saved as LineaType);
       }
+      
+      // Check if we just reloaded after generating codes
+      const justReloaded = sessionStorage.getItem('corrals-just-reloaded');
+      if (justReloaded === 'true') {
+        sessionStorage.removeItem('corrals-just-reloaded');
+      }
+      
+      // Force initial data load after a short delay to ensure state is set
+      setTimeout(() => {
+        setForceReload(prev => prev + 1);
+      }, 50);
     }
   }, []);
 
@@ -193,7 +205,7 @@ export function CorralsManagement() {
   }, []);
 
   // Helper function to reset mobile transfer modal
-  const resetMobileTransferModal = () => {
+  const resetMobileTransferModal = useCallback(() => {
     setMobileTransferModal({
       isOpen: false,
       brand: null,
@@ -202,10 +214,10 @@ export function CorralsManagement() {
       initialQuantitiesByStage: {},
       targetCorralId: null
     });
-  };
+  }, []);
 
   // Helper function to reset confirmation modal
-  const resetConfirmationModal = () => {
+  const resetConfirmationModal = useCallback(() => {
     setConfirmationModal({
       isOpen: false,
       brand: null,
@@ -215,9 +227,9 @@ export function CorralsManagement() {
       selectedMales: 0,
       selectedFemales: 0,
       selectedQuantitiesByStage: {},
-      initialQuantitiesByStage: {} // Reset initial quantities
+      initialQuantitiesByStage: {}
     });
-  };
+  }, []);
 
   const openCorralDialog = (corralId: string) => {
     setTargetCorralId(corralId);
@@ -845,34 +857,62 @@ const reloadStatusByDate = async () => {
       try {
         setIsLoadingLine(true);
         setIsLoadingProductiveStages(true);
-        setHasInitiallyLoaded(false); // Reset when changing lines
+        setHasInitiallyLoaded(false);
 
         // Load line data
         const response = await getLineByTypeService(selectedTab);
+        
+        // Validate that the response matches the selected tab
+        const expectedSpecie = selectedTab === 'bovinos' ? 'bovino' : 
+                              selectedTab === 'porcinos' ? 'porcino' : 
+                              'ovino';
+        
+        const specieName = response.data?.specie?.name?.toLowerCase() || '';
+        const lineName = response.data?.name?.toLowerCase() || '';
+        const description = response.data?.description?.toLowerCase() || '';
+        
+        // Check if the response matches the expected specie
+        const isCorrectSpecie = specieName.includes(expectedSpecie) || 
+                               lineName.includes(expectedSpecie) ||
+                               description.includes(expectedSpecie);
+        
+        if (!isCorrectSpecie) {
+          console.warn(`API returned incorrect specie for ${selectedTab}. Expected: ${expectedSpecie}, Got: ${specieName}`);
+        }
+        
+        // Set line data immediately
         setCurrentLineData(response.data);
+        setIsLoadingLine(false);
+        
+        // Load productive stages in parallel (don't wait)
         if (response.data?.idSpecie) {
-          try {
-            const stagesResponse = await getProductiveStagesBySpecie(response.data.idSpecie);
-            setProductiveStages(stagesResponse.data || []);
-          } catch (stagesError) {
-            console.error('Error loading productive stages:', stagesError);
-            setProductiveStages([]);
-          }
+          getProductiveStagesBySpecie(response.data.idSpecie)
+            .then(stagesResponse => {
+              setProductiveStages(stagesResponse.data || []);
+            })
+            .catch(stagesError => {
+              console.error('Error loading productive stages:', stagesError);
+              setProductiveStages([]);
+            })
+            .finally(() => {
+              setIsLoadingProductiveStages(false);
+            });
         } else {
           setProductiveStages([]);
+          setIsLoadingProductiveStages(false);
         }
 
       } catch (error) {
+        console.error('Error loading line data:', error);
         setCurrentLineData(null);
         setProductiveStages([]);
-      } finally {
         setIsLoadingLine(false);
         setIsLoadingProductiveStages(false);
       }
     };
 
     loadLineData();
-  }, [selectedTab]);
+  }, [selectedTab, forceReload]);
 
   // -----------------------
   // Helper function to get corrales with cache
@@ -944,7 +984,7 @@ const reloadStatusByDate = async () => {
     };
 
     calculateRealCounts();
-  }, [currentLineData, allCorralGroups, selectedTab]);
+  }, [currentLineData, allCorralGroups, selectedTab, forceReload]);
 
   useEffect(() => {
     const loadStatusByDate = async () => {
@@ -982,7 +1022,7 @@ const reloadStatusByDate = async () => {
     };
 
     loadStatusByDate();
-  }, [selectedDate]);
+  }, [selectedDate, forceReload]);
 
   // -----------------------
   // Load brand details by admission date and group
@@ -1004,6 +1044,7 @@ const reloadStatusByDate = async () => {
           return;
         }
 
+        // Add a small delay to ensure the API has processed the code generation
         const allBrandDetails = await getBrandDetailsByLineService(selectedDate, currentLineData.id);
 
         const brandMap: Record<string, BrandDetail[]> = {};
@@ -1019,6 +1060,7 @@ const reloadStatusByDate = async () => {
         setBrandDetailsMap(brandMap);
 
       } catch (error) {
+        console.error('Error loading brand details:', error);
         setBrandDetailsMap({});
       } finally {
         setIsLoadingBrandDetails(false);
@@ -1028,9 +1070,10 @@ const reloadStatusByDate = async () => {
     if (currentLineData) {
       loadBrandDetails();
     }
-  }, [selectedDate, currentLineData]);
+  }, [selectedDate, currentLineData, forceReload]);
 
 
+  // Load groups once on mount - independent of line selection
   useEffect(() => {
     const loadAllGroups = async () => {
       try {
@@ -1038,6 +1081,7 @@ const reloadStatusByDate = async () => {
         const groups = await getAllCorralGroupsService();
         setAllCorralGroups(groups);
       } catch (error) {
+        console.error('Error loading groups:', error);
         setAllCorralGroups([]);
       } finally {
         setIsLoadingGroups(false);
@@ -1050,19 +1094,23 @@ const reloadStatusByDate = async () => {
 
   useEffect(() => {
     const loadCorrales = async () => {
-      if (!currentLineData || !currentLineData.id) {
-        setApiCorrales([]);
+      // Wait for both line data and groups to be available
+      if (!currentLineData || !currentLineData.id || allCorralGroups.length === 0) {
+        // Don't clear corrales immediately, keep showing previous data
+        if (!currentLineData || !currentLineData.id) {
+          setApiCorrales([]);
+        }
         return;
       }
 
       try {
         setIsLoadingCorrales(true);
-        setHasInitiallyLoaded(false);
 
         if (processFilter === "todos") {
           const currentGroups = getGroupsForCurrentLine();
           if (currentGroups.length > 0) {
             const allGroupIds = currentGroups.map(g => g.id);
+            // Load all corrales in parallel
             const allCorralesPromises = allGroupIds.map(groupId => getCorralesWithCache(groupId));
             const allCorralesResults = await Promise.allSettled(allCorralesPromises);
             const allCorrales = allCorralesResults
@@ -1077,20 +1125,20 @@ const reloadStatusByDate = async () => {
           const corrales = await getCorralesWithCache(targetGroupId);
           setApiCorrales(corrales);
         }
+        
+        setHasInitiallyLoaded(true);
       } catch (error) {
-        setApiCorrales([]);
+        console.error('Error loading corrales:', error);
+        // Don't clear corrales on error, keep showing previous data
       } finally {
         setIsLoadingCorrales(false);
-        if (currentLineData && allCorralGroups.length > 0) {
-          setHasInitiallyLoaded(true);
-        }
       }
     };
 
     loadCorrales();
-  }, [processFilter, currentLineData, allCorralGroups, selectedTab]);
+  }, [processFilter, currentLineData, allCorralGroups, selectedTab, forceReload]);
 
-  const getGroupsForCurrentLine = (): CorralGroup[] => {
+  const getGroupsForCurrentLine = useCallback((): CorralGroup[] => {
     if (!currentLineData || allCorralGroups.length === 0) {
       return [];
     }
@@ -1102,7 +1150,7 @@ const reloadStatusByDate = async () => {
     return allCorralGroups.filter(
       (group) => group && group.idLine === currentLineData.id
     );
-  };
+  }, [currentLineData, allCorralGroups]);
 
   const getDefaultGroupIdForLine = (lineaType: LineaType): number | null => {
     switch (lineaType) {
@@ -1297,11 +1345,11 @@ const reloadStatusByDate = async () => {
     {}
   );
 
-  const resetPendingVideos = () => {
+  const resetPendingVideos = useCallback(() => {
     // Revoke any object URLs to avoid leaks
     pendingVideos.forEach((v) => URL.revokeObjectURL(v.url));
     setPendingVideos([]);
-  };
+  }, [pendingVideos]);
 
   const openVideoDialogForLinea = (corralId: string) => {
     setVideoDialogOpen(true);
@@ -1317,15 +1365,15 @@ const reloadStatusByDate = async () => {
     });
   };
 
-  const handleModalOpenCloseState = (isOpen: boolean)=>{
+  const handleModalOpenCloseState = useCallback((isOpen: boolean) => {
     setVideoDialogOpen(isOpen);
     if (!isOpen) resetPendingVideos();
-  }
+  }, [resetPendingVideos]);
 
-  const handleAddFiles = async (files: FileList ) => {
-    const readVideos = await readMultipleVideoFiles(files)
+  const handleAddFiles = useCallback(async (files: FileList) => {
+    const readVideos = await readMultipleVideoFiles(files);
     setPendingVideos((prev) => [...prev, ...readVideos]);
-  };
+  }, []);
 
   const handleRemoveVideo = async (video: VideoItem) => {
 
@@ -1404,10 +1452,10 @@ const reloadStatusByDate = async () => {
   const totalCorrales = corralesWithLiveStats?.length || 0;
 
   // Función para manejar el cambio de línea y resetear el filtro
-  const handleTabChange = (value: LineaType) => {
+  const handleTabChange = useCallback((value: LineaType) => {
     setSelectedTab(value);
     setProcessFilter("todos"); // Reset filter to show all corrals
-  };
+  }, []);
 
   // Status counts using live statistics
   const statusCounts = useMemo(() => {
@@ -1492,10 +1540,20 @@ const reloadStatusByDate = async () => {
 
   function getLineaTitle(linea: LineaType) {
     // Use real data from API if available, otherwise fallback to static titles
-    if (currentLineData && !isLoadingLine) {
-      return `CORRALES DE LA ${currentLineData.name.toUpperCase()} DE ${
-        currentLineData.specie.name
-      }`;
+    if (currentLineData && !isLoadingLine && currentLineData.specie) {
+      // Ensure we're using the correct specie name from the API
+      const specieName = currentLineData.specie.name?.toUpperCase() || '';
+      const lineName = currentLineData.name?.toUpperCase() || '';
+      
+      // Validate that the specie name matches the selected line type
+      const expectedSpecie = linea === 'bovinos' ? 'BOVINO' : 
+                            linea === 'porcinos' ? 'PORCINO' : 
+                            'OVINO';
+      
+      // If the API data doesn't match, use fallback
+      if (specieName.includes(expectedSpecie) || lineName.includes(expectedSpecie)) {
+        return `CORRALES DE LA ${lineName} DE ${specieName}`;
+      }
     }
 
     // Fallback to static titles while loading or if API fails
@@ -1510,16 +1568,16 @@ const reloadStatusByDate = async () => {
   }
 
   // Helper function to get brand details for a corral
-  function getBrandDetailsForCorral(corralId: string): BrandDetail[] {
+  const getBrandDetailsForCorral = useCallback((corralId: string): BrandDetail[] => {
     return brandDetailsMap[corralId] || [];
-  }
+  }, [brandDetailsMap]);
 
   // Helper function to determine if corral should appear "closed/blocked" in UI
-  function isCorralBlocked(corral: Corral): boolean {
+  const isCorralBlocked = useCallback((corral: Corral): boolean => {
     // A corral is visually "blocked" only when the API record indicates closeCorral === true
     const status = statusByDateMap[corral.id];
     return !!(status && status.closeCorral === true);
-  }
+  }, [statusByDateMap]);
 
   // Animated Number Component for smooth transitions
   const AnimatedNumber = ({ value, duration = 300 }: { value: number; duration?: number }) => {
