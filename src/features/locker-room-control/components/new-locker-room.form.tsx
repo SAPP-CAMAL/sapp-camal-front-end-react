@@ -41,7 +41,6 @@ import { useDebouncedCallback } from "use-debounce";
 import { getAllObservationsService } from "../server/db/observations.service";
 import { capitalizeText } from "@/lib/utils";
 import { useBiosecurityEquipments } from "../hooks/use-biosecurity-equipments ";
-import { getAllBiosecurityLinesService } from "../server/db/biosecurity-line.service";
 import { MappedLockerRoomControl } from "../domain/locker-room-control.types";
 import {
   saveLockerRoomControlService,
@@ -53,12 +52,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { BiosecurityLines } from "../domain/biosecurityLines.types";
 
 interface NewAddresseesFormProps {
   trigger: React.ReactNode;
   isUpdate?: boolean;
   lockerRoomData?: MappedLockerRoomControl & { id?: number };
+  biosecurityLines: BiosecurityLines[];
   onSuccess?: () => void;
+  selectedLine: string;
+  setSelectedLine: any;
 }
 
 export default function NewLockerRoomControlForm({
@@ -66,6 +69,9 @@ export default function NewLockerRoomControlForm({
   isUpdate = false,
   onSuccess,
   lockerRoomData,
+  biosecurityLines,
+  selectedLine,
+  setSelectedLine,
 }: NewAddresseesFormProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,7 +84,6 @@ export default function NewLockerRoomControlForm({
   const [selectedObservations, setSelectedObservations] = useState<string[]>(
     []
   );
-  const [selectedLine, setSelectedLine] = useState("");
   const { groupedData, isLoading, isError } = useBiosecurityEquipments(
     Number(selectedLine)
   );
@@ -91,7 +96,7 @@ export default function NewLockerRoomControlForm({
     setSelectedPerson(person);
     setFilterFullName(data.employeeFullName);
     setFilterIdentification("");
-    setSelectedLine(data.biosecurityLine.toString());
+    setSelectedLine(data.biosecurityLine?.toString());
     setSelectedObservations(
       data.observationsLocker.map((obs: any) => String(obs.idObservation))
     );
@@ -128,12 +133,6 @@ export default function NewLockerRoomControlForm({
   const ObservationsList = useQuery({
     queryKey: ["observations"],
     queryFn: getAllObservationsService,
-    enabled: open,
-  });
-
-  const BiosecurityLinesList = useQuery({
-    queryKey: ["biosecurity-lines"],
-    queryFn: getAllBiosecurityLinesService,
     enabled: open,
   });
 
@@ -254,7 +253,7 @@ export default function NewLockerRoomControlForm({
     setFilterIdentification("");
     setSelectedPerson(null);
     setPersonData([]);
-    setSelectedLine("");
+    //setSelectedLine("");
     setSelectedObservations([]);
     setCheckedItems({});
   };
@@ -442,7 +441,7 @@ export default function NewLockerRoomControlForm({
                   <SelectValue placeholder="Seleccione una línea" />
                 </SelectTrigger>
                 <SelectContent>
-                  {BiosecurityLinesList.data?.data.map((line, index) => (
+                  {biosecurityLines?.map((line, index) => (
                     <SelectItem key={index} value={String(line.id)}>
                       {capitalizeText(line.name)}
                     </SelectItem>
@@ -479,7 +478,7 @@ export default function NewLockerRoomControlForm({
                           <input
                             type="checkbox"
                             id={`item-${item.id}`}
-                            className="h-5 w-5 border-gray-300 rounded"
+                            className="h-5 w-5 rounded border-gray-300 cursor-pointer accent-[var(--primary)]"
                             checked={!!checkedItems[item.id]}
                             onChange={() => toggleItem(item.id)}
                           />

@@ -43,6 +43,15 @@ import {
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { getAllBiosecurityLinesService } from "../server/db/biosecurity-line.service";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { capitalizeText } from "@/lib/utils";
 
 // Componente para mostrar observaciones
 function ObservationsPopover({ observations }: { observations: string[] }) {
@@ -176,7 +185,7 @@ export function LockerRoomControlManagement() {
   }, []);
 
   const [fecha, setFecha] = useState<Date>(today);
-
+  const [selectedLine, setSelectedLine] = useState("1");
   const [floatingPosition, setFloatingPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{
@@ -185,6 +194,7 @@ export function LockerRoomControlManagement() {
     elemX: number;
     elemY: number;
   } | null>(null);
+  console.log({ selectedLine });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -223,12 +233,20 @@ export function LockerRoomControlManagement() {
   }, [isDragging]);
 
   const { data: lockerRoomData = [], isLoading: isLoadingData } = useQuery({
-    queryKey: ["locker-room-data", fecha],
+    queryKey: ["locker-room-data", fecha, selectedLine],
     queryFn: async () => {
       const formattedDate = format(fecha, "yyyy-MM-dd");
-      const data = await getLockerRoomControlByDateService(formattedDate);
+      const data = await getLockerRoomControlByDateService(
+        formattedDate,
+        Number(selectedLine)
+      );
       return data ?? [];
     },
+  });
+
+  const biosecurityLinesList = useQuery({
+    queryKey: ["biosecurity-lines"],
+    queryFn: getAllBiosecurityLinesService,
   });
 
   const handleDelete = async (id: number) => {
@@ -263,7 +281,7 @@ export function LockerRoomControlManagement() {
           <div className="mt-3 flex flex-col lg:flex-row gap-3 lg:gap-4 lg:items-center lg:justify-between">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <Label
-                htmlFor="fecha-antemortem"
+                htmlFor="fecha"
                 className="text-sm font-medium whitespace-nowrap"
               >
                 Fecha:
@@ -274,13 +292,13 @@ export function LockerRoomControlManagement() {
                     className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                     onClick={() => {
                       const input = document.getElementById(
-                        "fecha-antemortem"
+                        "fecha"
                       ) as HTMLInputElement;
                       if (input) input.showPicker();
                     }}
                   />
                   <Input
-                    id="fecha-antemortem"
+                    id="fecha"
                     type="date"
                     className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                     value={fecha ? format(fecha, "yyyy-MM-dd") : ""}
@@ -311,10 +329,33 @@ export function LockerRoomControlManagement() {
                 )}
               </div>
             </div>
-
+            {/* Línea */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 lg:ml-2">
+              <span className="text-sm text-black font-semibold whitespace-nowrap">
+                Línea:
+              </span>
+              <Select
+                value={selectedLine}
+                onValueChange={(value) => setSelectedLine(value)}
+              >
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Seleccione una línea" />
+                </SelectTrigger>
+                <SelectContent>
+                  {biosecurityLinesList.data?.data.map((line, index) => (
+                    <SelectItem key={index} value={String(line.id)}>
+                      {capitalizeText(line.name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex justify-start lg:justify-end">
               <NewLockerRoomControlForm
                 onSuccess={handleRefresh}
+                biosecurityLines={biosecurityLinesList.data?.data ?? []}
+                selectedLine={selectedLine}
+                setSelectedLine={setSelectedLine}
                 trigger={
                   <Button className="w-full sm:w-auto">
                     <PlusIcon className="h-4 w-4" />
@@ -408,62 +449,96 @@ export function LockerRoomControlManagement() {
                   </TableCell>
                   <TableCell className="text-center border">
                     <div className="flex items-center justify-center gap-2">
-                      <Tooltip>
-                        <NewLockerRoomControlForm
-                          isUpdate={true}
-                          lockerRoomData={row}
-                          onSuccess={handleRefresh}
-                          trigger={
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon">
-                                <EditIcon className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                          }
-                        />
-                        <TooltipContent
-                          side="top"
-                          align="center"
-                          sideOffset={5}
-                          avoidCollisions
-                          style={{
-                            backgroundColor: "var(--primary)",
-                            color: "var(--primary-foreground)",
-                            padding: "0.5rem 1rem",
-                            borderRadius: "0.375rem",
-                            fontSize: "0.875rem",
-                          }}
-                        >
-                          Editar
-                        </TooltipContent>
-                      </Tooltip>
+                      {(() => {
+                        const disabled =
+                          format(fecha, "yyyy-MM-dd") !==
+                          format(today, "yyyy-MM-dd");
 
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleDelete(row.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="top"
-                          align="center"
-                          sideOffset={5}
-                          avoidCollisions
-                          style={{
-                            backgroundColor: "var(--primary)",
-                            color: "var(--primary-foreground)",
-                            padding: "0.5rem 1rem",
-                            borderRadius: "0.375rem",
-                            fontSize: "0.875rem",
-                          }}
-                        >
-                          Eliminar
-                        </TooltipContent>
-                      </Tooltip>
+                        return (
+                          <>
+                            <Tooltip>
+                              <NewLockerRoomControlForm
+                                isUpdate={true}
+                                lockerRoomData={row}
+                                selectedLine={selectedLine}
+                                setSelectedLine={setSelectedLine}
+                                biosecurityLines={
+                                  biosecurityLinesList.data?.data ?? []
+                                }
+                                onSuccess={handleRefresh}
+                                trigger={
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      disabled={disabled}
+                                      className={
+                                        disabled
+                                          ? "opacity-50 cursor-not-allowed"
+                                          : ""
+                                      }
+                                    >
+                                      <EditIcon className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                }
+                              />
+                              <TooltipContent
+                                side="top"
+                                align="center"
+                                sideOffset={5}
+                                avoidCollisions
+                                style={{
+                                  backgroundColor: "var(--primary)",
+                                  color: "var(--primary-foreground)",
+                                  padding: "0.5rem 1rem",
+                                  borderRadius: "0.375rem",
+                                  fontSize: "0.875rem",
+                                }}
+                              >
+                                {disabled
+                                  ? "Solo editable en la fecha de hoy"
+                                  : "Editar"}
+                              </TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleDelete(row.id)}
+                                  disabled={disabled}
+                                  className={
+                                    disabled
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                align="center"
+                                sideOffset={5}
+                                avoidCollisions
+                                style={{
+                                  backgroundColor: "var(--primary)",
+                                  color: "var(--primary-foreground)",
+                                  padding: "0.5rem 1rem",
+                                  borderRadius: "0.375rem",
+                                  fontSize: "0.875rem",
+                                }}
+                              >
+                                {disabled
+                                  ? "Solo eliminable en la fecha de hoy"
+                                  : "Eliminar"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </>
+                        );
+                      })()}
                     </div>
                   </TableCell>
                 </TableRow>

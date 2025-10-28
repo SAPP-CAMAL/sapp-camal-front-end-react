@@ -414,61 +414,91 @@ export function HygieneControlManagement() {
 
                   <TableCell className="text-center border">
                     <div className="flex items-center justify-center gap-2">
-                      <Tooltip>
-                        <NewLockerRoomControlForm
-                          isUpdate={true}
-                          hygieneControlData={row}
-                          onSuccess={handleRefresh}
-                          trigger={
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon">
-                                <EditIcon className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                          }
-                        />
-                        <TooltipContent
-                          side="top"
-                          align="center"
-                          sideOffset={5}
-                          avoidCollisions
-                          style={{
-                            backgroundColor: "var(--primary)",
-                            color: "var(--primary-foreground)",
-                            padding: "0.5rem 1rem",
-                            borderRadius: "0.375rem",
-                            fontSize: "0.875rem",
-                          }}
-                        >
-                          Editar
-                        </TooltipContent>
-                      </Tooltip>
+                      {(() => {
+                        const disabled =
+                          format(fecha, "yyyy-MM-dd") !==
+                          format(today, "yyyy-MM-dd");
 
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleDelete(row.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="top"
-                          align="center"
-                          sideOffset={5}
-                          avoidCollisions
-                          style={{
-                            backgroundColor: "var(--primary)",
-                            color: "var(--primary-foreground)",
-                            padding: "0.5rem 1rem",
-                            borderRadius: "0.375rem",
-                          }}
-                        >
-                          Eliminar
-                        </TooltipContent>
-                      </Tooltip>
+                        return (
+                          <>
+                            <Tooltip>
+                              <NewLockerRoomControlForm
+                                isUpdate={true}
+                                hygieneControlData={row}
+                                onSuccess={handleRefresh}
+                                trigger={
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      disabled={disabled}
+                                      className={
+                                        disabled
+                                          ? "opacity-50 cursor-not-allowed"
+                                          : ""
+                                      }
+                                    >
+                                      <EditIcon className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                }
+                              />
+                              <TooltipContent
+                                side="top"
+                                align="center"
+                                sideOffset={5}
+                                avoidCollisions
+                                style={{
+                                  backgroundColor: "var(--primary)",
+                                  color: "var(--primary-foreground)",
+                                  padding: "0.5rem 1rem",
+                                  borderRadius: "0.375rem",
+                                  fontSize: "0.875rem",
+                                }}
+                              >
+                                {disabled
+                                  ? "Solo editable en la fecha de hoy"
+                                  : "Editar"}
+                              </TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleDelete(row.id)}
+                                  disabled={disabled}
+                                  className={
+                                    disabled
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                align="center"
+                                sideOffset={5}
+                                avoidCollisions
+                                style={{
+                                  backgroundColor: "var(--primary)",
+                                  color: "var(--primary-foreground)",
+                                  padding: "0.5rem 1rem",
+                                  borderRadius: "0.375rem",
+                                  fontSize: "0.875rem",
+                                }}
+                              >
+                                {disabled
+                                  ? "Solo eliminable en la fecha de hoy"
+                                  : "Eliminar"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </>
+                        );
+                      })()}
                     </div>
                   </TableCell>
                 </TableRow>

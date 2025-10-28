@@ -57,11 +57,12 @@ export const mapLockerRoomControlResponse = (
 };
 
 export const getLockerRoomControlByDateService = async (
-  date: string
+  date: string,
+  idLine:number
 ): Promise<MappedLockerRoomControl[]> => {
   try {
     const response = await http
-      .get(`v1/1.0.0/locker-room-control/by-date-register?dateRegister=${date}`)
+      .get(`v1/1.0.0/locker-room-control/by-date-register?dateRegister=${date}&idLine=${idLine}`)
       .json<LockerRoomControlResponse>(); 
 
     // Mapeas solo el array que viene en data

@@ -424,7 +424,7 @@ export default function NewHygieneControlForm({
                           <input
                             type="checkbox"
                             id={`item-${item.idSettingHygiene}`}
-                            className="h-5 w-5 border-gray-300 rounded"
+                            className="h-5 w-5 rounded border-gray-300 cursor-pointer accent-[var(--primary)]"
                             checked={!!checkedItems[item.idSettingHygiene]}
                             onChange={() => toggleItem(item.idSettingHygiene)}
                           />
