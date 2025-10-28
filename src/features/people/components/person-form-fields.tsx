@@ -126,15 +126,15 @@ export function NewPeopleFields({
 
               if (isCedula && value.length !== 10)
                 return "El número de documento debe tener 10 caracteres";
-              if (isRUCJ && value.length !== 9)
-                return "El número de documento debe tener 9 caracteres";
+              if (isRUCJ && value.length !== 13)
+                return "El número de documento debe tener 13 caracteres";
 
               if (isRUCN && value.length !== 13)
                 return "El número de documento debe tener 13 caracteres";
 
               try {
-                await validateDocumentTypeService(currentValue.code, value);
-                return true;
+                const response = await validateDocumentTypeService(currentValue.code, value);
+                return !!response?.data?.isValid;
               } catch (error: any) {
                 const { message } = await error.response.json();
                 return message;
