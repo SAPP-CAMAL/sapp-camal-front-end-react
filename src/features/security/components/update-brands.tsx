@@ -177,19 +177,42 @@ export function UpdateBrands({
     setIsSubmitting(true);
 
     try {
-      const updatedBrand = await updateBrandService(brandId, {
+      // Crear un Set con los IDs seleccionados para búsqueda rápida
+      const selectedIds = new Set(brandSpecies.map((s) => s.id));
+      
+      // Mapear todas las especies: las seleccionadas con status true, las demás con false
+      const speciesWithStatus = species.map((specie) => ({
+        id: specie.id,
+        status: selectedIds.has(specie.id),
+      }));
+
+      const payload = {
         description: brandName.trim(),
         name: brandName.trim(),
-        species: brandSpecies.map((specie) => ({
-          id: specie.id,
-          status: true,
-        })),
-      });
+        species: speciesWithStatus,
+      };
+
+      console.log("Payload enviado:", payload);
+
+      const updatedBrand = await updateBrandService(brandId, payload);
 
       toast.success(`Marca "${brandName}" actualizada exitosamente`);
       handleCloseModal();
-    } catch (error) {
-      toast.error("Error al actualizar la marca");
+    } catch (error: any) {
+      console.error("Error al actualizar la marca:", error);
+      
+      // Intentar obtener el mensaje de error del backend
+      if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          console.error("Error data:", errorData);
+          toast.error(errorData.message || "Error al actualizar la marca");
+        } catch {
+          toast.error("Error al actualizar la marca. Verifica los datos.");
+        }
+      } else {
+        toast.error("Error al actualizar la marca");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -267,12 +290,12 @@ export function UpdateBrands({
         </TooltipContent>
       </Tooltip>
 
-      <DialogContent className="min-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{`${"Gestionar Marcas"} - ${
-            introductor.fullName
-          } `}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">
+            {`${"Gestionar Marcas"} - ${introductor.fullName}`}
+          </DialogTitle>
+          <DialogDescription className="text-sm">
             Edita las marcas existentes y agrega nuevas marcas para este
             introductor.
           </DialogDescription>
@@ -294,20 +317,20 @@ export function UpdateBrands({
                           !brandIsActive ? "opacity-60 pointer-events-none" : ""
                         }`}
                       >
-                        <CardHeader>
-                          <CardTitle className="flex items-center justify-between">
-                            Nombre de la Marca
-                            <div className="flex gap-2">
+                        <CardHeader className="p-4 sm:p-6">
+                          <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <span className="text-base sm:text-lg">Nombre de la Marca</span>
+                            <div className="flex flex-col sm:flex-row gap-2">
                               {/* Botón Guardar */}
                               <Button
                                 type="button"
                                 size="sm"
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 w-full sm:w-auto"
                                 onClick={() => handleUpdateBrand(brand.id)}
                                 disabled={isSubmitting || !brandIsActive}
                               >
                                 <Save size={16} />
-                                Guardar
+                                <span className="text-xs sm:text-sm">Guardar</span>
                               </Button>
 
                               <Button
@@ -317,27 +340,29 @@ export function UpdateBrands({
                                   brandIsActive ? "outline" : "secondary"
                                 }
                                 disabled={isSubmitting}
+                                className="w-full sm:w-auto"
+                                size="sm"
                               >
                                 <span
-                                  className={
+                                  className={`text-xs sm:text-sm ${
                                     brandIsActive
                                       ? "font-bold"
                                       : "text-gray-400"
-                                  }
+                                  }`}
                                 >
                                   {brandIsActive ? "Activo" : "Inactivo"}
                                 </span>
                                 {brandIsActive ? (
-                                  <ToggleRightIcon className="w-8 h-8 text-primary" />
+                                  <ToggleRightIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                                 ) : (
-                                  <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
+                                  <ToggleLeftIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500" />
                                 )}
                               </Button>
                             </div>
                           </CardTitle>
                         </CardHeader>
 
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-4 p-4 sm:p-6">
                           <Input
                             type="text"
                             value={
@@ -345,7 +370,7 @@ export function UpdateBrands({
                                 ? brandNames[brand.id]
                                 : brand.name
                             }
-                            className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100"
+                            className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100 text-sm sm:text-base"
                             onChange={(e) =>
                               handleBrandNameChange(brand.id, e.target.value)
                             }
@@ -353,14 +378,14 @@ export function UpdateBrands({
                           />
 
                           <div>
-                            <label className="font-semibold block mb-2">
+                            <label className="font-semibold block mb-2 text-sm sm:text-base">
                               Especies *
                             </label>
-                            <div className="flex flex-wrap gap-4">
+                            <div className="flex flex-wrap gap-3 sm:gap-4">
                               {species.map((specie) => (
                                 <Label
                                   key={specie.id}
-                                  className={`flex items-center gap-x-2 cursor-pointer ${
+                                  className={`flex items-center gap-x-2 cursor-pointer text-sm sm:text-base ${
                                     !brandIsActive
                                       ? "cursor-not-allowed opacity-70"
                                       : ""
@@ -387,7 +412,7 @@ export function UpdateBrands({
 
                           {selectedSpecies[brand.id] &&
                             selectedSpecies[brand.id].length > 0 && (
-                              <div className="p-3 bg-gray-50 rounded-lg border">
+                              <div className="p-3 bg-gray-50 rounded-lg border text-sm sm:text-base">
                                 <span className="font-bold">
                                   {brandNames[brand.id] || brand.name}:
                                 </span>
@@ -449,13 +474,13 @@ export function UpdateBrands({
 
                   <CardContent className="space-y-4">
                     <div>
-                      <label className="font-semibold block mb-2">
+                      <label className="font-semibold block mb-2 text-sm sm:text-base">
                         Nombre de la Marca *
                       </label>
                       <Input
                         type="text"
                         placeholder="Ej: Finca San José, Marca ABC, etc."
-                        className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100"
+                        className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100 text-sm sm:text-base"
                         value={form.watch("description") ?? ""}
                         onChange={(e) =>
                           form.setValue("description", e.target.value, {
@@ -467,14 +492,14 @@ export function UpdateBrands({
                     </div>
 
                     <div>
-                      <label className="font-semibold block mb-2">
+                      <label className="font-semibold block mb-2 text-sm sm:text-base">
                         Especies *
                       </label>
-                      <div className="flex flex-wrap gap-4">
+                      <div className="flex flex-wrap gap-3 sm:gap-4">
                         {species.map((specie) => (
                           <Label
                             key={specie.id}
-                            className={`flex items-center gap-x-2 cursor-pointer ${
+                            className={`flex items-center gap-x-2 cursor-pointer text-sm sm:text-base ${
                               isSubmitting
                                 ? "opacity-60 cursor-not-allowed"
                                 : ""
@@ -496,7 +521,7 @@ export function UpdateBrands({
                     </div>
 
                     {newBrandSpecies.length > 0 && (
-                      <div className="p-3 bg-gray-50 rounded-lg border">
+                      <div className="p-3 bg-gray-50 rounded-lg border text-sm sm:text-base">
                         <span className="font-bold">Nueva marca:</span>
                         <span className="ml-2">
                           [

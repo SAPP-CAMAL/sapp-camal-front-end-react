@@ -86,38 +86,29 @@ export default function NewAddresseesForm({
     Number(cantonId)
   );
 
+  // Initialize form when dialog opens in edit mode
   useEffect(() => {
     if (open && isUpdate && addresseeData) {
       initializeFormWithData(addresseeData);
+      
+      // Initialize province immediately if available
+      if (addresseeData.addresses?.[0] && provinces) {
+        const currentAddress = addresseeData.addresses[0];
+        const province = provinces.find(
+          (p) => p.name.toUpperCase() === currentAddress.province.toUpperCase()
+        );
+        if (province) {
+          setProvinceId(String(province.id));
+        }
+      }
     }
-  }, [open, isUpdate, addresseeData]);
+  }, [open, isUpdate, addresseeData, provinces]);
 
+  // Load canton when province is set and cantons are available
   useEffect(() => {
-    if (open && isUpdate && addresseeData) {
-      initializeFormWithData(addresseeData);
-    }
-  }, [open, isUpdate, addresseeData]);
-
-  useEffect(() => {
-    if (!addresseeData?.addresses?.[0]) return;
-
-    const currentAddress = addresseeData.addresses[0];
-    const province = provinces?.find(
-      (p) => p.name.toUpperCase() === currentAddress.province.toUpperCase()
-    );
-
-    if (province) {
-      setProvinceId(String(province.id));
-    }
-  }, [addresseeData, provinces]);
-
-  useEffect(() => {
-    if (
-      !addresseeData?.addresses?.[0] ||
-      !cantons?.data ||
-      cantons.data.length === 0
-    )
-      return;
+    if (!isUpdate || !addresseeData?.addresses?.[0]) return;
+    if (!cantons?.data || cantons.data.length === 0) return;
+    if (provinceId === "*") return;
 
     const currentAddress = addresseeData.addresses[0];
     const canton = cantons.data.find(
@@ -127,15 +118,13 @@ export default function NewAddresseesForm({
     if (canton) {
       setCantonId(String(canton.id));
     }
-  }, [addresseeData, cantons?.data]);
+  }, [isUpdate, addresseeData, cantons?.data, provinceId]);
 
+  // Load parish when canton is set and parishes are available
   useEffect(() => {
-    if (
-      !addresseeData?.addresses?.[0] ||
-      !parishes?.data ||
-      parishes.data.length === 0
-    )
-      return;
+    if (!isUpdate || !addresseeData?.addresses?.[0]) return;
+    if (!parishes?.data || parishes.data.length === 0) return;
+    if (cantonId === "*") return;
 
     const currentAddress = addresseeData.addresses[0];
     const parish = parishes.data.find(
@@ -145,7 +134,7 @@ export default function NewAddresseesForm({
     if (parish) {
       setParishId(String(parish.id));
     }
-  }, [addresseeData, parishes?.data]);
+  }, [isUpdate, addresseeData, parishes?.data, cantonId]);
 
   const initializeFormWithData = (data: any) => {
     const person: Person = {
@@ -280,6 +269,9 @@ export default function NewAddresseesForm({
     setAddress("");
     setSelectedPerson(null);
     setPersonData([]);
+    setDebouncedFullName("");
+    setDebouncedIdentification("");
+    setIsActive(true);
   };
 
   const handleToggleStatus = () => {
@@ -478,10 +470,10 @@ export default function NewAddresseesForm({
                 <Select
                   onValueChange={(value) => setCantonId(value)}
                   value={cantonId || "*"}
-                  disabled={isUpdate && !isActive}
+                  disabled={(isUpdate && !isActive) || provinceId === "*" || cantonsLoading}
                 >
                   <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <SelectValue placeholder="Seleccione el cantón" />
+                    <SelectValue placeholder={cantonsLoading ? "Cargando cantones..." : "Seleccione el cantón"} />
                   </SelectTrigger>
                   <SelectContent className="w-full">
                     <SelectItem value="*">Todos los cantones</SelectItem>
@@ -501,10 +493,10 @@ export default function NewAddresseesForm({
                 <Select
                   onValueChange={(value) => setParishId(value)}
                   value={parishId || "*"}
-                  disabled={isUpdate && !isActive}
+                  disabled={(isUpdate && !isActive) || cantonId === "*" || parishesLoading}
                 >
                   <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <SelectValue placeholder="Seleccione la parroquia" />
+                    <SelectValue placeholder={parishesLoading ? "Cargando parroquias..." : "Seleccione la parroquia"} />
                   </SelectTrigger>
                   <SelectContent className="w-full">
                     <SelectItem value="*">Todas las parroquias</SelectItem>

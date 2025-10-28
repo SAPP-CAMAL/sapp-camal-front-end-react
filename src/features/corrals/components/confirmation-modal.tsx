@@ -56,15 +56,15 @@ export function ConfirmationModal({
 
   return (
     <Dialog open={confirmationModal.isOpen} onOpenChange={(open) => !open && onReset()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <CheckCircle className="h-5 w-5 text-blue-600" />
             Confirmar Transferencia
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 overflow-y-auto">
           {/* Transfer flow visualization */}
           <div className="flex items-center justify-center gap-3 p-3 bg-muted/40 rounded-lg border">
             <div className="text-center">
@@ -169,11 +169,11 @@ export function ConfirmationModal({
           </div>
 
           {/* Action buttons - Enhanced */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2 sticky bottom-0 bg-white pb-2 flex-shrink-0">
             <Button 
               variant="outline" 
               onClick={onReset}
-              className="flex-1 gap-2 border-gray-300 hover:bg-gray-50"
+              className="flex-1 gap-2 border-gray-300 hover:bg-gray-50 h-11"
               disabled={isTransferring}
             >
               <X className="h-4 w-4" />
@@ -181,7 +181,7 @@ export function ConfirmationModal({
             </Button>
             <Button 
               onClick={onConfirm}
-              className="flex-1 gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+              className="flex-1 gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-11"
               disabled={isTransferring}
             >
               {isTransferring ? (
@@ -192,7 +192,7 @@ export function ConfirmationModal({
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4" />
-                  Confirmar Transferencia
+                  Confirmar
                 </>
               )}
             </Button>
