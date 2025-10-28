@@ -18,6 +18,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { VisitorLogFormFields } from "./new-visitor-log-fields.form";
 import { createVisitorLogService } from "../server/db/visitor-log.service";
 import { useState } from "react";
+import { NewPerson } from "@/features/people/components/new-person.form";
+import { NewCompany } from "./new-company";
 
 export function NewVisitorLogForm() {
   const queryClient = useQueryClient();
@@ -39,10 +41,9 @@ export function NewVisitorLogForm() {
     try {
       console.log({ data });
 
-      if(!data.savedPerson){
+      if (!data.savedPerson) {
         return toast.error("Debe seleccionar una persona");
       }
-
 
       await createVisitorLogService({
         idPerson: Number(data.personId),
@@ -100,11 +101,21 @@ export function NewVisitorLogForm() {
       </DialogTrigger>
       <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
         <DialogHeader>
-          <DialogTitle>Nueva Visita</DialogTitle>
-          <DialogDescription>
-            Complete la información de la persona. Los campos marcados con (*)
-            son obligatorios.
-          </DialogDescription>
+          <div className="flex gap-x-2 justify-between items-center">
+            <div>
+              <DialogTitle>Nueva Visita</DialogTitle>
+              <DialogDescription>
+                Complete la información de la persona. Los campos marcados con
+                (*) son obligatorios.
+              </DialogDescription>
+            </div>
+            <div className="">
+              <NewPerson 
+                isUpdateVisitorLog
+              />
+              <NewCompany />
+            </div>
+          </div>
         </DialogHeader>
         <Form {...form}>
           <form

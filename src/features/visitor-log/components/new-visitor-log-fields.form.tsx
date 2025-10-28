@@ -31,8 +31,6 @@ import {
 import { getUserPersonByFilterService } from "@/features/security/server/db/security.queries";
 import { SelectCompany } from "../visitor-log-management";
 import { Textarea } from "@/components/ui/textarea";
-import { NewPerson } from "@/features/people/components/new-person.form";
-
 export type BrandCreating = {
   id: number;
   name: string;
@@ -94,9 +92,6 @@ export function VisitorLogFormFields() {
                   1
                 </div>
                 <span className="">Buscar Persona</span>
-              </div>
-              <div>
-                <NewPerson />
               </div>
             </div>
           </CardTitle>

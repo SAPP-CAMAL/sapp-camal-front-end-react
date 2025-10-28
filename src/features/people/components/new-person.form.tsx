@@ -18,7 +18,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createEmployeeService } from "@/features/employees/server/db/employees.services";
 import { NewPeopleFields } from "./person-form-fields";
 
-export function NewPerson() {
+export function NewPerson({
+  isUpdateVisitorLog = false
+}: {
+  isUpdateVisitorLog?: boolean;
+}) {
   const queryClient = useQueryClient();
 
   const defaultValues = {
@@ -47,7 +51,7 @@ export function NewPerson() {
         mobileNumber: data.mobileNumber,
         firstName: data.firstName,
         lastName: data.lastName,
-        fullName: `${data.firstName ?? ''} ${data.lastName ?? ''}`,
+        fullName: `${data.firstName ?? ""} ${data.lastName ?? ""}`,
         address: data.address,
         affiliationDate: new Date(),
         status: data.status === "true",
@@ -93,7 +97,7 @@ export function NewPerson() {
       onOpenChange={(open) => form.setValue("open", open)}
     >
       <DialogTrigger asChild>
-        <Button>
+        <Button type="button">
           <PlusIcon />
           Nueva Persona
         </Button>
@@ -111,7 +115,9 @@ export function NewPerson() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-8 grid grid-cols-2 gap-2"
           >
-            <NewPeopleFields />
+            <NewPeopleFields
+              isUpdateVisitorLog={isUpdateVisitorLog}
+            />
             <div className="flex justify-end col-span-2">
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Guardando..." : "Guardar"}

@@ -1,5 +1,5 @@
 import { CommonHttpResponse, CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
-import { CreateVisitorLogBody, UpdateVisitorLogBody, VisitorCompany, VisitorLogFilterBody, VisitorLogFilterResponse } from "../../domain";
+import { CreateCompanyBody, CreateVisitorLogBody, RCompanyType, UpdateVisitorLogBody, VisitorCompany, VisitorLogFilterBody, VisitorLogFilterResponse } from "../../domain";
 import { http } from "@/lib/ky";
 
 export function getVisitorLogByFilterService(body: VisitorLogFilterBody) {
@@ -38,4 +38,17 @@ export function upateVisitorLogService(id: number, body: UpdateVisitorLogBody) {
             json: body
         })
         .json();
+}
+
+
+export function getCompanyTypes() {
+    return http
+        .get("v1/1.0.0/company-type/all")
+        .json<CommonHttpResponse<RCompanyType>>();
+}
+
+export function createVisitorCompanyService(body: CreateCompanyBody) {
+    return http
+        .post("v1/1.0.0/visitor-company", { json: body })
+        .json()
 }
