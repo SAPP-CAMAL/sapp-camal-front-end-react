@@ -26,13 +26,13 @@ import { useState, useMemo } from "react";
 export const Step1Certificate = () => {
   const {
     shippers,
-    certificate,
+    certificates,
     selectedShipper,
     selectedCertificate,
     searchParams,
     step1Accordion,
     isLoadingShippers,
-    certificateQuery,
+    certificatesQuery,
     successMsg,
     isFromQR,
 
@@ -142,15 +142,22 @@ export const Step1Certificate = () => {
 
           {/* Results */}
           {certificateNumber.state === "loading" ||
-          certificateQuery.isFetching ? (
-            <Label className="opacity-50">Buscando certificado...</Label>
+          certificatesQuery.isFetching ? (
+            <Label className="opacity-50">Buscando certificados...</Label>
           ) : (
             <>
               {certificateNumber.value.length > 0 &&
-                !certificate &&
+                certificates.length === 0 &&
                 !selectedCertificate && (
                   <Label className="opacity-50">
-                    Certificados encontrados:
+                    Certificados encontrados: 0
+                  </Label>
+                )}
+              {certificateNumber.value.length > 0 &&
+                certificates.length > 0 &&
+                !selectedCertificate && (
+                  <Label className="opacity-50">
+                    Certificados encontrados: {certificates.length}
                   </Label>
                 )}
             </>
@@ -186,27 +193,30 @@ export const Step1Certificate = () => {
                 isSelected
               />
             ) : (
-              certificate && (
-                <BasicResultsCard
-                  title={certificate.code}
-                  paragraph={`${certificate.quantity} ${
-                    certificate.quantity > 1 ? "animales" : "animal"
-                  } ${
-                    certificate.plateVehicle && `• ${certificate.plateVehicle}`
-                  } • ${certificate.placeOrigin}`}
-                  editButton={
-                    <Button variant="outline">
-                      <Edit />
-                      Seleccionar
-                    </Button>
-                  }
-                  onSelect={() => handleSetSelectedCertificate(certificate)}
-                />
-              )
+              <>
+                {certificates.map((cert) => (
+                  <BasicResultsCard
+                    key={cert.id}
+                    title={cert.code}
+                    paragraph={`${cert.quantity} ${
+                      cert.quantity > 1 ? "animales" : "animal"
+                    } ${
+                      cert.plateVehicle && `• ${cert.plateVehicle}`
+                    } • ${cert.placeOrigin}`}
+                    editButton={
+                      <Button variant="outline">
+                        <Edit />
+                        Seleccionar
+                      </Button>
+                    }
+                    onSelect={() => handleSetSelectedCertificate(cert)}
+                  />
+                ))}
+              </>
             )}
             {certificateNumber.value.length > 0 &&
               !selectedCertificate &&
-              !certificate && (
+              certificates.length === 0 && (
                 <BasicResultsCard
                   title="No se encontraron certificados"
                   paragraph="Intente con otro número de certificado"

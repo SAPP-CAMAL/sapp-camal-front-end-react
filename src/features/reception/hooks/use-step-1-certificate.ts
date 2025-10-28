@@ -6,7 +6,7 @@ import { mapToAnimalAdmissions } from '../utils';
 import { ShipperBasicData } from '@/features/shipping/domain';
 import { Certificate } from '@/features/certificate/domain';
 import { useReceptionContext } from './use-reception-context';
-import { useCertificateByCode } from '@/features/certificate/hooks';
+import { useCertificatesByCode } from '@/features/certificate/hooks';
 import { updateCertificateService } from '@/features/certificate/server/db/certificate.service';
 import {
 	getDetailRegisterVehicleByIdShippingAndCertificateCodeService,
@@ -100,8 +100,8 @@ export const useStep1Certificate = () => {
 			};
 		});
 
-	const certificateQuery = useCertificateByCode(certificateNumber.searchValue);
-	const certificate = certificateQuery.data?.data;
+	const certificatesQuery = useCertificatesByCode(certificateNumber.searchValue);
+	const certificates = certificatesQuery.data?.data || [];
 
 	const debouncedSetSearchParams = useDebouncedCallback((field: keyof Step1State, searchValue: string) => {
 		setSearchState(prev => ({ ...prev, [field]: { value: searchValue, searchValue, state: 'enabled' } }));
@@ -265,12 +265,12 @@ export const useStep1Certificate = () => {
 	return {
 		// data
 		shippers,
-		certificate,
+		certificates,
 		selectedShipper,
 		selectedCertificate,
 		step1Accordion,
 		searchParams: searchState,
-		certificateQuery,
+		certificatesQuery,
 		successMsg,
 		isFromQR,
 		isLoadingShippers: registerVehicleQuery.isLoading,
