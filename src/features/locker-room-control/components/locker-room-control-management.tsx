@@ -21,6 +21,8 @@ import {
   AlertCircle,
   PlusIcon,
   Shirt,
+  XIcon,
+  Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
@@ -52,6 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { capitalizeText } from "@/lib/utils";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 // Componente para mostrar observaciones
 function ObservationsPopover({ observations }: { observations: string[] }) {
@@ -194,7 +197,6 @@ export function LockerRoomControlManagement() {
     elemX: number;
     elemY: number;
   } | null>(null);
-  console.log({ selectedLine });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -501,13 +503,14 @@ export function LockerRoomControlManagement() {
                                   : "Editar"}
                               </TooltipContent>
                             </Tooltip>
-
-                            <Tooltip>
-                              <TooltipTrigger asChild>
+                            <ConfirmationDialog
+                              title="¿Estás seguro de que deseas eliminar este registro?"
+                              description="Esta acción no se puede deshacer. Esto eliminará permanentemente el registro."
+                              onConfirm={() => handleDelete(row.id)}
+                              triggerBtn={
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  onClick={() => handleDelete(row.id)}
                                   disabled={disabled}
                                   className={
                                     disabled
@@ -517,25 +520,24 @@ export function LockerRoomControlManagement() {
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
-                              </TooltipTrigger>
-                              <TooltipContent
-                                side="top"
-                                align="center"
-                                sideOffset={5}
-                                avoidCollisions
-                                style={{
-                                  backgroundColor: "var(--primary)",
-                                  color: "var(--primary-foreground)",
-                                  padding: "0.5rem 1rem",
-                                  borderRadius: "0.375rem",
-                                  fontSize: "0.875rem",
-                                }}
-                              >
-                                {disabled
-                                  ? "Solo eliminable en la fecha de hoy"
-                                  : "Eliminar"}
-                              </TooltipContent>
-                            </Tooltip>
+                              }
+                              cancelBtn={
+                                <Button variant="outline" size="lg">
+                                  <XIcon className="h-4 w-4 mr-1" />
+                                  No
+                                </Button>
+                              }
+                              confirmBtn={
+                                <Button
+                                  variant="ghost"
+                                  className="hover:bg-red-600 hover:text-white"
+                                  size="lg"
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Sí
+                                </Button>
+                              }
+                            />
                           </>
                         );
                       })()}

@@ -20,6 +20,8 @@ import {
   Beaker,
   FlaskConical,
   AlertCircle,
+  XIcon,
+  Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
@@ -38,6 +40,7 @@ import {
 import React from "react";
 import NewCleaningDosageForm from "./new-cleaning-dosage.form";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 export function CleaningDosageManagement() {
   const queryClient = useQueryClient();
@@ -266,7 +269,7 @@ export function CleaningDosageManagement() {
                 <TableHead className="text-center border font-bold">
                   <div className="flex items-center justify-center gap-2">
                     <AlertCircle className="h-4 w-4 text-white" />
-                    <span>OBSERVACIONES</span>
+                    <span>OBSERVACIÓN</span>
                   </div>
                 </TableHead>
               </TableRow>
@@ -280,7 +283,7 @@ export function CleaningDosageManagement() {
                 return (
                   <TableRow key={idx}>
                     <TableCell className="text-center border">
-                      {new Date(row.registrationDate).toLocaleDateString()}
+                      {row.registrationDate}
                     </TableCell>
 
                     <TableCell className="text-center border">
@@ -327,18 +330,27 @@ export function CleaningDosageManagement() {
                     <TableCell className="text-center border">
                       <div className="flex items-center justify-center gap-2">
                         <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              disabled={disabled}
-                              className={
-                                disabled ? "opacity-50 cursor-not-allowed" : ""
-                              }
-                            >
-                              <EditIcon className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
+                          <NewCleaningDosageForm
+                            onSuccess={handleRefresh}
+                            isUpdate={true}
+                            cleaningDosageData={row}
+                            trigger={
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  disabled={disabled}
+                                  className={
+                                    disabled
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }
+                                >
+                                  <EditIcon className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                            }
+                          />
                           <TooltipContent
                             side="top"
                             align="center"
@@ -358,12 +370,14 @@ export function CleaningDosageManagement() {
                           </TooltipContent>
                         </Tooltip>
 
-                        <Tooltip>
-                          <TooltipTrigger asChild>
+                        <ConfirmationDialog
+                          title="¿Estás seguro de que deseas eliminar este registro?"
+                          description="Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de dosificación."
+                          onConfirm={() => handleDelete(row.id)}
+                          triggerBtn={
                             <Button
                               variant="outline"
                               size="icon"
-                              onClick={() => handleDelete(row.id)}
                               disabled={disabled}
                               className={
                                 disabled ? "opacity-50 cursor-not-allowed" : ""
@@ -371,25 +385,24 @@ export function CleaningDosageManagement() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="top"
-                            align="center"
-                            sideOffset={5}
-                            avoidCollisions
-                            style={{
-                              backgroundColor: "var(--primary)",
-                              color: "var(--primary-foreground)",
-                              padding: "0.5rem 1rem",
-                              borderRadius: "0.375rem",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            {disabled
-                              ? "Solo eliminable en la fecha de hoy"
-                              : "Eliminar"}
-                          </TooltipContent>
-                        </Tooltip>
+                          }
+                          cancelBtn={
+                            <Button variant="outline" size="lg">
+                              <XIcon className="h-4 w-4 mr-1" />
+                              No
+                            </Button>
+                          }
+                          confirmBtn={
+                            <Button
+                              variant="ghost"
+                              className="hover:bg-red-600 hover:text-white"
+                              size="lg"
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Sí
+                            </Button>
+                          }
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

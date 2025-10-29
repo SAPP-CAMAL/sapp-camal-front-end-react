@@ -226,7 +226,6 @@ export default function NewCleaningDosageForm({
     setSelectedMethod("");
     setSelectedDose("");
   };
-  console.log({ cleaningDosageData });
 
   const methodsList = useQuery({
     queryKey: ["cleaning-material"],

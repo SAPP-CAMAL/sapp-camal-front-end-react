@@ -6,7 +6,7 @@ export interface CleaningDosageResponse {
 
 export interface CleaningDosage {
     id:               number;
-    registrationDate: Date;
+    registrationDate: string;
     idMaterial:       number;
     equipment:        string;
     dose:             string;
