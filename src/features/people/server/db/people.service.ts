@@ -1,5 +1,5 @@
 import { http } from "@/lib/ky";
-import { FilterPeople, Person, ResponseCreatePerson, ResponseFindPersonByIdentificationOrFullName, ResponsePeopleByFilter, ResponseValidateDocumentType } from "@/features/people/domain";
+import { CommonHttpResponseSingle, FilterPeople, Person, PersonValidateDocumentResponse, ResponseCreatePerson, ResponseFindPersonByIdentificationOrFullName, ResponsePeopleByFilter, ResponseValidateDocumentType } from "@/features/people/domain";
 
 export function getPeopleByFilterService(filters: FilterPeople = {}): Promise<ResponsePeopleByFilter> {
     return http.post("v1/1.0.0/person/person-by-filter", {
@@ -38,4 +38,10 @@ export function getPersonByIdentificationOrFullNameService(query: { identificati
             ...(query.fullName && { fullName: query.fullName })
         }
     }).json()
+}
+
+export function personValidateDocument(identification: string) {
+    return http.get("v1/1.0.0/person/validate", {
+        searchParams: { identification }
+    }).json<CommonHttpResponseSingle<PersonValidateDocumentResponse>>()
 }

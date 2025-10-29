@@ -1,5 +1,5 @@
-import { AnimalAdmissionPage } from '@/features/reception/pages/animal-admission-page';
+import { AnimalAdmissionPage } from "@/features/reception/pages/animal-admission-page";
 
 export default function AnimalAdmission() {
-	return <AnimalAdmissionPage />;
+  return <AnimalAdmissionPage />;
 }

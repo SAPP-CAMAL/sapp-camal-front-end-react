@@ -74,15 +74,21 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
       const result = await generateSpecieCodesService(idLine);
       if (result.success) {
         toast.success(result.message);
-        // Refresh the page to show updated codes
-        window.location.reload();
+        // Mark that we're about to reload
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('corrals-just-reloaded', 'true');
+        }
+        // Force a hard reload to clear all caches and show updated codes
+        setTimeout(() => {
+          window.location.href = window.location.href;
+        }, 500);
       } else {
         toast.error(result.message);
+        setGeneratingCodes(false);
       }
     } catch (error) {
       console.error('Error generating codes:', error);
       toast.error('Error al generar los códigos. Por favor, intente nuevamente.');
-    } finally {
       setGeneratingCodes(false);
     }
   };

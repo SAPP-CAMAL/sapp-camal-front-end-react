@@ -63,3 +63,21 @@ export interface VisitorCompany {
     address: null | string;
     status: boolean;
 }
+
+
+export interface RCompanyType {
+  id: number;
+  name: string;
+  description: string;
+  status: boolean;
+}
+
+export interface CreateCompanyBody {
+  ruc: string;
+  name: string;
+  idCompanyType: number;
+  phone: string;
+  email: string;
+  address: string;
+  status: boolean;
+}

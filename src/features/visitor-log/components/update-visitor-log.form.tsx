@@ -16,16 +16,31 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { VisitorLogFormFields } from "./new-visitor-log-fields.form";
-import {
-  createVisitorLogService,
-  upateVisitorLogService,
-} from "../server/db/visitor-log.service";
+import { upateVisitorLogService } from "../server/db/visitor-log.service";
 import { useState } from "react";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+
+function isTodayEcuador(dateIsoString: string): boolean {
+  const dateUTC = new Date(dateIsoString);
+
+  const dateLocal = new Date(
+    dateUTC.toLocaleString("en-US", { timeZone: "America/Guayaquil" })
+  );
+
+  const nowLocal = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/Guayaquil" })
+  );
+
+  return (
+    dateLocal.getFullYear() === nowLocal.getFullYear() &&
+    dateLocal.getMonth() === nowLocal.getMonth() &&
+    dateLocal.getDate() === nowLocal.getDate()
+  );
+}
 
 function toLocalInputValue(utcString?: string) {
   if (!utcString) return "";
@@ -103,6 +118,10 @@ export function UpdateVisitorLogDialog({ visitor }: { visitor: any }) {
     }
   };
 
+  const isDisabled = !isTodayEcuador(visitor?.entryTime);
+
+  console.log({ visitor });
+
   return (
     <Dialog
       open={open}
@@ -114,7 +133,12 @@ export function UpdateVisitorLogDialog({ visitor }: { visitor: any }) {
       <Tooltip>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
-            <Button size="sm" variant="outline" className="p-0">
+            <Button
+              size="sm"
+              variant="outline"
+              className="p-0"
+              disabled={isDisabled}
+            >
               <EditIcon className="h-4 w-4" />
               <span className="sr-only">Editar registro de visita</span>
             </Button>

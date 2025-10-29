@@ -42,8 +42,10 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { UpdateVisitorLogDialog } from "./components/update-visitor-log.form";
 import { RegisterExitTime } from "./components/register-exit-time";
+import { UpdateVisitorLogDialog } from "./components/update-visitor-log.form";
+
+
 export function VisitorLogManagement() {
   const visitorLogParams = useSearchParams();
   const [searchParams, setSearchParams] = useQueryStates(
@@ -195,10 +197,6 @@ export function VisitorLogManagement() {
       <TableVisitorLog
         columns={[
           {
-            accessorKey: "visitPurpose",
-            header: "Motivo de Visita",
-          },
-          {
             header: "Fecha de Entrada",
             cell: ({ row }) => {
               const date = new Date(row.original.entryTime);
@@ -255,10 +253,6 @@ export function VisitorLogManagement() {
             },
           },
           {
-            accessorKey: "observation",
-            header: "Observaciones",
-          },
-          {
             accessorKey: "person.identification",
             header: "Identificación",
           },
@@ -273,6 +267,14 @@ export function VisitorLogManagement() {
           {
             accessorKey: "company.companyType.name",
             header: "Tipo de Empresa",
+          },
+          {
+            accessorKey: "visitPurpose",
+            header: "Motivo de Visita",
+          },
+          {
+            accessorKey: "observation",
+            header: "Observaciones",
           },
           {
             header: "Acciones",
@@ -326,7 +328,7 @@ export function SelectCompany({
 
   const options = query.data?.data.map((company) => ({
     id: company.id.toString(),
-    label: `${company.ruc}-${company.name}`,
+    label: `${company.name}`,
     ruc: company.ruc,
     name: company.name,
   }));
