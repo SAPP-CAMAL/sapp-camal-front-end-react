@@ -25,9 +25,6 @@ export interface GetAllLinesResponse {
 export interface Brand {
   id: number;
   name: string;
-  description: string;
-  introducerId: number;
-  status: boolean;
 }
 
 export interface SettingCertificateBrand {
@@ -67,8 +64,12 @@ export interface StatusCorralDetail {
   admissionDay: string;
   numberRings: number | null;
   status: boolean;
-  corral: Corral;
+  corral: {
+    id: number;
+    name: string;
+  };
   settingCertificatesBrands: SettingCertificateBrand[];
+  haveObservations: boolean; // Nueva propiedad para mostrar/ocultar botón de observaciones
 }
 
 export interface GetCorralDetailsResponse {
@@ -188,7 +189,8 @@ export const mapStatusCorralToAntemortemRow = (detail: StatusCorralDetail): impo
     argollas: detail.numberRings || 0, // Solo para bovinos
     total,
     machos,
-    hembras
+    hembras,
+    haveObservations: detail.haveObservations // Nueva propiedad de la API
   };
 };
 

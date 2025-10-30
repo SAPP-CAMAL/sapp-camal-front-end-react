@@ -472,35 +472,61 @@ export function SignosClinicosModal({
         return;
       }
       
-      // ✅ VALIDACIÓN: Siempre debe tener al menos un dictamen
-      if (selection.dictamen.size === 0) {
+      // Crear una copia de la selección para no mutar el estado original
+      const selectionToSave = cloneSelection(selection);
+      
+      console.log('📋 Validando datos antes de guardar:', {
+        isDeadAnimal: selectionToSave.isDeadAnimal,
+        dictamenSize: selectionToSave.dictamen.size,
+        selectedCauseOfDeath: selectionToSave.selectedCauseOfDeath,
+        disposalType: selectionToSave.disposalType,
+        signsWithBodyPartsSize: selectionToSave.signsWithBodyParts.size,
+        simpleSignsCount: Array.from(selectionToSave.simpleSigns.values()).filter(v => v).length
+      });
+      
+      // ✅ VALIDACIÓN: Si NO está marcado como animal muerto, debe tener al menos un dictamen
+      if (!selectionToSave.isDeadAnimal && selectionToSave.dictamen.size === 0) {
+        console.log('❌ Validación fallida: No hay dictamen y no es animal muerto');
         toast.error('Debe seleccionar al menos un dictamen');
         return;
       }
       
       // ✅ VALIDACIÓN: Si está marcado como animal muerto, debe tener causa de muerte y disposición
-      if (selection.isDeadAnimal) {
-        if (!selection.selectedCauseOfDeath) {
+      if (selectionToSave.isDeadAnimal) {
+        if (!selectionToSave.selectedCauseOfDeath) {
+          console.log('❌ Validación fallida: Animal muerto sin causa de muerte');
           toast.error('Debe seleccionar una causa de muerte');
           return;
         }
-        if (!selection.disposalType) {
+        if (!selectionToSave.disposalType) {
+          console.log('❌ Validación fallida: Animal muerto sin tipo de disposición');
           toast.error('Debe seleccionar un tipo de disposición');
           return;
         }
+        // Limpiar dictamen si el animal está muerto (no se debe enviar)
+        console.log('🧹 Limpiando dictamen porque es animal muerto');
+        selectionToSave.dictamen.clear();
       }
       
-      // Siempre hay datos para guardar si hay al menos un dictamen seleccionado
+      // Siempre hay datos para guardar si:
+      // - Es un animal muerto (con causa y disposición)
+      // - O tiene al menos un dictamen seleccionado
+      // - O tiene signos clínicos
       const hasData = 
-        selection.dictamen.size > 0 || // Al menos un dictamen seleccionado
-        selection.signsWithBodyParts.size > 0 || 
-        Array.from(selection.simpleSigns.values()).some(v => v) ||
-        selection.isDeadAnimal;
+        selectionToSave.isDeadAnimal || // Animal muerto (ya validado con causa y disposición)
+        selectionToSave.dictamen.size > 0 || // Al menos un dictamen seleccionado
+        selectionToSave.signsWithBodyParts.size > 0 || 
+        Array.from(selectionToSave.simpleSigns.values()).some(v => v);
+      
+      console.log('📊 Verificación de datos:', { hasData });
       
       if (!hasData) {
+        console.log('❌ No hay datos para guardar');
         toast.info('No hay datos para guardar');
         return;
       }
+      
+      console.log('✅ Validaciones pasadas, procediendo a guardar...');
       
       // Verificar si es actualización o creación
       const currentAnimalHasSavedData = Boolean(savedAnimalIds[currentId]);
@@ -517,12 +543,21 @@ export function SignosClinicosModal({
           const updateRequest = convertSelectionToUpdateRequest(
             animal.id,
             antemortemId,
-            selection,
+            selectionToSave,
             existingData
           );
           
+          // Log para debug
+          console.log('🔄 Actualizando antemortem:', {
+            antemortemId,
+            updateRequest,
+            selectionToSave
+          });
+          
           // Actualizar en la API
           const response = await updateAntemortemService(antemortemId, updateRequest);
+          
+          console.log('✅ Respuesta de actualización:', response);
           
           if (response && (response.code === 200 || response.code === 201)) {
             toast.success(`Datos del animal ${currentId} actualizados exitosamente`);
@@ -547,7 +582,7 @@ export function SignosClinicosModal({
             
             setHasUnsavedChanges(false);
             
-            const currentCount = countSelection(selection);
+            const currentCount = countSelection(selectionToSave);
             setAnimalTotalSigns(prev => ({
               ...prev,
               [currentId]: currentCount
@@ -561,19 +596,31 @@ export function SignosClinicosModal({
             }
           } else {
             const errorMessage = response?.message || 'Error desconocido al actualizar';
+            console.error('❌ Error en respuesta:', response);
             throw new Error(errorMessage);
           }
         } catch (error) {
-          toast.error(`Error al actualizar: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+          console.error('❌ Error capturado al actualizar:', error);
+          const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
+          toast.error(`Error al actualizar: ${errorMsg}`);
           throw error; // Re-lanzar para que el catch exterior lo maneje
         }
       } else {
         try {
           // CREAR nuevo registro
-          const saveRequest = convertSelectionToSaveRequest(animal.id, selection);
+          const saveRequest = convertSelectionToSaveRequest(animal.id, selectionToSave);
+          
+          // Log para debug
+          console.log('💾 Guardando nuevo antemortem:', {
+            animalId: animal.id,
+            saveRequest,
+            selectionToSave
+          });
           
           // Guardar en la API
           const response = await saveAntemortemService(saveRequest);
+          
+          console.log('✅ Respuesta de guardado:', response);
           
           if (response && (response.code === 200 || response.code === 201) && response.data) {
             toast.success(`Datos del animal ${currentId} guardados exitosamente`);
@@ -603,7 +650,7 @@ export function SignosClinicosModal({
             setHasUnsavedChanges(false);
             
             // Actualizar totalSigns con el contador actual
-            const currentCount = countSelection(selection);
+            const currentCount = countSelection(selectionToSave);
             setAnimalTotalSigns(prev => ({
               ...prev,
               [currentId]: currentCount
@@ -621,10 +668,13 @@ export function SignosClinicosModal({
             }
           } else {
             const errorMessage = response?.message || 'Error desconocido al guardar';
+            console.error('❌ Error en respuesta de guardado:', response);
             throw new Error(errorMessage);
           }
         } catch (error) {
-          toast.error(`Error al guardar: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+          console.error('❌ Error capturado al guardar:', error);
+          const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
+          toast.error(`Error al guardar: ${errorMsg}`);
           throw error;
         }
       }
@@ -977,9 +1027,15 @@ export function SignosClinicosModal({
             </div>
             
             {/* Dictamen Section */}
-            <div className="rounded-md border">
-              <div className="p-3 bg-muted/30 border-b">
+            <div className={`rounded-md border ${current.isDeadAnimal ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className="p-3 bg-muted/30 border-b flex items-center justify-between">
                 <h3 className="font-semibold text-base">Dictamen *</h3>
+                {current.isDeadAnimal && (
+                  <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300 text-xs flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Bloqueado (Animal Muerto)
+                  </Badge>
+                )}
               </div>
               <div className="p-4 space-y-3">
                 {opinions.filter(opinion => {

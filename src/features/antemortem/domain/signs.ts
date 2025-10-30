@@ -472,12 +472,19 @@ export function convertSelectionToUpdateRequest(
     };
   }
   
-  return {
+  // Construir el request final
+  const updateRequest: UpdateAntemortemRequest = {
     idDetailsSpeciesCertificate: animalId,
     status: true,
     settingAntemortemClinicalSignSpecie: clinicalSigns,
-    antemortemOpinion: opinions,
-    antemortemDeadAnimal: deadAnimal
+    antemortemOpinion: opinions
   };
+  
+  // Solo incluir deadAnimal si existe (no enviar undefined)
+  if (deadAnimal !== undefined) {
+    updateRequest.antemortemDeadAnimal = deadAnimal;
+  }
+  
+  return updateRequest;
 }
 

@@ -19,6 +19,7 @@ export interface AntemortemRow {
   total: number; // machos + hembras
   machos: number;
   hembras: number;
+  haveObservations?: boolean; // Indica si tiene observaciones guardadas (para mostrar/ocultar botón)
 }
 
 export interface AntemortemDataSet {

@@ -116,17 +116,17 @@ export const getLineByDescriptionService = async (description: string): Promise<
 };
 
 /**
- * Obtiene los detalles de corrales filtrados por fecha y línea
+ * Obtiene los detalles de corrales con observaciones filtrados por fecha y línea
  * @param admissionDate - Fecha de admisión en formato YYYY-MM-DD
  * @param idLine - ID de la línea
- * @returns Promise con los detalles de corrales
+ * @returns Promise con los detalles de corrales incluyendo haveObservations
  */
 export const getCorralDetailsService = async (
   admissionDate: string, 
   idLine: number
 ): Promise<GetCorralDetailsResponse> => {
   try {
-    const response = await http.get("v1/1.0.0/status-corrals/detail-corrals", {
+    const response = await http.get("v1/1.0.0/status-corrals/detail-corrals-observations", {
       searchParams: {
         admissionDate,
         idLine: idLine.toString()

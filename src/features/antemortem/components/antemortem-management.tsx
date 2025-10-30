@@ -148,6 +148,7 @@ export function AntemortemManagement() {
   // Estados para datos de antemortem
   const [antemortemData, setAntemortemData] = useState<AntemortemRow[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Renderizado de marcas: colorea H (azul) y M (rosa) mostrando numero primero, robusto ante "6H", "H:6", comas y corchetes
   const renderMarcaPieces = (m: string) => {
@@ -346,7 +347,12 @@ export function AntemortemManagement() {
         <div className="mx-auto max-w-screen-xl px-3 md:px-4 py-3 md:py-4">
           {/* Título */}
           <div className="text-center">
-            <h1 className="text-2xl font-normal">ANTEMORTEM INTERNO- {linea.toUpperCase()}</h1>
+            <h1 className="text-2xl font-normal flex items-center justify-center gap-2">
+              ANTEMORTEM INTERNO- {linea.toUpperCase()}
+              {isRefreshing && (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              )}
+            </h1>
             <p className="text-sm text-muted-foreground">Marcas generadas para: {format(fecha, "dd 'de' MMMM 'de' yyyy", { locale: es })}</p>
           </div>
           {/* Filtros */}
@@ -549,9 +555,9 @@ export function AntemortemManagement() {
                   </div>
                 </TableCell>
                 <TableCell className="text-center border">
-                  {r.observaciones ? (
+                  {r.haveObservations ? (
                     <ObservacionesModal 
-                      observaciones={r.observaciones}
+                      observaciones={r.observaciones || "Sin observaciones"}
                       statusCorralId={r.statusCorralId}
                       admissionDate={format(fecha, "yyyy-MM-dd")}
                       marcasInfo={r.marcasInfo}
@@ -774,6 +780,11 @@ export function AntemortemManagement() {
         marcaLabel={signosMarca}
         settingCertificateBrandsId={signosSettingId}
         idSpecie={signosIdSpecie}
+        onSave={async () => {
+          setIsRefreshing(true);
+          await loadAntemortemData(fecha, linea);
+          setIsRefreshing(false);
+        }}
       />
 
 
