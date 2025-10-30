@@ -113,11 +113,9 @@ export function PostmortemManagement() {
       idSpecies: selectedSpecieId,
     };
 
-    // TODO: Descomentar cuando el filtro NORMAL esté listo
-    // if (corralTypeFilter === "NORMAL") {
-    //   request.type = "NOR";
-    // } else
-    if (corralTypeFilter === "EMERGENCIA") {
+    if (corralTypeFilter === "NORMAL") {
+      request.type = "NOR";
+    } else if (corralTypeFilter === "EMERGENCIA") {
       request.type = "EME";
     }
 
@@ -522,7 +520,7 @@ export function PostmortemManagement() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[90vw] sm:w-[400px] p-0" align="end">
-                <Command>
+                <Command shouldFilter={true}>
                   <CommandInput
                     placeholder="Buscar por nombre o marca..."
                     className="h-9"
@@ -541,20 +539,34 @@ export function PostmortemManagement() {
                         return (
                           <CommandItem
                             key={intro.id}
+                            value={`${intro.nombre} ${intro.marca} ${intro.certificado}`}
                             onSelect={() => {
                               if (!isAlreadySelected) {
-                                // Agregar nueva fila con este introductor
-                                const newRowId = `row-${rows.length + 1}`;
-                                setRows((prev) => [
-                                  ...prev,
-                                  {
-                                    id: newRowId,
-                                    introductor: intro,
-                                    values: Array(
-                                      dynamicColumnConfig.length + 3
-                                    ).fill(0),
-                                  },
-                                ]);
+                                // Encontrar la primera fila vacía
+                                const firstEmptyRowIndex = rows.findIndex(
+                                  (r) => r.introductor === null
+                                );
+                                
+                                const newRowId = `row-${Date.now()}`;
+                                const newRow = {
+                                  id: newRowId,
+                                  introductor: intro,
+                                  values: Array(
+                                    dynamicColumnConfig.length + 3
+                                  ).fill(0),
+                                };
+
+                                if (firstEmptyRowIndex !== -1) {
+                                  // Insertar antes de la primera fila vacía
+                                  setRows((prev) => [
+                                    ...prev.slice(0, firstEmptyRowIndex),
+                                    newRow,
+                                    ...prev.slice(firstEmptyRowIndex),
+                                  ]);
+                                } else {
+                                  // No hay filas vacías, agregar al final
+                                  setRows((prev) => [...prev, newRow]);
+                                }
                                 setOpenPopover(null);
                               }
                             }}

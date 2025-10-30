@@ -1,7 +1,9 @@
+import { http } from "@/lib/ky";
 import type {
   SaveAnimalWeighingRequest,
   GetAnimalWeighingRequest,
   AnimalWeighingData,
+  GetAnimalWeighingResponse,
 } from "../../domain";
 
 /**
@@ -29,11 +31,14 @@ export async function saveAnimalWeighing(
  */
 export async function getAnimalWeighingByFilters(
   request: GetAnimalWeighingRequest
-): Promise<{ data: AnimalWeighingData[] }> {
-  // TODO: Implementar llamada a la API
-  console.log("Obteniendo pesajes:", request);
-  
-  return {
-    data: [],
-  };
+): Promise<GetAnimalWeighingResponse> {
+  const response = await http
+    .get("v1/1.0.0/detail-specie-cert/detail-animal", {
+      searchParams: {
+        slaughterDate: request.slaughterDate,
+      },
+    })
+    .json<GetAnimalWeighingResponse>();
+
+  return response;
 }

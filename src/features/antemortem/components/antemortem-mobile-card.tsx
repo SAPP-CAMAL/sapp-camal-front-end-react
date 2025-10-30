@@ -17,6 +17,7 @@ type AntemortemMobileCardProps = {
     hembras: number;
     total: number;
     statusCorralId?: number;
+    haveObservations?: boolean;
   };
   showArgollas: boolean;
   onViewSignosClinicas: (marca: string, settingId: number) => void;
@@ -208,10 +209,10 @@ export function AntemortemMobileCard({
           </div>
 
           {/* Observaciones */}
-          {item.observaciones && (
+          {item.haveObservations && (
             <div>
               <ObservacionesModal 
-                observaciones={item.observaciones}
+                observaciones={item.observaciones || "Sin observaciones"}
                 statusCorralId={item.statusCorralId}
                 admissionDate={admissionDate}
                 marcasInfo={item.marcasInfo}

@@ -4,7 +4,7 @@
 
 export type ProductType = "CANAL" | "MEDIA_CANAL";
 
-export type WeighingStage = "EN_PIE" | "DESPUES_FAENAMIENTO" | "DISTRIBUCION";
+export type WeighingStage = "ANTE" | "POST" | "DIST";
 
 export type AnimalWeighingFilters = {
   slaughterDate: string;
@@ -16,11 +16,12 @@ export type AnimalWeighingFilters = {
 
 export type AnimalWeighingRow = {
   id: string;
-  marca: string;
-  producto: string;
+  code: string; // Código del animal
+  producto: string; // Sexo + Etapa productiva
   peso: number;
-  idSettingCertificateBrands: number;
-  idProductiveStage: number;
+  fechaIngreso: string; // Fecha de ingreso
+  idDetailsCertificateBrands: number;
+  idAnimalSex: number;
 };
 
 export type SaveAnimalWeighingRequest = {
@@ -34,8 +35,56 @@ export type SaveAnimalWeighingRequest = {
 
 export type GetAnimalWeighingRequest = {
   slaughterDate: string;
-  idSpecies: number;
+  idSpecies?: number;
   productType?: ProductType;
+};
+
+// Tipos para la respuesta de la API
+export type AnimalSex = {
+  id: number;
+  name: string;
+};
+
+export type ProductiveStage = {
+  id: number;
+  name: string;
+};
+
+export type CorralType = {
+  id: number;
+  description: string;
+  code: string;
+};
+
+export type DetailsCertificateBrand = {
+  createdAt: string;
+  id: number;
+  corralType: CorralType;
+};
+
+export type DetailCertificateBrands = {
+  id: number;
+  productiveStage: ProductiveStage;
+  detailsCertificateBrand: DetailsCertificateBrand;
+};
+
+export type AnimalDetail = {
+  id: number;
+  idDetailsCertificateBrands: number;
+  idAnimalSex: number;
+  code: string;
+  status: boolean;
+  animalSex: AnimalSex;
+  detailCertificateBrands: DetailCertificateBrands;
+};
+
+export type GetAnimalWeighingResponse = {
+  code: number;
+  message: string;
+  data: {
+    ingressEmergency: AnimalDetail[];
+    ingressNormal: AnimalDetail[];
+  };
 };
 
 export type AnimalWeighingData = {
