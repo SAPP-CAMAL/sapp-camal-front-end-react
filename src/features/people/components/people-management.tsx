@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { SearchIcon } from "lucide-react";
+import { CreditCardIcon, SearchIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -118,7 +118,7 @@ export function PeopleManagement({}) {
                 Buscar por identificación
               </label>
               <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <CreditCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
                 <Input
                   type="text"
                   placeholder="Ingrese identificación"

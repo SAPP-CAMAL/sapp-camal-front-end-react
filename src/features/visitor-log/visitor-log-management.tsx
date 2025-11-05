@@ -14,6 +14,7 @@ import {
   Calendar,
   CheckIcon,
   ChevronsUpDownIcon,
+  CreditCardIcon,
   IdCardIcon,
   SearchIcon,
 } from "lucide-react";
@@ -148,7 +149,7 @@ export function VisitorLogManagement() {
                 Buscar por identificación
               </label>
               <div className="relative">
-                <IdCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <CreditCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
                 <Input
                   type="text"
                   placeholder="Ingrese identificación"
