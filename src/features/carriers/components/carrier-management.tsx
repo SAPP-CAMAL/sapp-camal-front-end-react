@@ -11,7 +11,7 @@ import { NewCarrier } from "./new-carrier.form";
 import { CarriersTable } from "./table-carriers";
 import { Badge } from "@/components/ui/badge";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
-import { EditIcon, PlusIcon, SearchIcon, Truck } from "lucide-react";
+import { CreditCardIcon, EditIcon, PlusIcon, SearchIcon, Truck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -140,7 +140,7 @@ export function CarriersManagement({}) {
                 Buscar por identificación
               </label>
               <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <CreditCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
                 <Input
                   type="text"
                   placeholder="Ingrese Identificación"

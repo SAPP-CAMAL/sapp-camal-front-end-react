@@ -152,6 +152,47 @@ export function NewPeopleFields({
           </FormItem>
         )}
       />
+
+      <FormField
+        control={form.control}
+        name="firstName"
+        rules={{
+          required: {
+            value: true,
+            message: "El campo nombres es requerido",
+          },
+        }}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Nombres *</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="lastName"
+        rules={{
+          required: {
+            value: true,
+            message: "El campo apellidos es requerido",
+          },
+        }}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Apellidos *</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+
       <FormField
         control={form.control}
         name="genderId"
@@ -194,44 +235,6 @@ export function NewPeopleFields({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Número de Teléfono *</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="firstName"
-        rules={{
-          required: {
-            value: true,
-            message: "El campo nombres es requerido",
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Nombres *</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="lastName"
-        rules={{
-          required: {
-            value: true,
-            message: "El campo apellidos es requerido",
-          },
-        }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Apellidos *</FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
