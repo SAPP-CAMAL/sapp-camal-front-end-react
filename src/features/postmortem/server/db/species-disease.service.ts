@@ -41,8 +41,35 @@ export const groupDiseasesByProduct = (
   const productMap = new Map<string, GroupedColumn>();
 
   data.forEach((item) => {
+    // Validar que los objetos necesarios no sean null o undefined
+    if (!item) {
+      console.warn('Item de species-disease es null o undefined');
+      return;
+    }
+
+    if (!item.productDisease) {
+      console.warn('productDisease es null o undefined para item:', item.id);
+      return;
+    }
+
+    if (!item.productDisease.product) {
+      console.warn('product es null o undefined para productDisease:', item.productDisease.id);
+      return;
+    }
+
+    if (!item.productDisease.disease) {
+      console.warn('disease es null o undefined para productDisease:', item.productDisease.id);
+      return;
+    }
+
     const productName = item.productDisease.product.description;
     const diseaseName = item.productDisease.disease.names;
+
+    if (!productName || !diseaseName) {
+      console.warn('Nombre de producto o enfermedad vacío:', { productName, diseaseName, itemId: item.id });
+      return;
+    }
+
     const speciesDiseaseId = item.id; // ID de SpeciesDisease (el correcto para guardar)
     const productDiseaseId = item.productDisease.id;
 
