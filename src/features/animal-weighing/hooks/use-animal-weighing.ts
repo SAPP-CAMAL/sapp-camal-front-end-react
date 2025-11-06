@@ -17,6 +17,6 @@ export function useAnimalWeighingByFilters(
       }
       return getAnimalWeighingByFilters(request);
     },
-    enabled: !!request,
+    enabled: !!request && !!request.idSpecie && !!request.idWeighingStage,
   });
 }

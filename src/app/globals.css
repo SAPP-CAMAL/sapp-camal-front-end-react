@@ -1652,3 +1652,28 @@ button[data-slot="checkbox"][data-state="checked"],
 .animate-collapse-up {
   animation: collapse-up 200ms ease-out;
 }
+
+
+/* ========================================
+   FIX SCROLL PARA PANTALLAS 1080x1920
+   ======================================== */
+html, body {
+  height: 100%;
+  overflow: auto !important;
+}
+
+body {
+  overflow-y: scroll !important;
+}
+
+/* Forzar scroll en el contenedor del sidebar */
+[data-sidebar="inset"] {
+  overflow-y: auto !important;
+  height: 100vh !important;
+}
+
+
+/* Fix específico para la página de pesajes */
+main {
+  min-height: calc(100vh - 4rem);
+}
