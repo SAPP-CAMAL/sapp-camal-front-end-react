@@ -36,6 +36,7 @@ export const useStep1Certificate = () => {
 		step1Accordion,
 		selectedShipper,
 		selectedCertificate,
+		selectedSpecie,
 		isFromQR,
 		handleRemoveSelectedCertificate,
 		handleSetSelectedCertificate: handleSelectedCertificate,
@@ -62,16 +63,18 @@ export const useStep1Certificate = () => {
 	const shippers = registerVehicleQuery.data.data
 		.filter(item => {
 			// Verificar que todos los objetos necesarios existan
-			return item.registerVehicle?.shipping?.person && 
-			       item.registerVehicle?.shipping?.vehicle?.vehicleDetail?.vehicleType &&
-			       item.registerVehicle?.shipping?.vehicle?.vehicleDetail?.transportType;
+			return (
+				item.registerVehicle?.shipping?.person &&
+				item.registerVehicle?.shipping?.vehicle?.vehicleDetail?.vehicleType &&
+				item.registerVehicle?.shipping?.vehicle?.vehicleDetail?.transportType
+			);
 		})
 		.map(item => {
 			const shipping = item.registerVehicle!.shipping!;
 			const person = shipping.person;
 			const vehicle = shipping.vehicle;
 			const vehicleDetail = vehicle.vehicleDetail;
-			
+
 			return {
 				id: shipping.id,
 				person: {
@@ -112,8 +115,6 @@ export const useStep1Certificate = () => {
 
 		setSearchState(prev => ({ ...prev, [field]: { value, searchValue: '', state: 'loading' } }));
 	};
-
-
 
 	const handleSuccessButton = async (qrData: Certificate | null, closeModal: () => void) => {
 		closeModal?.();
@@ -183,6 +184,18 @@ export const useStep1Certificate = () => {
 			handleSetAccordionState({ name: 'step2Accordion', accordionState: { isOpen: true, state: 'enabled' } });
 			handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: false, state: 'enabled' } });
 		}
+
+		// 3. Retrieve specie if not set
+		try {
+
+			if (selectedSpecie) return;
+
+			const registerVehicle = (
+				await getDetailRegisterVehicleByIdShippingAndCertificateCodeService(selectedShipper.id, selectedCertificate.code)
+			).data;
+
+			if (registerVehicle.species) handleSetSelectedSpecie(registerVehicle.species);
+		} catch (error) {}
 	};
 
 	const handleSetSelectedCertificate = async (certificate: Certificate, isFromQR?: boolean) => {
