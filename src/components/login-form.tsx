@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,7 +43,7 @@ export function LoginForm({
         window.cookieStore.set("user", JSON.stringify(resp.data)),
       ]);
       console.log("Tokens stored, redirecting...");
-      router.push("/dashboard/people");
+      router.push("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
 
