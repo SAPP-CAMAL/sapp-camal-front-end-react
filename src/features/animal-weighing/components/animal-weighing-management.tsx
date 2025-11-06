@@ -5,6 +5,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -20,15 +27,19 @@ import {
 } from "@/components/ui/table";
 import { CalendarIcon, Download, Search, Scale } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLines } from "@/features/postmortem/hooks/use-lines";
 import { useSerialScale } from "@/hooks/use-serial-scale";
 import { toast } from "sonner";
 import {
   useAnimalWeighingByFilters,
   useSaveAnimalWeighing,
+  useUpdateAnimalWeighing,
   useWeighingStages,
   useHookTypesBySpecie,
   useChannelTypes,
+  useChannelSectionsByType,
+  useUnitMeasure,
 } from "../hooks";
 import type { ProductType, AnimalWeighingRow, WeighingStage } from "../domain";
 import {
@@ -43,6 +54,7 @@ export function AnimalWeighingManagement() {
     getLocalDateString()
   );
   const [weighingStage, setWeighingStage] = useState<WeighingStage>("ANTE");
+  const [weighingStageId, setWeighingStageId] = useState<number | null>(null);
   const [productType, setProductType] = useState<ProductType>("MEDIA_CANAL");
   const [selectedHook, setSelectedHook] = useState<number | null>(null);
   const [selectedChannelTypeId, setSelectedChannelTypeId] = useState<
@@ -53,6 +65,8 @@ export function AnimalWeighingManagement() {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [capturedWeight, setCapturedWeight] = useState<number | null>(null);
   const lastCapturedWeightRef = useRef<number | null>(null);
+
+  const queryClient = useQueryClient();
 
   // Hook de balanza serial
   const {
@@ -72,6 +86,15 @@ export function AnimalWeighingManagement() {
     useHookTypesBySpecie(selectedSpecieId);
   const { data: channelTypesData, isLoading: isLoadingChannelTypes } =
     useChannelTypes();
+  const { data: channelSectionsData, isLoading: isLoadingChannelSections } =
+    useChannelSectionsByType(selectedChannelTypeId);
+  
+  // Cargar secciones de todos los tipos de canal para tener la información completa
+  const { data: mediaCanalSections } = useChannelSectionsByType(1); // Media Canal
+  const { data: canalSections } = useChannelSectionsByType(2); // Canal
+  const { data: cuartaSections } = useChannelSectionsByType(3); // Cuarta
+  
+  const { data: unitMeasureData } = useUnitMeasure();
 
   // Seleccionar Bovinos por defecto
   useEffect(() => {
@@ -86,34 +109,54 @@ export function AnimalWeighingManagement() {
     }
   }, [lines, selectedLineId]);
 
+  // Seleccionar automáticamente el primer ID de etapa de pesaje
+  useEffect(() => {
+    if (weighingStagesData?.data && weighingStagesData.data.length > 0) {
+      const firstStage = weighingStagesData.data[0];
+      setWeighingStage(firstStage.code as WeighingStage);
+      setWeighingStageId(firstStage.id);
+    }
+  }, [weighingStagesData]);
+
+  // Seleccionar automáticamente el primer gancho cuando se carguen
+  useEffect(() => {
+    if (hookTypesData?.data && hookTypesData.data.length > 0 && weighingStageId !== 1) {
+      const firstHook = hookTypesData.data[0];
+      setSelectedHook(firstHook.id);
+    }
+  }, [hookTypesData, weighingStageId]);
+
+  // Seleccionar automáticamente el primer tipo de canal cuando se carguen
+  useEffect(() => {
+    if (channelTypesData?.data && channelTypesData.data.length > 0 && weighingStageId !== 1) {
+      const firstChannel = channelTypesData.data[0];
+      setSelectedChannelTypeId(firstChannel.id);
+    }
+  }, [channelTypesData, weighingStageId]);
+
   const weighingRequest = useMemo(() => {
-    if (!slaughterDate) return null;
+    if (!slaughterDate || !selectedSpecieId || !weighingStageId) return null;
     return {
       slaughterDate,
-      productType,
+      idSpecie: selectedSpecieId,
+      idWeighingStage: weighingStageId,
     };
-  }, [slaughterDate, productType]);
+  }, [slaughterDate, selectedSpecieId, weighingStageId]);
 
   const { data: weighingData, isLoading: isLoadingWeighingData } = useAnimalWeighingByFilters(weighingRequest);
   const saveWeighingMutation = useSaveAnimalWeighing();
+  const updateWeighingMutation = useUpdateAnimalWeighing();
 
-  // Generar filas basadas en datos de pesaje y tipo de canal
+  // Generar filas basadas en datos de pesaje y secciones de canal
   useEffect(() => {
     if (!weighingData?.data) {
       setRows([]);
       return;
     }
 
-    // Si no hay tipo de canal seleccionado, usar 1 por defecto (una sola fila por animal)
-    let hooksQuantity = 1;
-    
-    if (selectedChannelTypeId && channelTypesData?.data) {
-      const selectedChannel = channelTypesData.data.find(
-        (ch) => ch.id === selectedChannelTypeId
-      );
-      if (selectedChannel) {
-        hooksQuantity = selectedChannel.hooksQuantity;
-      }
+    // Si NO es EN PIE y aún no se han cargado las secciones, esperar
+    if (weighingStageId !== 1 && selectedChannelTypeId && !channelSectionsData?.data) {
+      return; // No limpiar las filas, solo esperar a que se carguen las secciones
     }
 
     const newRows: AnimalWeighingRow[] = [];
@@ -124,26 +167,292 @@ export function AnimalWeighingManagement() {
       ...weighingData.data.ingressEmergency,
     ];
 
+    // Crear un mapa de todas las secciones conocidas (de todos los tipos de canal)
+    const allKnownSections = new Map<number, { code: string; description: string }>();
+    
+    // Agregar secciones de Media Canal
+    if (mediaCanalSections?.data) {
+      mediaCanalSections.data.forEach(section => {
+        allKnownSections.set(section.id, {
+          code: section.sectionCode,
+          description: section.description
+        });
+      });
+    }
+
+    // Agregar secciones de Canal
+    if (canalSections?.data) {
+      canalSections.data.forEach(section => {
+        allKnownSections.set(section.id, {
+          code: section.sectionCode,
+          description: section.description
+        });
+      });
+    }
+
+    // Agregar secciones de Cuarta
+    if (cuartaSections?.data) {
+      cuartaSections.data.forEach(section => {
+        allKnownSections.set(section.id, {
+          code: section.sectionCode,
+          description: section.description
+        });
+      });
+    }
+
+    // Agregar las del tipo actual si aún no están
+    if (channelSectionsData?.data) {
+      channelSectionsData.data.forEach(section => {
+        if (!allKnownSections.has(section.id)) {
+          allKnownSections.set(section.id, {
+            code: section.sectionCode,
+            description: section.description
+          });
+        }
+      });
+    }
+
+    // Extraer información de secciones de los datos guardados como último recurso
     allAnimals.forEach((animal) => {
-      // Generar múltiples filas según hooksQuantity
-      for (let i = 0; i < hooksQuantity; i++) {
-        newRows.push({
-          id: `${animal.id}-${i}`,
-          code: animal.code,
-          producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
-          peso: 0,
-          fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
-          idDetailsCertificateBrands: animal.idDetailsCertificateBrands,
-          idAnimalSex: animal.idAnimalSex,
+      if (animal.animalWeighing && animal.animalWeighing.length > 0) {
+        animal.animalWeighing.forEach((weighing: any) => {
+          if (weighing.detailAnimalWeighing) {
+            weighing.detailAnimalWeighing.forEach((detail: any) => {
+              if (detail.idConfigSectionChannel && detail.configSectionChannel) {
+                if (!allKnownSections.has(detail.idConfigSectionChannel)) {
+                  allKnownSections.set(detail.idConfigSectionChannel, {
+                    code: detail.configSectionChannel.sectionCode,
+                    description: detail.configSectionChannel.description
+                  });
+                }
+              }
+            });
+          }
         });
       }
     });
 
-    // Ordenar por código de animal
-    newRows.sort((a, b) => a.code.localeCompare(b.code));
+    // Si es EN PIE (weighingStageId === 1) o no hay secciones, mostrar 1 fila por animal
+    if (weighingStageId === 1 || !channelSectionsData?.data || channelSectionsData.data.length === 0) {
+      allAnimals.forEach((animal) => {
+        // Buscar si tiene peso guardado para esta etapa
+        let savedWeight = 0;
+        if (animal.animalWeighing && animal.animalWeighing.length > 0) {
+          const weighingForStage = animal.animalWeighing.find(
+            (w: any) => w.idWeighingStage === weighingStageId
+          );
+          if (weighingForStage && weighingForStage.detailAnimalWeighing && weighingForStage.detailAnimalWeighing.length > 0) {
+            // Para EN PIE, tomar el primer detalle
+            savedWeight = parseFloat(weighingForStage.detailAnimalWeighing[0].netWeight) || 0;
+          }
+        }
+
+        newRows.push({
+          id: `${animal.id}`,
+          animalId: animal.id,
+          code: animal.code,
+          producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
+          peso: savedWeight,
+          savedWeight: savedWeight,
+          fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
+          idDetailsCertificateBrands: animal.idDetailsCertificateBrands,
+          idAnimalSex: animal.idAnimalSex,
+        });
+      });
+    } else {
+      // Si hay secciones de canal, solo mostrar filas con datos guardados
+      allAnimals.forEach((animal) => {
+        // Obtener TODAS las secciones guardadas para este animal en esta etapa
+        const savedSections = new Map<number, number>(); // Map<idConfigSectionChannel, peso>
+        let idAnimalWeighing: number | undefined = undefined;
+        
+        if (animal.animalWeighing && animal.animalWeighing.length > 0) {
+          const weighingForStage = animal.animalWeighing.find(
+            (w: any) => w.idWeighingStage === weighingStageId
+          );
+          if (weighingForStage) {
+            idAnimalWeighing = weighingForStage.id; // Guardar el ID del registro de pesaje
+            if (weighingForStage.detailAnimalWeighing) {
+              weighingForStage.detailAnimalWeighing.forEach((detail: any) => {
+                if (detail.idConfigSectionChannel) {
+                  savedSections.set(
+                    detail.idConfigSectionChannel,
+                    parseFloat(detail.netWeight) || 0
+                  );
+                }
+              });
+            }
+          }
+        }
+
+        // Verificar qué secciones guardadas pertenecen al tipo de canal actual
+        const savedSectionsInCurrentType = new Set<number>();
+        savedSections.forEach((weight, sectionId) => {
+          const belongsToCurrentType = channelSectionsData.data.some(s => s.id === sectionId);
+          if (belongsToCurrentType) {
+            savedSectionsInCurrentType.add(sectionId);
+          }
+        });
+
+        // Si tiene secciones guardadas del tipo actual, mostrar TODAS las secciones del tipo actual
+        // (las guardadas con peso y las faltantes sin peso)
+        if (savedSectionsInCurrentType.size > 0) {
+          channelSectionsData.data.forEach((section) => {
+            const savedWeight = savedSections.get(section.id) || 0;
+            newRows.push({
+              id: `${animal.id}-${section.id}`,
+              animalId: animal.id,
+              code: animal.code,
+              producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
+              peso: savedWeight,
+              savedWeight: savedWeight,
+              fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
+              idDetailsCertificateBrands: animal.idDetailsCertificateBrands,
+              idAnimalSex: animal.idAnimalSex,
+              sectionCode: section.sectionCode,
+              sectionDescription: section.description,
+              idChannelSection: section.id,
+              idAnimalWeighing: savedWeight > 0 ? idAnimalWeighing : undefined,
+            });
+          });
+        } else if (savedSections.size > 0) {
+          // Si tiene secciones guardadas pero NO del tipo actual, mostrar solo las guardadas
+          savedSections.forEach((weight, sectionId) => {
+            const sectionInfo = allKnownSections.get(sectionId);
+            if (sectionInfo) {
+              newRows.push({
+                id: `${animal.id}-${sectionId}`,
+                animalId: animal.id,
+                code: animal.code,
+                producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
+                peso: weight,
+                savedWeight: weight,
+                fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
+                idDetailsCertificateBrands: animal.idDetailsCertificateBrands,
+                idAnimalSex: animal.idAnimalSex,
+                sectionCode: sectionInfo.code,
+                sectionDescription: sectionInfo.description,
+                idChannelSection: sectionId,
+                idAnimalWeighing: idAnimalWeighing,
+              });
+            }
+          });
+        } else {
+          // Si no hay datos guardados, mostrar todas las secciones del tipo actual
+          channelSectionsData.data.forEach((section) => {
+            newRows.push({
+              id: `${animal.id}-${section.id}`,
+              animalId: animal.id,
+              code: animal.code,
+              producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
+              peso: 0,
+              savedWeight: 0,
+              fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
+              idDetailsCertificateBrands: animal.idDetailsCertificateBrands,
+              idAnimalSex: animal.idAnimalSex,
+              sectionCode: section.sectionCode,
+              sectionDescription: section.description,
+              idChannelSection: section.id,
+            });
+          });
+        }
+      });
+    }
+
+    // Calcular si cada animal está completo
+    const animalCompletionMap = new Map<string, boolean>();
+    
+    // Para EN PIE o sin secciones: completo si tiene peso
+    if (weighingStageId === 1 || !channelSectionsData?.data || channelSectionsData.data.length === 0) {
+      allAnimals.forEach((animal) => {
+        let hasWeight = false;
+        if (animal.animalWeighing && animal.animalWeighing.length > 0) {
+          const weighingForStage = animal.animalWeighing.find(
+            (w: any) => w.idWeighingStage === weighingStageId
+          );
+          if (weighingForStage && weighingForStage.detailAnimalWeighing && weighingForStage.detailAnimalWeighing.length > 0) {
+            hasWeight = weighingForStage.detailAnimalWeighing.some(
+              (d: any) => parseFloat(d.netWeight) > 0
+            );
+          }
+        }
+        animalCompletionMap.set(animal.code, hasWeight);
+      });
+    } else {
+      // Para canales con secciones: completo si tiene TODAS las secciones de CUALQUIER tipo de canal
+      allAnimals.forEach((animal) => {
+        const savedSectionIds = new Set<number>();
+        
+        if (animal.animalWeighing && animal.animalWeighing.length > 0) {
+          const weighingForStage = animal.animalWeighing.find(
+            (w: any) => w.idWeighingStage === weighingStageId
+          );
+          if (weighingForStage && weighingForStage.detailAnimalWeighing) {
+            weighingForStage.detailAnimalWeighing.forEach((detail: any) => {
+              if (detail.idConfigSectionChannel && parseFloat(detail.netWeight) > 0) {
+                savedSectionIds.add(detail.idConfigSectionChannel);
+              }
+            });
+          }
+        }
+        
+        // Verificar si está completo en CUALQUIER tipo de canal
+        let isComplete = false;
+        
+        // Verificar Canal Entera
+        if (canalSections?.data) {
+          const canalIds = canalSections.data.map(s => s.id);
+          if (canalIds.length > 0 && canalIds.every(id => savedSectionIds.has(id))) {
+            isComplete = true;
+          }
+        }
+        
+        // Verificar Media Canal
+        if (!isComplete && mediaCanalSections?.data) {
+          const mediaCanalIds = mediaCanalSections.data.map(s => s.id);
+          if (mediaCanalIds.length > 0 && mediaCanalIds.every(id => savedSectionIds.has(id))) {
+            isComplete = true;
+          }
+        }
+        
+        // Verificar Cuarta
+        if (!isComplete && cuartaSections?.data) {
+          const cuartaIds = cuartaSections.data.map(s => s.id);
+          if (cuartaIds.length > 0 && cuartaIds.every(id => savedSectionIds.has(id))) {
+            isComplete = true;
+          }
+        }
+        
+        animalCompletionMap.set(animal.code, isComplete);
+      });
+    }
+    
+    // Marcar cada fila con isComplete
+    newRows.forEach(row => {
+      row.isComplete = animalCompletionMap.get(row.code) || false;
+    });
+
+    // Ordenar: primero los incompletos, luego los completos
+    // Dentro de cada grupo, ordenar por código de animal y sección
+    newRows.sort((a, b) => {
+      // Primero ordenar por completitud (incompletos primero)
+      if (a.isComplete !== b.isComplete) {
+        return a.isComplete ? 1 : -1;
+      }
+      
+      // Luego por código de animal
+      const codeCompare = a.code.localeCompare(b.code);
+      if (codeCompare !== 0) return codeCompare;
+      
+      // Finalmente por sección
+      if (a.sectionCode && b.sectionCode) {
+        return a.sectionCode.localeCompare(b.sectionCode);
+      }
+      return 0;
+    });
 
     setRows(newRows);
-  }, [weighingData, selectedChannelTypeId, channelTypesData]);
+  }, [weighingData, weighingStageId, channelSectionsData, selectedChannelTypeId]);
 
   const handleHookSelect = (hookId: number) => {
     setSelectedHook(hookId);
@@ -161,21 +470,82 @@ export function AnimalWeighingManagement() {
       return;
     }
 
+    // Validar que haya especie e ID de etapa de pesaje
+    if (!selectedSpecieId || !weighingStageId) {
+      toast.error("Faltan datos requeridos");
+      return;
+    }
+
+    // Si NO es EN PIE, validar que haya un gancho seleccionado
+    if (weighingStageId !== 1 && !selectedHook) {
+      toast.error("Debe seleccionar un gancho");
+      return;
+    }
+
+    const unit = unitMeasureData?.data?.symbol || 'lb';
+    const grossWeight = row.peso; // Peso bruto de la balanza
+    let netWeight = grossWeight;
+    let hookWeight = 0;
+
+    // Si NO es EN PIE, calcular peso neto restando el gancho
+    if (weighingStageId !== 1 && selectedHook) {
+      const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
+      hookWeight = selectedHookData ? parseFloat(selectedHookData.weight) : 0;
+      netWeight = grossWeight - hookWeight;
+    }
+
     try {
-      // TODO: Actualizar con los campos correctos según la nueva API
-      await saveWeighingMutation.mutateAsync({
-        idSettingCertificateBrands: row.idDetailsCertificateBrands, // Usar el nuevo campo
-        idProductiveStage: 0, // TODO: Obtener de la estructura de datos
-        weight: row.peso,
-        slaughterDate,
-        productType,
-        weighingStage,
-      });
-      toast.success(`Peso guardado: ${row.peso.toFixed(2)} lb`);
+      const detailsAnimalWeighing: any = {
+        grossWeight: grossWeight,
+        netWeight: netWeight,
+      };
+
+      // Solo agregar idHookType si NO es EN PIE
+      if (weighingStageId !== 1 && selectedHook) {
+        detailsAnimalWeighing.idHookType = selectedHook;
+      }
+
+      // Solo agregar idConfigSectionChannel si existe (cuando hay secciones)
+      if (row.idChannelSection) {
+        detailsAnimalWeighing.idConfigSectionChannel = row.idChannelSection;
+      }
+
+      // Decidir si es POST (nuevo) o PATCH (actualización)
+      if (row.idAnimalWeighing) {
+        // PATCH - Actualizar peso existente
+        await updateWeighingMutation.mutateAsync({
+          idAnimalWeighing: row.idAnimalWeighing,
+          data: {
+            idWeighingStage: weighingStageId,
+            idSpecie: selectedSpecieId,
+            detailsAnimalWeighing: [detailsAnimalWeighing]
+          }
+        });
+      } else {
+        // POST - Crear nuevo peso
+        await saveWeighingMutation.mutateAsync({
+          idWeighingStage: weighingStageId,
+          idDetailsSpeciesCertificate: row.animalId,
+          idSpecie: selectedSpecieId,
+          observation: "",
+          detailsAnimalWeighing: [detailsAnimalWeighing]
+        });
+      }
+      
+      const message = weighingStageId === 1 
+        ? `Peso ${row.idAnimalWeighing ? 'actualizado' : 'guardado'}: ${grossWeight.toFixed(2)} ${unit}`
+        : `Peso ${row.idAnimalWeighing ? 'actualizado' : 'guardado'}: Bruto ${grossWeight.toFixed(2)} ${unit}, Neto ${netWeight.toFixed(2)} ${unit}`;
+      
+      toast.success(message);
+      
+      // Invalidar la query para refrescar los datos desde la API
+      queryClient.invalidateQueries({ queryKey: ["animal-weighing"] });
+      
       setSelectedRowId(null);
       setCapturedWeight(null);
       lastCapturedWeightRef.current = null;
     } catch (error) {
+      console.error('Error al guardar:', error);
       toast.error("Error al guardar el peso");
     }
   };
@@ -183,43 +553,45 @@ export function AnimalWeighingManagement() {
   // Capturar peso estable de la balanza
   useEffect(() => {
     if (currentWeight && selectedRowId) {
-      // Convertir de kg a lb
-      const weightInKg =
-        currentWeight.unit === "kg"
-          ? currentWeight.value
-          : currentWeight.value / 2.20462; // Si viene en lb, convertir a kg primero
+      console.log('⚖️ Peso recibido de balanza:', {
+        value: currentWeight.value,
+        unit: currentWeight.unit,
+        stable: currentWeight.stable,
+        selectedRowId
+      });
 
-      const weightInLb = weightInKg * 2.20462;
-
-      // Solo capturar pesos razonables (mayores a 10 kg / 22 lb)
-      // Esto evita capturar valores parciales como "=97" o "=500"
-      if (weightInKg < 10) {
-        return;
-      }
+      const weight = currentWeight.value;
+      const unit = unitMeasureData?.data?.symbol || 'lb';
 
       // Evitar capturas duplicadas del mismo peso
-      const roundedWeight = Math.round(weightInLb * 100) / 100;
+      const roundedWeight = Math.round(weight * 100) / 100;
       if (lastCapturedWeightRef.current === roundedWeight) {
+        console.log('❌ Peso duplicado, ignorando:', roundedWeight);
         return;
       }
+
+      console.log('✅ Actualizando peso en fila:', {
+        rowId: selectedRowId,
+        peso: roundedWeight
+      });
 
       lastCapturedWeightRef.current = roundedWeight;
       setCapturedWeight(roundedWeight);
 
       // Actualizar el peso en la fila
-      setRows((prev) =>
-        prev.map((row) =>
+      setRows((prev) => {
+        const updated = prev.map((row) =>
           row.id === selectedRowId ? { ...row, peso: roundedWeight } : row
-        )
-      );
+        );
+        console.log('📊 Filas actualizadas:', updated.find(r => r.id === selectedRowId));
+        return updated;
+      });
 
       toast.success(
-        `Peso capturado: ${roundedWeight.toFixed(2)} lb (${weightInKg.toFixed(
-          2
-        )} kg)`
+        `Peso capturado: ${roundedWeight.toFixed(2)} ${unit}`
       );
     }
-  }, [currentWeight?.value, currentWeight?.unit, selectedRowId]);
+  }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData]);
 
   const filteredRows = useMemo(() => {
     if (!searchTerm) return rows;
@@ -231,10 +603,10 @@ export function AnimalWeighingManagement() {
   const totalRecords = filteredRows.length;
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-2 sm:p-4 pb-64 max-w-full overflow-x-hidden min-h-full">
       <div className="text-center">
-        <h1 className="text-xl font-semibold mb-">PESAJE DE ANIMALES</h1>
-        <p className="text-muted-foreground text-sm">
+        <h1 className="text-lg sm:text-xl font-semibold mb-2">PESAJE DE ANIMALES</h1>
+        <p className="text-muted-foreground text-xs sm:text-sm">
           Fecha de Faenamiento:{" "}
           {parseLocalDateString(slaughterDate).toLocaleDateString("es-ES", {
             weekday: "long",
@@ -246,34 +618,35 @@ export function AnimalWeighingManagement() {
       </div>
 
       {/* Balanza Serial */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+      <Card className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
         <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
             <div className="flex items-center gap-2">
-              <Scale className="h-5 w-5 text-blue-600" />
-              <Label className="text-base font-semibold">
-                Balanza Bernalo X1
+              <Scale className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+              <Label className="text-sm sm:text-base font-semibold">
+                EQUIPOS DE PESAJE INDUSTRIAL X1
               </Label>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               {isConnected ? (
                 <>
                   <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-sm text-green-700 font-medium">
+                  <span className="text-xs sm:text-sm text-green-700 font-medium">
                     Conectada
                   </span>
-                  <Button size="sm" variant="outline" onClick={disconnectScale}>
+                  <Button size="sm" variant="outline" onClick={disconnectScale} className="text-xs sm:text-sm">
                     Desconectar
                   </Button>
                 </>
               ) : (
                 <>
                   <span className="flex h-2 w-2 rounded-full bg-gray-400" />
-                  <span className="text-sm text-gray-600">Desconectada</span>
+                  <span className="text-xs sm:text-sm text-gray-600">Desconectada</span>
                   <Button
                     size="sm"
                     onClick={connectScale}
                     disabled={!isSupported}
+                    className="text-xs sm:text-sm"
                   >
                     Conectar Balanza
                   </Button>
@@ -283,21 +656,18 @@ export function AnimalWeighingManagement() {
           </div>
 
           {isConnected && (
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 bg-white rounded-lg border-2 border-blue-300">
-              <div className="flex-1">
-                <p className="text-sm text-gray-600 mb-2">Peso Actual</p>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 bg-white rounded-lg border-2 border-blue-300">
+              <div className="flex-1 w-full">
+                <p className="text-xs sm:text-sm text-gray-600 mb-2">Peso Actual</p>
                 {currentWeight ? (
                   <div className="space-y-2">
-                    {/* Peso en Libras */}
+                    {/* Peso principal con símbolo de la API */}
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-4xl font-bold text-blue-900">
-                        {(currentWeight.unit === "kg"
-                          ? currentWeight.value * 2.20462
-                          : currentWeight.value
-                        ).toFixed(2)}
+                      <span className={`text-2xl sm:text-3xl md:text-4xl font-bold ${currentWeight.value < 0 ? 'text-red-900' : 'text-blue-900'}`}>
+                        {currentWeight.value.toFixed(2)}
                       </span>
-                      <span className="text-2xl font-semibold text-blue-700">
-                        lb
+                      <span className={`text-xl sm:text-2xl font-semibold ${currentWeight.value < 0 ? 'text-red-700' : 'text-blue-700'}`}>
+                        {unitMeasureData?.data?.symbol || 'lb'}
                       </span>
                       {currentWeight.stable && (
                         <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
@@ -305,29 +675,17 @@ export function AnimalWeighingManagement() {
                         </span>
                       )}
                     </div>
-                    {/* Peso en Kilogramos */}
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-2xl font-semibold text-gray-700">
-                        {(currentWeight.unit === "kg"
-                          ? currentWeight.value
-                          : currentWeight.value / 2.20462
-                        ).toFixed(2)}
-                      </span>
-                      <span className="text-lg font-medium text-gray-600">
-                        kg
-                      </span>
-                    </div>
                   </div>
                 ) : (
-                  <span className="text-2xl text-gray-400">
+                  <span className="text-lg sm:text-xl md:text-2xl text-gray-400">
                     Esperando lectura...
                   </span>
                 )}
               </div>
               {selectedRowId && (
-                <div className="text-left md:text-right">
-                  <p className="text-sm text-gray-600">Animal Seleccionado</p>
-                  <p className="text-lg font-semibold text-blue-900">
+                <div className="text-left md:text-right w-full md:w-auto">
+                  <p className="text-xs sm:text-sm text-gray-600">Animal Seleccionado</p>
+                  <p className="text-base sm:text-lg font-semibold text-blue-900">
                     {rows.find((r) => r.id === selectedRowId)?.code}
                   </p>
                 </div>
@@ -352,8 +710,8 @@ export function AnimalWeighingManagement() {
       </Card>
 
       {/* Etapa de Pesaje y Fecha */}
-      <Card className="p-4">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <Card className="p-3 sm:p-4">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4">
           {/* Fecha a la izquierda */}
           <div className="flex items-center gap-2 w-full lg:w-auto">
             <Label className="whitespace-nowrap font-semibold">
@@ -377,11 +735,42 @@ export function AnimalWeighingManagement() {
 
           {/* Etapa de Pesaje a la derecha */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
-            <Label className="text-base font-semibold whitespace-nowrap">
+            <Label className="whitespace-nowrap font-semibold">
               Etapa de Pesaje:
             </Label>
+            
+            {/* Versión móvil - Select */}
+            <div className="block lg:hidden w-full">
+              {isLoadingWeighingStages ? (
+                <span className="text-sm text-muted-foreground">Cargando...</span>
+              ) : (
+                <Select
+                  value={weighingStageId?.toString()}
+                  onValueChange={(value) => {
+                    const stage = weighingStagesData?.data.find(s => s.id.toString() === value);
+                    if (stage) {
+                      setWeighingStage(stage.code as WeighingStage);
+                      setWeighingStageId(stage.id);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione etapa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {weighingStagesData?.data.map((stage) => (
+                      <SelectItem key={stage.id} value={stage.id.toString()}>
+                        {stage.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Versión desktop - Botones */}
             <TooltipProvider>
-              <div className="flex gap-2 w-full sm:w-auto">
+              <div className="hidden lg:flex gap-2 w-full sm:w-auto">
                 {isLoadingWeighingStages ? (
                   <span className="text-sm text-muted-foreground">
                     Cargando...
@@ -395,9 +784,10 @@ export function AnimalWeighingManagement() {
                             weighingStage === stage.code ? "default" : "outline"
                           }
                           size="lg"
-                          onClick={() =>
-                            setWeighingStage(stage.code as WeighingStage)
-                          }
+                          onClick={() => {
+                            setWeighingStage(stage.code as WeighingStage);
+                            setWeighingStageId(stage.id);
+                          }}
                           className="flex-1 sm:flex-initial"
                         >
                           {stage.name}
@@ -415,108 +805,196 @@ export function AnimalWeighingManagement() {
         </div>
       </Card>
 
-      {/* Especie y Ganchos */}
-      <Card className="p-4">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          {/* Especie a la izquierda */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
-            <Label className="whitespace-nowrap font-semibold">Especie:</Label>
-            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              {isLoadingLines ? (
-                <span className="text-sm text-muted-foreground">
-                  Cargando...
-                </span>
-              ) : (
-                lines?.map((line) => (
-                  <Button
-                    key={line.id}
-                    variant={
-                      selectedLineId === line.id.toString()
-                        ? "default"
-                        : "outline"
-                    }
-                    size="sm"
-                    onClick={() => {
-                      setSelectedLineId(line.id.toString());
-                      setSelectedSpecieId(line.idSpecie);
-                    }}
-                    className="flex-1 sm:flex-initial"
-                  >
-                    {line.description}
-                  </Button>
-                ))
-              )}
-            </div>
+      {/* Especie - Siempre visible */}
+      <Card className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+          <Label className="whitespace-nowrap font-semibold">Especie:</Label>
+          
+          {/* Versión móvil - Select */}
+          <div className="block lg:hidden w-full">
+            {isLoadingLines ? (
+              <span className="text-sm text-muted-foreground">Cargando...</span>
+            ) : (
+              <Select
+                value={selectedLineId}
+                onValueChange={(value) => {
+                  const line = lines?.find(l => l.id.toString() === value);
+                  if (line) {
+                    setSelectedLineId(value);
+                    setSelectedSpecieId(line.idSpecie);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione especie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {lines?.map((line) => (
+                    <SelectItem key={line.id} value={line.id.toString()}>
+                      {line.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
-          {/* Ganchos a la derecha */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
-            <Label className="whitespace-nowrap font-semibold">Ganchos:</Label>
-            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              {isLoadingHookTypes ? (
-                <span className="text-sm text-muted-foreground">
-                  Cargando...
-                </span>
-              ) : (
-                hookTypesData?.data.map((hook) => (
-                  <Button
-                    key={hook.id}
-                    variant={selectedHook === hook.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleHookSelect(hook.id)}
-                    className="flex-1 sm:flex-initial min-w-[80px]"
-                  >
-                    {hook.name}{" "}
-                    <span className="text-xs ml-1">({hook.weightLb})</span>
-                  </Button>
-                ))
-              )}
-            </div>
+          {/* Versión desktop - Botones */}
+          <div className="hidden lg:flex flex-wrap gap-2 w-full sm:w-auto">
+            {isLoadingLines ? (
+              <span className="text-sm text-muted-foreground">
+                Cargando...
+              </span>
+            ) : (
+              lines?.map((line) => (
+                <Button
+                  key={line.id}
+                  variant={
+                    selectedLineId === line.id.toString()
+                      ? "default"
+                      : "outline"
+                  }
+                  size="sm"
+                  onClick={() => {
+                    setSelectedLineId(line.id.toString());
+                    setSelectedSpecieId(line.idSpecie);
+                  }}
+                  className="flex-1 sm:flex-initial"
+                >
+                  {line.description}
+                </Button>
+              ))
+            )}
           </div>
         </div>
       </Card>
 
-      {/* Tipo de Canal */}
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <Label className="flex-shrink-0 font-semibold">Tipo de Canal:</Label>
-          <TooltipProvider>
-            <div className="flex gap-2 w-full sm:w-auto">
+      {/* Ganchos - Solo mostrar cuando weighingStageId !== 1 (no es EN PIE) */}
+      {weighingStageId !== null && weighingStageId !== 1 && (
+      <Card className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+          <Label className="whitespace-nowrap font-semibold">Ganchos:</Label>
+          
+          {/* Versión móvil - Select */}
+          <div className="block lg:hidden w-full">
+            {isLoadingHookTypes ? (
+              <span className="text-sm text-muted-foreground">Cargando...</span>
+            ) : (
+              <Select
+                value={selectedHook?.toString()}
+                onValueChange={(value) => handleHookSelect(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione gancho" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hookTypesData?.data.map((hook) => (
+                    <SelectItem key={hook.id} value={hook.id.toString()}>
+                      {hook.name} ({hook.weight})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* Versión desktop - Botones */}
+          <div className="hidden lg:flex flex-wrap gap-2 w-full sm:w-auto">
+            {isLoadingHookTypes ? (
+              <span className="text-sm text-muted-foreground">
+                Cargando...
+              </span>
+            ) : (
+              hookTypesData?.data.map((hook) => (
+                <Button
+                  key={hook.id}
+                  variant={selectedHook === hook.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleHookSelect(hook.id)}
+                  className="flex-1 sm:flex-initial min-w-[80px]"
+                >
+                  {hook.name}{" "}
+                  <span className="text-xs ml-1">({hook.weight})</span>
+                </Button>
+              ))
+            )}
+          </div>
+        </div>
+      </Card>
+      )}
+
+      {/* Tipo de Canal - Solo mostrar cuando weighingStageId !== 1 (no es EN PIE) */}
+      {weighingStageId !== null && weighingStageId !== 1 && (
+      <>
+        <Card className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <Label className="flex-shrink-0 font-semibold">Tipo de Canal:</Label>
+            
+            {/* Versión móvil - Select */}
+            <div className="block lg:hidden w-full">
               {isLoadingChannelTypes ? (
-                <span className="text-sm text-muted-foreground">
-                  Cargando...
-                </span>
+                <span className="text-sm text-muted-foreground">Cargando...</span>
               ) : (
-                channelTypesData?.data.map((channel) => (
-                  <Tooltip key={channel.id}>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={
-                          selectedChannelTypeId === channel.id
-                            ? "default"
-                            : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setSelectedChannelTypeId(channel.id)}
-                        className="flex-1 sm:flex-initial"
-                      >
+                <Select
+                  value={selectedChannelTypeId?.toString()}
+                  onValueChange={(value) => setSelectedChannelTypeId(parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione tipo de canal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {channelTypesData?.data.map((channel) => (
+                      <SelectItem key={channel.id} value={channel.id.toString()}>
                         {channel.name}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">{channel.description}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ))
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             </div>
-          </TooltipProvider>
-        </div>
-      </Card>
+
+            {/* Versión desktop - Botones */}
+            <TooltipProvider>
+              <div className="hidden lg:flex gap-2 w-full sm:w-auto">
+                {isLoadingChannelTypes ? (
+                  <span className="text-sm text-muted-foreground">
+                    Cargando...
+                  </span>
+                ) : (
+                  channelTypesData?.data.map((channel) => (
+                    <Tooltip key={channel.id}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={
+                            selectedChannelTypeId === channel.id
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          onClick={() => setSelectedChannelTypeId(channel.id)}
+                          className="flex-1 sm:flex-initial"
+                        >
+                          {channel.name}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">{channel.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))
+                )}
+              </div>
+            </TooltipProvider>
+          </div>
+        </Card>
+
+
+      </>
+      )}
 
       {/* Búsqueda y Tabla */}
-      <Card className="p-4">
-        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <Card className="p-2 sm:p-3 md:p-4">
+        <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
               {totalRecords} registro{totalRecords !== 1 ? "s" : ""}
@@ -543,59 +1021,72 @@ export function AnimalWeighingManagement() {
           </div>
         </div>
 
-        <div className="overflow-x-auto border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-center">📅 Fecha de Ingreso</TableHead>
-                <TableHead className="text-center">🐄 Animales</TableHead>
-                <TableHead className="text-center">📦 Producto</TableHead>
-                <TableHead className="text-center">⚖️ Peso</TableHead>
-                <TableHead className="text-center">🔧 Opción</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
-                    {isLoadingWeighingData ? "Cargando animales..." : "No hay registros disponibles"}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredRows.map((row) => (
-                  <TableRow key={row.id} className="bg-green-50">
-                    <TableCell className="text-center">
-                      {new Date(row.fechaIngreso).toLocaleDateString("es-ES", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                      })}
-                    </TableCell>
-                    <TableCell className="text-center font-medium">
-                      {row.code}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {row.producto}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="text-green-600 font-semibold">
-                        {row.peso > 0 ? `${row.peso} lb` : "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex gap-2 justify-center">
-                        {isConnected ? (
-                          <>
+        {/* Versión móvil - Cards */}
+        <div className="block lg:hidden space-y-3">
+          {filteredRows.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {isLoadingWeighingData ? "Cargando animales..." : "No hay registros disponibles"}
+            </div>
+          ) : (
+            (() => {
+              const groupedRows: { [key: string]: typeof filteredRows } = {};
+              filteredRows.forEach((row) => {
+                if (!groupedRows[row.code]) {
+                  groupedRows[row.code] = [];
+                }
+                groupedRows[row.code].push(row);
+              });
+
+              return Object.entries(groupedRows).map(([animalCode, animalRows]) => (
+                <Card key={animalCode} className={`p-3 ${animalRows[0].isComplete ? 'bg-[#86c6c5]' : 'bg-green-50'}`}>
+                  {/* Información del animal */}
+                  <div className="mb-3 pb-3 border-b">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="text-xs text-muted-foreground">Animal</div>
+                        <div className="text-lg font-bold">{animalCode}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-muted-foreground">Fecha</div>
+                        <div className="text-sm">
+                          {new Date(animalRows[0].fechaIngreso).toLocaleDateString("es-ES", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">Producto</div>
+                    <div className="text-sm">{animalRows[0].producto}</div>
+                  </div>
+
+                  {/* Secciones */}
+                  <div className="space-y-2">
+                    {animalRows.map((row) => (
+                      <div key={row.id} className="p-2 bg-white/50 rounded border">
+                        {weighingStageId !== 1 && row.sectionCode && (
+                          <div className="mb-2">
+                            <span className="font-bold text-blue-600 text-sm">{row.sectionCode}</span>
+                            <span className="text-xs text-muted-foreground ml-2">{row.sectionDescription}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <div className="text-xs text-muted-foreground">Peso</div>
+                            <div className={`font-semibold ${row.peso < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {row.peso !== 0 ? `${row.peso} ${unitMeasureData?.data?.symbol || 'lb'}` : "-"}
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-1">
                             <Button
                               size="sm"
-                              variant={
-                                selectedRowId === row.id ? "default" : "outline"
-                              }
-                              className={
-                                selectedRowId === row.id
-                                  ? "bg-green-600"
-                                  : "text-green-600 border-green-600"
-                              }
+                              variant={selectedRowId === row.id ? "default" : "outline"}
+                              className={`text-xs whitespace-nowrap ${
+                                selectedRowId === row.id ? "bg-green-600" : "text-green-600 border-green-600"
+                              }`}
                               onClick={() => {
                                 if (selectedRowId === row.id) {
                                   setSelectedRowId(null);
@@ -603,56 +1094,160 @@ export function AnimalWeighingManagement() {
                                 } else {
                                   setSelectedRowId(row.id);
                                   setCapturedWeight(null);
-                                  resetWeight(); // Resetear la balanza cuando se selecciona un animal
+                                  resetWeight();
                                 }
                               }}
+                              disabled={!isConnected}
                             >
-                              {selectedRowId === row.id
-                                ? "SELECCIONADO"
-                                : "SELECCIONAR"}
+                              {selectedRowId === row.id ? "CAPTURADO" : "CAPTURAR"}
                             </Button>
-                            {selectedRowId === row.id && capturedWeight && (
+                            {selectedRowId === row.id && (
                               <Button
                                 size="sm"
-                                className="bg-blue-600"
+                                className="bg-blue-600 text-xs whitespace-nowrap"
                                 onClick={() => handleSaveWeight(row)}
-                                disabled={saveWeighingMutation.isPending}
+                                disabled={saveWeighingMutation.isPending || updateWeighingMutation.isPending || !capturedWeight}
                               >
-                                {saveWeighingMutation.isPending
-                                  ? "GUARDANDO..."
-                                  : "GUARDAR"}
+                                {(saveWeighingMutation.isPending || updateWeighingMutation.isPending)
+                                  ? (row.savedWeight > 0 ? "ACTUALIZANDO..." : "GUARDANDO...")
+                                  : (row.savedWeight > 0 ? "ACTUALIZAR" : "GUARDAR")}
                               </Button>
                             )}
-                          </>
-                        ) : (
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              ));
+            })()
+          )}
+        </div>
+
+        {/* Versión desktop - Tabla */}
+        <div className="hidden lg:block overflow-x-auto border rounded-lg">
+          <Table className="min-w-full">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">📅 Fecha de Ingreso</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">🐄 Animales</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">📦 Producto</TableHead>
+                {weighingStageId !== 1 && <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">📍 Sección</TableHead>}
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">⚖️ Peso</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">🔧 Opción</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={weighingStageId !== 1 ? 6 : 5} className="text-center py-8">
+                    {isLoadingWeighingData ? "Cargando animales..." : "No hay registros disponibles"}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                (() => {
+                  // Agrupar filas por código de animal para hacer rowspan
+                  const groupedRows: { [key: string]: typeof filteredRows } = {};
+                  filteredRows.forEach((row) => {
+                    if (!groupedRows[row.code]) {
+                      groupedRows[row.code] = [];
+                    }
+                    groupedRows[row.code].push(row);
+                  });
+
+                  return Object.entries(groupedRows).map(([animalCode, animalRows]) => {
+                    const rowSpan = animalRows.length;
+                    return animalRows.map((row, index) => (
+                      <TableRow 
+                        key={row.id} 
+                        className={row.isComplete ? "[&]:!bg-[#86c6c5] hover:!bg-[#86c6c5]" : "bg-green-50 hover:!bg-green-50"}
+                      >
+                        {/* Fecha de Ingreso - solo en la primera fila del animal */}
+                        {index === 0 && (
+                          <TableCell className="text-center" rowSpan={rowSpan}>
+                            {new Date(row.fechaIngreso).toLocaleDateString("es-ES", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                            })}
+                          </TableCell>
+                        )}
+                        {/* Código del Animal - solo en la primera fila del animal */}
+                        {index === 0 && (
+                          <TableCell className="text-center font-medium" rowSpan={rowSpan}>
+                            {row.code}
+                          </TableCell>
+                        )}
+                        {/* Producto - solo en la primera fila del animal */}
+                        {index === 0 && (
+                          <TableCell className="text-center" rowSpan={rowSpan}>
+                            {row.producto}
+                          </TableCell>
+                        )}
+                        {/* Sección - siempre visible cuando no es EN PIE */}
+                        {weighingStageId !== 1 && (
+                          <TableCell className="text-center">
+                            {row.sectionCode ? (
+                              <div className="flex flex-col items-center">
+                                <span className="font-bold text-blue-600">{row.sectionCode}</span>
+                                <span className="text-xs text-muted-foreground">{row.sectionDescription}</span>
+                              </div>
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
+                        )}
+                    <TableCell className="text-center">
+                      <span className={`font-semibold ${row.peso < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {row.peso !== 0 ? `${row.peso} ${unitMeasureData?.data?.symbol || 'lb'}` : "-"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex gap-2 justify-center">
+                        <Button
+                          size="sm"
+                          variant={
+                            selectedRowId === row.id ? "default" : "outline"
+                          }
+                          className={`text-xs sm:text-sm whitespace-nowrap ${
+                            selectedRowId === row.id
+                              ? "bg-green-600"
+                              : "text-green-600 border-green-600"
+                          }`}
+                          onClick={() => {
+                            if (selectedRowId === row.id) {
+                              setSelectedRowId(null);
+                              setCapturedWeight(null);
+                            } else {
+                              setSelectedRowId(row.id);
+                              setCapturedWeight(null);
+                              resetWeight(); // Resetear la balanza cuando se selecciona un animal
+                            }
+                          }}
+                          disabled={!isConnected}
+                        >
+                          {selectedRowId === row.id
+                            ? "CAPTURADO"
+                            : "CAPTURAR"}
+                        </Button>
+                        {selectedRowId === row.id && (
                           <Button
                             size="sm"
-                            variant="outline"
-                            className="text-blue-600 border-blue-600"
-                            onClick={() => {
-                              const weight = prompt(
-                                `Ingrese el peso para ${row.code} - ${row.producto}:`,
-                                row.peso.toString()
-                              );
-                              if (weight) {
-                                const numWeight = parseFloat(weight);
-                                if (!isNaN(numWeight) && numWeight > 0) {
-                                  handleWeightChange(row.id, numWeight);
-                                  handleSaveWeight({
-                                    ...row,
-                                    peso: numWeight,
-                                  });
-                                }
-                              }
-                            }}
+                            className="bg-blue-600 text-xs sm:text-sm whitespace-nowrap"
+                            onClick={() => handleSaveWeight(row)}
+                            disabled={saveWeighingMutation.isPending || updateWeighingMutation.isPending || !capturedWeight}
                           >
-                            MANUAL
+                            {(saveWeighingMutation.isPending || updateWeighingMutation.isPending)
+                              ? (row.savedWeight > 0 ? "ACTUALIZANDO..." : "GUARDANDO...")
+                              : (row.savedWeight > 0 ? "ACTUALIZAR" : "GUARDAR")}
                           </Button>
                         )}
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                    ));
+                  });
+                })()
               )}
             </TableBody>
           </Table>

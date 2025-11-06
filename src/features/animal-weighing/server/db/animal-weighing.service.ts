@@ -1,8 +1,8 @@
 import { http } from "@/lib/ky";
 import type {
   SaveAnimalWeighingRequest,
+  UpdateAnimalWeighingRequest,
   GetAnimalWeighingRequest,
-  AnimalWeighingData,
   GetAnimalWeighingResponse,
 } from "../../domain";
 
@@ -11,19 +11,30 @@ import type {
  */
 export async function saveAnimalWeighing(
   data: SaveAnimalWeighingRequest
-): Promise<{ data: AnimalWeighingData }> {
-  // TODO: Implementar llamada a la API
-  console.log("Guardando pesaje:", data);
-  console.log("Etapa de pesaje:", data.weighingStage);
-  
-  return {
-    data: {
-      id: 1,
-      ...data,
-      marca: "ER-002",
-      productiveStageName: "Vaca",
-    },
-  };
+): Promise<{ code: number; message: string; data: any }> {
+  const response = await http
+    .post("v1/1.0.0/animal-weighing", {
+      json: data,
+    })
+    .json<{ code: number; message: string; data: any }>();
+
+  return response;
+}
+
+/**
+ * Servicio para actualizar el pesaje de animales
+ */
+export async function updateAnimalWeighing(
+  idAnimalWeighing: number,
+  data: UpdateAnimalWeighingRequest
+): Promise<{ code: number; message: string; data: any }> {
+  const response = await http
+    .patch(`v1/1.0.0/animal-weighing/${idAnimalWeighing}`, {
+      json: data,
+    })
+    .json<{ code: number; message: string; data: any }>();
+
+  return response;
 }
 
 /**
@@ -36,6 +47,8 @@ export async function getAnimalWeighingByFilters(
     .get("v1/1.0.0/detail-specie-cert/detail-animal", {
       searchParams: {
         slaughterDate: request.slaughterDate,
+        idSpecie: request.idSpecie.toString(),
+        idWeighingStage: request.idWeighingStage.toString(),
       },
     })
     .json<GetAnimalWeighingResponse>();

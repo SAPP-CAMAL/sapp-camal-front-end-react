@@ -1,7 +1,7 @@
 export interface HookType {
   id: number;
   name: string;
-  weightLb: string;
+  weight: string;
   description: string;
   status: boolean;
   idSpecie: number;
