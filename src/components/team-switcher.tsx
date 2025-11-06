@@ -25,6 +25,7 @@ import {
 } from "@/features/security/server/db/security.queries";
 import { revalidatePathAction } from "@/features/security/server/actions/revalidate.action";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function RoleSwitcher() {
   const { isMobile } = useSidebar();
@@ -116,6 +117,7 @@ export function RoleSwitcher() {
 }
 
 function RoleItem({ role, isActive, onSelect }: { role: any; isActive: boolean; onSelect: () => void }) {
+  const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
   return (
@@ -133,6 +135,8 @@ function RoleItem({ role, isActive, onSelect }: { role: any; isActive: boolean; 
           ]);
 
           await revalidatePathAction("/dashboard");
+
+          router.push("/dashboard");
 
           toast.success("Cambio de rol exitoso");
           onSelect();
