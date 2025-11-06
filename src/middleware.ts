@@ -9,6 +9,7 @@ export async function middleware(req: NextRequest) {
     const resp = await httpSSR
         .get("v1/1.0.0/administration/menu")
         .json<any>()
+        .catch(() => ({ data: [] }));
 
     const allowsPaths = resp
         .data
