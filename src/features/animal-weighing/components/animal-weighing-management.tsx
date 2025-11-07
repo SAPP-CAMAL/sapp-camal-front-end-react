@@ -46,6 +46,8 @@ import {
   getLocalDateString,
   parseLocalDateString,
 } from "@/features/postmortem/utils/postmortem-helpers";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format, parseISO } from "date-fns";
 
 export function AnimalWeighingManagement() {
   const [selectedLineId, setSelectedLineId] = useState<string>("");
@@ -88,12 +90,12 @@ export function AnimalWeighingManagement() {
     useChannelTypes();
   const { data: channelSectionsData, isLoading: isLoadingChannelSections } =
     useChannelSectionsByType(selectedChannelTypeId);
-  
+
   // Cargar secciones de todos los tipos de canal para tener la información completa
   const { data: mediaCanalSections } = useChannelSectionsByType(1); // Media Canal
   const { data: canalSections } = useChannelSectionsByType(2); // Canal
   const { data: cuartaSections } = useChannelSectionsByType(3); // Cuarta
-  
+
   const { data: unitMeasureData } = useUnitMeasure();
 
   // Seleccionar Bovinos por defecto
@@ -169,7 +171,7 @@ export function AnimalWeighingManagement() {
 
     // Crear un mapa de todas las secciones conocidas (de todos los tipos de canal)
     const allKnownSections = new Map<number, { code: string; description: string }>();
-    
+
     // Agregar secciones de Media Canal
     if (mediaCanalSections?.data) {
       mediaCanalSections.data.forEach(section => {
@@ -265,7 +267,7 @@ export function AnimalWeighingManagement() {
         // Obtener TODAS las secciones guardadas para este animal en esta etapa
         const savedSections = new Map<number, number>(); // Map<idConfigSectionChannel, peso>
         let idAnimalWeighing: number | undefined = undefined;
-        
+
         if (animal.animalWeighing && animal.animalWeighing.length > 0) {
           const weighingForStage = animal.animalWeighing.find(
             (w: any) => w.idWeighingStage === weighingStageId
@@ -361,7 +363,7 @@ export function AnimalWeighingManagement() {
 
     // Calcular si cada animal está completo
     const animalCompletionMap = new Map<string, boolean>();
-    
+
     // Para EN PIE o sin secciones: completo si tiene peso
     if (weighingStageId === 1 || !channelSectionsData?.data || channelSectionsData.data.length === 0) {
       allAnimals.forEach((animal) => {
@@ -382,7 +384,7 @@ export function AnimalWeighingManagement() {
       // Para canales con secciones: completo si tiene TODAS las secciones de CUALQUIER tipo de canal
       allAnimals.forEach((animal) => {
         const savedSectionIds = new Set<number>();
-        
+
         if (animal.animalWeighing && animal.animalWeighing.length > 0) {
           const weighingForStage = animal.animalWeighing.find(
             (w: any) => w.idWeighingStage === weighingStageId
@@ -395,10 +397,10 @@ export function AnimalWeighingManagement() {
             });
           }
         }
-        
+
         // Verificar si está completo en CUALQUIER tipo de canal
         let isComplete = false;
-        
+
         // Verificar Canal Entera
         if (canalSections?.data) {
           const canalIds = canalSections.data.map(s => s.id);
@@ -406,7 +408,7 @@ export function AnimalWeighingManagement() {
             isComplete = true;
           }
         }
-        
+
         // Verificar Media Canal
         if (!isComplete && mediaCanalSections?.data) {
           const mediaCanalIds = mediaCanalSections.data.map(s => s.id);
@@ -414,7 +416,7 @@ export function AnimalWeighingManagement() {
             isComplete = true;
           }
         }
-        
+
         // Verificar Cuarta
         if (!isComplete && cuartaSections?.data) {
           const cuartaIds = cuartaSections.data.map(s => s.id);
@@ -422,11 +424,11 @@ export function AnimalWeighingManagement() {
             isComplete = true;
           }
         }
-        
+
         animalCompletionMap.set(animal.code, isComplete);
       });
     }
-    
+
     // Marcar cada fila con isComplete
     newRows.forEach(row => {
       row.isComplete = animalCompletionMap.get(row.code) || false;
@@ -439,11 +441,11 @@ export function AnimalWeighingManagement() {
       if (a.isComplete !== b.isComplete) {
         return a.isComplete ? 1 : -1;
       }
-      
+
       // Luego por código de animal
       const codeCompare = a.code.localeCompare(b.code);
       if (codeCompare !== 0) return codeCompare;
-      
+
       // Finalmente por sección
       if (a.sectionCode && b.sectionCode) {
         return a.sectionCode.localeCompare(b.sectionCode);
@@ -531,16 +533,16 @@ export function AnimalWeighingManagement() {
           detailsAnimalWeighing: [detailsAnimalWeighing]
         });
       }
-      
-      const message = weighingStageId === 1 
+
+      const message = weighingStageId === 1
         ? `Peso ${row.idAnimalWeighing ? 'actualizado' : 'guardado'}: ${grossWeight.toFixed(2)} ${unit}`
         : `Peso ${row.idAnimalWeighing ? 'actualizado' : 'guardado'}: Bruto ${grossWeight.toFixed(2)} ${unit}, Neto ${netWeight.toFixed(2)} ${unit}`;
-      
+
       toast.success(message);
-      
+
       // Invalidar la query para refrescar los datos desde la API
       queryClient.invalidateQueries({ queryKey: ["animal-weighing"] });
-      
+
       setSelectedRowId(null);
       setCapturedWeight(null);
       lastCapturedWeightRef.current = null;
@@ -717,7 +719,7 @@ export function AnimalWeighingManagement() {
             <Label className="whitespace-nowrap font-semibold">
               Fecha de Faenamiento:
             </Label>
-            <div className="relative flex-1 lg:flex-initial">
+            {/* <div className="relative flex-1 lg:flex-initial">
               <Input
                 id="fecha-weighing"
                 type="date"
@@ -730,7 +732,18 @@ export function AnimalWeighingManagement() {
                 }}
               />
               <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            </div>
+            </div> */}
+
+            <DatePicker
+              inputClassName='bg-secondary'
+              selected={parseISO(slaughterDate)}
+              onChange={date => {
+                if (!date) return;
+                const formattedDate = format(date, 'yyyy-MM-dd');
+                setSlaughterDate(formattedDate);
+              }}
+            />
+
           </div>
 
           {/* Etapa de Pesaje a la derecha */}
@@ -738,7 +751,7 @@ export function AnimalWeighingManagement() {
             <Label className="whitespace-nowrap font-semibold">
               Etapa de Pesaje:
             </Label>
-            
+
             {/* Versión móvil - Select */}
             <div className="block lg:hidden w-full">
               {isLoadingWeighingStages ? (
@@ -809,7 +822,7 @@ export function AnimalWeighingManagement() {
       <Card className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
           <Label className="whitespace-nowrap font-semibold">Especie:</Label>
-          
+
           {/* Versión móvil - Select */}
           <div className="block lg:hidden w-full">
             {isLoadingLines ? (
@@ -874,7 +887,7 @@ export function AnimalWeighingManagement() {
       <Card className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
           <Label className="whitespace-nowrap font-semibold">Ganchos:</Label>
-          
+
           {/* Versión móvil - Select */}
           <div className="block lg:hidden w-full">
             {isLoadingHookTypes ? (
@@ -929,7 +942,7 @@ export function AnimalWeighingManagement() {
         <Card className="p-3 sm:p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
             <Label className="flex-shrink-0 font-semibold">Tipo de Canal:</Label>
-            
+
             {/* Versión móvil - Select */}
             <div className="block lg:hidden w-full">
               {isLoadingChannelTypes ? (
@@ -1071,7 +1084,7 @@ export function AnimalWeighingManagement() {
                             <span className="text-xs text-muted-foreground ml-2">{row.sectionDescription}</span>
                           </div>
                         )}
-                        
+
                         <div className="flex items-center justify-between gap-2">
                           <div>
                             <div className="text-xs text-muted-foreground">Peso</div>
@@ -1079,7 +1092,7 @@ export function AnimalWeighingManagement() {
                               {row.peso !== 0 ? `${row.peso} ${unitMeasureData?.data?.symbol || 'lb'}` : "-"}
                             </div>
                           </div>
-                          
+
                           <div className="flex gap-1">
                             <Button
                               size="sm"
@@ -1158,8 +1171,8 @@ export function AnimalWeighingManagement() {
                   return Object.entries(groupedRows).map(([animalCode, animalRows]) => {
                     const rowSpan = animalRows.length;
                     return animalRows.map((row, index) => (
-                      <TableRow 
-                        key={row.id} 
+                      <TableRow
+                        key={row.id}
                         className={row.isComplete ? "[&]:!bg-[#86c6c5] hover:!bg-[#86c6c5]" : "bg-green-50 hover:!bg-green-50"}
                       >
                         {/* Fecha de Ingreso - solo en la primera fila del animal */}

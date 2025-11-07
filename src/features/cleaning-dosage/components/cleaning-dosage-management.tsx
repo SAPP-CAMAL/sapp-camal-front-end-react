@@ -41,6 +41,7 @@ import React from "react";
 import NewCleaningDosageForm from "./new-cleaning-dosage.form";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function CleaningDosageManagement() {
   const queryClient = useQueryClient();
@@ -143,7 +144,7 @@ export function CleaningDosageManagement() {
                 Fecha:
               </Label>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-[200px]">
+                {/* <div className="relative w-full sm:w-[200px]">
                   <CalendarIcon
                     className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                     onClick={() => {
@@ -170,7 +171,10 @@ export function CleaningDosageManagement() {
                     }}
                     title="Selecciona la fecha"
                   />
-                </div>
+                </div> */}
+
+                <DatePicker inputClassName='bg-secondary' selected={fecha} onChange={date => setFecha(date as Date)} />
+
                 {format(fecha, "yyyy-MM-dd") !==
                   format(today, "yyyy-MM-dd") && (
                   <Button
