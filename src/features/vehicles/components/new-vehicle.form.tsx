@@ -114,13 +114,13 @@ export default function NewVehicleForm({
           Number(vehicleData.transportTypeId)
         );
         setAvailableVehicleTypes(response.data || []);
-        
+
         // Si estamos en modo edición y hay un vehicleTypeId, verificar que esté en la lista
         if (isUpdate && vehicleData.vehicleTypeId) {
           const vehicleTypeExists = response.data?.some(
             (tipo) => String(tipo.id) === vehicleData.vehicleTypeId
           );
-          
+
           // Si el tipo de vehículo actual no está en la lista, limpiarlo
           if (!vehicleTypeExists) {
             console.warn("Vehicle type not found in available types, clearing selection");
@@ -243,7 +243,7 @@ export default function NewVehicleForm({
           </DialogDescription>
         </DialogHeader>
         <Card className="border-0 shadow-none">
-          <CardHeader className="pb-3 px-0 sm:px-6">
+          <CardHeader className="pb-3 px-0 sm:px-2">
             <CardTitle className="text-base sm:text-lg flex items-center gap-2">
               <Car className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
               Información del Vehículo
@@ -252,7 +252,7 @@ export default function NewVehicleForm({
               Complete la información del nuevo vehículo.
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-0 sm:px-6">
+          <CardContent className="px-0 sm:px-2">
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="w-full">
                 <Label className="text-xs sm:text-sm font-medium">
@@ -354,7 +354,7 @@ export default function NewVehicleForm({
                       !vehicleData.transportTypeId
                     }
                   >
-                    <SelectTrigger className="h-9 text-xs sm:text-sm">
+                    <SelectTrigger className="h-9 text-xs sm:text-sm w-full">
                       <SelectValue
                         placeholder={
                           !vehicleData.transportTypeId
