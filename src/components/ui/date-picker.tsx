@@ -24,14 +24,16 @@ export const DatePicker = ({
 	...props
 }: Props) => {
 	return (
-		<BaseDatePicker
-			dateFormat={dateFormat}
-			locale={locale}
-			showIcon={showIcon}
-			icon={icon ?? <Calendar className='mt-[1px]' />}
-			placeholderText={placeholderText}
-			className={cn(defaultInputStyle, inputClassName)}
-			{...props}
-		/>
+		<div>
+			<BaseDatePicker
+				dateFormat={dateFormat}
+				locale={locale}
+				showIcon={showIcon}
+				icon={icon ?? <Calendar className='mt-[1px]' />}
+				placeholderText={placeholderText}
+				className={cn(defaultInputStyle, inputClassName)}
+				{...props}
+			/>
+		</div>
 	);
 };
