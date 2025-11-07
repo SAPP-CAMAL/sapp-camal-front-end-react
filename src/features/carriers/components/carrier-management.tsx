@@ -247,9 +247,8 @@ export function CarriersManagement({}) {
             accessorFn: (row) => row.vehicle,
             cell: ({ row }) => {
               const vehicle = row.original.vehicle;
-              let value = toCapitalize(
-                vehicle.vehicleDetail?.vehicleType?.name ?? ""
-              );
+              const vehicleName = vehicle.vehicleDetail?.vehicleType?.name?.trim() ?? "";
+              let value = vehicleName === 'N/A' ? vehicleName: toCapitalize(vehicleName);
 
               if (vehicle.color) value += ` • ${vehicle.color}`;
               if (vehicle.manufactureYear)

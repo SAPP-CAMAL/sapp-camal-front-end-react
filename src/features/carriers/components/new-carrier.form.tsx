@@ -774,6 +774,7 @@ export function NewCarrier({
               setfilterFullName("");
               setfilterIdentification("");
               form.setValue("open", false);
+              onOpenChange?.(false);
             }}
           >
             Cancelar

@@ -27,7 +27,7 @@ export default async function DashboardLayout({
   try {
     menus = await getAdministrationMenusService();
   } catch (error) {
-    console.error("Error fetching menus:", error);
+    // console.error("Error fetching menus:", error);
     // Proporcionar un valor por defecto si falla
     menus = { data: [] };
   }

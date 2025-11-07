@@ -1,12 +1,13 @@
 'use client';
 
+import { format, parseISO } from 'date-fns';
 import { parseAsString, useQueryStates } from 'nuqs';
 import { ColumnDef, flexRender, Row } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight, FileText, Info, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Info } from 'lucide-react';
 
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { usePaginated } from '@/hooks/use-paginated';
+import { DatePicker } from '@/components/ui/date-picker';
 import { useGetRegisterVehicleByDate } from '@/features/vehicles/hooks';
 import { DetailRegisterVehicleByDate } from '@/features/vehicles/domain';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -105,7 +106,15 @@ export function DailyDisinfectionLogTable() {
 				<h2>Registros Diarios</h2>
 				<div className='flex items-center gap-3'>
 					<span className='whitespace-nowrap'>Filtrar por fecha</span>
-					<Input value={searchParams.date} type='date' onChange={e => setSearchParams({ date: e.target.value })} />
+					<DatePicker
+						inputClassName='bg-secondary'
+						selected={parseISO(searchParams.date)}
+						onChange={date => {
+							if (!date) return;
+							const formattedDate = format(date, 'yyyy-MM-dd');
+							setSearchParams({ date: formattedDate });
+						}}
+					/>
 					<Button>
 						<FileText />
 						Generar Reporte

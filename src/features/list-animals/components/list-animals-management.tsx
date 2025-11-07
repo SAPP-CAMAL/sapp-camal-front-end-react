@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function ListAnimalsManagement() {
   const [fechaIngreso, setFechaIngreso] = useState<Date | null>(null);
@@ -374,7 +375,7 @@ export function ListAnimalsManagement() {
               <span className="text-xs text-muted-foreground font-medium">
                 Fecha de Ingreso
               </span>
-              <div className="relative">
+              {/* <div className="relative">
                 <Calendar
                   className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                   onClick={() => {
@@ -401,13 +402,21 @@ export function ListAnimalsManagement() {
                   }}
                   title="Selecciona la fecha de ingreso de los animales"
                 />
-              </div>
+              </div> */}
+
+              <DatePicker
+                inputClassName='bg-secondary'
+                iconClassName="text-muted-foreground"
+                selected={fechaIngreso || new Date()}
+                onChange={date => setFechaIngreso(date as Date)}
+              />
+
             </div>
             <div className="flex flex-col gap-1 min-w-0">
               <span className="text-xs text-muted-foreground font-medium">
                 Fecha de Faenamiento
               </span>
-              <div className="relative">
+              {/* <div className="relative">
                 <CalendarDays
                   className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                   onClick={() => {
@@ -434,7 +443,14 @@ export function ListAnimalsManagement() {
                   }}
                   title="Selecciona la fecha de faenamiento de los animales"
                 />
-              </div>
+              </div> */}
+
+              <DatePicker
+                inputClassName='bg-secondary'
+                selected={fechaFaenamiento}
+                onChange={date => setFechaFaenamiento(date as Date)}
+                icon={<CalendarDays className="text-muted-foreground" />}
+              />
             </div>
             <SpeciesMenu
               className="w-full"

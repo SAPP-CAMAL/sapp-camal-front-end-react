@@ -39,8 +39,9 @@ import {
   Badge as BadgeIcon,
   Search,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function ListTransportManagement() {
   // Estado inicial de los filtros
@@ -59,7 +60,7 @@ export function ListTransportManagement() {
     null
   );
   const isMobile = useIsMobile();
-  
+
   // Estado local para los valores de los inputs (para escritura fluida)
   const [inputValues, setInputValues] = useState({
     code: "",
@@ -122,7 +123,7 @@ export function ListTransportManagement() {
         ...prev,
         [field]: value
       }));
-      
+
       // Limpiar timeout anterior
       if (searchTimeout) {
         clearTimeout(searchTimeout);
@@ -324,7 +325,7 @@ export function ListTransportManagement() {
               >
                 Fecha de Ingreso
               </label>
-              <div className="relative">
+              {/* <div className="relative">
                 <Calendar
                   className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                   onClick={() => {
@@ -342,7 +343,19 @@ export function ListTransportManagement() {
                   onChange={(e) => handleFilterChange("entryDate", e.target.value)}
                   title="Selecciona la fecha de ingreso de los animales"
                 />
-              </div>
+              </div> */}
+
+              <DatePicker
+               inputClassName='bg-secondary'
+               iconClassName='text-muted-foreground'
+               dateFormat='dd/MM/yyyy'
+               selected={parseISO(filters.entryDate)}
+               onChange={date => {
+                 if (!date) return;
+                 const formattedDate = format(date, 'yyyy-MM-dd');
+                 handleFilterChange("entryDate", formattedDate);
+               }}
+              />
             </div>
 
             {/* Código */}

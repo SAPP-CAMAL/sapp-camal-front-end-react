@@ -20,30 +20,31 @@ import { ObservacionesModal } from "./observaciones-modal";
 import { AntemortemMobileCard } from "./antemortem-mobile-card";
 import { getActiveLinesDataService, getAntemortemDataService, updateArgollasService } from "../server/db/antemortem.service";
 import { LineItem, mapLineItemToLineaType, getLineIdByType } from "../domain/line.types";
+import { DatePicker } from "@/components/ui/date-picker";
 
-function SelectLinea({ 
-  value, 
-  onChange, 
+function SelectLinea({
+  value,
+  onChange,
   availableLines = [],
-  isLoading = false 
-}: { 
-  value: Linea; 
+  isLoading = false
+}: {
+  value: Linea;
   onChange: (v: Linea) => void;
   availableLines?: LineItem[];
   isLoading?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  
+
   // Mapear las líneas de la API a los valores de Linea usando description
-  const opciones: Linea[] = availableLines.length > 0 
+  const opciones: Linea[] = availableLines.length > 0
     ? availableLines.map(mapLineItemToLineaType)
     : ["Bovinos", "Porcinos", "Ovinos Caprinos"];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="justify-between w-full bg-muted/40"
           disabled={isLoading}
         >
@@ -83,7 +84,7 @@ export function AntemortemManagement() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }, []);
-  
+
   const [fecha, setFecha] = useState<Date>(today);
   const [linea, setLinea] = useState<Linea>("Bovinos");
   const [signosOpen, setSignosOpen] = useState(false);
@@ -91,7 +92,7 @@ export function AntemortemManagement() {
   const [signosMarca, setSignosMarca] = useState<string>("");
   const [signosIdSpecie, setSignosIdSpecie] = useState<number>(1); // Default: Bovinos = 1
   const isMobile = useMediaQuery('(max-width: 768px)');
-  
+
   // Estados para editar argollas
   const [editingArgollasCorral, setEditingArgollasCorral] = useState<string | null>(null);
   const [tempArgollasValue, setTempArgollasValue] = useState<number>(0);
@@ -106,7 +107,7 @@ export function AntemortemManagement() {
   // Inicializar posición flotante en el cliente
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setFloatingPosition({ 
+      setFloatingPosition({
         x: 20, // Esquina inferior izquierda
         y: window.innerHeight - 150
       });
@@ -144,7 +145,7 @@ export function AntemortemManagement() {
   // Estados para cargar líneas desde la nueva API
   const [availableLines, setAvailableLines] = useState<LineItem[]>([]);
   const [isLoadingLines, setIsLoadingLines] = useState(false);
-  
+
   // Estados para datos de antemortem
   const [antemortemData, setAntemortemData] = useState<AntemortemRow[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -213,7 +214,7 @@ export function AntemortemManagement() {
       setIsLoadingLines(true);
       const response = await getActiveLinesDataService();
       setAvailableLines(response);
-      
+
       // Establecer la primera línea como línea activa (siempre línea 1)
       if (response.length > 0) {
         const firstLine = mapLineItemToLineaType(response[0]);
@@ -233,13 +234,13 @@ export function AntemortemManagement() {
       setIsLoadingData(true);
       const admissionDate = format(selectedFecha, "yyyy-MM-dd");
       const lineId = getLineIdByType(selectedLinea);
-      
+
       if (lineId === 0) {
         console.warn(`No se encontró ID para la línea: ${selectedLinea}`);
         setAntemortemData([]);
         return;
       }
-      
+
       const data = await getAntemortemDataService(admissionDate, lineId);
       setAntemortemData(data);
     } catch (error) {
@@ -297,13 +298,13 @@ export function AntemortemManagement() {
   }, []);
 
   const showArgollas = linea === "Bovinos";
-  
+
   // Funciones para editar argollas
   const handleArgollasClick = (corral: string, currentValue: number) => {
     setEditingArgollasCorral(corral);
     setTempArgollasValue(currentValue || 0);
   };
-  
+
   const handleSaveArgollas = async (row: AntemortemRow) => {
     if (!row.statusCorralId) {
       return;
@@ -311,19 +312,19 @@ export function AntemortemManagement() {
 
     try {
       setSavingArgollasCorral(row.corral);
-      
+
       const response = await updateArgollasService(row.statusCorralId, tempArgollasValue);
-      
+
       if (response.code === 200) {
         // Actualizar los datos localmente
-        setAntemortemData(prevData => 
-          prevData.map(item => 
-            item.corral === row.corral 
+        setAntemortemData(prevData =>
+          prevData.map(item =>
+            item.corral === row.corral
               ? { ...item, argollas: tempArgollasValue }
               : item
           )
         );
-        
+
         // Limpiar estado de edición
         setEditingArgollasCorral(null);
         setTempArgollasValue(0);
@@ -334,7 +335,7 @@ export function AntemortemManagement() {
       setSavingArgollasCorral(null);
     }
   };
-  
+
   const handleCancelArgollas = () => {
     setEditingArgollasCorral(null);
     setTempArgollasValue(0);
@@ -363,9 +364,9 @@ export function AntemortemManagement() {
                 Fecha:
               </Label>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-[200px]">
-                  <CalendarIcon 
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer" 
+                {/* <div className="relative w-full sm:w-[200px]">
+                  <CalendarIcon
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                     onClick={() => {
                       const input = document.getElementById('fecha-antemortem') as HTMLInputElement;
                       if (input) input.showPicker();
@@ -387,7 +388,15 @@ export function AntemortemManagement() {
                     }}
                     title="Selecciona la fecha"
                   />
-                </div>
+                </div> */}
+
+                <DatePicker
+                  inputClassName='bg-secondary'
+                  selected={fecha}
+                  onChange={date => setFecha(date || today)}
+                />
+
+
                 {/* Botón para volver a hoy */}
                 {format(fecha, "yyyy-MM-dd") !== format(today, "yyyy-MM-dd") && (
                   <Button
@@ -406,7 +415,7 @@ export function AntemortemManagement() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 lg:ml-2">
               <span className="text-sm text-black font-semibold whitespace-nowrap">Línea:</span>
               <div className="flex items-center gap-2 w-full">
-                <SelectLinea 
+                <SelectLinea
                   value={linea}
                   onChange={setLinea}
                   availableLines={availableLines}
@@ -495,7 +504,7 @@ export function AntemortemManagement() {
     </div>
 
       {/* Contenedor de la tabla o tarjetas */}
-      <div className={`relative overflow-auto ${!isMobile ? 'border-2 rounded-lg' : 'space-y-3'}`} 
+      <div className={`relative overflow-auto ${!isMobile ? 'border-2 rounded-lg' : 'space-y-3'}`}
            style={{ maxHeight: 'calc(100vh - 280px)' }}>
         {isLoadingData ? (
           <div className="flex items-center justify-center py-8">
@@ -556,7 +565,7 @@ export function AntemortemManagement() {
                 </TableCell>
                 <TableCell className="text-center border">
                   {r.haveObservations ? (
-                    <ObservacionesModal 
+                    <ObservacionesModal
                       observaciones={r.observaciones || "Sin observaciones"}
                       statusCorralId={r.statusCorralId}
                       admissionDate={format(fecha, "yyyy-MM-dd")}
@@ -643,9 +652,9 @@ export function AntemortemManagement() {
         ) : (
           <div className="px-2 pb-16">
             {data.filas.map((item: AntemortemRow, idx: number) => (
-              <AntemortemMobileCard 
-                key={idx} 
-                item={item} 
+              <AntemortemMobileCard
+                key={idx}
+                item={item}
                 showArgollas={showArgollas}
                 editingArgollasCorral={editingArgollasCorral}
                 tempArgollasValue={tempArgollasValue}
@@ -667,13 +676,13 @@ export function AntemortemManagement() {
           </div>
         )}
       </div>
-        
+
         {/* Resumen total flotante y draggable */}
         {!isMobile && showFloatingTotals && (
-          <div 
+          <div
             className="fixed bg-white rounded-md shadow-lg border border-gray-200 overflow-hidden z-50 select-none"
-            style={{ 
-              left: `${floatingPosition.x}px`, 
+            style={{
+              left: `${floatingPosition.x}px`,
               top: `${floatingPosition.y}px`,
               width: '160px'
             }}

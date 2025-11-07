@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/select";
 import { capitalizeText } from "@/lib/utils";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 
 // Componente para mostrar observaciones
 function ObservationsPopover({ observations }: { observations: string[] }) {
@@ -289,7 +290,7 @@ export function LockerRoomControlManagement() {
                 Fecha:
               </Label>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-[200px]">
+                {/* <div className="relative w-full sm:w-[200px]">
                   <CalendarIcon
                     className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                     onClick={() => {
@@ -316,7 +317,10 @@ export function LockerRoomControlManagement() {
                     }}
                     title="Selecciona la fecha"
                   />
-                </div>
+                </div> */}
+
+                <DatePicker inputClassName='bg-secondary' selected={fecha} onChange={date => setFecha(date as Date)} />
+
                 {format(fecha, "yyyy-MM-dd") !==
                   format(today, "yyyy-MM-dd") && (
                   <Button

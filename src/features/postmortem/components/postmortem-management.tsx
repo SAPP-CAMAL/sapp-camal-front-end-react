@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { format, parseISO } from "date-fns";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -40,6 +40,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { AnimalSelectionModal } from "./animal-selection-modal";
+import { DatePicker } from "@/components/ui/date-picker";
 import { TotalConfiscationModal } from "./total-confiscation-modal";
 import { PartialConfiscationModal } from "./partial-confiscation-modal";
 import { DynamicTableHeaders } from "./dynamic-table-headers";
@@ -432,9 +433,9 @@ export function PostmortemManagement() {
       {/* Filtros */}
       <Card className="p-3 sm:p-4">
         <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-            <Label className="sm:min-w-40 text-sm">Fecha de Inspección</Label>
-            <div className="relative w-full sm:w-[200px]">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 justify-start">
+            <Label className="sm:min-w-34 text-sm">Fecha de Inspección</Label>
+            {/* <div className="relative w-full sm:w-[200px]">
               <CalendarIcon
                 className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                 onClick={() => {
@@ -451,10 +452,21 @@ export function PostmortemManagement() {
                 value={slaughterDate}
                 onChange={(e) => setSlaughterDate(e.target.value)}
               />
-            </div>
+            </div> */}
+
+            <DatePicker
+						  inputClassName='bg-secondary'
+						  selected={parseISO(slaughterDate)}
+						  onChange={date => {
+						  	if (!date) return;
+						  	const formattedDate = format(date, 'yyyy-MM-dd');
+						  	setSlaughterDate(formattedDate);
+						  }}
+					  />
+
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-            <Label className="sm:min-w-40 inline-flex text-sm">
+            <Label className="sm:min-w-34 inline-flex text-sm">
               Línea de Producción
             </Label>
             <Select
@@ -546,7 +558,7 @@ export function PostmortemManagement() {
                                 const firstEmptyRowIndex = rows.findIndex(
                                   (r) => r.introductor === null
                                 );
-                                
+
                                 const newRowId = `row-${Date.now()}`;
                                 const newRow = {
                                   id: newRowId,
@@ -579,7 +591,7 @@ export function PostmortemManagement() {
                           >
                             <div className="font-medium">
                               {intro.nombre}
-                            
+
                             </div>
                             <div className="text-xs text-muted-foreground">
                               Marca: {intro.marca} | Cert: {intro.certificado} |
@@ -631,7 +643,7 @@ export function PostmortemManagement() {
         ) : (
           <div className="overflow-x-auto border rounded-lg bg-white -mx-2 sm:mx-0">
             <Table className="min-w-[1200px] bg-white text-xs sm:text-sm">
-              <TableHeader className="sticky top-0 z-20 [&_th]:!text-gray-900">
+              <TableHeader className="sticky top-0 [&_th]:!text-gray-900">
                 <DynamicTableHeaders
                   groupedColumns={groupedColumns}
                   isLoading={isLoadingDiseases}
@@ -732,7 +744,7 @@ export function PostmortemManagement() {
                                             >
                                               <div className="font-medium">
                                                 {intro.nombre}
-                                              
+
                                               </div>
                                               <div className="text-xs text-muted-foreground">
                                                 Marca: {intro.marca} | Cert:{" "}

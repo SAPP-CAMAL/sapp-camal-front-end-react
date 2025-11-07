@@ -26,7 +26,7 @@ import {
   getVisitorLogByFilterService,
 } from "./server/db/visitor-log.service";
 import { NewVisitorLogForm } from "./components/new-visitor-log.form";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import {
   Command,
   CommandEmpty,
@@ -45,6 +45,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RegisterExitTime } from "./components/register-exit-time";
 import { UpdateVisitorLogDialog } from "./components/update-visitor-log.form";
+import { DatePicker } from "@/components/ui/date-picker";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 
 export function VisitorLogManagement() {
@@ -118,7 +120,7 @@ export function VisitorLogManagement() {
               <span className="mb-1 text-sm font-medium text-gray-700">
                 Fecha de Ingreso
               </span>
-              <div className="relative">
+              {/* <div className="relative">
                 <Calendar
                   className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                   onClick={() => {
@@ -141,7 +143,18 @@ export function VisitorLogManagement() {
                   }}
                   title="Selecciona la fecha de ingreso de los animales"
                 />
-              </div>
+              </div> */}
+
+              <DatePicker
+                inputClassName='bg-secondary h-10 flex items-center'
+                iconClassName='mt-1'
+                selected={parseISO(searchParams.registerDate)}
+                onChange={date => {
+                  if (!date) return;
+                  const registerDate = format(date, 'yyyy-MM-dd');
+                  setSearchParams({ registerDate });
+                }}
+              />
             </div>
 
             <div className="flex flex-col w-full">
@@ -260,6 +273,7 @@ export function VisitorLogManagement() {
           {
             accessorKey: "person.fullName",
             header: "Nombre Completo",
+            cell: ({ row }) => toCapitalize(row.original?.person?.fullName ?? "", true)
           },
           {
             accessorKey: "company.name",

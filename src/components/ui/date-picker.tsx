@@ -12,6 +12,7 @@ const defaultInputStyle =
 
 type Props = DatePickerProps & {
 	inputClassName?: string;
+	iconClassName?: string;
 };
 
 export const DatePicker = ({
@@ -21,17 +22,20 @@ export const DatePicker = ({
 	icon,
 	placeholderText = 'Elija una fecha',
 	inputClassName = '',
+	iconClassName = '',
 	...props
 }: Props) => {
 	return (
-		<BaseDatePicker
-			dateFormat={dateFormat}
-			locale={locale}
-			showIcon={showIcon}
-			icon={icon ?? <Calendar className='mt-[1px]' />}
-			placeholderText={placeholderText}
-			className={cn(defaultInputStyle, inputClassName)}
-			{...props}
-		/>
+		<div>
+			<BaseDatePicker
+				dateFormat={dateFormat}
+				locale={locale}
+				showIcon={showIcon}
+				icon={icon ?? <Calendar className={cn('mt-[1px]', iconClassName )} />}
+				placeholderText={placeholderText}
+				className={cn(defaultInputStyle, inputClassName)}
+				{...props}
+			/>
+		</div>
 	);
 };

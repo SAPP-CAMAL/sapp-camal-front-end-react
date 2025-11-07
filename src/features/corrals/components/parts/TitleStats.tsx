@@ -183,7 +183,7 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
                 </>
               )}
             </Button>
-            <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white rounded whitespace-nowrap z-10 ${
+            <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white rounded whitespace-nowrap ${
               isToday && !hasExistingCodes ? 'bg-teal-600' : 'bg-gray-400'
             } opacity-0 group-hover:opacity-100 transition-opacity`}>
               {hasExistingCodes
