@@ -46,7 +46,6 @@
 }
 
 .react-datepicker__day--selected,
-.react-datepicker__day--keyboard-selected,
 .react-datepicker__day:is([aria-selected='true']),
 .react-datepicker__day:is([aria-selected='true']):hover {
 	background-color: var(--color-foreground);
@@ -116,4 +115,8 @@
 
 .react-datepicker__view-calendar-icon input {
 	padding: 6px 10px 5px 30px;
+}
+
+.react-datepicker__day--keyboard-selected {
+	background-color: var(--color-background) !important;
 }
