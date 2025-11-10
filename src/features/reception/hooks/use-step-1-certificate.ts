@@ -9,6 +9,7 @@ import { useReceptionContext } from './use-reception-context';
 import { useCertificatesByCode } from '@/features/certificate/hooks';
 import { updateCertificateService } from '@/features/certificate/server/db/certificate.service';
 import {
+	getDetailRegisterVehicleById,
 	getDetailRegisterVehicleByIdShippingAndCertificateCodeService,
 	getShippersByIdService,
 } from '@/features/shipping/server/db/shipping.service';
@@ -100,6 +101,9 @@ export const useStep1Certificate = () => {
 					},
 				},
 				status: true,
+				specie: item.species,
+				entryTime: item.timeStar || '',
+				idDetailsRegisterVehicles: item.id,
 			};
 		});
 
@@ -144,6 +148,7 @@ export const useStep1Certificate = () => {
 				shippingsId: selectedShipper.id,
 				idOrigin: selectedCertificate.idOrigin ?? 0,
 				status: true,
+				idDetailsRegisterVehicles: selectedShipper.idDetailsRegisterVehicles,
 			});
 
 			const updatedCertificate = response.data;
@@ -187,14 +192,11 @@ export const useStep1Certificate = () => {
 
 		// 3. Retrieve specie if not set
 		try {
+			if (selectedSpecie || !selectedCertificate.idDetailsRegisterVehicles) return;
 
-			if (selectedSpecie) return;
+			const registerVehicle = (await getDetailRegisterVehicleById(selectedCertificate.idDetailsRegisterVehicles )).data;
 
-			const registerVehicle = (
-				await getDetailRegisterVehicleByIdShippingAndCertificateCodeService(selectedShipper.id, selectedCertificate.code)
-			).data;
-
-			if (registerVehicle.species) handleSetSelectedSpecie(registerVehicle.species);
+			if (registerVehicle.specie) handleSetSelectedSpecie(registerVehicle.specie);
 		} catch (error) {}
 	};
 
@@ -211,10 +213,11 @@ export const useStep1Certificate = () => {
 		}
 
 		try {
-			const registerVehicle = (await getDetailRegisterVehicleByIdShippingAndCertificateCodeService(certificate.shippingsId ?? 0, certificate.code))
-				.data;
+			if (!selectedSpecie && certificate.idDetailsRegisterVehicles) {
+				const registerVehicle = (await getDetailRegisterVehicleById(certificate.idDetailsRegisterVehicles )).data;
 
-			if (registerVehicle.species) handleSetSelectedSpecie(registerVehicle.species);
+				if (registerVehicle.specie) handleSetSelectedSpecie(registerVehicle.specie);
+			}
 		} catch (error) {}
 
 		// Si el certificado no tiene transportista asociado, limpiar el transportista seleccionado
@@ -277,6 +280,7 @@ export const useStep1Certificate = () => {
 
 	return {
 		// data
+		selectedSpecie,
 		shippers,
 		certificates,
 		selectedShipper,
@@ -295,6 +299,7 @@ export const useStep1Certificate = () => {
 		handleRemoveSelectedShipper,
 		handleChangeStep1,
 		debounceFields,
+		handleSetSelectedSpecie,
 
 		// action to save data
 		handleSuccessButton,

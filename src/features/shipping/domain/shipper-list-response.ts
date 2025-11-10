@@ -30,6 +30,20 @@ export interface DetailRegisterVehicleResponseByCodeAndIdShipping {
 	disinfectant: Disinfectant;
 }
 
+export interface DetailRegisterVehicleResponseById {
+	id: number;
+	idRegisterVehicle: number;
+	idSpecies: number;
+	idDisinfectant: number;
+	dosage: string;
+	commentary: string;
+	timeStar: string;
+	timeEnd: null;
+	status: boolean;
+	specie: Specie;
+	disinfectant: Disinfectant;
+}
+
 interface Disinfectant {
 	id: number;
 	name: string;
