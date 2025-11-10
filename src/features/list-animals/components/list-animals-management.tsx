@@ -45,6 +45,7 @@ import {
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DatePicker } from "@/components/ui/date-picker";
+import { parseLocalDateString, getLocalDateString } from "@/lib/formatDate";
 
 export function ListAnimalsManagement() {
   const [fechaIngreso, setFechaIngreso] = useState<Date | null>(null);
@@ -193,11 +194,11 @@ export function ListAnimalsManagement() {
     ),
     totalFaenamiento: apiData.reduce((acc, item) => {
       const targetDateObj = fechaFaenamiento || new Date();
-      const targetDate = `${targetDateObj.getFullYear()}-${String(targetDateObj.getMonth() + 1).padStart(2, '0')}-${String(targetDateObj.getDate()).padStart(2, '0')}`;
+      const targetDate = getLocalDateString(targetDateObj);
 
-      const itemSlaughterDate = item.slaughterDate ? new Date(item.slaughterDate) : null;
+      const itemSlaughterDate = item.slaughterDate ? parseLocalDateString(item.slaughterDate.split('T')[0]) : null;
       const itemSlaughter = itemSlaughterDate
-        ? `${itemSlaughterDate.getFullYear()}-${String(itemSlaughterDate.getMonth() + 1).padStart(2, '0')}-${String(itemSlaughterDate.getDate()).padStart(2, '0')}`
+        ? getLocalDateString(itemSlaughterDate)
         : null;
 
       if (itemSlaughter && itemSlaughter === targetDate) {
@@ -274,7 +275,7 @@ export function ListAnimalsManagement() {
                   Fecha de Faenamiento
                 </div>
                 <div className="text-sm font-medium">
-                  {format(new Date(item.slaughterDate), "dd/LL/yyyy")}
+                  {format(parseLocalDateString(item.slaughterDate.split('T')[0]), "dd/LL/yyyy")}
                 </div>
               </div>
             </div>
@@ -396,7 +397,7 @@ export function ListAnimalsManagement() {
                   }
                   onChange={(e) => {
                     const date = e.target.value
-                      ? new Date(e.target.value)
+                      ? parseLocalDateString(e.target.value)
                       : null;
                     setFechaIngreso(date);
                   }}
@@ -437,7 +438,7 @@ export function ListAnimalsManagement() {
                   }
                   onChange={(e) => {
                     const date = e.target.value
-                      ? new Date(e.target.value)
+                      ? parseLocalDateString(e.target.value)
                       : null;
                     setFechaFaenamiento(date);
                   }}
@@ -714,7 +715,7 @@ export function ListAnimalsManagement() {
                         </TableCell>
                         <TableCell className="whitespace-normal text-center text-sm">
                           {item.slaughterDate
-                            ? format(new Date(item.slaughterDate), "dd/LL")
+                            ? format(parseLocalDateString(item.slaughterDate.split('T')[0]), "dd/LL")
                             : "-"}
                         </TableCell>
                         <TableCell className="whitespace-normal text-center border-x">

@@ -51,5 +51,6 @@ export type GroupedColumn = {
     id: number;
     name: string;
     productDiseaseId: number;
+    idProduct: number; // ID del producto para obtener ubicaciones anatómicas
   }[];
 };

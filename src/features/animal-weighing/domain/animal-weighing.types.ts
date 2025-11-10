@@ -33,6 +33,7 @@ export type AnimalWeighingRow = {
 
 export type DetailAnimalWeighing = {
   idHookType: number;
+  idUnitMeasure: number; // ID de la unidad de medida (lb, kg, etc.)
   idConfigSectionChannel?: number; // Opcional, solo cuando hay secciones
   grossWeight: number; // Peso bruto de la balanza
   netWeight: number; // Peso neto (grossWeight - peso del gancho)

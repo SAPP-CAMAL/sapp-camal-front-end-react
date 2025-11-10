@@ -209,6 +209,7 @@ export function PostmortemManagement() {
           localizacion: group.product,
           patologia: disease.name,
           idSpeciesDisease: disease.id, // Agregar el ID de la enfermedad
+          idProduct: disease.idProduct, // Agregar el ID del producto
         });
       });
     });
@@ -376,6 +377,7 @@ export function PostmortemManagement() {
       localizacion: config.localizacion,
       patologia: config.patologia,
       idSpeciesDisease: config.idSpeciesDisease,
+      idProduct: config.idProduct,
     });
   };
 
@@ -969,6 +971,8 @@ export function PostmortemManagement() {
         localizacion={modalState.localizacion}
         patologia={modalState.patologia}
         idSpeciesDisease={modalState.idSpeciesDisease ?? 0}
+        idProduct={modalState.idProduct ?? null}
+        idSpecie={selectedSpecieId}
         certId={currentIntroductor?.certId ?? null}
       />
 

@@ -84,6 +84,7 @@ export const groupDiseasesByProduct = (
       id: speciesDiseaseId, // Usar el ID de SpeciesDisease
       name: diseaseName,
       productDiseaseId,
+      idProduct: item.productDisease.idProduct, // Agregar idProduct
     });
   });
 

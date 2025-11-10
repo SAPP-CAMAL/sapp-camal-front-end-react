@@ -15,6 +15,7 @@ export interface SubProductPostmortem {
     percentageAffection: number;
     weight: number;
     status: boolean;
+    idProductAnatomicalLocation?: number; // ID de la ubicación anatómica (opcional)
 }
 
 export interface SavePostmortemRequest {
@@ -79,6 +80,7 @@ export interface SubProductPostmortemData {
   weight: string;
   percentageAffection: string;
   status: boolean;
+  idProductAnatomicalLocation?: number; // ID de la ubicación anatómica
   speciesDisease: SpeciesDiseaseData;
 }
 
