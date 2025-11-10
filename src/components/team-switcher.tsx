@@ -39,10 +39,47 @@ export function RoleSwitcher() {
     enabled: typeof window !== 'undefined', // Solo ejecutar en el cliente
   });
 
-  // Establecer el primer rol como activo por defecto
+  // Cargar el rol activo desde localStorage o usar el rol del usuario
   React.useEffect(() => {
     if (query.data?.data && query.data.data.length > 0 && activeRoleId === null) {
+      // Intentar obtener el rol guardado en localStorage
+      const savedRoleId = localStorage.getItem('activeRoleId');
+      
+      if (savedRoleId) {
+        const roleId = parseInt(savedRoleId);
+        // Verificar que el rol guardado existe en la lista de roles del usuario
+        const roleExists = query.data.data.some((role: any) => role.id === roleId);
+        if (roleExists) {
+          setActiveRoleId(roleId);
+          return;
+        }
+      }
+      
+      // Si no hay rol guardado o no existe, intentar obtener del usuario en cookies usando document.cookie
+      try {
+        const cookies = document.cookie.split(';');
+        const userCookie = cookies.find(cookie => cookie.trim().startsWith('user='));
+        
+        if (userCookie) {
+          const userValue = userCookie.split('=')[1];
+          const userData = JSON.parse(decodeURIComponent(userValue));
+          
+          if (userData.role?.id) {
+            const roleExists = query.data.data.some((role: any) => role.id === userData.role.id);
+            if (roleExists) {
+              setActiveRoleId(userData.role.id);
+              localStorage.setItem('activeRoleId', userData.role.id.toString());
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error al leer cookies:', error);
+      }
+      
+      // Si todo falla, usar el primer rol
       setActiveRoleId(query.data.data[0].id);
+      localStorage.setItem('activeRoleId', query.data.data[0].id.toString());
     }
   }, [query.data, activeRoleId]);
 
@@ -97,6 +134,7 @@ export function RoleSwitcher() {
                   isActive={role.id === activeRoleId}
                   onSelect={() => {
                     setActiveRoleId(role.id);
+                    localStorage.setItem('activeRoleId', role.id.toString());
                     setOpen(false);
                   }}
                 />
