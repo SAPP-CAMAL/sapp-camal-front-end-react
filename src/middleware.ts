@@ -14,7 +14,16 @@ export async function middleware(req: NextRequest) {
     const allowsPaths = resp
         .data
         .flatMap((menu: any) => menu?.children ?? [])
-        .map((item: any) => item?.url ?? [])
+        .map((item: any) => {
+            const url = item?.url ?? '';
+            // Asegurar que la URL comience con /
+            return url.startsWith('/') ? url : `/${url}`;
+        })
+
+    // Debug: ver rutas permitidas
+    console.log('Pathname:', pathname);
+    console.log('Allowed paths:', allowsPaths);
+    console.log('Is allowed:', allowsPaths.includes(pathname));
 
     if (pathname.startsWith("/dashboard")) {
         if (!token) {
