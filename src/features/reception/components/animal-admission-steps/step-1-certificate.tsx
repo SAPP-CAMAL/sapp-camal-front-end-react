@@ -35,6 +35,7 @@ export const Step1Certificate = () => {
     certificatesQuery,
     successMsg,
     isFromQR,
+    selectedSpecie,
 
     // actions - state
     handleRemoveSelectedCertificate,
@@ -42,6 +43,7 @@ export const Step1Certificate = () => {
     handleSetSelectedShipper,
     handleRemoveSelectedShipper,
     handleChangeStep1,
+    handleSetSelectedSpecie,
     debounceFields,
 
     // action to save data
@@ -241,14 +243,15 @@ export const Step1Certificate = () => {
               </Label>
             </div>
 
-            <ShipperModal
+            {/* // ! Quitar posiblemente */}
+            {/* <ShipperModal
               triggerButton={
                 <Button>
                   <Plus />
                   Crear Nuevo
                 </Button>
               }
-            />
+            /> */}
           </div>
 
           {/* Selected shipper card */}
@@ -257,7 +260,7 @@ export const Step1Certificate = () => {
               title={selectedShipper.fullName}
               paragraph={`${selectedShipper.identification} • ${
                 selectedShipper.plate
-              } • ${toCapitalize(selectedShipper.vehicleType)}`}
+              } • ${toCapitalize(selectedShipper.vehicleType)}${selectedSpecie?.name ? ` • ${toCapitalize(selectedSpecie.name)}` : ''}${selectedShipper?.entryTime ? ` • Ingreso: ${selectedShipper.entryTime}` : ''}`}
               onRemove={handleRemoveSelectedShipper}
               editButton={
                 selectedCertificate ? (
@@ -288,7 +291,11 @@ export const Step1Certificate = () => {
                             shipping.vehicle.vehicleDetail.transportType.id.toString(),
                           transportType:
                             shipping.vehicle.vehicleDetail.transportType.name,
+                          entryTime: registerVehicle.timeStar || '',
+                          idDetailsRegisterVehicles: registerVehicle.id,
                         });
+
+                        handleSetSelectedSpecie(registerVehicle.species);
                       }
                     }}
                     triggerButton={
@@ -363,15 +370,15 @@ export const Step1Certificate = () => {
                     )}
                   </div>
                   <div className="grid gap-2 max-h-96 overflow-y-auto border rounded-lg p-2 bg-gray-50">
-                    {filteredShippers.map((shipper) => (
+                    {filteredShippers.map((shipper, index) => (
                       <BasicResultsCard
-                        key={shipper.id}
+                        key={`${shipper.id}-${index}`}
                         title={shipper.person.fullName}
                         paragraph={`${shipper.person.identification} • ${
                           shipper.vehicle.plate
                         } • ${toCapitalize(
                           shipper.vehicle.vehicleDetail.vehicleType.name
-                        )}`}
+                        )} • ${toCapitalize(shipper.specie.name)}`}
                         onSelect={() => {
                           handleSetSelectedShipper({
                             id: shipper.id,
@@ -392,8 +399,14 @@ export const Step1Certificate = () => {
                               shipper.vehicle.vehicleDetail.transportType.id.toString(),
                             transportType:
                               shipper.vehicle.vehicleDetail.transportType.name,
+                            entryTime: shipper.entryTime || '',
+                            idDetailsRegisterVehicles: shipper.idDetailsRegisterVehicles,
                           });
                           setShipperSearch(""); // Limpiar búsqueda al seleccionar
+
+
+                          handleSetSelectedSpecie(shipper.specie);
+
                         }}
                       />
                     ))}
