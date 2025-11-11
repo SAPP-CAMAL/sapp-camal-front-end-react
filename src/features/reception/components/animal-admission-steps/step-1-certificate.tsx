@@ -374,11 +374,11 @@ export const Step1Certificate = () => {
                       <BasicResultsCard
                         key={`${shipper.id}-${index}`}
                         title={shipper.person.fullName}
-                        paragraph={`${shipper.person.identification} • ${
-                          shipper.vehicle.plate
-                        } • ${toCapitalize(
+                        paragraph={`${shipper.person.identification} • ${shipper.vehicle.plate} • ${toCapitalize(
                           shipper.vehicle.vehicleDetail.vehicleType.name
-                        )} • ${toCapitalize(shipper.specie.name)}`}
+                        )} • ${toCapitalize(shipper.specie.name)}${
+                          shipper.entryTime ? ` • Ingreso: ${shipper.entryTime}` : ""
+                        }`}
                         onSelect={() => {
                           handleSetSelectedShipper({
                             id: shipper.id,
@@ -404,9 +404,7 @@ export const Step1Certificate = () => {
                           });
                           setShipperSearch(""); // Limpiar búsqueda al seleccionar
 
-
                           handleSetSelectedSpecie(shipper.specie);
-
                         }}
                       />
                     ))}
