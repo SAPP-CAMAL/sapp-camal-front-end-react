@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/tooltip";
 import {
   ChangeShipperModal,
-  SearchShippersInput,
   ShipperModal,
 } from "@/features/shipping/components";
 import { BasicAnimalAdmissionAccordionHeader } from "../basic-animal-admission-accordion-header";
@@ -36,6 +35,7 @@ export const Step1Certificate = () => {
     successMsg,
     isFromQR,
     selectedSpecie,
+    canEditDetailsRegisterVehicle,
 
     // actions - state
     handleRemoveSelectedCertificate,
@@ -261,7 +261,7 @@ export const Step1Certificate = () => {
               paragraph={`${selectedShipper.identification} • ${
                 selectedShipper.plate
               } • ${toCapitalize(selectedShipper.vehicleType)}${selectedSpecie?.name ? ` • ${toCapitalize(selectedSpecie.name)}` : ''}${selectedShipper?.entryTime ? ` • Ingreso: ${selectedShipper.entryTime}` : ''}`}
-              onRemove={handleRemoveSelectedShipper}
+              onRemove={canEditDetailsRegisterVehicle ? handleRemoveSelectedShipper : undefined}
               editButton={
                 selectedCertificate ? (
                   <ChangeShipperModal
@@ -299,7 +299,7 @@ export const Step1Certificate = () => {
                       }
                     }}
                     triggerButton={
-                      <Button variant="ghost">
+                      <Button variant="ghost" disabled={!canEditDetailsRegisterVehicle}>
                         <Edit />
                         Editar
                       </Button>
@@ -312,7 +312,7 @@ export const Step1Certificate = () => {
                       handleSetSelectedShipper(shipper!)
                     }
                     triggerButton={
-                      <Button variant="ghost">
+                      <Button variant="ghost" disabled={!canEditDetailsRegisterVehicle}>
                         <Edit />
                         Editar
                       </Button>

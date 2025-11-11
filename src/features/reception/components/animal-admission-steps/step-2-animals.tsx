@@ -51,6 +51,7 @@ export const Step2Animals = () => {
     handleRemoveSelectedSpecie,
   } = useStep2Animals();
 
+
   const speciesQuery = useAllSpecies();
   const species: Specie[] = (speciesQuery.data?.data as Specie[]) || [];
 
