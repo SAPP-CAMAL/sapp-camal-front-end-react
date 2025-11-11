@@ -106,6 +106,7 @@ export const useRegisterDisinfectantData = () => {
 				vehicleId: dailyDisinfectionRegister.registerVehicle.shipping.vehicleId.toString() ?? '',
 				vehicleType: dailyDisinfectionRegister.registerVehicle.shipping.vehicle.vehicleDetail.vehicleType.name ?? '',
 				vehicleTypeId: dailyDisinfectionRegister.registerVehicle.shipping.vehicle.vehicleDetail.vehicleTypeId.toString() ?? '',
+				idDetailsRegisterVehicles: dailyDisinfectionRegister.id,
 			},
 			fullName: dailyDisinfectionRegister?.registerVehicle.shipping.person.fullName ?? '',
 			identification: dailyDisinfectionRegister?.registerVehicle.shipping.person.identification ?? '',
@@ -132,29 +133,10 @@ export const useRegisterDisinfectantData = () => {
 		}
 
 		const timeEnd = departureApplicationTime ? departureApplicationTime.split(':').slice(0, 2).join(':') : null;
+		let idDetailsRegisterVehicles = shipper.idDetailsRegisterVehicles ?? data.id;
 
 		try {
-			// 1. Update the certificate if it exists with shipping id.
-			if (selectedCertificate) {
-				const response = await updateCertificateService(selectedCertificate.id, {
-					code: selectedCertificate.code,
-					issueDate: selectedCertificate.issueDate,
-					placeOrigin: selectedCertificate.placeOrigin,
-					quantity: selectedCertificate.quantity,
-					plateVehicle: selectedCertificate.plateVehicle,
-					status: selectedCertificate.status,
-					authorizedTo: selectedCertificate.authorizedTo,
-					originAreaCode: selectedCertificate.originAreaCode,
-					destinationAreaCode: selectedCertificate.destinationAreaCode,
-					urlFile: selectedCertificate.urlFile,
-					idOrigin: selectedCertificate.origin?.id ?? 0,
-					shippingsId: shipper.id,
-				});
-
-				handleSetSelectedCertificate(response.data);
-			}
-
-			// 2. Create or update the daily disinfection register
+			// 3. Create or update the daily disinfection register
 			if (data.id) {
 				const requestData: UpdateDetailRegisterVehicle = {
 					idDisinfectant: +disinfectant,
@@ -181,9 +163,32 @@ export const useRegisterDisinfectantData = () => {
 					...(timeEnd && { timeEnd }),
 				};
 
-				await createRegisterVehicleService(shipper.id, requestData);
+				const response = await createRegisterVehicleService(shipper.id, requestData);
+
+				idDetailsRegisterVehicles = response.data.id;
 
 				toast.success('Registro creado exitosamente');
+			}
+
+			// 2. Update the certificate if it exists with shipping id.
+			if (selectedCertificate) {
+				const response = await updateCertificateService(selectedCertificate.id, {
+					code: selectedCertificate.code,
+					issueDate: selectedCertificate.issueDate,
+					placeOrigin: selectedCertificate.placeOrigin,
+					quantity: selectedCertificate.quantity,
+					plateVehicle: selectedCertificate.plateVehicle,
+					status: selectedCertificate.status,
+					authorizedTo: selectedCertificate.authorizedTo,
+					originAreaCode: selectedCertificate.originAreaCode,
+					destinationAreaCode: selectedCertificate.destinationAreaCode,
+					urlFile: selectedCertificate.urlFile,
+					idOrigin: selectedCertificate.origin?.id ?? 0,
+					shippingsId: shipper.id,
+					idDetailsRegisterVehicles,
+				});
+
+				handleSetSelectedCertificate(response.data);
 			}
 
 			form.reset({ ...defaultValues, admissionApplicationTime: getCurrentTime() });
