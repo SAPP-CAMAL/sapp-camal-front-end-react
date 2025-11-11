@@ -80,6 +80,8 @@ export function AnimalWeighingManagement() {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [capturedWeight, setCapturedWeight] = useState<number | null>(null);
   const lastCapturedWeightRef = useRef<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const queryClient = useQueryClient();
 
@@ -641,6 +643,42 @@ export function AnimalWeighingManagement() {
     );
   }, [rows, searchTerm]);
 
+  // Agrupar filas por animal
+  const groupedByAnimal = useMemo(() => {
+    const groups: { [key: string]: typeof filteredRows } = {};
+    filteredRows.forEach((row) => {
+      if (!groups[row.code]) {
+        groups[row.code] = [];
+      }
+      groups[row.code].push(row);
+    });
+    return groups;
+  }, [filteredRows]);
+
+  // Obtener lista de códigos de animales únicos
+  const animalCodes = useMemo(() => Object.keys(groupedByAnimal), [groupedByAnimal]);
+
+  // Calcular paginación por animales (no por filas)
+  const totalAnimals = animalCodes.length;
+  const totalPages = Math.ceil(totalAnimals / itemsPerPage);
+  const startAnimalIndex = (currentPage - 1) * itemsPerPage;
+  const endAnimalIndex = startAnimalIndex + itemsPerPage;
+  const paginatedAnimalCodes = animalCodes.slice(startAnimalIndex, endAnimalIndex);
+
+  // Obtener todas las filas de los animales paginados
+  const paginatedRows = useMemo(() => {
+    const rows: typeof filteredRows = [];
+    paginatedAnimalCodes.forEach((code) => {
+      rows.push(...groupedByAnimal[code]);
+    });
+    return rows;
+  }, [paginatedAnimalCodes, groupedByAnimal]);
+
+  // Resetear a página 1 cuando cambie el filtro de búsqueda o el tamaño de página
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, itemsPerPage]);
+
   const totalRecords = filteredRows.length;
 
   return (
@@ -1195,7 +1233,7 @@ export function AnimalWeighingManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRows.length === 0 ? (
+              {paginatedRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={weighingStageId !== 1 ? 6 : 5} className="text-center py-8">
                     {isLoadingWeighingData ? "Cargando animales..." : "No hay registros disponibles"}
@@ -1204,8 +1242,8 @@ export function AnimalWeighingManagement() {
               ) : (
                 (() => {
                   // Agrupar filas por código de animal para hacer rowspan
-                  const groupedRows: { [key: string]: typeof filteredRows } = {};
-                  filteredRows.forEach((row) => {
+                  const groupedRows: { [key: string]: typeof paginatedRows } = {};
+                  paginatedRows.forEach((row) => {
                     if (!groupedRows[row.code]) {
                       groupedRows[row.code] = [];
                     }
@@ -1309,6 +1347,90 @@ export function AnimalWeighingManagement() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Paginación */}
+        {totalAnimals > 0 && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 px-4">
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {startAnimalIndex + 1} a{" "}
+                {Math.min(endAnimalIndex, totalAnimals)} de{" "}
+                {totalAnimals} animales ({filteredRows.length} registros)
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Mostrar:</span>
+                <Select
+                  value={itemsPerPage.toString()}
+                  onValueChange={(value) => setItemsPerPage(Number(value))}
+                >
+                  <SelectTrigger className="w-20 h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-x-2">
+              <Button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
+                variant="outline"
+                size="sm"
+              >
+                Anterior
+              </Button>
+              {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+                const pageNumber = i + 1;
+                const isCurrentPage = pageNumber === currentPage;
+
+                // Mostrar primera página, última página, página actual y páginas alrededor
+                const showPage =
+                  pageNumber === 1 ||
+                  pageNumber === totalPages ||
+                  Math.abs(pageNumber - currentPage) <= 2;
+
+                if (!showPage) return null;
+
+                return (
+                  <Button
+                    key={pageNumber}
+                    variant="outline"
+                    size="sm"
+                    className={
+                      isCurrentPage
+                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
+                        : ""
+                    }
+                    onClick={() => setCurrentPage(pageNumber)}
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
+              {totalPages > 10 && (
+                <span className="px-2 text-sm text-muted-foreground">
+                  ... {totalPages}
+                </span>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+              >
+                Siguiente
+              </Button>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
     </div>
   );
