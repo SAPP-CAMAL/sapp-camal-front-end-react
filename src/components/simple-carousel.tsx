@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 
@@ -70,10 +70,10 @@ export function SimpleCarousel({
         )}
 
         {/* Welcome Message - Top Center */}
-        <div className="absolute top-55 left-1/2 -translate-x-1/2 z-40 text-center">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent drop-shadow-lg flex items-center justify-center gap-2">
-            <span>¡Bienvenido, {userName}!</span>
-            <span className="animate-wave text-4xl">👋</span>
+        <div className="absolute top-55 left-1/2 -translate-x-1/2 z-40 text-center w-full px-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent drop-shadow-lg inline-flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
+            <span className="whitespace-nowrap">¡Bienvenido, {userName}!</span>
+            <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 md:h-9 md:w-9 text-yellow-500 animate-pulse flex-shrink-0" />
           </h1>
         </div>
 
