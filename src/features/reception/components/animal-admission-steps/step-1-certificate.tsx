@@ -244,14 +244,14 @@ export const Step1Certificate = () => {
             </div>
 
             {/* // ! Quitar posiblemente */}
-            <ShipperModal
+            {/* <ShipperModal
               triggerButton={
                 <Button>
                   <Plus />
                   Crear Nuevo
                 </Button>
               }
-            />
+            /> */}
           </div>
 
           {/* Selected shipper card */}
