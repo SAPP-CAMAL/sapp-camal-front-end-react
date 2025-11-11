@@ -42,3 +42,11 @@ export const getCertBrandById = (id: number | string) => {
 		})
 		.json<CreateOrUpdateHttpResponse<SettingCertBrandByID>>();
 };
+
+export const getSimpleSettingCertBrandByCertificateId = (id: number | string) => {
+	return http
+		.get('v1/1.0.0/setting-cert-brand/registers/by-certificate-id', {
+			searchParams: { certificateId: id.toString() },
+		})
+		.json<CommonHttpResponse<SaveCertificateBrandResponse>>();
+};

@@ -13,7 +13,7 @@ import {
 	getDetailRegisterVehicleByIdShippingAndCertificateCodeService,
 	getShippersByIdService,
 } from '@/features/shipping/server/db/shipping.service';
-import { getCertBrandByCertificateId } from '@/features/setting-certificate-brand/server/db/setting-cert-brand.service';
+import { getCertBrandByCertificateId, getSimpleSettingCertBrandByCertificateId } from '@/features/setting-certificate-brand/server/db/setting-cert-brand.service';
 import { getConditionTransportByCertificateId } from '@/features/condition-transport/server/db/condition-transport.service';
 import { useGetRegisterVehicleByDate } from '@/features/vehicles/hooks';
 
@@ -52,6 +52,7 @@ export const useStep1Certificate = () => {
 	} = useReceptionContext();
 
 	const [searchState, setSearchState] = useState<Step1State>(initialState);
+	const [canEditDetailsRegisterVehicle, setCanEditDetailsRegisterVehicle] = useState(true)
 
 	const { certificateNumber } = searchState;
 
@@ -250,6 +251,17 @@ export const useStep1Certificate = () => {
 			// Si hay error al obtener el transportista, también limpiarlo
 			handleRemoveSelectedShipper();
 		}
+
+		// Validate if can edit details register vehicle
+		try {
+			const settingCertsResponse = await getSimpleSettingCertBrandByCertificateId(certificate.id);
+			const settingCerts = settingCertsResponse.data
+			const canEdit = settingCerts.length === 0;
+
+			setCanEditDetailsRegisterVehicle(canEdit)
+		} catch (error) {
+			setCanEditDetailsRegisterVehicle(true)
+		}
 	};
 
 	const handleChangeStep1 = () =>
@@ -291,6 +303,7 @@ export const useStep1Certificate = () => {
 		successMsg,
 		isFromQR,
 		isLoadingShippers: registerVehicleQuery.isLoading,
+		canEditDetailsRegisterVehicle,
 
 		// state handlers
 		handleRemoveSelectedCertificate: handleRemoveCertificate,

@@ -47,6 +47,11 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 		header: 'Especies',
 		cell: ({ row }) => toCapitalize(row.original.species.name ?? '', true),
 	},
+	{
+		accessorKey: 'timeStar',
+		header: 'Ingreso',
+		cell: ({ row }) => toCapitalize(row.original.timeStar ?? '', true),
+	},
 ];
 
 export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCode, onShipperChanged }: ChangeShipperModalProps) => {
@@ -78,7 +83,7 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 				return;
 			}
 
-			await updateCertificateShipperService(certificateId, { 
+			await updateCertificateShipperService(certificateId, {
 				shippingsId: shippingId,
 				code: certificateCode
 			});
@@ -111,10 +116,10 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 							{/* <div className='bg-muted/50 p-4 rounded-lg border'>
 								<div className='flex items-center gap-4'>
 									<label className='text-sm font-medium whitespace-nowrap'>Filtrar por fecha:</label>
-									<Input 
-										value={date} 
-										type='date' 
-										onChange={e => setDate(e.target.value)} 
+									<Input
+										value={date}
+										type='date'
+										onChange={e => setDate(e.target.value)}
 										className='max-w-xs bg-background'
 									/>
 									<div className='ml-auto text-sm text-muted-foreground'>
@@ -203,7 +208,7 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 								Se cambiará el transportista asignado a este certificado por el seleccionado.
 							</DialogDescription>
 						</DialogHeader>
-						
+
 						<div className='space-y-4 py-4'>
 							<p className='text-base text-muted-foreground'>Nuevo transportista seleccionado:</p>
 							<div className='bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3'>
@@ -219,6 +224,10 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 									<span className='font-semibold text-primary min-w-[80px]'>Vehículo:</span>
 									<span className='text-foreground'>{toCapitalize(selectedRegisterVehicle.registerVehicle?.shipping?.vehicle?.vehicleDetail?.vehicleType?.name ?? '', true)}</span>
 								</div>
+								<div className='flex items-start gap-3'>
+									<span className='font-semibold text-primary min-w-[80px]'>Ingreso:</span>
+									<span className='text-foreground'>{toCapitalize(selectedRegisterVehicle.timeStar ?? '', true)}</span>
+								</div>
 							</div>
 							<p className='text-sm text-muted-foreground bg-muted/50 border border-muted/20 rounded p-3'>
 								⚠️ Esta acción actualizará el certificado con el nuevo transportista seleccionado.
@@ -226,9 +235,9 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 						</div>
 
 						<DialogFooter className='gap-2'>
-							<Button 
-								variant='outline' 
-								size='lg' 
+							<Button
+								variant='outline'
+								size='lg'
 								disabled={isUpdating}
 								onClick={() => setSelectedRegisterVehicle(null)}
 							>

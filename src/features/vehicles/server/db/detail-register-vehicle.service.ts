@@ -1,5 +1,6 @@
 import { http } from '@/lib/ky';
 import { CommonHttpResponse } from '@/features/people/domain';
+import { CreateOrUpdateHttpResponse } from '../../../people/domain/index';
 import {
 	CreateDetailRegisterVehicle,
 	CreateDetailRegisterVehicleResponse,
@@ -14,7 +15,7 @@ export const createRegisterVehicleService = async (idShipping: number | string, 
 		.post('v1/1.0.0/detail-register-vehicle/' + idShipping.toString(), {
 			json: registerVehicle,
 		})
-		.json<CreateDetailRegisterVehicleResponse>();
+		.json<CreateOrUpdateHttpResponse<CreateDetailRegisterVehicleResponse>>();
 };
 
 export const updateDetailRegisterVehicleService = async (idDetailRegisterVehicle: number | string, registerVehicle: UpdateDetailRegisterVehicle) => {
@@ -22,7 +23,7 @@ export const updateDetailRegisterVehicleService = async (idDetailRegisterVehicle
 		.patch('v1/1.0.0/detail-register-vehicle/' + idDetailRegisterVehicle.toString(), {
 			json: registerVehicle,
 		})
-		.json<UpdateDetailRegisterVehicleResponse>();
+		.json<CreateOrUpdateHttpResponse<UpdateDetailRegisterVehicleResponse>>();
 };
 
 export const updateRegisterVehicleService = async (idRegisterVehicle: number | string, registerVehicle: Partial<UpdateRegisterVehicle>) => {
