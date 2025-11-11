@@ -4,6 +4,7 @@ import { useAllOrigins } from '@/features/origin/hooks';
 import { DatePicker } from '@/components/ui/date-picker';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { parseISO } from 'date-fns';
 
 export const CertificateFields = () => {
 	const form = useFormContext();
@@ -60,7 +61,7 @@ export const CertificateFields = () => {
 					<FormItem>
 						<FormLabel>Fecha de Emisión</FormLabel>
 						<FormControl>
-							<DatePicker inputClassName='bg-secondary' selected={field.value} onChange={date => field.onChange(date)} />
+							<DatePicker inputClassName='bg-secondary' selected={parseISO(field.value)} onChange={date => field.onChange(date)} />
 						</FormControl>
 						<FormMessage />
 					</FormItem>
