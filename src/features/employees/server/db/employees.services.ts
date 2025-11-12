@@ -28,3 +28,11 @@ export function getEmployeesByRoleIdService(roleId: number): Promise<ResponseEmp
         }
     }).json<ResponseEmployeesByPerson>()
 }
+
+export function deleteEmployeeService(employeeId: number): Promise<void> {
+    return http.delete(`v1/1.0.0/employee/${employeeId}`).json<void>()
+}
+
+export function deleteEmployeesByPersonIdService(personId: number): Promise<void> {
+    return http.delete(`v1/1.0.0/employee/by-person-id/${personId}`).json<void>()
+}
