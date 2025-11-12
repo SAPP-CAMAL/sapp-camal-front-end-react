@@ -771,8 +771,13 @@ export function CorralsManagement() {
           })
           .filter((detail) => (detail.quantity || 0) > 0);
 
+        // Get the destination corral's idCorralType
+        const targetCorral = apiCorrales.find((c) => c.id === targetCorralId);
+        const targetCorralType = targetCorral?.idCorralType || 1;
+
         const updateData = {
           idCorral: targetCorralId,
+          idCorralType: targetCorralType,
           males: selectedMales,
           females: selectedFemales,
           slaughterDate: slaughterDate,
@@ -809,11 +814,13 @@ export function CorralsManagement() {
             };
           });
 
+        // Get the destination corral's idCorralType
         const currentCorral = apiCorrales.find((c) => c.id === targetCorralId);
+        const targetCorralType = currentCorral?.idCorralType || 1;
 
         const transferData: SaveCertificateBrand = {
           idBrands: certificateData.idBrands,
-          idCorralType: certificateData.idCorralType || 1,
+          idCorralType: targetCorralType,
           idCertificate: certificateData.idCertificate,
           idSpecies: speciesId,
           idCorral: targetCorralId,
@@ -822,7 +829,7 @@ export function CorralsManagement() {
           slaughterDate: slaughterDate,
           commentary: `Transferido desde corral ${originalBrand.idCorral}`,
           status: true,
-          idCorralGroup: currentCorral?.idCorralType!,
+          idCorralGroup: targetCorralType,
           detailsCertificateBrand: detailsCertificateBrand,
         };
 
