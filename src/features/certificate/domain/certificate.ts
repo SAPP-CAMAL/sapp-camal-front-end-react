@@ -1,4 +1,5 @@
-import { Origin } from '@/features/origin/domain';
+import type { Origin } from '@/features/origin/domain';
+import type { DetailRegisterVehicle } from '@/features/vehicles/domain';
 
 /**
  * Represents the structure of a valid Certificate saved in DB.
@@ -49,4 +50,6 @@ export interface Certificate {
 	status: boolean;
 	/** The details register vehicles identifier associated with the certificate. */
 	idDetailsRegisterVehicles?: number;
+	/** The details register vehicle associated with the certificate. */
+	detailsRegisterVehicle?: DetailRegisterVehicle;
 }

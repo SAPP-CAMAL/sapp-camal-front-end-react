@@ -69,11 +69,11 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 	const closeModal = async () => {
 		if (!qrModalState?.qrData?.code) return setIsModalOpen(false);
 
-		const certificate = await getCertificateByCodeService(qrModalState.qrData.code);
+		const certificate = (await getCertificateByCodeService(qrModalState.qrData.code)).data ?? null;
 
-		setQrData(certificate.data);
-		onSetQrData?.(certificate.data);
 		setIsModalOpen(false);
+		setQrData(certificate);
+		if (certificate) onSetQrData?.(certificate);
 	};
 
 	/**
