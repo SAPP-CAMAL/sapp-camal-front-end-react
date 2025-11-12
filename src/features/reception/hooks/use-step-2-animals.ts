@@ -1,12 +1,16 @@
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
 import { useReceptionContext } from './use-reception-context';
-import { deleteCertBrand } from '@/features/setting-certificate-brand/server/db/setting-cert-brand.service';
+import { deleteCertBrand, validateSettingCertBrandCodesGeneration } from '@/features/setting-certificate-brand/server/db/setting-cert-brand.service';
 import { AnimalAdmissionItem } from '../context/reception-provider';
 import { getBrandByFilter } from '@/features/brand/server/db/brand.service';
 import { getCorralGroupById, getCorralGroupBySpecieAndType } from '@/features/corral-group/server/db/corral-group.service';
 import { getCorralById, getCorralsByTypeAndGroup } from '@/features/corral/server/db/corral.service';
 import { getStatusCorralsByDate } from '@/features/corral/server/db/status-corral.service';
 import { getAllProductiveStages } from '@/features/productive-stage/server/db/productive-stage.service';
+
+const currentDate = format(new Date(), "yyyy-MM-dd");
 
 export const useStep2Animals = () => {
 	const {
@@ -22,6 +26,15 @@ export const useStep2Animals = () => {
 		handleSetSelectedSpecie,
 		handleRemoveSelectedSpecie,
 	} = useReceptionContext();
+
+	const [canCreateAdmissions, setCanCreateAdmissions] = useState(true);
+
+	useEffect(() => {
+		if (!selectedSpecie?.id) return;
+
+		validateSettingCertBrandCodesGeneration(selectedSpecie.id, currentDate)
+		.then(response => setCanCreateAdmissions(!response.data));
+	}, [selectedSpecie?.id]);
 
 	const totalAnimals = animalAdmissionList.reduce(
 		(sum, admission) => sum + (+(admission.animalAdmission.males || 0) + +(admission.animalAdmission.females || 0)),
@@ -123,8 +136,8 @@ export const useStep2Animals = () => {
 			const corrals = (await getCorralsByTypeAndGroup(corralTypeId, corralGroupId))?.data ?? [];
 
 			const today = new Date();
-		const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-		const corralsStatus = (await getStatusCorralsByDate(todayStr))?.data ?? [];
+			const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+			const corralsStatus = (await getStatusCorralsByDate(todayStr))?.data ?? [];
 
 			let availableCorrals = corrals
 				.filter(corral => !corralsStatus.find(status => status.idCorrals === corral.id))
@@ -163,6 +176,7 @@ export const useStep2Animals = () => {
 		animalAdmissionList,
 		totalAnimals,
 		isCompleted,
+		canCreateAdmissions,
 		// species,
 		// speciesQuery,
 

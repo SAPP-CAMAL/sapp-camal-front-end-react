@@ -41,6 +41,7 @@ export const Step2Animals = () => {
     totalAnimals,
     isCompleted,
     selectedSpecie,
+    canCreateAdmissions,
 
     handleChangeStep2,
     handleAddNewAnimalAdmission,
@@ -199,17 +200,22 @@ export const Step2Animals = () => {
               <span>
                 <Button
                   onClick={handleAddNewAnimalAdmission}
-                  disabled={isCompleted || !selectedSpecie || hasUnsavedChanges}
+                  disabled={isCompleted || !selectedSpecie || hasUnsavedChanges || !canCreateAdmissions}
                 >
                   <Plus />
                   Crear Nuevo
                 </Button>
               </span>
             </TooltipTrigger>
-            {hasUnsavedChanges && (
+            {(hasUnsavedChanges && !canCreateAdmissions) && (
               <TooltipContent side="top" align="end">
                 Debe guardar o cancelar el ingreso actual antes de crear uno
                 nuevo
+              </TooltipContent>
+            )}
+            {(!canCreateAdmissions) && (
+              <TooltipContent side="top" align="end">
+                Ya se generaron los códigos para la especie seleccionada, no se pueden realizar mas animales.
               </TooltipContent>
             )}
           </Tooltip>
