@@ -2,6 +2,18 @@
 
 import { Button } from "@/components/ui/button";
 import { PlusIcon, XIcon } from "lucide-react";
+import { toast } from "sonner";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   FormControl,
   FormField,
@@ -29,11 +41,15 @@ export function NewPeopleFields({
   updatePersonButton,
   updatePositionsButton,
   isUpdateVisitorLog = false,
+  onDeleteEmployee,
+  onSlaughterhouseChange,
 }: {
   isUpdate?: boolean;
   updatePersonButton?: React.ReactNode;
   updatePositionsButton?: React.ReactNode;
   isUpdateVisitorLog?: boolean;
+  onDeleteEmployee?: (employeeId: number) => Promise<void>;
+  onSlaughterhouseChange?: (checked: boolean) => void;
 }) {
   const catalogueCharges = useCatalogue("CARGOS");
   const catalogueIdentityTypes = useCatalogue("TID");
@@ -46,6 +62,37 @@ export function NewPeopleFields({
   });
 
   const isPersonalCamal = form.watch("slaughterhouse");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<{
+    index: number;
+    employeeId?: number;
+  } | null>(null);
+
+  const handleDeleteClick = (index: number, employeeId?: number) => {
+    setEmployeeToDelete({ index, employeeId });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!employeeToDelete) return;
+
+    try {
+      // Si tiene employeeId, eliminar del backend
+      if (employeeToDelete.employeeId && onDeleteEmployee) {
+        await onDeleteEmployee(employeeToDelete.employeeId);
+        toast.success("Cargo eliminado exitosamente");
+      }
+      
+      // Eliminar del formulario
+      positionsFiledArray.remove(employeeToDelete.index);
+      
+      setDeleteDialogOpen(false);
+      setEmployeeToDelete(null);
+    } catch (error: any) {
+      console.log({ error });
+      toast.error("Ocurrió un error al eliminar el cargo");
+    }
+  };
 
   const defaultPositions = isUpdate
     ? form.formState?.defaultValues?.positions?.map((position: any) =>
@@ -300,7 +347,12 @@ export function NewPeopleFields({
                     <Checkbox
                       id="camal-1"
                       checked={field.value}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (onSlaughterhouseChange) {
+                          onSlaughterhouseChange(checked as boolean);
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormLabel htmlFor="camal-1">Es personal del Camal</FormLabel>
@@ -348,7 +400,7 @@ export function NewPeopleFields({
                           <Button
                             variant="link"
                             type="button"
-                            onClick={() => positionsFiledArray.remove(index)}
+                            onClick={() => handleDeleteClick(index, (position as any).employeeId)}
                           >
                             <XIcon className="text-red-500" />
                           </Button>
@@ -479,6 +531,23 @@ export function NewPeopleFields({
           )}
         </div>
       }
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Está seguro de eliminar este cargo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El cargo será eliminado permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

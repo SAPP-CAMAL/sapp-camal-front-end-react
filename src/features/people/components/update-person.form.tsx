@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { EditIcon, SaveIcon, BriefcaseIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,6 +15,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import { updatePersonService } from "../server/db/people.service";
 import { NewPeopleFields } from "./person-form-fields";
@@ -22,6 +32,8 @@ import {
   getEmployeesByPersonIdService,
   updateEmployeeService,
   createEmployeeService,
+  deleteEmployeeService,
+  deleteEmployeesByPersonIdService,
 } from "@/features/employees/server/db/employees.services";
 import { useSearchParams } from "next/navigation";
 import {
@@ -51,14 +63,20 @@ export function UpdatePerson({ person }: { person: any }) {
   const form = useForm<any>({ defaultValues });
   const personId = person.id;
   const open = form.watch("open");
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const [hasExistingEmployees, setHasExistingEmployees] = useState(false);
   // const positions = useWatch({ name: "positions", control: form.control });
 
   useEffect(() => {
     if (open) {
       getEmployeesByPersonIdService(personId)
         .then((resp) => {
-          if (resp.data.length === 0) return;
+          if (resp.data.length === 0) {
+            setHasExistingEmployees(false);
+            return;
+          }
 
+          setHasExistingEmployees(true);
           form.reset({
             ...defaultValues,
             open: true,
@@ -76,6 +94,42 @@ export function UpdatePerson({ person }: { person: any }) {
         .catch((error) => console.log(error));
     }
   }, [open, person]);
+
+  const handleSlaughterhouseChange = (checked: boolean) => {
+    // Si se desmarca y hay empleados existentes, mostrar confirmación
+    if (!checked && hasExistingEmployees) {
+      setDeleteAllDialogOpen(true);
+    }
+  };
+
+  const handleDeleteAllEmployees = async () => {
+    try {
+      await deleteEmployeesByPersonIdService(personId);
+      
+      form.setValue("positions", []);
+      form.reset({
+        ...form.getValues(),
+        open: true,
+        slaughterhouse: false,
+        positions: [],
+      });
+
+      setHasExistingEmployees(false);
+      setDeleteAllDialogOpen(false);
+
+      const searchParamsObject = Object.fromEntries(searchParams.entries());
+      await queryClient.invalidateQueries({
+        queryKey: ["people", searchParamsObject],
+      });
+
+      toast.success("Todos los cargos han sido eliminados exitosamente");
+    } catch (error: any) {
+      console.log({ error });
+      toast.error("Ocurrió un error al eliminar los cargos");
+      // Revertir el checkbox si falla
+      form.setValue("slaughterhouse", true);
+    }
+  };
 
   const onSubmitPersonInfo = async (data: any) => {
     try {
@@ -158,27 +212,15 @@ export function UpdatePerson({ person }: { person: any }) {
       }
 
       await Promise.all(
-        data.positions.map((position: any, index: number) => {
+        data.positions.map((position: any) => {
           // Si el cargo tiene employeeId, actualizar; si no, crear nuevo
           if (position.employeeId) {
-            const changePositionId =
-              form.formState.dirtyFields.positions?.[index]?.catalogueId;
-
             return updateEmployeeService(position.employeeId, {
-              ...(changePositionId && {
-                positionId: Number(position.catalogueId),
-              }),
-              ...(form.formState.dirtyFields?.positions?.[index]?.suitable && {
-                suitable: position.suitable,
-              }),
-              ...(form.formState.dirtyFields?.positions?.[index]
-                ?.suitableLimitations && {
-                suitableLimitations: position.suitableLimitations,
-              }),
-              ...(form.formState.dirtyFields?.positions?.[index]
-                ?.suitableObservation && {
-                suitableObservation: position.suitableObservation,
-              }),
+              personId,
+              positionId: Number(position.catalogueId),
+              suitable: position.suitable,
+              suitableLimitations: position.suitableLimitations,
+              suitableObservation: position.suitableObservation,
             });
           } else {
             // Crear nuevo empleado
@@ -252,6 +294,8 @@ export function UpdatePerson({ person }: { person: any }) {
           <form className="gap-y-4 grid grid-cols-2 gap-2">
             <NewPeopleFields
               isUpdate
+              onDeleteEmployee={deleteEmployeeService}
+              onSlaughterhouseChange={handleSlaughterhouseChange}
               updatePersonButton={
                 <div className="col-span-2 border-t pt-4 flex justify-end">
                   <Button
@@ -267,7 +311,8 @@ export function UpdatePerson({ person }: { person: any }) {
                         form.formState.dirtyFields.firstName ||
                         form.formState.dirtyFields.lastName ||
                         form.formState.dirtyFields.address ||
-                        form.formState.dirtyFields.status
+                        form.formState.dirtyFields.status ||
+                        (form.formState.dirtyFields.slaughterhouse && !form.watch("slaughterhouse"))
                       )
                     }
                   >
@@ -305,6 +350,25 @@ export function UpdatePerson({ person }: { person: any }) {
           </form>
         </Form>
       </DialogContent>
+
+      <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Está seguro de remover el cargo del personal del camal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará el cargo asociado a esta persona de forma permanente. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => form.setValue("slaughterhouse", true)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAllEmployees}>
+              Eliminar 
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
