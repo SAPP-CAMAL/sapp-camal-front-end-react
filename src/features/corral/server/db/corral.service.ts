@@ -12,6 +12,6 @@ export const getCorralsByTypeAndGroup = (corralTypeId: string, groupId: string) 
 		.json<CommonHttpResponse<Corral>>();
 };
 
-export const getCorralById = (id: string) => {
+export const getCorralById = (id: string | number) => {
 	return http.get('v1/1.0.0/corral', { searchParams: { id } }).json<CreateOrUpdateHttpResponse<Corral>>();
 };

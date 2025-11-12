@@ -65,6 +65,10 @@ import {
   readMultipleVideoFiles,
   readVideoFileMetadata,
 } from "@/lib/read-video-metadata";
+import { corralTypesCode } from "@/features/corral/constants/corral-types-code";
+import { useAllCorralType } from "@/features/corral/hooks";
+import { add, format } from "date-fns";
+import { getCorralById } from "@/features/corral/server/db/corral.service";
 
 // Obtener fecha actual en zona horaria local para evitar desfases
 const today = new Date();
@@ -149,6 +153,10 @@ export function CorralsManagement() {
     Record<string, BrandDetail[]>
   >({});
   const [isLoadingBrandDetails, setIsLoadingBrandDetails] = useState(false);
+
+  // Obtener todos los tipos de corrales
+  const corralTypesQuery = useAllCorralType();
+  const corralTypes = corralTypesQuery.data.data.filter(corralType => corralType.status);
 
   // Save selected line to localStorage whenever it changes (only after client mount)
   useEffect(() => {
@@ -744,16 +752,21 @@ export function CorralsManagement() {
           : selectedTab === "ovinos-caprinos"
           ? 3
           : 1);
-      const slaughterDateObj = new Date();
-      const slaughterDate = `${slaughterDateObj.getFullYear()}-${String(
-        slaughterDateObj.getMonth() + 1
-      ).padStart(2, "0")}-${String(slaughterDateObj.getDate()).padStart(
-        2,
-        "0"
-      )}`;
+
+      let slaughterDate =  format(add(new Date(), { days: 1 }), 'yyyy-MM-dd');
 
       // Use the ID directly from BrandDetail (no need to fetch it)
       const settingCertBrandId = originalBrand.id;
+      const originalSettingCert =  (await getCertBrandById(originalBrand.id)).data
+
+      const targetCorral = apiCorrales.find((c) => c.id === targetCorralId);
+      const targetCorralType = corralTypes.find(corralType => corralType.id === targetCorral?.idCorralType);
+
+      if (targetCorralType?.code === corralTypesCode.EMERGENCIA)
+        slaughterDate = format(new Date(), 'yyyy-MM-dd');
+
+      const targetCorralGroup = (await getCorralById(targetCorralId)).data.corralGroupDetails.at(0)
+
 
       if (isCompleteTransfer) {
         // For complete transfer, UPDATE the existing record to change the corral
@@ -772,19 +785,19 @@ export function CorralsManagement() {
           .filter((detail) => (detail.quantity || 0) > 0);
 
         // Get the destination corral's idCorralType
-        const targetCorral = apiCorrales.find((c) => c.id === targetCorralId);
-        const targetCorralType = targetCorral?.idCorralType || 1;
 
         const updateData = {
           idCorral: targetCorralId,
-          idCorralType: targetCorralType,
+          idCorralType: targetCorralType?.id ?? 1,
           males: selectedMales,
           females: selectedFemales,
-          slaughterDate: slaughterDate,
+          slaughterDate,
           commentary:
             originalBrand.codes ||
             `Transferido completamente al corral ${targetCorralId}`,
           detailsCertificateBrand: detailsCertificateBrand,
+          idFinishType: originalSettingCert.idFinishType,
+          ...(targetCorralGroup?.id && {idCorralGroup: targetCorralGroup?.groupId})
         };
 
         await updateCertBrand(settingCertBrandId.toString(), updateData);
@@ -816,11 +829,15 @@ export function CorralsManagement() {
 
         // Get the destination corral's idCorralType
         const currentCorral = apiCorrales.find((c) => c.id === targetCorralId);
-        const targetCorralType = currentCorral?.idCorralType || 1;
+        const targetCorralType = corralTypes.find(corralType => corralType.id === currentCorral?.idCorralType);
+
+        if (targetCorralType?.code === corralTypesCode.EMERGENCIA)
+          slaughterDate = format(new Date(), 'yyyy-MM-dd');
+
 
         const transferData: SaveCertificateBrand = {
           idBrands: certificateData.idBrands,
-          idCorralType: targetCorralType,
+          idCorralType: targetCorralType?.id ?? 1,
           idCertificate: certificateData.idCertificate,
           idSpecies: speciesId,
           idCorral: targetCorralId,
@@ -829,8 +846,9 @@ export function CorralsManagement() {
           slaughterDate: slaughterDate,
           commentary: `Transferido desde corral ${originalBrand.idCorral}`,
           status: true,
-          idCorralGroup: targetCorralType,
+          idCorralGroup: targetCorralGroup?.groupId!,
           detailsCertificateBrand: detailsCertificateBrand,
+          idFinishType: originalSettingCert.idFinishType
         };
 
         const createResult = await saveCertBrand(transferData);
@@ -883,6 +901,8 @@ export function CorralsManagement() {
             originalBrand.codes ||
             "Cantidad actualizada por transferencia parcial",
           detailsCertificateBrand: remainingDetailsCertificateBrand,
+          idFinishType: originalSettingCert.idFinishType,
+          ...(targetCorralGroup?.id && {idCorralGroup: targetCorralGroup?.groupId})
         };
 
         await updateCertBrand(settingCertBrandId.toString(), updateData);
