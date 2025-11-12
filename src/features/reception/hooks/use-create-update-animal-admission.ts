@@ -266,8 +266,8 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 	};
 
 	const handleSetDate = () => {
-		const corral = form.watch('corralType')?.description?.toLowerCase();
-		
+		const corral = form.watch('corralType')?.code?.toLowerCase();
+
 		const formatLocalDateTime = (date: Date): string => {
 			return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
 		};

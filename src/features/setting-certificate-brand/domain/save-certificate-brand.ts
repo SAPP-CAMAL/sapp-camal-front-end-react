@@ -139,6 +139,13 @@ export interface SettingCertBrandByID {
 		shippingsId: null;
 		idOrigin: number;
 	};
+	idFinishType?: number;
+	finishType?: {
+		id: number;
+		name: string;
+		status: boolean;
+		idSpecie: number;
+	};
 	detailsCertificateBrand: DetailsCertificateBrand[];
 }
 

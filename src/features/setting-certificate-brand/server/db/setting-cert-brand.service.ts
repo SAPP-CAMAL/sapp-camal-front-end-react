@@ -50,3 +50,11 @@ export const getSimpleSettingCertBrandByCertificateId = (id: number | string) =>
 		})
 		.json<CommonHttpResponse<SaveCertificateBrandResponse>>();
 };
+
+export const validateSettingCertBrandCodesGeneration = (idSpecies: number | string, admissionDate: string) => {
+	return http
+		.get('v1/1.0.0/setting-cert-brand/validate-codes-generation', {
+			searchParams: { idSpecie: idSpecies.toString(), admissionDate },
+		})
+		.json<CreateOrUpdateHttpResponse<boolean>>();
+};
