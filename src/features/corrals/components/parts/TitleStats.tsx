@@ -26,10 +26,10 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
   // Check if the selected date is today
   const isToday = admissionDate ? new Date(admissionDate).toDateString() === new Date().toDateString() : false;
 
-  // Check if any brand has codes already assigned for corralType 1
+  // Check if any brand has codes already assigned for corralType different to 2
   const hasExistingCodes = useMemo(() => {
     return brandDetails.some(brand => {
-      const isCorralType1 = brand.idCorralType === 1;
+      const isCorralType1 = brand.idCorralType != 2;
       const hasCode = brand.codes !== null && brand.codes !== undefined && brand.codes.trim() !== '';
       return isCorralType1 && hasCode;
     });
@@ -47,6 +47,7 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
         // Handle both direct array response and CommonHttpResponse format
         const details = Array.isArray(response) ? response : (response?.data || []);
         setBrandDetails(details);
+        console.log('Brand details loaded:', details);
       } catch (error) {
         console.error('Error loading brand details:', error);
         toast.error('Error al cargar los detalles de códigos');
