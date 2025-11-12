@@ -366,21 +366,22 @@ export function NewPeopleFields({
             <div className="bg-gray-50 border border-gray-200 px-4 mt-4 rounded-md">
               <div className="flex justify-between my-2">
                 <Label>Cargos del Personal del Camal</Label>
-                <Button
-                  type="button"
-                  onClick={() =>
-                    positionsFiledArray.append({
-                      catalogueId: "",
-                      suitable: false,
-                      suitableWithLimitatios: "",
-                      observations: "",
-                    })
-                  }
-                  disabled={positionsFiledArray.fields.length === 1}
-                >
-                  <PlusIcon />
-                  Agregar Cargo
-                </Button>
+                {positionsFiledArray.fields.length === 0 && (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      positionsFiledArray.append({
+                        catalogueId: "",
+                        suitable: false,
+                        suitableWithLimitatios: "",
+                        observations: "",
+                      })
+                    }
+                  >
+                    <PlusIcon />
+                    Agregar Cargo
+                  </Button>
+                )}
               </div>
               <div className="h-96 overflow-y-auto flex flex-col gap-3">
                 {positionsFiledArray.fields.length === 0 ? (
@@ -397,13 +398,14 @@ export function NewPeopleFields({
                       >
                         <section className="flex justify-between">
                           <Label>Cargo del personal del Camal</Label>
-                          <Button
+                          {/* Botón de eliminar oculto - funcionalidad mantenida para uso futuro */}
+                          {/* <Button
                             variant="link"
                             type="button"
                             onClick={() => handleDeleteClick(index, (position as any).employeeId)}
                           >
                             <XIcon className="text-red-500" />
-                          </Button>
+                          </Button> */}
                         </section>
                         <div className="space-y-4 mt-4">
                           <FormField
