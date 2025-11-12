@@ -1,3 +1,4 @@
+export type { DetailRegisterVehicle } from './detail-register-vehicle.model';
 export type { Vehicle } from './vehicle';
 export type { VehicleDetail } from './vehicle-detail';
 export type { RegisterVehicle } from './register-vehicle';
