@@ -19,9 +19,9 @@ type ObservacionesModalProps = {
   marcasInfo?: MarcaInfo[];
 };
 
-export function ObservacionesModal({ 
-  observaciones, 
-  children, 
+export function ObservacionesModal({
+  observaciones,
+  children,
   statusCorralId,
   admissionDate,
   marcasInfo = []
@@ -43,7 +43,7 @@ export function ObservacionesModal({
       return match ? match[1].trim() : m.label.split(' ')[0];
     }).filter((value, index, self) => self.indexOf(value) === index).join(', ');
   };
-  
+
   const getAllMarcasNames = (): string[] => {
     if (marcasInfo.length === 0) return [];
     return marcasInfo.map(m => {
@@ -65,10 +65,11 @@ export function ObservacionesModal({
       setLoading(true);
       setError(null);
       const response = await getObservationsByStatusCorralService(admissionDate, statusCorralId);
-      
+
       if (response.code === 200) {
         const withObservations = response.data.filter(
-          (obs) => obs.observationsText && obs.observationsText.trim() !== ""
+          (obs) => (obs.observationsText && obs.observationsText.trim() !== "")
+            || (obs.deathCause && obs.deathCause.trim() !== "")
         );
         setObservationsData(withObservations);
       } else {
@@ -146,9 +147,9 @@ export function ObservacionesModal({
                     <div className="flex flex-wrap gap-2">
                       <p className="text-xs text-muted-foreground w-full sm:w-auto">Marcas en este corral:</p>
                       {getAllMarcasNames().map((marca, idx) => (
-                        <Badge 
+                        <Badge
                           key={idx}
-                          variant="outline" 
+                          variant="outline"
                           className="bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-300 font-semibold text-xs"
                         >
                           <Tag className="h-3 w-3 mr-1" />
@@ -167,7 +168,7 @@ export function ObservacionesModal({
                   : obs.observationsText;
 
                 return (
-                  <Card 
+                  <Card
                     key={obs.code}
                     className="overflow-hidden border-l-4 border-l-gray-300 hover:shadow-md transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
                     style={{ animationDelay: `${index * 50}ms` }}
@@ -190,15 +191,15 @@ export function ObservacionesModal({
                               Muerte
                             </Badge>
                           )}
-                        </div>                        
+                        </div>
                         {(() => {
-                          const hasDeathInfoContent = hasDeathInfo && 
+                          const hasDeathInfoContent = hasDeathInfo &&
                             (obs.deathCause || obs.deathUse !== undefined || obs.deathConfiscation !== undefined);
                           const hasOpinions = obs.opinions && obs.opinions.length > 0;
                           const hasLongText = obs.observationsText && obs.observationsText.length > 100;
                           const hasMultipleItems = [hasDeathInfoContent, hasOpinions, hasLongText].filter(Boolean).length > 1;
                           const shouldShowButton = hasMultipleItems || hasLongText;
-                          
+
                           return shouldShowButton ? (
                             <Button
                               variant="ghost"
@@ -241,7 +242,7 @@ export function ObservacionesModal({
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {obs.opinions.map((opinion, idx) => (
-                              <Badge 
+                              <Badge
                                 key={idx}
                                 variant="secondary"
                                 className=" text-emerald-600 border border-primary text-xs px-2 py-1"
@@ -254,7 +255,7 @@ export function ObservacionesModal({
                       )}
 
                       {/* Información de muerte (solo si está expandido y hay datos de muerte) */}
-                      {isExpanded && hasDeathInfo && (obs.deathCause || obs.deathUse !== undefined || obs.deathConfiscation !== undefined) && (
+                      {hasDeathInfo && (obs.deathCause || obs.deathUse !== undefined || obs.deathConfiscation !== undefined) && (
                         <>
                           <Separator className="my-3" />
                           <div className="bg-muted/40 rounded-md p-3 space-y-2">
@@ -262,7 +263,7 @@ export function ObservacionesModal({
                               <Skull className="h-3 w-3" />
                               Información de Muerte
                             </p>
-                            
+
                             {obs.deathCause && (
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div>
@@ -273,7 +274,7 @@ export function ObservacionesModal({
                             )}
 
                             <div className="grid grid-cols-2 gap-2 mt-2">
-                              {obs.deathUse !== undefined && (
+                              {obs.deathUse && (
                                 <div className="flex items-center gap-2 bg-white rounded px-2 py-1.5">
                                   {obs.deathUse ? (
                                     <CheckCircle className="h-4 w-4 text-green-600" />
@@ -283,7 +284,7 @@ export function ObservacionesModal({
                                   <span className="text-xs">Aprovechamiento</span>
                                 </div>
                               )}
-                              {obs.deathConfiscation !== undefined && (
+                              {obs.deathConfiscation && (
                                 <div className="flex items-center gap-2 bg-white rounded px-2 py-1.5">
                                   {obs.deathConfiscation ? (
                                     <CheckCircle className="h-4 w-4 text-red-600" />
@@ -308,4 +309,3 @@ export function ObservacionesModal({
     </Dialog>
   );
 }
-
