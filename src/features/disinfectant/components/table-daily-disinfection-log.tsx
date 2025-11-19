@@ -1,5 +1,6 @@
 'use client';
 
+import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { parseAsString, useQueryStates } from 'nuqs';
 import { ColumnDef, flexRender, Row } from '@tanstack/react-table';
@@ -15,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useDailyDisinfectionRegisterContext } from '../hooks/use-daily-disinfection-register-context';
 import { RegisterVehicleTimeOut } from './register-vehicle-time-out';
 import { toCapitalize } from '../../../lib/toCapitalize';
+import { handleDownloadRegisterVehicleReport } from '../utils/handle-download-register-vehicle-report';
 
 const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
@@ -100,6 +102,17 @@ export function DailyDisinfectionLogTable() {
 		else handleSetDailyDisinfectionRegister(row.original);
 	};
 
+	const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+		const parsedDate = parseISO(searchParams.date);
+		if (Number.isNaN(parsedDate.getTime())) {
+			toast.error('Fecha inválida');
+			return;
+		}
+		const formattedDate = format(parsedDate, 'yyyy-MM-dd');
+
+		handleDownloadRegisterVehicleReport(formattedDate, type);
+	};
+
 	return (
 		<div className='overflow-hidden rounded-lg border p-4'>
 			<div className='py-4 px-2 flex justify-between'>
@@ -115,7 +128,7 @@ export function DailyDisinfectionLogTable() {
 							setSearchParams({ date: formattedDate });
 						}}
 					/>
-					<Button>
+					<Button onClick={() => handleDownloadReport('EXCEL')}>
 						<FileText />
 						Generar Reporte
 					</Button>
