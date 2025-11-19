@@ -18,6 +18,7 @@ import { useSavePostmortem } from "../hooks/use-save-postmortem";
 import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
 import type { ProductPostmortem } from "../domain/save-postmortem.types";
 import { toast } from "sonner";
+import { useUnitMeasure } from "@/features/animal-weighing/hooks/use-unit-measure";
 
 type BodyPartSelection = {
   id: number;
@@ -41,6 +42,7 @@ type PartialConfiscationModalProps = {
   introductor: string;
   localizacion: string;
   certId: number | null;
+  canEdit?: boolean; // Nueva prop para controlar si se puede editar
 };
 
 export function PartialConfiscationModal({
@@ -50,6 +52,7 @@ export function PartialConfiscationModal({
   introductor,
   localizacion,
   certId,
+  canEdit = true, // Por defecto true para mantener compatibilidad
 }: PartialConfiscationModalProps) {
   const { data: animalsData, isLoading: isLoadingAnimals } =
     useAnimalsByBrand(certId);
@@ -58,6 +61,10 @@ export function PartialConfiscationModal({
 
   // Obtener datos guardados de postmortem
   const { data: postmortemData } = usePostmortemByBrand(certId);
+
+  // Obtener unidad de medida desde la API
+  const { data: unitMeasureData } = useUnitMeasure();
+  const unitSymbol = unitMeasureData?.data?.symbol || "kg";
 
   // Verificar si ya existen datos guardados de decomiso parcial
   const hasExistingData = useMemo(() => {
@@ -351,7 +358,7 @@ export function PartialConfiscationModal({
                         checked={animalSelection.selected}
                         onCheckedChange={() => handleAnimalToggle(animalId)}
                         id={`animal-${animal.id}`}
-                        disabled={animalSelection.hasTotalConfiscation}
+                        disabled={animalSelection.hasTotalConfiscation || !canEdit}
                       />
                       <label
                         htmlFor={`animal-${animal.id}`}
@@ -382,7 +389,7 @@ export function PartialConfiscationModal({
                     {animalSelection.selected && (
                       <div className="ml-14 space-y-3">
                         <div className="text-xs font-medium text-gray-700">
-                          Partes Afectadas y Peso (kg) *
+                          Partes Afectadas y Peso ({unitSymbol}) *
                         </div>
 
                         {/* Grid de partes del cuerpo */}
@@ -398,6 +405,7 @@ export function PartialConfiscationModal({
                                   handleBodyPartToggle(animalId, part.id)
                                 }
                                 id={`${animalId}-${part.id}`}
+                                disabled={!canEdit}
                               />
                               <label
                                 htmlFor={`${animalId}-${part.id}`}
@@ -409,7 +417,7 @@ export function PartialConfiscationModal({
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                placeholder="kg"
+                                placeholder={unitSymbol}
                                 value={part.weight}
                                 onChange={(e) =>
                                   handleBodyPartWeight(
@@ -418,7 +426,7 @@ export function PartialConfiscationModal({
                                     e.target.value
                                   )
                                 }
-                                disabled={!part.selected}
+                                disabled={!part.selected || !canEdit}
                                 className="h-8 text-sm flex-1"
                               />
                             </div>
@@ -440,7 +448,7 @@ export function PartialConfiscationModal({
                                 key={part.id}
                                 className="font-semibold text-gray-800"
                               >
-                                {part.code}: {part.weight}kg
+                                {part.code}: {part.weight}{unitSymbol}
                               </div>
                             ))}
                           </div>
@@ -455,26 +463,28 @@ export function PartialConfiscationModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-            Cancelar
+            {canEdit ? "Cancelar" : "Cerrar"}
           </Button>
-          <Button
-            onClick={handleSaveAll}
-            disabled={selectedCount === 0 || isSaving}
-            className="bg-teal-600 hover:bg-teal-700"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {hasExistingData ? "Actualizando..." : "Guardando..."}
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                {hasExistingData ? "Actualizar" : "Guardar"} ({selectedCount}{" "}
-                animales)
-              </>
-            )}
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={handleSaveAll}
+              disabled={selectedCount === 0 || isSaving}
+              className="bg-teal-600 hover:bg-teal-700"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {hasExistingData ? "Actualizando..." : "Guardando..."}
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  {hasExistingData ? "Actualizar" : "Guardar"} ({selectedCount}{" "}
+                  animales)
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -49,6 +49,7 @@ import { useLines } from "../hooks/use-lines";
 import { useSpeciesDisease } from "../hooks/use-species-disease";
 import { usePostmortemByFilters } from "../hooks/use-postmortem-by-filters";
 import { useCertificates } from "../hooks/use-certificates";
+import { isToday } from "@/lib/date-utils";
 import { groupDiseasesByProduct } from "../server/db/species-disease.service";
 import { getIntroductoresFromCertificates } from "../server/db/certificates.service";
 import {
@@ -84,6 +85,9 @@ export function PostmortemManagement() {
   );
   const [corralTypeFilter, setCorralTypeFilter] =
     useState<CorralTypeFilter>("TODOS");
+
+  // Verificar si la fecha seleccionada es hoy (solo se puede editar hoy)
+  const canEdit = isToday(slaughterDate);
 
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
@@ -974,6 +978,7 @@ export function PostmortemManagement() {
         idProduct={modalState.idProduct ?? null}
         idSpecie={selectedSpecieId}
         certId={currentIntroductor?.certId ?? null}
+        canEdit={canEdit}
       />
 
       {/* Modal de Decomiso Total */}
@@ -1006,6 +1011,7 @@ export function PostmortemManagement() {
         }
         localizacion="CANAL"
         certId={totalConfiscationIntroductor?.certId ?? null}
+        canEdit={canEdit}
       />
 
       {/* Modal de Decomiso Parcial */}
@@ -1038,6 +1044,7 @@ export function PostmortemManagement() {
         }
         localizacion="CANAL"
         certId={partialConfiscationIntroductor?.certId ?? null}
+        canEdit={canEdit}
       />
     </div>
   );
