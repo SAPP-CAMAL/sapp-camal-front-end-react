@@ -18,6 +18,7 @@ import { useSavePostmortem } from "../hooks/use-save-postmortem";
 import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
 import type { ProductPostmortem } from "../domain/save-postmortem.types";
 import { toast } from "sonner";
+import { useUnitMeasure } from "@/features/animal-weighing/hooks/use-unit-measure";
 
 type AnimalWeight = {
   animalId: string;
@@ -32,6 +33,7 @@ type TotalConfiscationModalProps = {
   introductor: string;
   localizacion: string;
   certId: number | null;
+  canEdit?: boolean; // Nueva prop para controlar si se puede editar
 };
 
 export function TotalConfiscationModal({
@@ -41,12 +43,17 @@ export function TotalConfiscationModal({
   introductor,
   localizacion,
   certId,
+  canEdit = true, // Por defecto true para mantener compatibilidad
 }: TotalConfiscationModalProps) {
   const { data: animalsData, isLoading } = useAnimalsByBrand(certId);
   const { mutate: savePostmortem, isPending: isSaving } = useSavePostmortem();
 
   // Obtener datos guardados de postmortem
   const { data: postmortemData } = usePostmortemByBrand(certId);
+
+  // Obtener unidad de medida desde la API
+  const { data: unitMeasureData } = useUnitMeasure();
+  const unitSymbol = unitMeasureData?.data?.symbol || "kg";
 
   const [animalWeights, setAnimalWeights] = useState<AnimalWeight[]>([]);
 
@@ -221,6 +228,7 @@ export function TotalConfiscationModal({
                         checked={animalWeight.selected}
                         onCheckedChange={() => handleAnimalToggle(animalId)}
                         id={`animal-${animal.id}`}
+                        disabled={!canEdit}
                       />
                       <label
                         htmlFor={`animal-${animal.id}`}
@@ -241,7 +249,7 @@ export function TotalConfiscationModal({
                       <div className="ml-14 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium text-gray-700">
-                            Peso de la Canal (kg) *
+                            Peso de la Canal ({unitSymbol}) *
                           </span>
                           <Info className="h-3 w-3 text-gray-400" />
                           <Badge
@@ -256,42 +264,45 @@ export function TotalConfiscationModal({
                             type="number"
                             min="0"
                             step="0.01"
-                            placeholder="Peso de la canal en kg"
+                            placeholder={`Peso de la canal en ${unitSymbol}`}
                             value={animalWeight.weight}
                             onChange={(e) =>
                               handleWeightChange(animalId, e.target.value)
                             }
+                            disabled={!canEdit}
                             className="flex-1 h-10"
                           />
-                          <Button
-                            size="sm"
-                            onClick={() => handleSaveAnimal(animalId)}
-                            disabled={!animalWeight.weight || isSaving}
-                            className="bg-teal-600 hover:bg-teal-700"
-                          >
-                            {isSaving ? (
-                              <>
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                Guardando...
-                              </>
-                            ) : (
-                              // Verificar si ya existe data guardada para mostrar "Actualizar" o "Guardar"
-                              (() => {
-                                const savedData = postmortemData?.data?.find(
-                                  (item) =>
-                                    item.idDetailsSpeciesCertificate ===
-                                    parseInt(animalId)
-                                );
-                                const hasTotalConfiscation =
-                                  savedData?.productPostmortem?.some(
-                                    (prod) => prod.isTotalConfiscation === true
+                          {canEdit && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveAnimal(animalId)}
+                              disabled={!animalWeight.weight || isSaving}
+                              className="bg-teal-600 hover:bg-teal-700"
+                            >
+                              {isSaving ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  Guardando...
+                                </>
+                              ) : (
+                                // Verificar si ya existe data guardada para mostrar "Actualizar" o "Guardar"
+                                (() => {
+                                  const savedData = postmortemData?.data?.find(
+                                    (item) =>
+                                      item.idDetailsSpeciesCertificate ===
+                                      parseInt(animalId)
                                   );
-                                return hasTotalConfiscation
-                                  ? "Actualizar"
-                                  : "Guardar";
-                              })()
-                            )}
-                          </Button>
+                                  const hasTotalConfiscation =
+                                    savedData?.productPostmortem?.some(
+                                      (prod) => prod.isTotalConfiscation === true
+                                    );
+                                  return hasTotalConfiscation
+                                    ? "Actualizar"
+                                    : "Guardar";
+                                })()
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )}
@@ -304,7 +315,7 @@ export function TotalConfiscationModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-            Cancelar
+            {canEdit ? "Cancelar" : "Cerrar"}
           </Button>
         </DialogFooter>
       </DialogContent>

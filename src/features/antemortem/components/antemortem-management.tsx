@@ -21,6 +21,7 @@ import { AntemortemMobileCard } from "./antemortem-mobile-card";
 import { getActiveLinesDataService, getAntemortemDataService, updateArgollasService } from "../server/db/antemortem.service";
 import { LineItem, mapLineItemToLineaType, getLineIdByType } from "../domain/line.types";
 import { DatePicker } from "@/components/ui/date-picker";
+import { isToday } from "@/lib/date-utils";
 
 function SelectLinea({
   value,
@@ -299,8 +300,14 @@ export function AntemortemManagement() {
 
   const showArgollas = linea === "Bovinos";
 
+  // Verificar si la fecha seleccionada es hoy (solo se puede editar hoy)
+  const canEdit = isToday(fecha);
+
   // Funciones para editar argollas
   const handleArgollasClick = (corral: string, currentValue: number) => {
+    // Solo permitir edición si es la fecha actual
+    if (!canEdit) return;
+    
     setEditingArgollasCorral(corral);
     setTempArgollasValue(currentValue || 0);
   };
@@ -622,7 +629,13 @@ export function AntemortemManagement() {
                     ) : (
                       <button
                         onClick={() => handleArgollasClick(r.corral, r.argollas ?? 0)}
-                        className="text-amber-600 hover:text-amber-700 hover:underline font-medium cursor-pointer w-full"
+                        className={`font-medium w-full ${
+                          canEdit
+                            ? "text-amber-600 hover:text-amber-700 hover:underline cursor-pointer"
+                            : "text-gray-500 cursor-not-allowed"
+                        }`}
+                        disabled={!canEdit}
+                        title={canEdit ? "Editar argollas" : "Solo se puede editar en la fecha actual"}
                       >
                         {r.argollas ?? 0}
                       </button>
