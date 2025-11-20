@@ -180,7 +180,7 @@ export function ListTransportManagement() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
             <div>
               <div className="font-semibold text-sm">
-                {format(new Date(item.issueDate), "dd/LL/yyyy")}
+                {format(parseISO(item.issueDate as string), 'dd/MM/yyyy')}
               </div>
             </div>
           </div>
@@ -597,7 +597,7 @@ export function ListTransportManagement() {
                       >
                         <TableCell className="whitespace-normal text-center text-sm">
                           {item.issueDate
-                            ? format(new Date(item.issueDate), "dd/LL/yyyy")
+                            ?  format(parseISO(item.issueDate as string), 'dd/MM/yyyy')
                             : "N/A"}
                         </TableCell>
                         <TableCell className="whitespace-normal text-center text-sm font-medium">
