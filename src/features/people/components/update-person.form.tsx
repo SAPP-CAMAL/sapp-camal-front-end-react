@@ -86,8 +86,8 @@ export function UpdatePerson({ person }: { person: any }) {
               personId: employee.personId,
               catalogueId: String(employee.positionId),
               suitable: employee.suitable,
-              suitableLimitations: employee.suitableLimitations,
-              suitableObservation: employee.suitableObservation,
+              suitableLimitations: employee.suitableLimitations || "",
+              suitableObservation: employee.suitableObservation || "",
             })),
           });
         })

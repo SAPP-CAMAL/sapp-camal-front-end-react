@@ -41,6 +41,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
       email: "",
       userName: "",
       roles: [],
+      code: "",
     },
   });
 
@@ -54,7 +55,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
           roles: resp.data.userRoles
             .map((userRole) => userRole.roleId.toString())
             .filter((id): id is string => Boolean(id)), // 👈 Devuelve ["1", "2", "3"]
-          code: resp.data?.veterinarian?.code ,
+          code: resp.data?.veterinarian?.code || "",
         };
 
         form.reset(defaultValues);

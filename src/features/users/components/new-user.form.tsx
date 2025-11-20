@@ -23,11 +23,14 @@ export function NewUser() {
   const defaultValues = {
     open: false,
     personId: "",
+    name: "",
+    identification: "",
     email: "",
     userName: "",
     password: "",
     passwordConfirm: "",
     roles: [],
+    code: "",
   };
 
   const form = useForm({ defaultValues });

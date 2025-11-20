@@ -73,7 +73,7 @@ export function TotalConfiscationModal({
         return {
           animalId: animal.id.toString(),
           selected: !!savedTotalConfiscation,
-          weight: savedTotalConfiscation ? savedTotalConfiscation.weight : "",
+          weight: savedTotalConfiscation ? String(savedTotalConfiscation.weight) : "",
         };
       });
 
