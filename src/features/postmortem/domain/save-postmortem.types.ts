@@ -47,6 +47,7 @@ export interface ProductPostmortemData {
   idBodyPart: number;
   weight: string;
   isTotalConfiscation: boolean;
+  sectionCode?: string; // Código de la sección del canal (ej: "A2", "B1")
   status: boolean;
   bodyPart: BodyPartData;
 }
