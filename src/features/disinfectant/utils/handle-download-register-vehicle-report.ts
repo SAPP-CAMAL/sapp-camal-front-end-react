@@ -14,9 +14,7 @@ export const handleDownloadRegisterVehicleReport = async (date: string, type: 'E
 
 		window.URL.revokeObjectURL(url);
 		document.body.removeChild(a);
-
-		toast.success(`Reporte ${type} descargado correctamente`);
 	} catch (error) {
-		toast.error('Error al descargar el reporte');
+		throw 'Error al descargar el reporte';
 	}
 };

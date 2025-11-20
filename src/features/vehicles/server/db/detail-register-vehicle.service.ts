@@ -55,8 +55,8 @@ export const getRegisterVehicleByDateReport = async (
 	const contentDisposition = response.headers.get('content-disposition') || '';
 
 	const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-	const filename =
-		filenameMatch?.[1]?.replace(/['"]/g, '') || `Registro-de-vehiculos-${registerDate}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
+	const defaultFilename = `Registro-de-vehiculos-${registerDate}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
+	const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
 
 	return { blob, filename, contentType };
 };
