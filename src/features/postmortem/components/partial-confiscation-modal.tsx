@@ -121,7 +121,7 @@ export function PartialConfiscationModal({
             code: part.code,
             description: part.description,
             selected: !!savedPart,
-            weight: savedPart ? savedPart.weight : "",
+            weight: savedPart ? String(savedPart.weight) : "",
           };
         });
 

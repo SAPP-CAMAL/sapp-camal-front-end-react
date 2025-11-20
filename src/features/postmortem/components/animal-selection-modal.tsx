@@ -136,14 +136,14 @@ export function AnimalSelectionModal({
                 savedForLocation.percentageAffection
               );
               anatomicalWeights[location.id] = parseFloat(
-                savedForLocation.weight
+                String(savedForLocation.weight)
               );
               selectedAnatomicalLocations[location.id] = true; // Marcar como seleccionado
             } else {
               // Valores por defecto
               anatomicalPercentages[location.id] = 40;
               anatomicalWeights[location.id] = avgOrgansData?.data?.avgWeight
-                ? parseFloat(avgOrgansData.data.avgWeight)
+                ? parseFloat(String(avgOrgansData.data.avgWeight))
                 : 0;
               selectedAnatomicalLocations[location.id] = false;
             }
@@ -155,9 +155,9 @@ export function AnimalSelectionModal({
 
         // Inicializar peso con el valor guardado o el promedio de la API
         const weight = savedSubProduct
-          ? parseFloat(savedSubProduct.weight)
+          ? parseFloat(String(savedSubProduct.weight))
           : avgOrgansData?.data?.avgWeight
-          ? parseFloat(avgOrgansData.data.avgWeight)
+          ? parseFloat(String(avgOrgansData.data.avgWeight))
           : 0;
 
         return {
@@ -831,7 +831,7 @@ export function AnimalSelectionModal({
                                           value={
                                             selection.anatomicalPercentages?.[
                                               location.id
-                                            ] || 0
+                                            ] ?? 0
                                           }
                                           onChange={(e) =>
                                             handleAnatomicalPercentage(
@@ -865,7 +865,7 @@ export function AnimalSelectionModal({
                                             value={
                                               selection.anatomicalWeights?.[
                                                 location.id
-                                              ] || ""
+                                              ] ?? ""
                                             }
                                             onChange={(e) =>
                                               handleAnatomicalWeight(
@@ -953,7 +953,7 @@ export function AnimalSelectionModal({
                                     type="number"
                                     min="0"
                                     max="100"
-                                    value={selection.percentage || 0}
+                                    value={selection.percentage ?? 0}
                                     onChange={(e) =>
                                       handleAnimalPercentage(
                                         animalId,
@@ -986,7 +986,7 @@ export function AnimalSelectionModal({
                                       min="0"
                                       placeholder="Peso"
                                       className="w-24 h-8 bg-white text-sm"
-                                      value={selection.weight || ""}
+                                      value={selection.weight ?? ""}
                                       onChange={(e) =>
                                         handleAnimalWeight(
                                           animalId,
