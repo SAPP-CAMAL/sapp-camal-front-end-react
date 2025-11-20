@@ -41,11 +41,16 @@ import {
   CalendarDays,
   Users,
   Badge as BadgeIcon,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DatePicker } from "@/components/ui/date-picker";
 import { parseLocalDateString, getLocalDateString } from "@/lib/formatDate";
+import { downloadListVehicleReport } from "../utils/download-list-vehicle-report";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function ListAnimalsManagement() {
   const [fechaIngreso, setFechaIngreso] = useState<Date | null>(null);
@@ -208,6 +213,34 @@ export function ListAnimalsManagement() {
       return acc;
     }, 0),
   };
+
+  const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+    const selectedSpecieIds =
+      selectedSpecies.length > 0 && availableSpecies.length > 0
+        ? availableSpecies.filter(specie => selectedSpecies.includes(specie.name as Species)).map(specie => specie.id)
+        : null;
+    const filters = {
+      entryDate: fechaIngreso
+        ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
+        : getCurrentDate(),
+      slaughterDate: fechaFaenamiento
+        ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
+        : null,
+      idSpecie: selectedSpecieIds && selectedSpecieIds.length > 0 ? selectedSpecieIds[0] : null,
+      idFinishType: selectedFinishType,
+      brandName: marca.trim() || null,
+    };
+
+    toast.promise(
+      downloadListVehicleReport(filters, type),
+      {
+        loading: 'Generando reporte...',
+        success: `Reporte ${type} descargado correctamente`,
+        error: 'Error al descargar el reporte',
+      }
+    );
+  };
+
 
   // Componente para mostrar los datos en formato de tarjeta (móvil)
   const MobileCard = ({ item }: { item: any }) => (
@@ -485,13 +518,42 @@ export function ListAnimalsManagement() {
               </div>
             </div>
             <div className="flex flex-col gap-2 lg:items-end lg:justify-end">
-              <Button
-                className="w-full"
-                title="Generar reporte de los registros actuales"
-              >
-                <FileUp className="h-4 w-4" />
-                <span className="ml-2">Reporte</span>
-              </Button>
+
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="w-full"
+                    title="Generar reporte de los registros actuales"
+                    disabled={isLoading || apiData.length === 0}
+                  >
+                    <FileUp className="h-4 w-4" />
+                    <span className="ml-2">Reporte</span>
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56"
+                  sideOffset={5}
+                  alignOffset={0}
+                >
+                  <DropdownMenuItem
+                    onClick={() => handleDownloadReport('EXCEL')}
+                    className="cursor-pointer"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                    <span>Descargar Excel</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDownloadReport('PDF')}
+                    className="cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 mr-2 text-red-600" />
+                    <span>Descargar PDF</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant="outline"
                 onClick={clear}

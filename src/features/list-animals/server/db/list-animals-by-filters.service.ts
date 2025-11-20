@@ -1,40 +1,45 @@
-import { http } from "@/lib/ky";
-import { ListAnimalsFilters } from "@/features/list-animals/domain";
+import { http } from '@/lib/ky';
+import { ListAnimalsFilters } from '@/features/list-animals/domain';
 
 // Servicio para obtener animales por filtros
-export async function getListAnimalsByFiltersService(
-  filters: ListAnimalsFilters
-): Promise<any[]> {
-  try {
-    console.log('Enviando filtros a la API:', filters);
+export async function getListAnimalsByFiltersService(filters: ListAnimalsFilters): Promise<any[]> {
+	try {
+		const response = await http.post('v1/1.0.0/setting-cert-brand/by-filters', { json: filters }).json<any>();
 
-    const response = await http.post(
-      "v1/1.0.0/setting-cert-brand/by-filters",
-      {
-        json: filters
-      }
-    ).json<any>();
+		if (response.code === 201) {
+			return response.data; // Retorna los datos tal cual vienen de la API
+		}
 
-    console.log('Respuesta de la API:', response);
-
-    if (response.code === 201) {
-      return response.data; // Retorna los datos tal cual vienen de la API
-    }
-
-    throw new Error(response.message || 'Error al obtener los animales');
-  } catch (error) {
-    console.error('Error en getListAnimalsByFiltersService:', error);
-    throw error;
-  }
+		throw new Error(response.message || 'Error al obtener los animales');
+	} catch (error) {
+		throw error;
+	}
 }
 
 // Función para obtener la fecha actual en formato YYYY-MM-DD en zona horaria local
 // Evita problemas de desfase de día causados por conversión a UTC
 export function getCurrentDate(): string {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  
-  return `${year}-${month}-${day}`;
+	const today = new Date();
+	const year = today.getFullYear();
+	const month = String(today.getMonth() + 1).padStart(2, '0');
+	const day = String(today.getDate()).padStart(2, '0');
+
+	return `${year}-${month}-${day}`;
+}
+
+export async function getReportListAnimalsByFiltersService(filters: ListAnimalsFilters, typeReport: 'EXCEL' | 'PDF') {
+	const response = await http.post('v1/1.0.0/setting-cert-brand/report-by-filters', {
+		searchParams: { typeReport },
+		json: filters,
+	});
+
+	const blob = await response.blob();
+	const contentType = response.headers.get('content-type') || '';
+	const contentDisposition = response.headers.get('content-disposition') || '';
+
+	const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+	const defaultFilename = `Reporte-de-animales.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
+	const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
+
+	return { blob, filename, contentType };
 }
