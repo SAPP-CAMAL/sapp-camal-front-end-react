@@ -407,7 +407,7 @@ export const getStatusCorralsReport = async (
 		const contentDisposition = response.headers.get('content-disposition') || '';
 
 		const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-		const defaultFilename = `Reporte-condiciones-transporte-${admissionDate}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
+		const defaultFilename = `Reporte-antemortem-interno-${admissionDate}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
 		const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
 
 		return { blob, filename, contentType };
