@@ -113,17 +113,27 @@ export default function NewVehicleForm({
         const response = await getDetailVehicleByTransportIdService(
           Number(vehicleData.transportTypeId)
         );
-        setAvailableVehicleTypes(response.data || []);
+        
+        // Eliminar duplicados basándose en el nombre (case-insensitive)
+        const uniqueTypes = Array.from(
+          new Map(
+            (response.data || []).map((tipo) => [
+              tipo.name.toUpperCase().trim(), // Key: nombre en mayúsculas sin espacios
+              tipo
+            ])
+          ).values()
+        );
+        
+        setAvailableVehicleTypes(uniqueTypes);
 
         // Si estamos en modo edición y hay un vehicleTypeId, verificar que esté en la lista
         if (isUpdate && vehicleData.vehicleTypeId) {
-          const vehicleTypeExists = response.data?.some(
+          const vehicleTypeExists = uniqueTypes.some(
             (tipo) => String(tipo.id) === vehicleData.vehicleTypeId
           );
 
           // Si el tipo de vehículo actual no está en la lista, limpiarlo
           if (!vehicleTypeExists) {
-            console.warn("Vehicle type not found in available types, clearing selection");
             handleInputChange("vehicleTypeId", "");
           }
         }
@@ -271,11 +281,23 @@ export default function NewVehicleForm({
                   <SelectTrigger className="h-9 w-full text-xs sm:text-sm">
                     <SelectValue placeholder="Seleccione el tipo de transporte" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent 
+                    position="popper"
+                    sideOffset={5}
+                    className="max-h-[200px] overflow-y-auto"
+                  >
                     {transportsTypes?.length ? (
-                      transportsTypes.map((tipo: any) => (
+                      // Eliminar duplicados por nombre (case-insensitive)
+                      Array.from(
+                        new Map(
+                          transportsTypes.map((tipo: any) => [
+                            tipo.name.toUpperCase().trim(), // Key: nombre en mayúsculas
+                            tipo
+                          ])
+                        ).values()
+                      ).map((tipo: any) => (
                         <SelectItem
-                          key={tipo.catalogueId}
+                          key={`transport-type-${tipo.catalogueId}`}
                           value={String(tipo.catalogueId)}
                         >
                           {tipo.name}
@@ -365,10 +387,14 @@ export default function NewVehicleForm({
                         }
                       />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent 
+                      position="popper"
+                      sideOffset={5}
+                      className="max-h-[200px] overflow-y-auto"
+                    >
                       {availableVehicleTypes?.length ? (
                         availableVehicleTypes.map((tipo) => (
-                          <SelectItem key={tipo.id} value={String(tipo.id)}>
+                          <SelectItem key={`vehicle-type-${tipo.id}`} value={String(tipo.id)}>
                             {tipo.name}
                           </SelectItem>
                         ))

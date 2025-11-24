@@ -27,6 +27,8 @@ export function NewVisitorLogForm() {
 
   const defaultValues = {
     personId: "",
+    name: "",
+    identification: "",
     idCompany: "",
     visitPurpose: "",
     entryTime: "",

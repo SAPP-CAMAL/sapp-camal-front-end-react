@@ -164,6 +164,27 @@ export function AnimalWeighingManagement() {
   const saveWeighingMutation = useSaveAnimalWeighing();
   const updateWeighingMutation = useUpdateAnimalWeighing();
 
+  // Función helper para verificar si hay decomiso parcial
+  // Los datos de productPostmortem ya vienen en weighingData dentro de cada animal
+  const checkPartialConfiscation = (animal: any, sectionCode: string): boolean => {
+    if (!animal?.productPostmortem || animal.productPostmortem.length === 0) {
+      return false;
+    }
+    
+    // Buscar si hay algún producto con decomiso parcial en esta sección
+    const hasPartial = animal.productPostmortem.some(
+      (product: any) => {
+        const productSectionCode = product.sectionCode;
+        
+        // Si el producto tiene sectionCode y coincide con el de la tabla
+        // Y NO es decomiso total, entonces hay decomiso parcial
+        return productSectionCode && productSectionCode === sectionCode && product.isTotalConfiscation === false;
+      }
+    );
+    
+    return hasPartial;
+  };
+
   // Generar filas basadas en datos de pesaje y secciones de canal
   useEffect(() => {
     if (!weighingData?.data) {
@@ -316,6 +337,8 @@ export function AnimalWeighingManagement() {
         if (savedSectionsInCurrentType.size > 0) {
           channelSectionsData.data.forEach((section) => {
             const savedWeight = savedSections.get(section.id) || 0;
+            const hasPartialConfiscation = checkPartialConfiscation(animal, section.sectionCode);
+
             newRows.push({
               id: `${animal.id}-${section.id}`,
               animalId: animal.id,
@@ -330,6 +353,7 @@ export function AnimalWeighingManagement() {
               sectionDescription: section.description,
               idChannelSection: section.id,
               idAnimalWeighing: savedWeight > 0 ? idAnimalWeighing : undefined,
+              hasPartialConfiscation,
             });
           });
         } else if (savedSections.size > 0) {
@@ -337,6 +361,8 @@ export function AnimalWeighingManagement() {
           savedSections.forEach((weight, sectionId) => {
             const sectionInfo = allKnownSections.get(sectionId);
             if (sectionInfo) {
+              const hasPartialConfiscation = checkPartialConfiscation(animal, sectionInfo.code);
+
               newRows.push({
                 id: `${animal.id}-${sectionId}`,
                 animalId: animal.id,
@@ -351,12 +377,15 @@ export function AnimalWeighingManagement() {
                 sectionDescription: sectionInfo.description,
                 idChannelSection: sectionId,
                 idAnimalWeighing: idAnimalWeighing,
+                hasPartialConfiscation,
               });
             }
           });
         } else {
           // Si no hay datos guardados, mostrar todas las secciones del tipo actual
           channelSectionsData.data.forEach((section) => {
+            const hasPartialConfiscation = checkPartialConfiscation(animal, section.sectionCode);
+
             newRows.push({
               id: `${animal.id}-${section.id}`,
               animalId: animal.id,
@@ -370,6 +399,7 @@ export function AnimalWeighingManagement() {
               sectionCode: section.sectionCode,
               sectionDescription: section.description,
               idChannelSection: section.id,
+              hasPartialConfiscation,
             });
           });
         }
@@ -469,7 +499,7 @@ export function AnimalWeighingManagement() {
     });
 
     setRows(newRows);
-  }, [weighingData, weighingStageId, channelSectionsData, selectedChannelTypeId]);
+  }, [weighingData, weighingStageId, channelSectionsData, selectedChannelTypeId, mediaCanalSections, canalSections, cuartaSections]);
 
   const handleHookSelect = (hookId: number) => {
     setSelectedHook(hookId);
@@ -1133,7 +1163,7 @@ export function AnimalWeighingManagement() {
               });
 
               return Object.entries(groupedRows).map(([animalCode, animalRows]) => (
-                <Card key={animalCode} className={`p-3 ${animalRows[0].isComplete ? 'bg-[#86c6c5]' : 'bg-green-50'}`}>
+                <Card key={animalCode} className={`p-3 border-4 border-teal-600 shadow-lg ${animalRows[0].isComplete ? 'bg-[#86c6c5]' : 'bg-green-50'}`}>
                   {/* Información del animal */}
                   <div className="mb-3 pb-3 border-b">
                     <div className="flex justify-between items-start mb-2">
@@ -1164,6 +1194,14 @@ export function AnimalWeighingManagement() {
                           <div className="mb-2">
                             <span className="font-bold text-blue-600 text-sm">{row.sectionCode}</span>
                             <span className="text-xs text-muted-foreground ml-2">{row.sectionDescription}</span>
+                            {row.hasPartialConfiscation && (
+                              <div className="flex items-center gap-1 mt-1 text-yellow-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-xs font-semibold">Decomiso parcial</span>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -1252,10 +1290,17 @@ export function AnimalWeighingManagement() {
 
                   return Object.entries(groupedRows).map(([animalCode, animalRows]) => {
                     const rowSpan = animalRows.length;
-                    return animalRows.map((row, index) => (
+                    return animalRows.map((row, index) => {
+                      const isFirstRow = index === 0;
+                      const isLastRow = index === animalRows.length - 1;
+                      return (
                       <TableRow
                         key={row.id}
-                        className={row.isComplete ? "[&]:!bg-[#86c6c5] hover:!bg-[#86c6c5]" : "bg-green-50 hover:!bg-green-50"}
+                        className={`
+                          ${row.isComplete ? "[&]:!bg-[#86c6c5] hover:!bg-[#86c6c5]" : "bg-green-50 hover:!bg-green-50"}
+                          ${isFirstRow ? "border-t-4 border-t-teal-600 shadow-[0_-2px_4px_rgba(0,0,0,0.1)]" : ""}
+                          ${isLastRow ? "border-b-4 border-b-teal-600 shadow-[0_2px_4px_rgba(0,0,0,0.1)]" : ""}
+                        `}
                       >
                         {/* Fecha de Ingreso - solo en la primera fila del animal */}
                         {index === 0 && (
@@ -1286,6 +1331,14 @@ export function AnimalWeighingManagement() {
                               <div className="flex flex-col items-center">
                                 <span className="font-bold text-blue-600">{row.sectionCode}</span>
                                 <span className="text-xs text-muted-foreground">{row.sectionDescription}</span>
+                                {row.hasPartialConfiscation && (
+                                  <div className="flex items-center gap-1 mt-1 text-yellow-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="text-xs font-semibold">Decomiso parcial</span>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               "-"
@@ -1340,7 +1393,8 @@ export function AnimalWeighingManagement() {
                       </div>
                     </TableCell>
                   </TableRow>
-                    ));
+                      );
+                    });
                   });
                 })()
               )}

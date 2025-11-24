@@ -24,6 +24,7 @@ import { useAvgOrgansSpecies } from "../hooks/use-avg-organs-species";
 import type { SubProductPostmortem } from "../domain/save-postmortem.types";
 import { toast } from "sonner";
 import { useMemo } from "react";
+import { useUnitMeasure } from "@/features/animal-weighing/hooks/use-unit-measure";
 
 type AnimalSelectionModalProps = {
   isOpen: boolean;
@@ -36,6 +37,7 @@ type AnimalSelectionModalProps = {
   idProduct: number | null;
   idSpecie: number | null;
   certId: number | null;
+  canEdit?: boolean; // Nueva prop para controlar si se puede editar
 };
 
 export function AnimalSelectionModal({
@@ -49,6 +51,7 @@ export function AnimalSelectionModal({
   idProduct,
   idSpecie,
   certId,
+  canEdit = true, // Por defecto true para mantener compatibilidad
 }: AnimalSelectionModalProps) {
   // Obtener animales desde la API
   const { data: animalsData, isLoading } = useAnimalsByBrand(certId);
@@ -65,6 +68,10 @@ export function AnimalSelectionModal({
 
   // Obtener peso promedio de órganos (solo para subproductos)
   const { data: avgOrgansData } = useAvgOrgansSpecies(idSpecie, idProduct);
+
+  // Obtener unidad de medida desde la API
+  const { data: unitMeasureData } = useUnitMeasure();
+  const unitSymbol = unitMeasureData?.data?.symbol || "kg";
 
   const isSavingOrUpdating = isSaving || isUpdating;
 
@@ -129,14 +136,14 @@ export function AnimalSelectionModal({
                 savedForLocation.percentageAffection
               );
               anatomicalWeights[location.id] = parseFloat(
-                savedForLocation.weight
+                String(savedForLocation.weight)
               );
               selectedAnatomicalLocations[location.id] = true; // Marcar como seleccionado
             } else {
               // Valores por defecto
               anatomicalPercentages[location.id] = 40;
               anatomicalWeights[location.id] = avgOrgansData?.data?.avgWeight
-                ? parseFloat(avgOrgansData.data.avgWeight)
+                ? parseFloat(String(avgOrgansData.data.avgWeight))
                 : 0;
               selectedAnatomicalLocations[location.id] = false;
             }
@@ -148,9 +155,9 @@ export function AnimalSelectionModal({
 
         // Inicializar peso con el valor guardado o el promedio de la API
         const weight = savedSubProduct
-          ? parseFloat(savedSubProduct.weight)
+          ? parseFloat(String(savedSubProduct.weight))
           : avgOrgansData?.data?.avgWeight
-          ? parseFloat(avgOrgansData.data.avgWeight)
+          ? parseFloat(String(avgOrgansData.data.avgWeight))
           : 0;
 
         return {
@@ -669,6 +676,7 @@ export function AnimalSelectionModal({
                         checked={selection.selected}
                         onCheckedChange={() => handleAnimalToggle(animalId)}
                         id={`animal-${animal.id}`}
+                        disabled={!canEdit}
                       />
                       <label
                         htmlFor={`animal-${animal.id}`}
@@ -720,6 +728,7 @@ export function AnimalSelectionModal({
                                         )
                                       }
                                       id={`location-${animal.id}-${location.id}`}
+                                      disabled={!canEdit}
                                     />
                                     <label
                                       htmlFor={`location-${animal.id}-${location.id}`}
@@ -750,6 +759,7 @@ export function AnimalSelectionModal({
                                               20
                                             )
                                           }
+                                          disabled={!canEdit}
                                           className={`h-7 px-2 text-xs ${
                                             selection.anatomicalPercentages?.[
                                               location.id
@@ -776,6 +786,7 @@ export function AnimalSelectionModal({
                                               40
                                             )
                                           }
+                                          disabled={!canEdit}
                                           className={`h-7 px-2 text-xs ${
                                             selection.anatomicalPercentages?.[
                                               location.id
@@ -802,6 +813,7 @@ export function AnimalSelectionModal({
                                               60
                                             )
                                           }
+                                          disabled={!canEdit}
                                           className={`h-7 px-2 text-xs ${
                                             selection.anatomicalPercentages?.[
                                               location.id
@@ -819,7 +831,7 @@ export function AnimalSelectionModal({
                                           value={
                                             selection.anatomicalPercentages?.[
                                               location.id
-                                            ] || 0
+                                            ] ?? 0
                                           }
                                           onChange={(e) =>
                                             handleAnatomicalPercentage(
@@ -828,6 +840,7 @@ export function AnimalSelectionModal({
                                               parseInt(e.target.value) || 0
                                             )
                                           }
+                                          disabled={!canEdit}
                                           className="w-14 h-7 text-center bg-white text-xs"
                                         />
                                       </div>
@@ -836,7 +849,7 @@ export function AnimalSelectionModal({
                                       {avgOrgansData?.data && (
                                         <div className="flex items-center gap-2">
                                           <div className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                                            Peso (kg):
+                                            Peso ({unitSymbol}):
                                           </div>
                                           {avgOrgansData.data.avgWeight && (
                                             <div className="text-xs text-gray-500 whitespace-nowrap">
@@ -852,7 +865,7 @@ export function AnimalSelectionModal({
                                             value={
                                               selection.anatomicalWeights?.[
                                                 location.id
-                                              ] || ""
+                                              ] ?? ""
                                             }
                                             onChange={(e) =>
                                               handleAnatomicalWeight(
@@ -861,6 +874,7 @@ export function AnimalSelectionModal({
                                                 parseFloat(e.target.value) || 0
                                               )
                                             }
+                                            disabled={!canEdit}
                                           />
                                         </div>
                                       )}
@@ -888,6 +902,7 @@ export function AnimalSelectionModal({
                                     onClick={() =>
                                       handleAnimalPercentage(animalId, 20)
                                     }
+                                    disabled={!canEdit}
                                     className={
                                       selection.percentage === 20
                                         ? "bg-blue-600 hover:bg-blue-700"
@@ -906,6 +921,7 @@ export function AnimalSelectionModal({
                                     onClick={() =>
                                       handleAnimalPercentage(animalId, 40)
                                     }
+                                    disabled={!canEdit}
                                     className={
                                       selection.percentage === 40
                                         ? "bg-blue-600 hover:bg-blue-700"
@@ -924,6 +940,7 @@ export function AnimalSelectionModal({
                                     onClick={() =>
                                       handleAnimalPercentage(animalId, 60)
                                     }
+                                    disabled={!canEdit}
                                     className={
                                       selection.percentage === 60
                                         ? "bg-blue-600 hover:bg-blue-700"
@@ -936,13 +953,14 @@ export function AnimalSelectionModal({
                                     type="number"
                                     min="0"
                                     max="100"
-                                    value={selection.percentage || 0}
+                                    value={selection.percentage ?? 0}
                                     onChange={(e) =>
                                       handleAnimalPercentage(
                                         animalId,
                                         parseInt(e.target.value) || 0
                                       )
                                     }
+                                    disabled={!canEdit}
                                     className="w-20 h-8 text-center bg-gray-50"
                                   />
                                 </div>
@@ -953,11 +971,11 @@ export function AnimalSelectionModal({
                                 <div className="space-y-2">
                                   <div className="flex items-center gap-2 whitespace-nowrap">
                                     <div className="text-xs font-medium text-gray-700">
-                                      Peso Aprox. (kg)
+                                      Peso Aprox. ({unitSymbol})
                                     </div>
                                     {avgOrgansData.data.avgWeight && (
                                       <div className="text-xs text-gray-500">
-                                        Sug: {avgOrgansData.data.avgWeight} kg
+                                        Sug: {avgOrgansData.data.avgWeight} {unitSymbol}
                                       </div>
                                     )}
                                   </div>
@@ -968,13 +986,14 @@ export function AnimalSelectionModal({
                                       min="0"
                                       placeholder="Peso"
                                       className="w-24 h-8 bg-white text-sm"
-                                      value={selection.weight || ""}
+                                      value={selection.weight ?? ""}
                                       onChange={(e) =>
                                         handleAnimalWeight(
                                           animalId,
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
+                                      disabled={!canEdit}
                                     />
                                   </div>
                                 </div>
@@ -997,26 +1016,28 @@ export function AnimalSelectionModal({
             onClick={handleCancel}
             disabled={isSavingOrUpdating}
           >
-            Cancelar
+            {canEdit ? "Cancelar" : "Cerrar"}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={selectedCount === 0 || isSavingOrUpdating}
-            className="bg-teal-600 hover:bg-teal-700"
-          >
-            {isSavingOrUpdating ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {hasExistingData ? "Actualizando..." : "Guardando..."}
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                {hasExistingData ? "Actualizar" : "Guardar"} ({selectedCount}{" "}
-                {selectedCount === 1 ? "animal" : "animales"})
-              </>
-            )}
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={handleSave}
+              disabled={selectedCount === 0 || isSavingOrUpdating}
+              className="bg-teal-600 hover:bg-teal-700"
+            >
+              {isSavingOrUpdating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {hasExistingData ? "Actualizando..." : "Guardando..."}
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  {hasExistingData ? "Actualizar" : "Guardar"} ({selectedCount}{" "}
+                  {selectedCount === 1 ? "animal" : "animales"})
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

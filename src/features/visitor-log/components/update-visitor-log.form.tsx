@@ -59,6 +59,8 @@ export function UpdateVisitorLogDialog({ visitor }: { visitor: any }) {
 
   const defaultValues = {
     personId: visitor?.idPerson?.toString(),
+    name: "",
+    identification: "",
     idCompany: visitor?.idCompany?.toString(),
     visitPurpose: visitor?.visitPurpose ?? "",
     entryTime: toLocalInputValue(visitor?.entryTime),
