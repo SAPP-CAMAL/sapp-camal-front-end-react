@@ -38,10 +38,15 @@ import {
   CalendarDays,
   Badge as BadgeIcon,
   Search,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DatePicker } from "@/components/ui/date-picker";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { downloadConditionTransportByFilters } from "../utils/downloadConditionTransportByFilters";
 
 export function ListTransportManagement() {
   // Estado inicial de los filtros
@@ -170,6 +175,17 @@ export function ListTransportManagement() {
     [apiData]
   );
 
+    const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+      toast.promise(
+        downloadConditionTransportByFilters(filters, type),
+        {
+          loading: 'Generando reporte...',
+          success: `Reporte ${type} descargado correctamente`,
+          error: 'Error al descargar el reporte',
+        }
+      );
+    };
+
   // Componente para mostrar los datos en formato de tarjeta (móvil)
   const MobileCard = ({ item }: { item: any }) => (
     <Card className="mb-4">
@@ -180,7 +196,7 @@ export function ListTransportManagement() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
             <div>
               <div className="font-semibold text-sm">
-                {format(new Date(item.issueDate), "dd/LL/yyyy")}
+                {format(parseISO(item.issueDate as string), 'dd/MM/yyyy')}
               </div>
             </div>
           </div>
@@ -444,13 +460,41 @@ export function ListTransportManagement() {
 
             {/* Botones */}
             <div className="flex flex-col gap-2">
-              <Button
-                className="bg-primary hover:bg-emerald-600/90 text-white w-full"
-                title="Generar reporte de los registros actuales"
-              >
-                <FileUp className="h-4 w-4" />
-                <span className="ml-2">Reporte</span>
-              </Button>
+
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="w-full"
+                    title="Generar reporte de los registros actuales"
+                    disabled={isLoading || apiData.length === 0}
+                  >
+                    <FileUp className="h-4 w-4" />
+                    <span className="ml-2">Reporte</span>
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56"
+                  sideOffset={5}
+                  alignOffset={0}
+                >
+                  <DropdownMenuItem
+                    onClick={() => handleDownloadReport('EXCEL')}
+                    className="cursor-pointer"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                    <span>Descargar Excel</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDownloadReport('PDF')}
+                    className="cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 mr-2 text-red-600" />
+                    <span>Descargar PDF</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 variant="outline"
                 onClick={clearFilters}
@@ -597,7 +641,7 @@ export function ListTransportManagement() {
                       >
                         <TableCell className="whitespace-normal text-center text-sm">
                           {item.issueDate
-                            ? format(new Date(item.issueDate), "dd/LL/yyyy")
+                            ?  format(parseISO(item.issueDate as string), 'dd/MM/yyyy')
                             : "N/A"}
                         </TableCell>
                         <TableCell className="whitespace-normal text-center text-sm font-medium">

@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, Save, Loader2, X, GripVertical, Venus, Mars, BringToFront, CircleCheckBig } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, Save, Loader2, X, GripVertical, Venus, Mars, BringToFront, CircleCheckBig, FileSpreadsheet, FileUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { QuantitySelector } from "@/components/quantity-selector";
 import { format } from "date-fns";
@@ -21,6 +22,7 @@ import { AntemortemMobileCard } from "./antemortem-mobile-card";
 import { getActiveLinesDataService, getAntemortemDataService, updateArgollasService } from "../server/db/antemortem.service";
 import { LineItem, mapLineItemToLineaType, getLineIdByType } from "../domain/line.types";
 import { DatePicker } from "@/components/ui/date-picker";
+import { downloadStatusCorralsReport } from "../utils/download-antemortem-report";
 import { isToday } from "@/lib/date-utils";
 
 function SelectLinea({
@@ -307,7 +309,7 @@ export function AntemortemManagement() {
   const handleArgollasClick = (corral: string, currentValue: number) => {
     // Solo permitir edición si es la fecha actual
     if (!canEdit) return;
-    
+
     setEditingArgollasCorral(corral);
     setTempArgollasValue(currentValue || 0);
   };
@@ -347,6 +349,19 @@ export function AntemortemManagement() {
     setEditingArgollasCorral(null);
     setTempArgollasValue(0);
   };
+
+  const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+      const admissionDate = format(fecha, "yyyy-MM-dd");
+
+      toast.promise(
+        downloadStatusCorralsReport(admissionDate, getLineIdByType(linea), type),
+        {
+          loading: 'Generando reporte...',
+          success: `Reporte ${type} descargado correctamente`,
+          error: 'Error al descargar el reporte',
+        }
+      );
+    };
 
   return (
     <div className="space-y-4">
@@ -433,25 +448,71 @@ export function AntemortemManagement() {
             </div>
             {/* Reporte */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start lg:justify-end gap-2">
-              <DropdownMenu>
+
+              <div>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
+
                   <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary w-full sm:w-auto">
                     <FileText className="h-4 w-4" />
                     <span className="mx-2">Generar Reporte</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                    <FileText className="h-4 w-4" />
-                    <span>Antemortem Interno</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                    <FileText className="h-4 w-4" />
-                    <span>Antemortem Agrocalidad</span>
-                  </DropdownMenuItem>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-60"
+                  sideOffset={5}
+                  alignOffset={0}>
+
+                    {/* Antemortem - Interno */}
+                     <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="flex items-center">
+                        <FileText className="h-4 w-4 mr-2" />
+                        <span>Antemortem Interno</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-48">
+                        <DropdownMenuItem
+                        onClick={() => handleDownloadReport('EXCEL')}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                          Descargar Excel
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                        onClick={() => handleDownloadReport('PDF')}
+                        >
+                          <FileText className="h-4 w-4 mr-2 text-red-600" />
+                          Descargar PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
+                    {/* Antemortem - Agrocalidad*/}
+                     <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="flex items-center">
+                        <FileText className="h-4 w-4 mr-2" />
+                        <span>Antemortem Agrocalidad</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-48">
+                        <DropdownMenuItem
+                        // onClick={() => handleDownloadReport('EXCEL')}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                          Descargar Excel
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                        // onClick={() => handleDownloadReport('PDF')}
+                        >
+                          <FileText className="h-4 w-4 mr-2 text-red-600" />
+                          Descargar PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
+
             </div>
           </div>
         </div>

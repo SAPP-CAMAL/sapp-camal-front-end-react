@@ -1,9 +1,10 @@
 'use client';
 
+import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { parseAsString, useQueryStates } from 'nuqs';
 import { ColumnDef, flexRender, Row } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight, FileText, Info } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, FileSpreadsheet, FileText, FileUp, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { usePaginated } from '@/hooks/use-paginated';
@@ -15,6 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useDailyDisinfectionRegisterContext } from '../hooks/use-daily-disinfection-register-context';
 import { RegisterVehicleTimeOut } from './register-vehicle-time-out';
 import { toCapitalize } from '../../../lib/toCapitalize';
+import { handleDownloadRegisterVehicleReport } from '../utils/handle-download-register-vehicle-report';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
@@ -100,6 +103,21 @@ export function DailyDisinfectionLogTable() {
 		else handleSetDailyDisinfectionRegister(row.original);
 	};
 
+	const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+		const parsedDate = parseISO(searchParams.date);
+		if (Number.isNaN(parsedDate.getTime())) {
+			toast.error('Fecha inválida');
+			return;
+		}
+		const formattedDate = format(parsedDate, 'yyyy-MM-dd');
+
+		toast.promise(handleDownloadRegisterVehicleReport(formattedDate, type), {
+			loading: 'Generando reporte...',
+			success: `Reporte ${type} descargado correctamente`,
+			error: 'Error al descargar el reporte',
+		});
+	};
+
 	return (
 		<div className='overflow-hidden rounded-lg border p-4'>
 			<div className='py-4 px-2 flex justify-between'>
@@ -115,10 +133,29 @@ export function DailyDisinfectionLogTable() {
 							setSearchParams({ date: formattedDate });
 						}}
 					/>
-					<Button>
-						<FileText />
-						Generar Reporte
-					</Button>
+
+					<div>
+						<DropdownMenu modal={false}>
+							<DropdownMenuTrigger asChild>
+								<Button className='w-full' title='Generar reporte de los registros actuales' disabled={!query.data || query.data.data.length === 0}>
+									<FileUp className='h-4 w-4' />
+									<span className='ml-2'>Reporte</span>
+									<ChevronDown className='h-3 w-3 ml-1' />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align='end' className='w-56' sideOffset={5} alignOffset={0}>
+								<DropdownMenuItem onClick={() => handleDownloadReport('EXCEL')} className='cursor-pointer'>
+									<FileSpreadsheet className='h-4 w-4 mr-2 text-green-600' />
+									<span>Descargar Excel</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => handleDownloadReport('PDF')} className='cursor-pointer'>
+									<FileText className='h-4 w-4 mr-2 text-red-600' />
+									<span>Descargar PDF</span>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+
 				</div>
 			</div>
 			<Table>
