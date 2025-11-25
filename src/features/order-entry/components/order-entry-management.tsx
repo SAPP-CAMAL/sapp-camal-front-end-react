@@ -46,7 +46,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { OrderEntry, ProductSubproduct } from "../domain/order-entry.types";
+import type {
+  OrderEntry,
+  ProductSubproduct,
+} from "../domain/order-entry.types";
+import { Step2AddresseeSelection } from "./step-2-addressee-selection";
+import { AddresseeSummaryCard } from "./addressee-summary-card";
+import { Addressees } from "@/features/addressees/domain";
 
 export function OrderEntryManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,9 +66,17 @@ export function OrderEntryManagement() {
   const [introductorSearch, setIntroductorSearch] = useState("");
   const [checkedOrders, setCheckedOrders] = useState<Set<number>>(new Set());
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [productType, setProductType] = useState<"producto" | "subproducto">("producto");
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [productType, setProductType] = useState<"producto" | "subproducto">(
+    "producto"
+  );
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(
+    new Set()
+  );
   const [currentAnimalId, setCurrentAnimalId] = useState<number | null>(null);
+  const [step, setStep] = useState(1);
+  const [selectedAddressee, setSelectedAddressee] = useState<Addressees | null>(
+    null
+  );
 
   // Datos de ejemplo
   const orders: OrderEntry[] = [
@@ -142,6 +156,8 @@ export function OrderEntryManagement() {
   const handleClearSelection = () => {
     setSelectedOrder(null);
     setProducts([]);
+    setStep(1);
+    setSelectedAddressee(null);
   };
 
   const handleSearchChange = (value: string) => {
@@ -180,6 +196,12 @@ export function OrderEntryManagement() {
     // Tomar la primera orden seleccionada como referencia
     if (selectedOrdersList.length > 0) {
       setSelectedOrder(selectedOrdersList[0]);
+      
+      // Si no hay introductor seleccionado, usar el codDestinatario de la primera orden
+      if (!selectedIntroductor && selectedOrdersList[0].codDestinatario) {
+        setSelectedIntroductor(selectedOrdersList[0].codDestinatario);
+      }
+      
       // Generar productos de ejemplo para cada orden seleccionada
       const generatedProducts = selectedOrdersList.map((order, index) => ({
         id: index + 1,
@@ -189,7 +211,18 @@ export function OrderEntryManagement() {
         nroIngreso: order.nroIngreso,
       }));
       setProducts(generatedProducts);
+      setStep(2); // Move to Step 2 (Addressee Selection)
     }
+  };
+
+  const handleAddresseeSelect = (addressee: Addressees) => {
+    setSelectedAddressee(addressee);
+    setStep(3); // Move to Step 3 (Product Distribution)
+  };
+
+  const handleBackToStep2 = () => {
+    setStep(2);
+    setSelectedAddressee(null);
   };
 
   // Datos de ejemplo de introductores
@@ -206,27 +239,28 @@ export function OrderEntryManagement() {
   // Opciones de productos y subproductos
   const productosOptions = ["Canal", "Media Canal", "Cuarta de Canal"];
   const subproductosOptions = [
-"BAZO",
-"CABEZA",
-"CORAZÓN",
-"HIGADO",
-"INTESTINOS",
-"LENGUA",
-"LIBRILLO",
-"PATAS A",
-"PATAS B",
-"PATAS C",
-"PATAS D",
-"PULMONE A",
-"PULMONE B",
-"RIÑONES",
-"RUMEN",
-"TESTÍCULOS",
-"UBRE",
-"PIELES",
+    "BAZO",
+    "CABEZA",
+    "CORAZÓN",
+    "HIGADO",
+    "INTESTINOS",
+    "LENGUA",
+    "LIBRILLO",
+    "PATAS A",
+    "PATAS B",
+    "PATAS C",
+    "PATAS D",
+    "PULMONE A",
+    "PULMONE B",
+    "RIÑONES",
+    "RUMEN",
+    "TESTÍCULOS",
+    "UBRE",
+    "PIELES",
   ];
 
-  const currentOptions = productType === "producto" ? productosOptions : subproductosOptions;
+  const currentOptions =
+    productType === "producto" ? productosOptions : subproductosOptions;
 
   const handleOpenProductModal = () => {
     // Abrir con el primer animal seleccionado
@@ -239,10 +273,10 @@ export function OrderEntryManagement() {
 
   const handleSaveProductsForAnimal = () => {
     if (!currentAnimalId) return;
-    
+
     const order = orders.find((o) => o.id === currentAnimalId);
     if (!order) return;
-    
+
     // Crear productos solo para el animal actual
     const newProducts: ProductSubproduct[] = [];
     let productId = products.length + 1;
@@ -259,11 +293,11 @@ export function OrderEntryManagement() {
 
     setProducts([...products, ...newProducts]);
     setSelectedProducts(new Set());
-    
+
     // Pasar al siguiente animal o cerrar
     const ordersArray = Array.from(checkedOrders);
     const currentIndex = ordersArray.indexOf(currentAnimalId);
-    
+
     if (currentIndex < ordersArray.length - 1) {
       // Hay más animales, pasar al siguiente
       setCurrentAnimalId(ordersArray[currentIndex + 1]);
@@ -291,8 +325,8 @@ export function OrderEntryManagement() {
         <h1 className="text-2xl font-bold text-gray-800">AGREGAR INGRESO</h1>
       </div>
 
-      {/* Card de Distribución - Solo se muestra cuando hay una orden seleccionada */}
-      {selectedOrder && (
+      {/* Card de Distribución (Resumen Paso 1) - Se muestra en pasos 2 y 3 */}
+      {step >= 2 && selectedOrder && (
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4 mb-4">
@@ -300,15 +334,16 @@ export function OrderEntryManagement() {
                 <Edit className="h-6 w-6" />
               </div>
               <h2 className="text-xl font-semibold text-gray-700">
-                Distribución de Productos y Subproductos
+                Resumen de Ingreso
               </h2>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleClearSelection}
-                className="ml-auto"
+                className="ml-auto text-teal-600 hover:text-teal-700 hover:bg-teal-100"
               >
-                Cambiar Selección
+                <Edit className="h-4 w-4 mr-2" />
+                Cambiar
               </Button>
             </div>
 
@@ -316,18 +351,26 @@ export function OrderEntryManagement() {
               <div className="space-y-3">
                 <div>
                   <span className="text-gray-600">Introductor: </span>
-                  <span className="font-medium">{selectedIntroductor || "-"}</span>
+                  <span className="font-medium">
+                    {selectedIntroductor || "-"}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">N° de Ingresos seleccionados: </span>
+                  <span className="text-gray-600">
+                    N° de Ingresos seleccionados:{" "}
+                  </span>
                   <span className="font-medium">{checkedOrders.size}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Fecha de ingreso: </span>
                   <span className="font-medium">
-                    {format(new Date(selectedOrder.fechaIngreso), "dd/MM/yyyy HH:mm", {
-                      locale: es,
-                    })}
+                    {format(
+                      new Date(selectedOrder.fechaIngreso),
+                      "dd/MM/yyyy HH:mm",
+                      {
+                        locale: es,
+                      }
+                    )}
                   </span>
                 </div>
               </div>
@@ -358,13 +401,29 @@ export function OrderEntryManagement() {
         </Card>
       )}
 
-      {/* Card de Productos y Subproductos - Solo se muestra cuando hay una orden seleccionada */}
-      {selectedOrder && (
+      {/* Paso 2: Selección de Destinatario */}
+      {step === 2 && (
+        <Step2AddresseeSelection
+          onSelect={handleAddresseeSelect}
+          onBack={() => setStep(1)}
+        />
+      )}
+
+      {/* Resumen Paso 2: Destinatario Seleccionado - Se muestra en paso 3 */}
+      {step >= 3 && selectedAddressee && (
+        <AddresseeSummaryCard
+          addressee={selectedAddressee}
+          onEdit={handleBackToStep2}
+        />
+      )}
+
+      {/* Paso 3: Productos y Subproductos */}
+      {step === 3 && selectedOrder && (
         <Card>
           <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-700">
-                2.- Agregar productos y subproductos
+                3.- Agregar productos y subproductos
               </h2>
               <div className="flex gap-2">
                 <Button
@@ -421,16 +480,21 @@ export function OrderEntryManagement() {
                 <TableBody>
                   {products.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                      <TableCell
+                        colSpan={4}
+                        className="text-center py-8 text-gray-500"
+                      >
                         No hay productos agregados
                       </TableCell>
                     </TableRow>
                   ) : (
                     products.map((product) => (
-                      <TableRow key={product.id}>
+                      <TableRow key={product.id} className="hover:bg-gray-50/50 transition-colors">
                         <TableCell className="text-sm text-center border">
                           <div className="flex flex-col">
-                            <span className="font-medium">{product.especie}</span>
+                            <span className="font-medium">
+                              {product.especie}
+                            </span>
                             <span className="text-xs text-muted-foreground">
                               {product.codigoAnimal}
                             </span>
@@ -464,8 +528,8 @@ export function OrderEntryManagement() {
         </Card>
       )}
 
-      {/* Card de Filtros - Solo se muestra cuando NO hay orden seleccionada */}
-      {!selectedOrder && (
+      {/* Card de Filtros - Solo se muestra en el Paso 1 */}
+      {step === 1 && (
         <Card>
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
@@ -477,14 +541,16 @@ export function OrderEntryManagement() {
                 <DatePicker
                   inputClassName="bg-secondary"
                   selected={fechaFaenamiento}
-                  onChange={(newDate) => newDate && setFechaFaenamiento(newDate)}
+                  onChange={(newDate) =>
+                    newDate && setFechaFaenamiento(newDate)
+                  }
                 />
               </div>
 
               {/* Introductor */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  Destinario:
+                  Introductor:
                 </label>
                 <div className="relative">
                   <Input
@@ -516,7 +582,9 @@ export function OrderEntryManagement() {
                 </label>
                 <div className="flex gap-2">
                   <Button
-                    variant={selectedEspecie === "Bovino" ? "default" : "outline"}
+                    variant={
+                      selectedEspecie === "Bovino" ? "default" : "outline"
+                    }
                     onClick={() => setSelectedEspecie("Bovino")}
                     className={
                       selectedEspecie === "Bovino"
@@ -527,7 +595,9 @@ export function OrderEntryManagement() {
                     Bovino
                   </Button>
                   <Button
-                    variant={selectedEspecie === "Porcino" ? "default" : "outline"}
+                    variant={
+                      selectedEspecie === "Porcino" ? "default" : "outline"
+                    }
                     onClick={() => setSelectedEspecie("Porcino")}
                     className={
                       selectedEspecie === "Porcino"
@@ -539,7 +609,9 @@ export function OrderEntryManagement() {
                   </Button>
                   <Button
                     variant={
-                      selectedEspecie === "Ovino-Caprino" ? "default" : "outline"
+                      selectedEspecie === "Ovino-Caprino"
+                        ? "default"
+                        : "outline"
                     }
                     onClick={() => setSelectedEspecie("Ovino-Caprino")}
                     className={
@@ -557,16 +629,20 @@ export function OrderEntryManagement() {
         </Card>
       )}
 
-      {/* Tabla - Solo se muestra cuando NO hay orden seleccionada */}
-      {!selectedOrder && (
+      {/* Tabla - Solo se muestra en el Paso 1 */}
+      {step === 1 && (
         <Card>
           <CardContent className="pt-6 space-y-4">
             {/* Mostrar introductor seleccionado */}
             {selectedIntroductor && (
               <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
                 <p className="text-sm">
-                  <span className="font-semibold text-gray-700">Destinatario seleccionado: </span>
-                  <span className="text-teal-700 font-medium">{selectedIntroductor}</span>
+                  <span className="font-semibold text-gray-700">
+                    Destinatario seleccionado:{" "}
+                  </span>
+                  <span className="text-teal-700 font-medium">
+                    {selectedIntroductor}
+                  </span>
                 </p>
               </div>
             )}
@@ -645,14 +721,20 @@ export function OrderEntryManagement() {
                     const [fecha, hora] = order.fechaIngreso.split(" ");
 
                     return (
-                      <TableRow key={order.id}>
+                      <TableRow 
+                        key={order.id} 
+                        className="cursor-pointer hover:bg-teal-50/30 transition-colors"
+                        onClick={() => handleCheckOrder(order.id, !checkedOrders.has(order.id))}
+                      >
                         <TableCell className="text-center border">
                           {order.codigo}
                         </TableCell>
                         <TableCell className="text-xs text-center border py-2">
                           <div className="flex flex-col">
                             <span className="font-medium">{fecha}</span>
-                            <span className="text-muted-foreground">{hora}</span>
+                            <span className="text-muted-foreground">
+                              {hora}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="text-sm text-center border">
@@ -695,7 +777,9 @@ export function OrderEntryManagement() {
                     {filteredOrders.length} registros
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Mostrar:</span>
+                    <span className="text-sm text-muted-foreground">
+                      Mostrar:
+                    </span>
                     <Select
                       value={itemsPerPage.toString()}
                       onValueChange={(value) => setItemsPerPage(Number(value))}
@@ -723,33 +807,36 @@ export function OrderEntryManagement() {
                     >
                       Anterior
                     </Button>
-                    {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
-                      const pageNumber = i + 1;
-                      const isCurrentPage = pageNumber === currentPage;
+                    {Array.from(
+                      { length: Math.min(totalPages, 10) },
+                      (_, i) => {
+                        const pageNumber = i + 1;
+                        const isCurrentPage = pageNumber === currentPage;
 
-                      const showPage =
-                        pageNumber === 1 ||
-                        pageNumber === totalPages ||
-                        Math.abs(pageNumber - currentPage) <= 2;
+                        const showPage =
+                          pageNumber === 1 ||
+                          pageNumber === totalPages ||
+                          Math.abs(pageNumber - currentPage) <= 2;
 
-                      if (!showPage) return null;
+                        if (!showPage) return null;
 
-                      return (
-                        <Button
-                          key={pageNumber}
-                          variant="outline"
-                          size="sm"
-                          className={
-                            isCurrentPage
-                              ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
-                              : ""
-                          }
-                          onClick={() => setCurrentPage(pageNumber)}
-                        >
-                          {pageNumber}
-                        </Button>
-                      );
-                    })}
+                        return (
+                          <Button
+                            key={pageNumber}
+                            variant="outline"
+                            size="sm"
+                            className={
+                              isCurrentPage
+                                ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
+                                : ""
+                            }
+                            onClick={() => setCurrentPage(pageNumber)}
+                          >
+                            {pageNumber}
+                          </Button>
+                        );
+                      }
+                    )}
                     {totalPages > 10 && (
                       <span className="px-2 text-sm text-muted-foreground">
                         ... {totalPages}
@@ -793,8 +880,12 @@ export function OrderEntryManagement() {
                   <span className="text-base font-semibold">
                     Seleccionar Productos y Subproductos
                   </span>
-                  <Badge variant="outline" className="bg-blue-500 text-white border-blue-500">
-                    {checkedOrders.size} {checkedOrders.size === 1 ? "animal" : "animales"}
+                  <Badge
+                    variant="outline"
+                    className="bg-blue-500 text-white border-blue-500"
+                  >
+                    {checkedOrders.size}{" "}
+                    {checkedOrders.size === 1 ? "animal" : "animales"}
                   </Badge>
                 </div>
               </div>
@@ -808,34 +899,36 @@ export function OrderEntryManagement() {
                 Animal actual
               </div>
               <div className="text-xs text-muted-foreground mb-3">
-                {Array.from(checkedOrders).indexOf(currentAnimalId!) + 1} de {checkedOrders.size}
+                {Array.from(checkedOrders).indexOf(currentAnimalId!) + 1} de{" "}
+                {checkedOrders.size}
               </div>
-              {currentAnimalId && (() => {
-                const order = orders.find((o) => o.id === currentAnimalId);
-                if (!order) return null;
-                return (
-                  <div className="p-4 rounded-lg border-2 bg-white border-teal-500">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-bold text-blue-600 text-lg">
-                        {order.codigo}
-                      </span>
-                      <Badge className="bg-orange-500">
-                        {order.totalAnimales}
-                      </Badge>
+              {currentAnimalId &&
+                (() => {
+                  const order = orders.find((o) => o.id === currentAnimalId);
+                  if (!order) return null;
+                  return (
+                    <div className="p-4 rounded-lg border-2 bg-white border-teal-500">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-bold text-blue-600 text-lg">
+                          {order.codigo}
+                        </span>
+                        <Badge className="bg-orange-500">
+                          {order.totalAnimales}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-700 font-medium mb-2">
+                        {order.codDestinatario}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {order.especie}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        N° Ingreso: {order.nroIngreso}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-700 font-medium mb-2">
-                      {order.codDestinatario}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {order.especie}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2">
-                      N° Ingreso: {order.nroIngreso}
-                    </div>
-                  </div>
-                );
-              })()}
-              
+                  );
+                })()}
+
               {/* Lista de todos los animales */}
               <div className="mt-4">
                 <div className="text-xs font-semibold text-gray-600 mb-2">
@@ -846,10 +939,12 @@ export function OrderEntryManagement() {
                     if (orderId === currentAnimalId) return null;
                     const order = orders.find((o) => o.id === orderId);
                     if (!order) return null;
-                    
+
                     // Verificar si este animal ya tiene productos guardados
-                    const hasProducts = products.some(p => p.nroIngreso === order.nroIngreso);
-                    
+                    const hasProducts = products.some(
+                      (p) => p.nroIngreso === order.nroIngreso
+                    );
+
                     return (
                       <div
                         key={orderId}
@@ -866,9 +961,7 @@ export function OrderEntryManagement() {
                             </span>
                           </div>
                           {hasProducts && (
-                            <Badge className="bg-green-500 text-xs">
-                              ✓
-                            </Badge>
+                            <Badge className="bg-green-500 text-xs">✓</Badge>
                           )}
                         </div>
                       </div>
@@ -895,7 +988,9 @@ export function OrderEntryManagement() {
                     Producto
                   </Button>
                   <Button
-                    variant={productType === "subproducto" ? "default" : "outline"}
+                    variant={
+                      productType === "subproducto" ? "default" : "outline"
+                    }
                     onClick={() => setProductType("subproducto")}
                     className={
                       productType === "subproducto"
@@ -910,7 +1005,8 @@ export function OrderEntryManagement() {
                 {/* Lista de opciones con checkboxes */}
                 <div className="border-2 rounded-lg p-6 bg-white">
                   <h3 className="font-semibold text-gray-700 mb-4 text-lg">
-                    Seleccione {productType === "producto" ? "productos" : "subproductos"}:
+                    Seleccione{" "}
+                    {productType === "producto" ? "productos" : "subproductos"}:
                   </h3>
                   <div className="grid grid-cols-3 gap-3">
                     {currentOptions.map((option) => (
@@ -938,7 +1034,9 @@ export function OrderEntryManagement() {
                 {/* Información adicional */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
-                    <strong>Nota:</strong> Seleccione los productos/subproductos para este animal. Después de guardar, pasará automáticamente al siguiente animal.
+                    <strong>Nota:</strong> Seleccione los productos/subproductos
+                    para este animal. Después de guardar, pasará automáticamente
+                    al siguiente animal.
                   </p>
                 </div>
               </div>
@@ -963,7 +1061,8 @@ export function OrderEntryManagement() {
                 disabled={selectedProducts.size === 0}
               >
                 <Save className="h-4 w-4 mr-2" />
-                {Array.from(checkedOrders).indexOf(currentAnimalId!) < checkedOrders.size - 1
+                {Array.from(checkedOrders).indexOf(currentAnimalId!) <
+                checkedOrders.size - 1
                   ? `Guardar y Siguiente (${selectedProducts.size})`
                   : `Guardar y Finalizar (${selectedProducts.size})`}
               </Button>

@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CalendarIcon, Download, Search, Scale } from "lucide-react";
+import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLines } from "@/features/postmortem/hooks/use-lines";
@@ -60,6 +60,23 @@ const convertKgToLb = (kg: number): number => kg * KG_TO_LB;
 // Función para redondear hacia arriba a 2 decimales
 const roundUpToTwoDecimals = (value: number): number => {
   return Math.ceil(value * 100) / 100;
+};
+
+// Función para calcular el peso a mostrar (convertido a lb y con gancho restado si aplica)
+const calculateDisplayWeight = (
+  savedWeightKg: number,
+  isLbUnit: boolean,
+  weighingStageId: number | null,
+  hookWeightKg: number = 0
+): number => {
+  if (savedWeightKg === 0) return 0;
+  
+  // Convertir de kg a lb si la unidad es LB
+  const weightInLb = isLbUnit ? convertKgToLb(savedWeightKg) : savedWeightKg;
+  
+  // Si NO es EN PIE, el peso guardado ya es neto (sin gancho), así que solo convertir
+  // Si es EN PIE, no hay gancho que restar
+  return weightInLb;
 };
 
 export function AnimalWeighingManagement() {
@@ -285,11 +302,14 @@ export function AnimalWeighingManagement() {
           }
         }
 
+        const brandName = animal.detailCertificateBrands?.detailsCertificateBrand?.brand?.name;
+        
         newRows.push({
           id: `${animal.id}`,
           animalId: animal.id,
           code: animal.code,
           producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
+          brandName: brandName,
           peso: savedWeight,
           savedWeight: savedWeight,
           fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
@@ -344,6 +364,7 @@ export function AnimalWeighingManagement() {
               animalId: animal.id,
               code: animal.code,
               producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
+              brandName: animal.detailCertificateBrands?.detailsCertificateBrand?.brand?.name,
               peso: savedWeight,
               savedWeight: savedWeight,
               fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
@@ -368,6 +389,7 @@ export function AnimalWeighingManagement() {
                 animalId: animal.id,
                 code: animal.code,
                 producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
+                brandName: animal.detailCertificateBrands?.detailsCertificateBrand?.brand?.name,
                 peso: weight,
                 savedWeight: weight,
                 fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
@@ -391,6 +413,7 @@ export function AnimalWeighingManagement() {
               animalId: animal.id,
               code: animal.code,
               producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
+              brandName: animal.detailCertificateBrands?.detailsCertificateBrand?.brand?.name,
               peso: 0,
               savedWeight: 0,
               fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
@@ -666,12 +689,32 @@ export function AnimalWeighingManagement() {
     }
   }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData]);
 
+  // Calcular pesos a mostrar (convertidos a lb)
+  const rowsWithDisplayWeight = useMemo(() => {
+    const unitCode = unitMeasureData?.data?.code || 'LB';
+    const isLbUnit = unitCode === 'LB';
+    
+    return rows.map(row => {
+      // El peso guardado está en kg, convertir a lb para mostrar
+      const displayWeight = calculateDisplayWeight(
+        row.savedWeight,
+        isLbUnit,
+        weighingStageId
+      );
+      
+      return {
+        ...row,
+        displayWeight: displayWeight
+      };
+    });
+  }, [rows, unitMeasureData, weighingStageId]);
+
   const filteredRows = useMemo(() => {
-    if (!searchTerm) return rows;
-    return rows.filter((row) =>
+    if (!searchTerm) return rowsWithDisplayWeight;
+    return rowsWithDisplayWeight.filter((row) =>
       row.code.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [rows, searchTerm]);
+  }, [rowsWithDisplayWeight, searchTerm]);
 
   // Agrupar filas por animal
   const groupedByAnimal = useMemo(() => {
@@ -1168,11 +1211,19 @@ export function AnimalWeighingManagement() {
                   <div className="mb-3 pb-3 border-b">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <div className="text-xs text-muted-foreground">Animal</div>
-                        <div className="text-lg font-bold">{animalCode}</div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                          <Tag className="h-3 w-3" />
+                          <span>ID-Marca</span>
+                        </div>
+                        <div className="text-lg font-bold">
+                          {animalRows[0].brandName ? `${animalCode} - ${animalRows[0].brandName}` : animalCode}
+                        </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs text-muted-foreground">Fecha</div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1 justify-end">
+                          <Calendar className="h-3 w-3" />
+                          <span>Fecha de Ingreso</span>
+                        </div>
                         <div className="text-sm">
                           {new Date(animalRows[0].fechaIngreso).toLocaleDateString("es-ES", {
                             day: "2-digit",
@@ -1182,7 +1233,10 @@ export function AnimalWeighingManagement() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">Producto</div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                      <Package className="h-3 w-3" />
+                      <span>Género - Etapa Productiva</span>
+                    </div>
                     <div className="text-sm">{animalRows[0].producto}</div>
                   </div>
 
@@ -1192,8 +1246,11 @@ export function AnimalWeighingManagement() {
                       <div key={row.id} className="p-2 bg-white/50 rounded border">
                         {weighingStageId !== 1 && row.sectionCode && (
                           <div className="mb-2">
-                            <span className="font-bold text-blue-600 text-sm">{row.sectionCode}</span>
-                            <span className="text-xs text-muted-foreground ml-2">{row.sectionDescription}</span>
+                            <div className="flex items-center gap-1 mb-1">
+                              <MapPin className="h-3 w-3 text-blue-600" />
+                              <span className="font-bold text-blue-600 text-sm">{row.sectionCode}</span>
+                              <span className="text-xs text-muted-foreground ml-1">{row.sectionDescription}</span>
+                            </div>
                             {row.hasPartialConfiscation && (
                               <div className="flex items-center gap-1 mt-1 text-yellow-600">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
@@ -1207,9 +1264,12 @@ export function AnimalWeighingManagement() {
 
                         <div className="flex items-center justify-between gap-2">
                           <div>
-                            <div className="text-xs text-muted-foreground">Peso</div>
-                            <div className={`font-semibold ${row.peso < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                              {row.peso !== 0 ? `${row.peso} ${unitMeasureData?.data?.symbol || 'lb'}` : "-"}
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                              <Weight className="h-3 w-3" />
+                              <span>Peso</span>
+                            </div>
+                            <div className={`font-semibold ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} lb` : "-"}
                             </div>
                           </div>
 
@@ -1262,12 +1322,44 @@ export function AnimalWeighingManagement() {
           <Table className="min-w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">📅 Fecha de Ingreso</TableHead>
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">🐄 Animales</TableHead>
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">📦 Producto</TableHead>
-                {weighingStageId !== 1 && <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">📍 Sección</TableHead>}
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">⚖️ Peso</TableHead>
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">🔧 Opción</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                  <div className="flex items-center justify-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>Fecha de Ingreso</span>
+                  </div>
+                </TableHead>
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                  <div className="flex items-center justify-center gap-1">
+                    <Tag className="h-4 w-4" />
+                    <span>ID-Marca</span>
+                  </div>
+                </TableHead>
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                  <div className="flex items-center justify-center gap-1">
+                    <Package className="h-4 w-4" />
+                    <span>Género - Etapa Productiva</span>
+                  </div>
+                </TableHead>
+                {weighingStageId !== 1 && (
+                  <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                    <div className="flex items-center justify-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      <span>Sección</span>
+                    </div>
+                  </TableHead>
+                )}
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                  <div className="flex items-center justify-center gap-1">
+                    <Weight className="h-4 w-4" />
+                    <span>Peso</span>
+                  </div>
+                </TableHead>
+                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                  <div className="flex items-center justify-center gap-1">
+                    <Settings className="h-4 w-4" />
+                    <span>Acción</span>
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1315,7 +1407,7 @@ export function AnimalWeighingManagement() {
                         {/* Código del Animal - solo en la primera fila del animal */}
                         {index === 0 && (
                           <TableCell className="text-center font-medium" rowSpan={rowSpan}>
-                            {row.code}
+                            {row.brandName ? `${row.code} - ${row.brandName}` : row.code}
                           </TableCell>
                         )}
                         {/* Producto - solo en la primera fila del animal */}
@@ -1346,8 +1438,8 @@ export function AnimalWeighingManagement() {
                           </TableCell>
                         )}
                     <TableCell className="text-center">
-                      <span className={`font-semibold ${row.peso < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {row.peso !== 0 ? `${row.peso} ${unitMeasureData?.data?.symbol || 'lb'}` : "-"}
+                      <span className={`font-semibold ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} lb` : "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">

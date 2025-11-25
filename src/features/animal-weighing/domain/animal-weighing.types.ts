@@ -19,6 +19,7 @@ export type AnimalWeighingRow = {
   animalId: number; // ID del animal de la API
   code: string; // Código del animal
   producto: string; // Sexo + Etapa productiva
+  brandName?: string; // Nombre de la marca
   peso: number; // Peso actual (puede ser capturado o guardado)
   savedWeight: number; // Peso guardado en la BD
   fechaIngreso: string; // Fecha de ingreso
@@ -81,12 +82,18 @@ export type DetailsCertificateBrand = {
   createdAt: string;
   id: number;
   corralType: CorralType;
+  brand?: Brand;
 };
 
 export type DetailCertificateBrands = {
   id: number;
   productiveStage: ProductiveStage;
   detailsCertificateBrand: DetailsCertificateBrand;
+};
+
+export type Brand = {
+  id: number;
+  name: string;
 };
 
 export type AnimalDetail = {
@@ -97,6 +104,7 @@ export type AnimalDetail = {
   status: boolean;
   animalSex: AnimalSex;
   detailCertificateBrands: DetailCertificateBrands;
+  brand?: Brand; // Marca del animal
   animalWeighing?: any[]; // Pesos guardados del animal
 };
 
