@@ -6,3 +6,4 @@ export * from './use-hook-types';
 export * from './use-channel-types';
 export * from './use-channel-sections';
 export * from './use-unit-measure';
+export * from './use-delete-animal-weighing';

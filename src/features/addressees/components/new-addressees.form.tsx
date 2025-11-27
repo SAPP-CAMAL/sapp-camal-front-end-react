@@ -92,8 +92,8 @@ export default function NewAddresseesForm({
       initializeFormWithData(addresseeData);
       
       // Initialize province immediately if available
-      if (addresseeData.addresses?.[0] && provinces) {
-        const currentAddress = addresseeData.addresses[0];
+      if (addresseeData.addresses && provinces) {
+        const currentAddress = addresseeData.addresses;
         const province = provinces.find(
           (p) => p.name.toUpperCase() === currentAddress.province.toUpperCase()
         );
@@ -106,11 +106,11 @@ export default function NewAddresseesForm({
 
   // Load canton when province is set and cantons are available
   useEffect(() => {
-    if (!isUpdate || !addresseeData?.addresses?.[0]) return;
+    if (!isUpdate || !addresseeData?.addresses) return;
     if (!cantons?.data || cantons.data.length === 0) return;
     if (provinceId === "*") return;
 
-    const currentAddress = addresseeData.addresses[0];
+    const currentAddress = addresseeData.addresses;
     const canton = cantons.data.find(
       (c: any) => c.name.toUpperCase() === currentAddress.canton.toUpperCase()
     );
@@ -122,11 +122,11 @@ export default function NewAddresseesForm({
 
   // Load parish when canton is set and parishes are available
   useEffect(() => {
-    if (!isUpdate || !addresseeData?.addresses?.[0]) return;
+    if (!isUpdate || !addresseeData?.addresses) return;
     if (!parishes?.data || parishes.data.length === 0) return;
     if (cantonId === "*") return;
 
-    const currentAddress = addresseeData.addresses[0];
+    const currentAddress = addresseeData.addresses;
     const parish = parishes.data.find(
       (p: any) => p.name.toUpperCase() === currentAddress.parish.toUpperCase()
     );
@@ -148,7 +148,7 @@ export default function NewAddresseesForm({
     setSelectedPerson(person);
     setFilterFullName(data.fullName);
     setFilterIdentification(data.identification);
-    setAddress(data.addresses?.[0]?.firstStree || "");
+    setAddress(data.addresses?.firstStree || "");
   };
 
   const updateDebouncedFullName = useDebouncedCallback((value: string) => {
@@ -231,7 +231,7 @@ export default function NewAddresseesForm({
       if (isUpdate) {
         await updateAdresseesService(selectedPerson.id, {
           parishId: Number(parishId),
-          addressId: addresseeData?.addresses?.[0]?.id || 1,
+          addressId: addresseeData?.addresses?.id || 1,
           firstStreet: address,
           status: isActive ?? true,
         });

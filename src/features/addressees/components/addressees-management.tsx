@@ -197,7 +197,7 @@ export function AddresseesManagement({}) {
           {
             header: "Dirección",
             cell: ({ row }) => {
-              const address = row.original.addresses?.[0];
+              const address = row.original.addresses;
               if (!address) return "—";
 
               return (
@@ -220,7 +220,7 @@ export function AddresseesManagement({}) {
               <Badge variant="outline" className="flex items-center gap-1">
                 <MapPin className="text-purple-500" />
                 <span className="text-purple-600 font-medium">
-                  {row.original.addresses?.[0]?.province ?? "—"}
+                  {row.original.addresses?.province ?? "—"}
                 </span>
               </Badge>
             ),

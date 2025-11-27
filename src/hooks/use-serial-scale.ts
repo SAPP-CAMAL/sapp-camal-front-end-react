@@ -180,13 +180,11 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
 
       // Limpiar timers y buffers
       if (debounceTimerRef.current) {
-        console.log('🧹 Limpiando debounceTimer');
         clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = null;
       }
 
       if (intervalTimerRef.current) {
-        console.log('🧹 LIMPIANDO INTERVAL TIMER');
         clearTimeout(intervalTimerRef.current);
         intervalTimerRef.current = null;
       }
@@ -199,12 +197,10 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
           await readerRef.current.cancel();
           readerRef.current.releaseLock();
         } catch (err) {
-          console.warn('Error al cancelar reader:', err);
           // Intentar solo liberar el lock si cancel falla
           try {
             readerRef.current.releaseLock();
           } catch (releaseErr) {
-            console.warn('No se pudo liberar el lock del reader');
           }
         }
         readerRef.current = null;
@@ -215,7 +211,6 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
         try {
           await portRef.current.close();
         } catch (err) {
-          console.warn('Error al cerrar puerto:', err);
         }
         portRef.current = null;
       }
@@ -251,7 +246,6 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
           const { value, done } = await reader.read();
 
           if (done) {
-            console.log('Serial port closed');
             break;
           }
 
@@ -260,7 +254,6 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
           buffer += chunk;
 
           // Log para debugging
-          console.log('Raw data received:', chunk, '| Buffer length:', buffer.length);
 
           // Procesar cada valor que empiece con =
           // La balanza envía datos en fragmentos: primero "=9" luego ".7400"
@@ -276,37 +269,29 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
             const fullMatch = match[0]; // Por ejemplo: "=9.7400"
             lastIndex = regex.lastIndex;
 
-            console.log('📥 Processing complete data:', fullMatch);
             const weight = parseWeight(fullMatch);
             if (weight) {
-              console.log('⚖️ Weight parsed:', weight.value, weight.unit);
 
               // Ignorar lecturas de cero - no son válidas para el pesaje
               if (weight.value === 0) {
-                console.log('⏭️ Peso cero ignorado - esperando peso real');
                 continue; // Saltar al siguiente match
               }
 
               // Agregar peso al buffer (redondear a 2 decimales para agrupar valores similares)
               const roundedWeight = Math.round(weight.value * 100) / 100;
               weightBufferRef.current.push(roundedWeight);
-              console.log('📊 Buffer actual:', weightBufferRef.current.length, 'lecturas -', weightBufferRef.current);
 
               // Iniciar intervalo de 5 segundos si no existe
               if (!intervalTimerRef.current) {
-                console.log('⏱️ Iniciando intervalo de 5 segundos...');
                 const currentUnit = weight.unit; // Guardar unit en el scope
 
                 intervalTimerRef.current = setTimeout(() => {
-                  console.log('⏰ ⏰ ⏰ Intervalo de 5 segundos completado ⏰ ⏰ ⏰');
 
                   if (weightBufferRef.current.length === 0) {
-                    console.log('⚠️ Sin lecturas en el buffer');
                     intervalTimerRef.current = null;
                     return;
                   }
 
-                  console.log('🔍 Procesando buffer con', weightBufferRef.current.length, 'lecturas:', weightBufferRef.current);
 
                   // Función para encontrar el valor que más se repite
                   const findMostFrequent = (arr: number[]): number => {
@@ -317,7 +302,6 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
                       frequency[num] = (frequency[num] || 0) + 1;
                     });
 
-                    console.log('📊 Análisis de frecuencias:', frequency);
 
                     // Encontrar el más frecuente
                     let maxFreq = 0;
@@ -330,16 +314,12 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
                       }
                     }
 
-                    console.log('🎯 Valor más repetido:', mostFrequentValue, 'kg (apareció', maxFreq, 'veces)');
 
                     return mostFrequentValue;
                   };
 
                   const mostFrequentWeight = findMostFrequent(weightBufferRef.current);
 
-                  console.log('═══════════════════════════════════════');
-                  console.log('✅ PESO FINAL DESPUÉS DE 5 SEGUNDOS:', mostFrequentWeight.toFixed(2), 'kg');
-                  console.log('═══════════════════════════════════════');
 
                   // Establecer el peso más frecuente
                   const finalWeight = {
@@ -350,35 +330,27 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
                     stable: true,
                   };
 
-                  console.log('🚀 Estableciendo peso:', finalWeight);
                   setCurrentWeight(finalWeight);
 
-                  console.log('✨ Estado actualizado con peso:', mostFrequentWeight.toFixed(2), currentUnit);
 
                   // Limpiar buffer y timer
                   weightBufferRef.current = [];
                   intervalTimerRef.current = null;
-                  console.log('🧹 Buffer limpiado. Listo para nueva medición.');
                 }, 5000); // 5 segundos
 
-                console.log('✅ Timer creado con ID:', intervalTimerRef.current);
               } else {
-                console.log('⏱️ Intervalo ya activo. Lecturas acumuladas:', weightBufferRef.current.length);
               }
             } else {
-              console.warn('⚠️ Could not parse weight from:', fullMatch);
             }
           }
 
           // Limpiar el buffer de los datos ya procesados
           if (lastIndex > 0) {
             buffer = buffer.substring(lastIndex);
-            console.log('🧹 Buffer limpiado. Nuevo buffer:', buffer);
           }
 
           // Si el buffer crece demasiado sin matches, limpiarlo
           if (buffer.length > 50) {
-            console.warn('⚠️ Buffer demasiado grande sin match válido, limpiando:', buffer.substring(0, 50) + '...');
             buffer = '';
           }
         } catch (readError: any) {
@@ -407,13 +379,11 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
 
   // Resetear el peso actual (útil cuando se selecciona un nuevo animal)
   const resetWeight = useCallback(() => {
-    console.log('🔄 Reseteando peso capturado y timer de 5 segundos');
     setCurrentWeight(null);
     weightBufferRef.current = [];
 
     // Limpiar timer de intervalo si existe para que empiece desde cero
     if (intervalTimerRef.current) {
-      console.log('🧹 Cancelando timer de 5 segundos activo');
       clearTimeout(intervalTimerRef.current);
       intervalTimerRef.current = null;
     }
@@ -423,14 +393,11 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
       debounceTimerRef.current = null;
     }
 
-    console.log('✅ Balanza lista para nueva medición. Timer se reiniciará con la próxima lectura.');
   }, []);
 
   // Iniciar lectura automática cuando se conecte
   useEffect(() => {
-    console.log('🔄 useEffect de auto-inicio ejecutándose. isConnected:', isConnected, 'isReadingRef:', isReadingRef.current);
     if (isConnected && portRef.current && !isReadingRef.current) {
-      console.log('▶️ Iniciando lectura automática');
       startReading();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -439,19 +406,16 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
   // Limpiar al desmontar
   useEffect(() => {
     return () => {
-      console.log('🔴 COMPONENTE DESMONTÁNDOSE - Limpiando recursos');
       // Cleanup al desmontar el componente
       if (isReadingRef.current) {
         isReadingRef.current = false;
 
         // Limpiar timers
         if (debounceTimerRef.current) {
-          console.log('🧹 Limpiando debounceTimer en cleanup');
           clearTimeout(debounceTimerRef.current);
         }
 
         if (intervalTimerRef.current) {
-          console.log('🧹 LIMPIANDO INTERVAL TIMER EN CLEANUP');
           clearTimeout(intervalTimerRef.current);
         }
 
@@ -464,12 +428,10 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
                 await readerRef.current.cancel();
                 readerRef.current.releaseLock();
               } catch (err) {
-                console.warn('Error al cancelar reader (puede estar ya cerrado):', err);
                 // Intentar solo liberar el lock si cancel falla
                 try {
                   readerRef.current.releaseLock();
                 } catch (releaseErr) {
-                  console.warn('No se pudo liberar el lock del reader');
                 }
               }
               readerRef.current = null;
@@ -479,7 +441,6 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
               try {
                 await portRef.current.close();
               } catch (err) {
-                console.warn('Error al cerrar puerto (puede estar ya cerrado):', err);
               }
               portRef.current = null;
             }

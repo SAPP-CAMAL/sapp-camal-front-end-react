@@ -38,6 +38,19 @@ export async function updateAnimalWeighing(
 }
 
 /**
+ * Servicio para eliminar el pesaje de animales
+ */
+export async function deleteAnimalWeighing(
+  idAnimalWeighing: number
+): Promise<{ code: number; message: string; data: any }> {
+  const response = await http
+    .delete(`v1/1.0.0/animal-weighing/${idAnimalWeighing}`)
+    .json<{ code: number; message: string; data: any }>();
+
+  return response;
+}
+
+/**
  * Servicio para obtener pesajes por filtros
  */
 export async function getAnimalWeighingByFilters(

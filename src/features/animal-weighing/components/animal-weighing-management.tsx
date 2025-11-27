@@ -25,7 +25,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2 } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLines } from "@/features/postmortem/hooks/use-lines";
@@ -35,6 +41,7 @@ import {
   useAnimalWeighingByFilters,
   useSaveAnimalWeighing,
   useUpdateAnimalWeighing,
+  useDeleteAnimalWeighing,
   useWeighingStages,
   useHookTypesBySpecie,
   useChannelTypes,
@@ -48,6 +55,23 @@ import {
 } from "@/features/postmortem/utils/postmortem-helpers";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO } from "date-fns";
+import { Step2AddresseeSelection } from "@/features/order-entry/components/step-2-addressee-selection";
+import { AddresseeSummaryCard } from "@/features/order-entry/components/addressee-summary-card";
+import { Step3CarrierSelection } from "@/features/order-entry/components/step-3-carrier-selection";
+import { CarrierSummaryCard } from "@/features/order-entry/components/carrier-summary-card";
+import type { Addressees } from "@/features/addressees/domain";
+import type { Carrier } from "@/features/carriers/domain";
+import { toCapitalize } from "@/lib/toCapitalize";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Constantes de conversión
 const LB_TO_KG = 0.453592; // 1 lb = 0.453592 kg
@@ -99,6 +123,19 @@ export function AnimalWeighingManagement() {
   const lastCapturedWeightRef = useRef<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [addresseeSelectionRowId, setAddresseeSelectionRowId] = useState<string | null>(null);
+  const [modalStep, setModalStep] = useState<1 | 2>(1); // 1: Seleccionar destinatario, 2: Seleccionar transportista
+  const [tempAddressee, setTempAddressee] = useState<Addressees | null>(null);
+  const [tempCarrier, setTempCarrier] = useState<Carrier | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    idAnimalWeighing: number | null;
+    animalCode: string;
+  }>({
+    isOpen: false,
+    idAnimalWeighing: null,
+    animalCode: "",
+  });
 
   const queryClient = useQueryClient();
 
@@ -180,6 +217,25 @@ export function AnimalWeighingManagement() {
   const { data: weighingData, isLoading: isLoadingWeighingData } = useAnimalWeighingByFilters(weighingRequest);
   const saveWeighingMutation = useSaveAnimalWeighing();
   const updateWeighingMutation = useUpdateAnimalWeighing();
+  const deleteWeighingMutation = useDeleteAnimalWeighing();
+
+  const handleDeleteClick = (idAnimalWeighing: number, animalCode: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      idAnimalWeighing,
+      animalCode,
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirmation.idAnimalWeighing) {
+      deleteWeighingMutation.mutate(deleteConfirmation.idAnimalWeighing, {
+        onSuccess: () => {
+          setDeleteConfirmation({ isOpen: false, idAnimalWeighing: null, animalCode: "" });
+        },
+      });
+    }
+  };
 
   // Función helper para verificar si hay decomiso parcial
   // Los datos de productPostmortem ya vienen en weighingData dentro de cada animal
@@ -292,6 +348,9 @@ export function AnimalWeighingManagement() {
       allAnimals.forEach((animal) => {
         // Buscar si tiene peso guardado para esta etapa
         let savedWeight = 0;
+        let idAnimalWeighing: number | undefined = undefined;
+        let addresseeData = undefined;
+        let carrierData = undefined;
         if (animal.animalWeighing && animal.animalWeighing.length > 0) {
           const weighingForStage = animal.animalWeighing.find(
             (w: any) => w.idWeighingStage === weighingStageId
@@ -299,6 +358,24 @@ export function AnimalWeighingManagement() {
           if (weighingForStage && weighingForStage.detailAnimalWeighing && weighingForStage.detailAnimalWeighing.length > 0) {
             // Para EN PIE, tomar el primer detalle
             savedWeight = parseFloat(weighingForStage.detailAnimalWeighing[0].netWeight) || 0;
+            idAnimalWeighing = weighingForStage.id;
+          }
+          // Extraer addressee si existe
+          if (weighingForStage?.addressee?.personRole?.person) {
+            addresseeData = {
+              id: weighingForStage.addressee.id,
+              fullName: weighingForStage.addressee.personRole.person.fullName,
+              identification: weighingForStage.addressee.personRole.person.identification,
+            };
+          }
+          // Extraer carrier (shipping) si existe
+          if (weighingForStage?.shipping) {
+            carrierData = {
+              id: weighingForStage.shipping.id,
+              fullName: weighingForStage.shipping.person?.fullName || '',
+              identification: weighingForStage.shipping.person?.identification || '',
+              plate: weighingForStage.shipping.vehicle?.plate || '',
+            };
           }
         }
 
@@ -315,6 +392,9 @@ export function AnimalWeighingManagement() {
           fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
           idDetailsCertificateBrands: animal.idDetailsCertificateBrands,
           idAnimalSex: animal.idAnimalSex,
+          addressee: addresseeData,
+          carrier: carrierData,
+          idAnimalWeighing: idAnimalWeighing,
         });
       });
     } else {
@@ -340,6 +420,31 @@ export function AnimalWeighingManagement() {
                 }
               });
             }
+          }
+        }
+
+        // Extraer addressee y carrier si existen
+        let addresseeData = undefined;
+        let carrierData = undefined;
+        if (animal.animalWeighing && animal.animalWeighing.length > 0) {
+          const weighingForStage = animal.animalWeighing.find(
+            (w: any) => w.idWeighingStage === weighingStageId
+          );
+          if (weighingForStage?.addressee?.personRole?.person) {
+            addresseeData = {
+              id: weighingForStage.addressee.id,
+              fullName: weighingForStage.addressee.personRole.person.fullName,
+              identification: weighingForStage.addressee.personRole.person.identification,
+            };
+          }
+          // Extraer carrier (shipping) si existe
+          if (weighingForStage?.shipping) {
+            carrierData = {
+              id: weighingForStage.shipping.id,
+              fullName: weighingForStage.shipping.person?.fullName || '',
+              identification: weighingForStage.shipping.person?.identification || '',
+              plate: weighingForStage.shipping.vehicle?.plate || '',
+            };
           }
         }
 
@@ -375,6 +480,8 @@ export function AnimalWeighingManagement() {
               idChannelSection: section.id,
               idAnimalWeighing: savedWeight > 0 ? idAnimalWeighing : undefined,
               hasPartialConfiscation,
+              addressee: addresseeData,
+              carrier: carrierData,
             });
           });
         } else if (savedSections.size > 0) {
@@ -400,6 +507,8 @@ export function AnimalWeighingManagement() {
                 idChannelSection: sectionId,
                 idAnimalWeighing: idAnimalWeighing,
                 hasPartialConfiscation,
+                addressee: addresseeData,
+                carrier: carrierData,
               });
             }
           });
@@ -423,6 +532,8 @@ export function AnimalWeighingManagement() {
               sectionDescription: section.description,
               idChannelSection: section.id,
               hasPartialConfiscation,
+              addressee: addresseeData,
+              carrier: carrierData,
             });
           });
         }
@@ -534,6 +645,51 @@ export function AnimalWeighingManagement() {
     );
   };
 
+  const handleAddresseeSelect = (rowId: string, addressee: Addressees, carrier?: Carrier) => {
+    // Encontrar el código del animal de la fila seleccionada
+    const selectedRow = rows.find(row => row.id === rowId);
+    if (!selectedRow) return;
+    
+    const animalCode = selectedRow.code;
+    
+    // Asignar el destinatario y transportista a TODAS las filas del mismo animal
+    setRows((prev) =>
+      prev.map((row) => 
+        row.code === animalCode ? { 
+          ...row, 
+          addressee: {
+            id: addressee.id, // ID del destinatario para enviar al backend
+            fullName: addressee.fullName,
+            identification: addressee.identification,
+          },
+          carrier: carrier ? {
+            id: carrier.id, // ID del shipping para enviar al backend
+            fullName: carrier.person.fullName,
+            identification: carrier.person.identification,
+            plate: carrier.vehicle.plate,
+          } : undefined
+        } : row
+      )
+    );
+    setAddresseeSelectionRowId(null);
+    toast.success(`Destinatario y transportista asignados al animal ${animalCode}`);
+  };
+
+  const handleRemoveAddressee = (rowId: string) => {
+    // Encontrar el código del animal de la fila seleccionada
+    const selectedRow = rows.find(row => row.id === rowId);
+    if (!selectedRow) return;
+    
+    const animalCode = selectedRow.code;
+    
+    // Remover el destinatario de TODAS las filas del mismo animal
+    setRows((prev) =>
+      prev.map((row) => 
+        row.code === animalCode ? { ...row, addressee: undefined } : row
+      )
+    );
+  };
+
   const handleSaveWeight = async (row: AnimalWeighingRow) => {
     if (row.peso <= 0) {
       toast.error("El peso debe ser mayor a 0");
@@ -550,6 +706,18 @@ export function AnimalWeighingManagement() {
     if (weighingStageId !== 1 && !selectedHook) {
       toast.error("Debe seleccionar un gancho");
       return;
+    }
+
+    // Si NO es EN PIE, validar que haya destinatario y transportista
+    if (weighingStageId !== 1) {
+      if (!row.addressee?.id) {
+        toast.error("Debe agregar un destinatario");
+        return;
+      }
+      if (!row.carrier?.id) {
+        toast.error("Debe agregar un transportista");
+        return;
+      }
     }
 
     const unitCode = unitMeasureData?.data?.code || 'LB';
@@ -602,23 +770,47 @@ export function AnimalWeighingManagement() {
       // Decidir si es POST (nuevo) o PATCH (actualización)
       if (row.idAnimalWeighing) {
         // PATCH - Actualizar peso existente
+        const updateData: any = {
+          idWeighingStage: weighingStageId,
+          idSpecie: selectedSpecieId,
+          detailsAnimalWeighing: [detailsAnimalWeighing]
+        };
+        
+        // Agregar idAddressee si existe y NO es EN PIE
+        if (weighingStageId !== 1 && row.addressee?.id) {
+          updateData.idAddressee = row.addressee.id;
+        }
+        
+        // Agregar idShipping si existe y NO es EN PIE
+        if (weighingStageId !== 1 && row.carrier?.id) {
+          updateData.idShipping = row.carrier.id;
+        }
+        
         await updateWeighingMutation.mutateAsync({
           idAnimalWeighing: row.idAnimalWeighing,
-          data: {
-            idWeighingStage: weighingStageId,
-            idSpecie: selectedSpecieId,
-            detailsAnimalWeighing: [detailsAnimalWeighing]
-          }
+          data: updateData
         });
       } else {
         // POST - Crear nuevo peso
-        await saveWeighingMutation.mutateAsync({
+        const saveData: any = {
           idWeighingStage: weighingStageId,
           idDetailsSpeciesCertificate: row.animalId,
           idSpecie: selectedSpecieId,
           observation: "",
           detailsAnimalWeighing: [detailsAnimalWeighing]
-        });
+        };
+        
+        // Agregar idAddressee si existe y NO es EN PIE
+        if (weighingStageId !== 1 && row.addressee?.id) {
+          saveData.idAddressee = row.addressee.id;
+        }
+        
+        // Agregar idShipping si existe y NO es EN PIE
+        if (weighingStageId !== 1 && row.carrier?.id) {
+          saveData.idShipping = row.carrier.id;
+        }
+        
+        await saveWeighingMutation.mutateAsync(saveData);
       }
 
       const message = weighingStageId === 1
@@ -642,12 +834,6 @@ export function AnimalWeighingManagement() {
   // Capturar peso estable de la balanza
   useEffect(() => {
     if (currentWeight && selectedRowId) {
-      console.log('⚖️ Peso recibido de balanza:', {
-        value: currentWeight.value,
-        unit: currentWeight.unit,
-        stable: currentWeight.stable,
-        selectedRowId
-      });
 
       const unitCode = unitMeasureData?.data?.code || 'LB';
       const isLbUnit = unitCode === 'LB';
@@ -655,39 +841,41 @@ export function AnimalWeighingManagement() {
       
       // La balanza envía en kg, convertir a lb para mostrar si la unidad configurada es LB
       const weightFromScale = currentWeight.value;
-      const weightToDisplay = isLbUnit ? convertKgToLb(weightFromScale) : weightFromScale;
+      let weightToDisplay = isLbUnit ? convertKgToLb(weightFromScale) : weightFromScale;
+
+      // Si NO es EN PIE y hay gancho seleccionado, restar el peso del gancho
+      if (weighingStageId !== 1 && selectedHook) {
+        const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
+        if (selectedHookData) {
+          const hookWeightKg = parseFloat(selectedHookData.weight);
+          const hookWeightLb = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
+          weightToDisplay = weightToDisplay - hookWeightLb;
+        }
+      }
 
       // Evitar capturas duplicadas del mismo peso
       const roundedWeight = Math.round(weightToDisplay * 100) / 100;
       if (lastCapturedWeightRef.current === roundedWeight) {
-        console.log('❌ Peso duplicado, ignorando:', roundedWeight);
         return;
       }
-
-      console.log('✅ Actualizando peso en fila:', {
-        rowId: selectedRowId,
-        pesoOriginal: weightFromScale,
-        pesoConvertido: roundedWeight,
-        unidad: unitSymbol
-      });
 
       lastCapturedWeightRef.current = roundedWeight;
       setCapturedWeight(roundedWeight);
 
       // Actualizar el peso en la fila
-      setRows((prev) => {
-        const updated = prev.map((row) =>
+      setRows((prev) =>
+        prev.map((row) =>
           row.id === selectedRowId ? { ...row, peso: roundedWeight } : row
-        );
-        console.log('📊 Filas actualizadas:', updated.find(r => r.id === selectedRowId));
-        return updated;
-      });
-
-      toast.success(
-        `Peso capturado: ${roundedWeight.toFixed(2)} ${unitSymbol}`
+        )
       );
+
+      const message = weighingStageId !== 1 && selectedHook
+        ? `Peso neto capturado: ${roundedWeight.toFixed(2)} ${unitSymbol} (con gancho restado)`
+        : `Peso capturado: ${roundedWeight.toFixed(2)} ${unitSymbol}`;
+      
+      toast.success(message);
     }
-  }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData]);
+  }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData, weighingStageId, selectedHook, hookTypesData]);
 
   // Calcular pesos a mostrar (convertidos a lb)
   const rowsWithDisplayWeight = useMemo(() => {
@@ -695,12 +883,21 @@ export function AnimalWeighingManagement() {
     const isLbUnit = unitCode === 'LB';
     
     return rows.map(row => {
-      // El peso guardado está en kg, convertir a lb para mostrar
-      const displayWeight = calculateDisplayWeight(
-        row.savedWeight,
-        isLbUnit,
-        weighingStageId
-      );
+      // Si hay peso capturado (row.peso > 0), mostrarlo
+      // Si no, mostrar el peso guardado convertido
+      let displayWeight = 0;
+      
+      if (row.peso > 0) {
+        // Peso capturado ya está en lb y con gancho restado si aplica
+        displayWeight = row.peso;
+      } else if (row.savedWeight > 0) {
+        // El peso guardado está en kg, convertir a lb para mostrar
+        displayWeight = calculateDisplayWeight(
+          row.savedWeight,
+          isLbUnit,
+          weighingStageId
+        );
+      }
       
       return {
         ...row,
@@ -1165,7 +1362,7 @@ export function AnimalWeighingManagement() {
         <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {totalRecords} registro{totalRecords !== 1 ? "s" : ""}
+              {totalAnimals} animal{totalAnimals !== 1 ? "es" : ""} ({totalRecords} registro{totalRecords !== 1 ? "s" : ""})
             </span>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -1178,14 +1375,14 @@ export function AnimalWeighingManagement() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               className="text-blue-600 border-blue-600"
             >
               <Download className="h-4 w-4 mr-1" />
               Reporte
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -1233,11 +1430,25 @@ export function AnimalWeighingManagement() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                      <Package className="h-3 w-3" />
-                      <span>Género - Etapa Productiva</span>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                          <Package className="h-3 w-3" />
+                          <span>Género - Etapa Productiva</span>
+                        </div>
+                        <div className="text-sm">{animalRows[0].producto}</div>
+                      </div>
+                      {animalRows[0].idAnimalWeighing && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                          onClick={() => handleDeleteClick(animalRows[0].idAnimalWeighing!, animalCode)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
-                    <div className="text-sm">{animalRows[0].producto}</div>
                   </div>
 
                   {/* Secciones */}
@@ -1262,6 +1473,41 @@ export function AnimalWeighingManagement() {
                           </div>
                         )}
 
+                        {/* Destinatario en móvil */}
+                        {weighingStageId !== 1 && (
+                          <div className="mb-2 pb-2 border-b">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                              <User className="h-3 w-3" />
+                              <span>Destinatario</span>
+                            </div>
+                            {row.addressee ? (
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="text-sm font-medium">{toCapitalize(row.addressee.fullName, true)}</div>
+                                  <div className="text-xs text-muted-foreground">{row.addressee.identification}</div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-teal-600 hover:text-teal-700 h-7 px-2"
+                                  onClick={() => setAddresseeSelectionRowId(row.id)}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Cambiar
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                className="bg-teal-600 hover:bg-teal-700 w-full"
+                                onClick={() => setAddresseeSelectionRowId(row.id)}
+                              >
+                                Agregar Destinatario
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex items-center justify-between gap-2">
                           <div>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
@@ -1277,7 +1523,7 @@ export function AnimalWeighingManagement() {
                             <Button
                               size="sm"
                               variant={selectedRowId === row.id ? "default" : "outline"}
-                              className={`text-xs whitespace-nowrap ${
+                              className={`text-[10px] whitespace-nowrap h-6 px-1.5 ${
                                 selectedRowId === row.id ? "bg-green-600" : "text-green-600 border-green-600"
                               }`}
                               onClick={() => {
@@ -1297,7 +1543,7 @@ export function AnimalWeighingManagement() {
                             {selectedRowId === row.id && (
                               <Button
                                 size="sm"
-                                className="bg-blue-600 text-xs whitespace-nowrap"
+                                className="bg-blue-600 text-[10px] whitespace-nowrap h-6 px-1.5"
                                 onClick={() => handleSaveWeight(row)}
                                 disabled={saveWeighingMutation.isPending || updateWeighingMutation.isPending || !capturedWeight}
                               >
@@ -1318,45 +1564,60 @@ export function AnimalWeighingManagement() {
         </div>
 
         {/* Versión desktop - Tabla */}
-        <div className="hidden lg:block overflow-x-auto border rounded-lg">
-          <Table className="min-w-full">
+        <div className="hidden lg:block overflow-x-auto">
+          {(() => {
+            // Verificar si hay algún animal con idAnimalWeighing
+            const hasDeleteButton = paginatedRows.some(row => row.idAnimalWeighing);
+            
+            return (
+          <Table className="min-w-full border [&_td]:!rounded-none [&_th]:!rounded-none [&_tr]:!rounded-none">
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
-                  <div className="flex items-center justify-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>Fecha de Ingreso</span>
+                <TableHead className="text-center text-xs py-0.5 px-1">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <Calendar className="h-3 w-3" />
+                    <span className="leading-tight">Fecha de</span>
+                    <span className="leading-tight">Ingreso</span>
                   </div>
                 </TableHead>
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                <TableHead className="text-center text-xs whitespace-nowrap py-0.5 px-1">
                   <div className="flex items-center justify-center gap-1">
-                    <Tag className="h-4 w-4" />
+                    <Tag className="h-3 w-3" />
                     <span>ID-Marca</span>
                   </div>
                 </TableHead>
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
-                  <div className="flex items-center justify-center gap-1">
-                    <Package className="h-4 w-4" />
-                    <span>Género - Etapa Productiva</span>
+                <TableHead className="text-center text-xs py-0.5 px-1">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <Package className="h-3 w-3" />
+                    <span className="leading-tight">Género - Etapa</span>
+                    <span className="leading-tight">Productiva</span>
                   </div>
                 </TableHead>
                 {weighingStageId !== 1 && (
-                  <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                  <TableHead className="text-center text-xs whitespace-nowrap py-0.5 px-1">
                     <div className="flex items-center justify-center gap-1">
-                      <MapPin className="h-4 w-4" />
+                      <User className="h-3 w-3" />
+                      <span>Destinatario</span>
+                    </div>
+                  </TableHead>
+                )}
+                {weighingStageId !== 1 && (
+                  <TableHead className="text-center text-xs whitespace-nowrap py-0.5 px-1">
+                    <div className="flex items-center justify-center gap-1">
+                      <MapPin className="h-3 w-3" />
                       <span>Sección</span>
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                <TableHead className="text-center text-xs whitespace-nowrap py-0.5 px-1">
                   <div className="flex items-center justify-center gap-1">
-                    <Weight className="h-4 w-4" />
+                    <Weight className="h-3 w-3" />
                     <span>Peso</span>
                   </div>
                 </TableHead>
-                <TableHead className="text-center text-xs sm:text-sm whitespace-nowrap">
+                <TableHead className="text-center text-xs whitespace-nowrap py-0.5 px-1" colSpan={hasDeleteButton ? 2 : 1}>
                   <div className="flex items-center justify-center gap-1">
-                    <Settings className="h-4 w-4" />
+                    <Settings className="h-3 w-3" />
                     <span>Acción</span>
                   </div>
                 </TableHead>
@@ -1365,7 +1626,7 @@ export function AnimalWeighingManagement() {
             <TableBody>
               {paginatedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={weighingStageId !== 1 ? 6 : 5} className="text-center py-8">
+                  <TableCell colSpan={weighingStageId !== 1 ? 6 : 4} className="text-center py-8">
                     {isLoadingWeighingData ? "Cargando animales..." : "No hay registros disponibles"}
                   </TableCell>
                 </TableRow>
@@ -1389,6 +1650,7 @@ export function AnimalWeighingManagement() {
                       <TableRow
                         key={row.id}
                         className={`
+                          rounded-none
                           ${row.isComplete ? "[&]:!bg-[#86c6c5] hover:!bg-[#86c6c5]" : "bg-green-50 hover:!bg-green-50"}
                           ${isFirstRow ? "border-t-4 border-t-teal-600 shadow-[0_-2px_4px_rgba(0,0,0,0.1)]" : ""}
                           ${isLastRow ? "border-b-4 border-b-teal-600 shadow-[0_2px_4px_rgba(0,0,0,0.1)]" : ""}
@@ -1396,7 +1658,7 @@ export function AnimalWeighingManagement() {
                       >
                         {/* Fecha de Ingreso - solo en la primera fila del animal */}
                         {index === 0 && (
-                          <TableCell className="text-center" rowSpan={rowSpan}>
+                          <TableCell className="text-center text-xs py-0.5 px-1" rowSpan={rowSpan}>
                             {new Date(row.fechaIngreso).toLocaleDateString("es-ES", {
                               year: "numeric",
                               month: "2-digit",
@@ -1406,29 +1668,89 @@ export function AnimalWeighingManagement() {
                         )}
                         {/* Código del Animal - solo en la primera fila del animal */}
                         {index === 0 && (
-                          <TableCell className="text-center font-medium" rowSpan={rowSpan}>
+                          <TableCell className="text-center font-medium text-xs py-0.5 px-1" rowSpan={rowSpan}>
                             {row.brandName ? `${row.code} - ${row.brandName}` : row.code}
                           </TableCell>
                         )}
                         {/* Producto - solo en la primera fila del animal */}
                         {index === 0 && (
-                          <TableCell className="text-center" rowSpan={rowSpan}>
+                          <TableCell className="text-center text-xs py-0.5 px-1" rowSpan={rowSpan}>
                             {row.producto}
+                          </TableCell>
+                        )}
+                        {/* Destinatario - solo en la primera fila del animal cuando no es EN PIE */}
+                        {weighingStageId !== 1 && index === 0 && (
+                          <TableCell className="text-center py-0.5 px-1" rowSpan={rowSpan}>
+                            {row.addressee ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3 text-teal-600" />
+                                  <span className="text-xs font-medium leading-tight">{toCapitalize(row.addressee.fullName, true)}</span>
+                                </div>
+                                <span className="text-[10px] text-muted-foreground leading-tight">{row.addressee.identification}</span>
+                                <div className="w-full border-t border-gray-200 my-0.5"></div>
+                                {row.carrier ? (
+                                  <>
+                                    <div className="flex items-center gap-1">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+                                        <path d="M15 18H9"/>
+                                        <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
+                                        <circle cx="17" cy="18" r="2"/>
+                                        <circle cx="7" cy="18" r="2"/>
+                                      </svg>
+                                      <span className="text-xs font-medium leading-tight text-blue-600">{toCapitalize(row.carrier.fullName, true)}</span>
+                                    </div>
+                                    <span className="text-[10px] text-muted-foreground leading-tight">{row.carrier.plate}</span>
+                                  </>
+                                ) : (
+                                  <div className="flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+                                      <path d="M15 18H9"/>
+                                      <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
+                                      <circle cx="17" cy="18" r="2"/>
+                                      <circle cx="7" cy="18" r="2"/>
+                                    </svg>
+                                    <span className="text-xs text-gray-400 leading-tight">Sin transportista</span>
+                                  </div>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-teal-600 hover:text-teal-700 h-5 px-1.5 text-[10px]"
+                                  onClick={() => setAddresseeSelectionRowId(row.id)}
+                                >
+                                  <Edit className="h-2.5 w-2.5 mr-0.5" />
+                                  Cambiar
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex justify-center">
+                                <Button
+                                  size="sm"
+                                  className="bg-teal-600 hover:bg-teal-700 h-6 text-xs px-2"
+                                  onClick={() => setAddresseeSelectionRowId(row.id)}
+                                >
+                                  Agregar
+                                </Button>
+                              </div>
+                            )}
                           </TableCell>
                         )}
                         {/* Sección - siempre visible cuando no es EN PIE */}
                         {weighingStageId !== 1 && (
-                          <TableCell className="text-center">
+                          <TableCell className="text-center py-0.5 px-1">
                             {row.sectionCode ? (
-                              <div className="flex flex-col items-center">
-                                <span className="font-bold text-blue-600">{row.sectionCode}</span>
-                                <span className="text-xs text-muted-foreground">{row.sectionDescription}</span>
+                              <div className="flex flex-col items-center gap-0">
+                                <span className="font-bold text-blue-600 text-xs leading-tight">{row.sectionCode}</span>
+                                <span className="text-[10px] text-muted-foreground leading-tight">{row.sectionDescription}</span>
                                 {row.hasPartialConfiscation && (
-                                  <div className="flex items-center gap-1 mt-1 text-yellow-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                  <div className="flex items-center gap-0.5 mt-0.5 text-yellow-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                     </svg>
-                                    <span className="text-xs font-semibold">Decomiso parcial</span>
+                                    <span className="text-[10px] font-semibold leading-tight">Decomiso</span>
                                   </div>
                                 )}
                               </div>
@@ -1437,22 +1759,22 @@ export function AnimalWeighingManagement() {
                             )}
                           </TableCell>
                         )}
-                    <TableCell className="text-center">
-                      <span className={`font-semibold ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <TableCell className="text-center py-0.5 px-1">
+                      <span className={`font-semibold text-xs ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
                         {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} lb` : "-"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex gap-2 justify-center">
+                    <TableCell className="py-0.5 px-1">
+                      <div className="flex gap-0 justify-start items-center">
                         <Button
                           size="sm"
                           variant={
                             selectedRowId === row.id ? "default" : "outline"
                           }
-                          className={`text-xs sm:text-sm whitespace-nowrap ${
+                          className={`text-[9px] whitespace-nowrap h-6 px-1.5 rounded-r-none ${
                             selectedRowId === row.id
                               ? "bg-green-600"
-                              : "text-green-600 border-green-600"
+                              : "text-primary border-primary"
                           }`}
                           onClick={() => {
                             if (selectedRowId === row.id) {
@@ -1461,7 +1783,7 @@ export function AnimalWeighingManagement() {
                             } else {
                               setSelectedRowId(row.id);
                               setCapturedWeight(null);
-                              resetWeight(); // Resetear la balanza cuando se selecciona un animal
+                              resetWeight();
                             }
                           }}
                           disabled={!isConnected}
@@ -1473,7 +1795,7 @@ export function AnimalWeighingManagement() {
                         {selectedRowId === row.id && (
                           <Button
                             size="sm"
-                            className="bg-blue-600 text-xs sm:text-sm whitespace-nowrap"
+                            className="bg-blue-600 text-[9px] whitespace-nowrap h-6 px-1.5 rounded-l-none border-l-0"
                             onClick={() => handleSaveWeight(row)}
                             disabled={saveWeighingMutation.isPending || updateWeighingMutation.isPending || !capturedWeight}
                           >
@@ -1484,6 +1806,20 @@ export function AnimalWeighingManagement() {
                         )}
                       </div>
                     </TableCell>
+                    {hasDeleteButton && index === 0 && (
+                      <TableCell className="py-0.5 px-0 w-8" rowSpan={rowSpan}>
+                        {row.idAnimalWeighing && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-6 w-6 p-0 mx-auto"
+                            onClick={() => handleDeleteClick(row.idAnimalWeighing!, row.code)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                       );
                     });
@@ -1492,6 +1828,8 @@ export function AnimalWeighingManagement() {
               )}
             </TableBody>
           </Table>
+            );
+          })()}
         </div>
 
         {/* Paginación */}
@@ -1578,6 +1916,136 @@ export function AnimalWeighingManagement() {
           </div>
         )}
       </Card>
+
+      {/* Dialog de Selección de Destinatario y Transportista */}
+      <Dialog 
+        open={addresseeSelectionRowId !== null} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setAddresseeSelectionRowId(null);
+            setModalStep(1);
+            setTempAddressee(null);
+            setTempCarrier(null);
+          }
+        }}
+      >
+        <DialogContent className="!w-[95vw] sm:!w-[90vw] md:!w-[85vw] lg:!w-[82vw] !max-w-[1000px] h-[88vh] max-h-[88vh] overflow-y-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] p-3 sm:p-4">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-base sm:text-lg font-bold truncate">
+              {modalStep === 1 ? "Seleccionar Destinatario y Transportista" : "Seleccionar Destinatario y Transportista"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="w-full min-w-0 space-y-4">
+            {/* Paso 1: Seleccionar Destinatario */}
+            {modalStep === 1 && !tempAddressee && (
+              <Step2AddresseeSelection
+                onSelect={(addressee) => {
+                  setTempAddressee(addressee);
+                }}
+                onBack={() => {
+                  setAddresseeSelectionRowId(null);
+                  setModalStep(1);
+                  setTempAddressee(null);
+                  setTempCarrier(null);
+                }}
+              />
+            )}
+
+            {/* Card de resumen del destinatario seleccionado */}
+            {tempAddressee && (
+              <AddresseeSummaryCard
+                addressee={tempAddressee}
+                onEdit={() => {
+                  setTempAddressee(null);
+                  setTempCarrier(null);
+                  setModalStep(1);
+                }}
+              />
+            )}
+
+            {/* Paso 2: Seleccionar Transportista (solo si ya hay destinatario) */}
+            {tempAddressee && !tempCarrier && (
+              <Step3CarrierSelection
+                onSelect={(carrier) => {
+                  setTempCarrier(carrier);
+                }}
+                onBack={() => {
+                  setTempAddressee(null);
+                  setModalStep(1);
+                }}
+              />
+            )}
+
+            {/* Card de resumen del transportista seleccionado */}
+            {tempCarrier && (
+              <CarrierSummaryCard
+                carrier={tempCarrier}
+                onEdit={() => {
+                  setTempCarrier(null);
+                }}
+              />
+            )}
+
+            {/* Botón Finalizar (solo cuando ambos están seleccionados) */}
+            {tempAddressee && tempCarrier && (
+              <div className="flex justify-end pt-4">
+                <Button
+                  className="bg-teal-600 hover:bg-teal-700"
+                  onClick={() => {
+                    if (addresseeSelectionRowId) {
+                      handleAddresseeSelect(addresseeSelectionRowId, tempAddressee, tempCarrier);
+                    }
+                    setAddresseeSelectionRowId(null);
+                    setModalStep(1);
+                    setTempAddressee(null);
+                    setTempCarrier(null);
+                  }}
+                >
+                  Finalizar
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmación de Eliminación */}
+      <AlertDialog
+        open={deleteConfirmation.isOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteConfirmation({ isOpen: false, idAnimalWeighing: null, animalCode: "" });
+          }
+        }}
+      >
+        <AlertDialogContent className="p-4 sm:p-6">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg sm:text-xl font-bold">
+              Confirmar Eliminación
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm sm:text-base text-muted-foreground">
+              ¿Estás seguro de que deseas eliminar el registro de pesaje del animal <span className="font-semibold">{deleteConfirmation.animalCode}</span>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-end gap-2 pt-4">
+            <AlertDialogCancel asChild>
+              <Button variant="outline" size="sm">
+                Cancelar
+              </Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button
+                className="bg-red-600 hover:bg-red-700"
+                size="sm"
+                onClick={handleConfirmDelete}
+                disabled={deleteWeighingMutation.isPending}
+              >
+                {deleteWeighingMutation.isPending ? "Eliminando..." : "Eliminar"}
+              </Button>
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

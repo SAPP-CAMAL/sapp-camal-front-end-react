@@ -15,7 +15,7 @@ export function AddresseeSummaryCard({
   addressee,
   onEdit,
 }: AddresseeSummaryCardProps) {
-  const address = addressee.addresses?.[0];
+  const address = addressee.addresses;
 
   return (
     <Card>

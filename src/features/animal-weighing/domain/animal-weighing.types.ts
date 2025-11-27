@@ -31,6 +31,8 @@ export type AnimalWeighingRow = {
   idAnimalWeighing?: number; // ID del registro de pesaje para actualizar
   isComplete?: boolean; // Si el animal tiene todas sus secciones pesadas
   hasPartialConfiscation?: boolean; // Si la sección tiene decomiso parcial
+  addressee?: any; // Destinatario asignado a esta fila
+  carrier?: any; // Transportista asignado a esta fila
 };
 
 export type DetailAnimalWeighing = {

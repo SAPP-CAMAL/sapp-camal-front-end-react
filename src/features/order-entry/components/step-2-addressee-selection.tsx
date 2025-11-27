@@ -37,14 +37,15 @@ export function Step2AddresseeSelection({
 }: Step2AddresseeSelectionProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(5); // Show 5 items per page to fit in the wizard
+  const [itemsPerPage] = useState(5); // Show 5 items per page to fit in the wizard
 
+  // Pedir más datos del backend para compensar el filtrado
   const query = useQuery({
-    queryKey: ["addressees", "wizard", searchTerm, page, limit],
+    queryKey: ["addressees", "wizard", searchTerm],
     queryFn: () =>
       getAdresseesByFilterService({
-        page,
-        limit,
+        page: 1,
+        limit: 100, // Pedir más datos para tener suficientes después del filtrado
         fullName: searchTerm,
       }),
   });
@@ -58,54 +59,61 @@ export function Step2AddresseeSelection({
     onSelect(addressee);
   };
 
-  const data = query.data?.data.items ?? [];
-  const meta = query.data?.data.meta;
+  // Filtrar solo destinatarios activos (status: true) en el frontend
+  const allData = query.data?.data.items ?? [];
+  const filteredData = allData.filter((addressee) => addressee.status === true);
+
+  // Paginación en el frontend
+  const totalItems = filteredData.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const data = filteredData.slice(startIndex, endIndex);
+
+  // Meta personalizada para la paginación frontend
+  const meta = {
+    currentPage: page,
+    totalPages: totalPages,
+    itemCount: data.length,
+    totalItems: totalItems,
+    itemsPerPage: itemsPerPage,
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-700">
-          2.- Seleccionar Destinatario
-        </CardTitle>
-        <CardDescription>
-          Seleccione el destinatario para este ingreso
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-3 sm:space-y-4 w-full">
         {/* Search */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2">
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-4 w-4" />
             <Input
-              placeholder="Buscar por nombre..."
-              className="pl-9"
+              placeholder="Buscar por nombre, cédula o correo..."
+              className="pl-9 h-9 text-sm"
               onChange={(e) => debouncedSearch(e.target.value)}
             />
           </div>
         </div>
 
         {/* Table */}
-        <div className="rounded-md border">
-          <Table>
+        <div className="rounded-lg border w-full shadow-sm">
+          <Table className="w-full">
             <TableHeader>
               <TableRow className="bg-teal-600 hover:bg-teal-600">
-                <TableHead className="text-white font-bold"><div className="flex items-center gap-2"><User className="h-4 w-4" />DESTINATARIO</div></TableHead>
-                <TableHead className="text-white font-bold"><div className="flex items-center gap-2"><IdCard className="h-4 w-4" />IDENTIFICACIÓN</div></TableHead>
-                <TableHead className="text-white font-bold"><div className="flex items-center gap-2"><MapPin className="h-4 w-4" />DIRECCIÓN</div></TableHead>
-                <TableHead className="text-white font-bold"><div className="flex items-center gap-2"><Map className="h-4 w-4" />PROVINCIA</div></TableHead>
-                <TableHead className="text-white font-bold text-center"><div className="flex items-center justify-center gap-2"><MousePointerClick className="h-4 w-4" />ACCIÓN</div></TableHead>
+                <TableHead className="text-white font-bold text-sm py-1.5 px-2"><div className="flex items-center gap-1.5"><User className="h-4 w-4" />DESTINATARIO</div></TableHead>
+                <TableHead className="text-white font-bold text-sm py-1.5 px-2"><div className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />DIRECCIÓN</div></TableHead>
+                <TableHead className="text-white font-bold text-sm py-1.5 px-2"><div className="flex items-center gap-1.5"><Map className="h-4 w-4" />PROVINCIA</div></TableHead>
+                <TableHead className="text-white font-bold text-center text-sm py-1.5 px-2"><div className="flex items-center justify-center gap-1.5"><MousePointerClick className="h-4 w-4" />ACCIÓN</div></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {query.isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={4} className="h-20 text-center text-base">
                     Cargando destinatarios...
                   </TableCell>
                 </TableRow>
               ) : data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="h-20 text-center text-muted-foreground text-base">
                     No se encontraron destinatarios
                   </TableCell>
                 </TableRow>
@@ -113,47 +121,49 @@ export function Step2AddresseeSelection({
                 data.map((addressee) => (
                   <TableRow 
                     key={addressee.id} 
-                    className="cursor-pointer hover:bg-teal-50/50 transition-colors"
+                    className="cursor-pointer hover:bg-teal-50/50 transition-colors border-b"
                     onClick={() => handleSelect(addressee)}
                   >
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">
+                    <TableCell className="text-sm py-1.5 px-2">
+                      <div className="flex flex-col gap-0">
+                        <span className="font-semibold text-sm leading-tight">
                           {toCapitalize(addressee.fullName, true)}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground leading-tight">
                           {addressee.email}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-medium leading-tight">
+                          CI: {addressee.identification}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>{addressee.identification}</TableCell>
-                    <TableCell>
-                      {addressee.addresses?.[0] ? (
-                        <div className="flex flex-col text-sm">
-                          <span className="font-medium">
-                            {toCapitalize(addressee.addresses[0].canton, true)} -{" "}
-                            {toCapitalize(addressee.addresses[0].province, true)}
+                    <TableCell className="text-sm py-1.5 px-2">
+                      {addressee.addresses ? (
+                        <div className="flex flex-col gap-0">
+                          <span className="font-medium text-sm leading-tight">
+                            {toCapitalize(addressee.addresses.canton, true)} -{" "}
+                            {toCapitalize(addressee.addresses.province, true)}
                           </span>
-                          <span className="text-xs text-muted-foreground">
-                            {toCapitalize(addressee.addresses[0].firstStree, true)}
+                          <span className="text-xs text-muted-foreground leading-tight">
+                            {toCapitalize(addressee.addresses.firstStree, true)}
                           </span>
                         </div>
                       ) : (
                         "—"
                       )}
                     </TableCell>
-                    <TableCell>
-                      {addressee.addresses?.[0] && (
-                        <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50">
-                          <MapPin className="w-3 h-3 mr-1" />
-                          {addressee.addresses[0].province.toUpperCase()}
+                    <TableCell className="py-1.5 px-2">
+                      {addressee.addresses && (
+                        <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50 text-xs px-1.5 py-0.5">
+                          <MapPin className="w-3 h-3 mr-0.5" />
+                          {addressee.addresses.province.toUpperCase()}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center py-1.5 px-2">
                       <Button
                         size="sm"
-                        className="bg-teal-600 hover:bg-teal-700"
+                        className="bg-teal-600 hover:bg-teal-700 text-xs px-2.5 h-7"
                         onClick={() => handleSelect(addressee)}
                       >
                         Seleccionar
@@ -168,8 +178,8 @@ export function Step2AddresseeSelection({
 
         {/* Pagination */}
         {meta && (meta.totalPages ?? 0) > 1 && (
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-2">
+            <div className="text-xs text-muted-foreground">
               Página {meta.currentPage} de {meta.totalPages}
             </div>
             <div className="flex gap-2">
@@ -178,27 +188,30 @@ export function Step2AddresseeSelection({
                 size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                className="text-xs"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3 w-3 mr-1" />
+                Anterior
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage((p) => Math.min(meta?.totalPages ?? 0, p + 1))}
                 disabled={page === (meta.totalPages ?? 0)}
+                className="text-xs"
               >
-                <ChevronRight className="h-4 w-4" />
+                Siguiente
+                <ChevronRight className="h-3 w-3 ml-1" />
               </Button>
             </div>
           </div>
         )}
 
-        <div className="flex justify-start pt-2">
-          <Button variant="outline" onClick={onBack}>
-            Atrás
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex justify-start pt-2">
+        <Button variant="outline" onClick={onBack} className="text-xs h-9 px-4">
+          Atrás
+        </Button>
+      </div>
+    </div>
   );
 }

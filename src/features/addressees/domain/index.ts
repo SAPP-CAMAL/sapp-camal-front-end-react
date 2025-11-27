@@ -6,6 +6,7 @@ export type FiltersAddressees = {
     provinceId?:     number;
     page?:           number;
     limit?:          number;
+    status?:         boolean;
 }
 
 
@@ -14,12 +15,12 @@ export type ResponseAddresseesByFilter = CommonHttpResponsePagination<Addressees
 export interface Addressees {
     id:             number;
     fullName:       string;
-    personId:       number;
+    personId?:      number;
     email:          string;
     identification: string;
     status:         boolean;
     createdAt:      Date;
-    addresses:      Address[];
+    addresses:      Address;
 }
 
 export interface Address {

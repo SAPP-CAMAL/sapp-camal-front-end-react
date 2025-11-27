@@ -30,7 +30,6 @@ import {
 import {
   Search,
   Trash2,
-  FolderOpen,
   Hash,
   Calendar,
   User,
@@ -49,10 +48,22 @@ import { es } from "date-fns/locale";
 import type {
   OrderEntry,
   ProductSubproduct,
+  AnimalStock,
+  AnimalStockItem,
+  StockByIdsRequest,
+  ProductStockItem,
 } from "../domain/order-entry.types";
 import { Step2AddresseeSelection } from "./step-2-addressee-selection";
 import { AddresseeSummaryCard } from "./addressee-summary-card";
+import { Step3CarrierSelection } from "./step-3-carrier-selection";
+import { CarrierSummaryCard } from "./carrier-summary-card";
 import { Addressees } from "@/features/addressees/domain";
+import { Carrier } from "@/features/carriers/domain";
+import { useAllSpecies } from "@/features/specie/hooks/use-all-species";
+import { Specie } from "@/features/specie/domain";
+import { useStockBySpecie, useStockByIds } from "../hooks";
+import { Weight } from "lucide-react";
+import { useMemo } from "react";
 
 export function OrderEntryManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -61,7 +72,7 @@ export function OrderEntryManagement() {
   const [selectedOrder, setSelectedOrder] = useState<OrderEntry | null>(null);
   const [products, setProducts] = useState<ProductSubproduct[]>([]);
   const [fechaFaenamiento, setFechaFaenamiento] = useState<Date>(new Date());
-  const [selectedEspecie, setSelectedEspecie] = useState<string>("Bovino");
+  const [selectedEspecieId, setSelectedEspecieId] = useState<number | null>(null);
   const [selectedIntroductor, setSelectedIntroductor] = useState<string>("");
   const [introductorSearch, setIntroductorSearch] = useState("");
   const [checkedOrders, setCheckedOrders] = useState<Set<number>>(new Set());
@@ -69,7 +80,7 @@ export function OrderEntryManagement() {
   const [productType, setProductType] = useState<"producto" | "subproducto">(
     "producto"
   );
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(
+  const [selectedProducts, setSelectedProducts] = useState<Set<number>>(
     new Set()
   );
   const [currentAnimalId, setCurrentAnimalId] = useState<number | null>(null);
@@ -77,61 +88,49 @@ export function OrderEntryManagement() {
   const [selectedAddressee, setSelectedAddressee] = useState<Addressees | null>(
     null
   );
+  const [selectedCarrier, setSelectedCarrier] = useState<Carrier | null>(null);
 
-  // Datos de ejemplo
-  const orders: OrderEntry[] = [
-    {
-      id: 27286,
-      nroIngreso: "27286",
-      codigo: "11",
-      fechaIngreso: "2025-11-10 19:03:00",
-      codDestinatario: "RICHARD MAURICIO ESCOBAR ESCOBAR",
-      especie: "PORCINO",
-      totalAnimales: 1,
-    },
-    {
-      id: 27285,
-      nroIngreso: "27285",
-      codigo: "16",
-      fechaIngreso: "2025-11-10 19:02:41",
-      codDestinatario: "GISELE SOFIA GUEVARA RUANO",
-      especie: "PORCINO",
-      totalAnimales: 1,
-    },
-    {
-      id: 27284,
-      nroIngreso: "27284",
-      codigo: "59",
-      fechaIngreso: "2025-11-10 19:02:20",
-      codDestinatario: "ZAYA ÑUSTA SEGOVIA CORDOVA",
-      especie: "PORCINO",
-      totalAnimales: 1,
-    },
-    {
-      id: 27283,
-      nroIngreso: "27283",
-      codigo: "32",
-      fechaIngreso: "2025-11-10 19:02:02",
-      codDestinatario: "ANA LUCIA LOPEZ ENRIQUEZ",
-      especie: "PORCINO",
-      totalAnimales: 1,
-    },
-    {
-      id: 27282,
-      nroIngreso: "27282",
-      codigo: "118",
-      fechaIngreso: "2025-11-10 19:01:42",
-      codDestinatario: "LENIN ERMINZUL GUARANGUAY BELTRAN",
-      especie: "PORCINO",
-      totalAnimales: 2,
-    },
-  ];
+  // Consumir API de especies
+  const speciesQuery = useAllSpecies();
+  const species: Specie[] = (speciesQuery.data?.data as Specie[]) || [];
 
-  const filteredOrders = orders.filter((order) =>
-    Object.values(order).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  // Preparar request para productos/subproductos
+  const stockByIdsRequest: StockByIdsRequest | null = useMemo(() => {
+    if (!isProductModalOpen || checkedOrders.size === 0) return null;
+    
+    return {
+      productTypeCode: productType === "producto" ? "PRO" : "SUB",
+      idDetailsSpeciesCertificate: Array.from(checkedOrders),
+    };
+  }, [isProductModalOpen, checkedOrders, productType]);
+
+  // Consumir API de productos/subproductos por IDs
+  const productsQuery = useStockByIds(stockByIdsRequest);
+  const availableProducts = (productsQuery.data?.data || []) as unknown as ProductStockItem[];
+
+  // Consumir API de stock por especie
+  const stockQuery = useStockBySpecie(selectedEspecieId);
+  const stockData = (stockQuery.data?.data || []) as unknown as AnimalStock[];
+
+  // Aplanar el array de animales (cada elemento tiene un array animal[])
+  const animalStock: AnimalStockItem[] = stockData.flatMap((item) => item.animal || []);
+
+  // Filtrar animales por búsqueda y por introductor seleccionado
+  const filteredOrders = animalStock.filter((animal) => {
+    // Filtro por introductor seleccionado
+    if (selectedIntroductor && animal.introducer !== selectedIntroductor) {
+      return false;
+    }
+    
+    // Filtro por término de búsqueda
+    if (searchTerm) {
+      return Object.values(animal).some((value) =>
+        value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    return true;
+  });
 
   // Calcular paginación
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
@@ -190,25 +189,37 @@ export function OrderEntryManagement() {
   };
 
   const handleNext = () => {
-    const selectedOrdersList = orders.filter((order) =>
-      checkedOrders.has(order.id)
+    const selectedAnimalsList = animalStock.filter((animal) =>
+      checkedOrders.has(animal.id)
     );
-    // Tomar la primera orden seleccionada como referencia
-    if (selectedOrdersList.length > 0) {
-      setSelectedOrder(selectedOrdersList[0]);
+    // Tomar el primer animal seleccionado como referencia
+    if (selectedAnimalsList.length > 0) {
+      const firstAnimal = selectedAnimalsList[0];
+      const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
       
-      // Si no hay introductor seleccionado, usar el codDestinatario de la primera orden
-      if (!selectedIntroductor && selectedOrdersList[0].codDestinatario) {
-        setSelectedIntroductor(selectedOrdersList[0].codDestinatario);
+      // Crear un OrderEntry temporal para mantener compatibilidad
+      setSelectedOrder({
+        id: firstAnimal.id,
+        nroIngreso: firstAnimal.id.toString(),
+        codigo: firstAnimal.code,
+        fechaIngreso: firstAnimal.createAt,
+        codDestinatario: firstAnimal.introducer,
+        especie: selectedSpecieName,
+        totalAnimales: selectedAnimalsList.length,
+      });
+      
+      // Si no hay introductor seleccionado, usar el introductor del primer animal
+      if (!selectedIntroductor && firstAnimal.introducer) {
+        setSelectedIntroductor(firstAnimal.introducer);
       }
       
-      // Generar productos de ejemplo para cada orden seleccionada
-      const generatedProducts = selectedOrdersList.map((order, index) => ({
+      // Generar productos de ejemplo para cada animal seleccionado
+      const generatedProducts = selectedAnimalsList.map((animal, index) => ({
         id: index + 1,
-        especie: order.especie,
-        codigoAnimal: `[${order.codigo}]-[02P-023] - CERDO LEVANTE`,
+        especie: selectedSpecieName,
+        codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
         subproducto: "Vísceras",
-        nroIngreso: order.nroIngreso,
+        nroIngreso: animal.id.toString(),
       }));
       setProducts(generatedProducts);
       setStep(2); // Move to Step 2 (Addressee Selection)
@@ -217,7 +228,7 @@ export function OrderEntryManagement() {
 
   const handleAddresseeSelect = (addressee: Addressees) => {
     setSelectedAddressee(addressee);
-    setStep(3); // Move to Step 3 (Product Distribution)
+    setStep(3); // Move to Step 3 (Carrier Selection)
   };
 
   const handleBackToStep2 = () => {
@@ -225,42 +236,59 @@ export function OrderEntryManagement() {
     setSelectedAddressee(null);
   };
 
-  // Datos de ejemplo de introductores
-  const introductores = [
-    "JUAN PEREZ GOMEZ",
-    "MARIA RODRIGUEZ LOPEZ",
-    "CARLOS SANCHEZ MARTINEZ",
-  ];
+  const handleCarrierSelect = (carrier: Carrier) => {
+    setSelectedCarrier(carrier);
+    setStep(4); // Move to Step 4 (Product Distribution)
+  };
 
-  const filteredIntroductores = introductores.filter((intro) =>
-    intro.toLowerCase().includes(introductorSearch.toLowerCase())
-  );
+  const handleBackToStep3 = () => {
+    setStep(3);
+    setSelectedCarrier(null);
+  };
 
-  // Opciones de productos y subproductos
-  const productosOptions = ["Canal", "Media Canal", "Cuarta de Canal"];
-  const subproductosOptions = [
-    "BAZO",
-    "CABEZA",
-    "CORAZÓN",
-    "HIGADO",
-    "INTESTINOS",
-    "LENGUA",
-    "LIBRILLO",
-    "PATAS A",
-    "PATAS B",
-    "PATAS C",
-    "PATAS D",
-    "PULMONE A",
-    "PULMONE B",
-    "RIÑONES",
-    "RUMEN",
-    "TESTÍCULOS",
-    "UBRE",
-    "PIELES",
-  ];
+  // Obtener lista única de introductores de los animales cargados
+  const introductores = useMemo(() => {
+    const uniqueIntroducers = new Set<string>();
+    animalStock.forEach((animal) => {
+      if (animal.introducer) {
+        uniqueIntroducers.add(animal.introducer);
+      }
+    });
+    return Array.from(uniqueIntroducers).sort();
+  }, [animalStock]);
 
-  const currentOptions =
-    productType === "producto" ? productosOptions : subproductosOptions;
+  const filteredIntroductores = useMemo(() => {
+    if (!introductorSearch) return [];
+    return introductores.filter((intro) =>
+      intro.toLowerCase().includes(introductorSearch.toLowerCase())
+    );
+  }, [introductores, introductorSearch]);
+
+  // Agrupar productos por animal y ordenar por displayOrder
+  const groupedProducts = useMemo(() => {
+    const grouped = new Map<number, ProductStockItem[]>();
+    
+    availableProducts.forEach((product) => {
+      const animalId = product.idDetailsSpeciesCertificate;
+      if (!grouped.has(animalId)) {
+        grouped.set(animalId, []);
+      }
+      grouped.get(animalId)!.push(product);
+    });
+    
+    // Ordenar productos dentro de cada grupo por displayOrder
+    grouped.forEach((products) => {
+      products.sort((a, b) => a.speciesProduct.displayOrder - b.speciesProduct.displayOrder);
+    });
+    
+    return grouped;
+  }, [availableProducts]);
+
+  // Obtener productos del animal actual
+  const currentAnimalProducts = useMemo(() => {
+    if (!currentAnimalId) return [];
+    return groupedProducts.get(currentAnimalId) || [];
+  }, [currentAnimalId, groupedProducts]);
 
   const handleOpenProductModal = () => {
     // Abrir con el primer animal seleccionado
@@ -274,33 +302,38 @@ export function OrderEntryManagement() {
   const handleSaveProductsForAnimal = () => {
     if (!currentAnimalId) return;
 
-    const order = orders.find((o) => o.id === currentAnimalId);
-    if (!order) return;
+    const animal = animalStock.find((a) => a.id === currentAnimalId);
+    if (!animal) return;
 
-    // Crear productos solo para el animal actual
+    const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
+
+    // Crear productos solo para el animal actual usando los datos de la API
     const newProducts: ProductSubproduct[] = [];
     let productId = products.length + 1;
 
-    selectedProducts.forEach((productName) => {
-      newProducts.push({
-        id: productId++,
-        especie: order.especie,
-        codigoAnimal: `[${order.codigo}]-[02P-023] - CERDO LEVANTE`,
-        subproducto: productName,
-        nroIngreso: order.nroIngreso,
-      });
+    selectedProducts.forEach((productStockId) => {
+      const productStock = availableProducts.find((p) => p.id === productStockId);
+      if (productStock) {
+        newProducts.push({
+          id: productId++,
+          especie: selectedSpecieName,
+          codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
+          subproducto: productStock.speciesProduct.productName,
+          nroIngreso: animal.id.toString(),
+        });
+      }
     });
 
     setProducts([...products, ...newProducts]);
     setSelectedProducts(new Set());
 
     // Pasar al siguiente animal o cerrar
-    const ordersArray = Array.from(checkedOrders);
-    const currentIndex = ordersArray.indexOf(currentAnimalId);
+    const animalsArray = Array.from(checkedOrders);
+    const currentIndex = animalsArray.indexOf(currentAnimalId);
 
-    if (currentIndex < ordersArray.length - 1) {
+    if (currentIndex < animalsArray.length - 1) {
       // Hay más animales, pasar al siguiente
-      setCurrentAnimalId(ordersArray[currentIndex + 1]);
+      setCurrentAnimalId(animalsArray[currentIndex + 1]);
     } else {
       // Era el último animal, cerrar modal
       setIsProductModalOpen(false);
@@ -308,12 +341,12 @@ export function OrderEntryManagement() {
     }
   };
 
-  const handleToggleProduct = (productName: string) => {
+  const handleToggleProduct = (productId: number) => {
     const newSelected = new Set(selectedProducts);
-    if (newSelected.has(productName)) {
-      newSelected.delete(productName);
+    if (newSelected.has(productId)) {
+      newSelected.delete(productId);
     } else {
-      newSelected.add(productName);
+      newSelected.add(productId);
     }
     setSelectedProducts(newSelected);
   };
@@ -350,27 +383,18 @@ export function OrderEntryManagement() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div className="space-y-3">
                 <div>
-                  <span className="text-gray-600">Introductor: </span>
-                  <span className="font-medium">
-                    {selectedIntroductor || "-"}
-                  </span>
-                </div>
-                <div>
                   <span className="text-gray-600">
                     N° de Ingresos seleccionados:{" "}
                   </span>
                   <span className="font-medium">{checkedOrders.size}</span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Fecha de ingreso: </span>
+                  <span className="text-gray-600">Peso Total: </span>
                   <span className="font-medium">
-                    {format(
-                      new Date(selectedOrder.fechaIngreso),
-                      "dd/MM/yyyy HH:mm",
-                      {
-                        locale: es,
-                      }
-                    )}
+                    {animalStock
+                      .filter((animal) => checkedOrders.has(animal.id))
+                      .reduce((total, animal) => total + (animal.netWeight || 0), 0)
+                      .toFixed(2)} kg
                   </span>
                 </div>
               </div>
@@ -378,23 +402,16 @@ export function OrderEntryManagement() {
               <div className="space-y-3">
                 <div>
                   <span className="text-gray-600">Especie: </span>
-                  <span className="font-medium">{selectedOrder.especie}</span>
+                  <span className="font-medium">
+                    {species.find((s) => s.id === selectedEspecieId)?.name || selectedOrder.especie}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">Total: Restantes: </span>
-                  <Badge className="bg-orange-500 hover:bg-orange-600">
-                    {Array.from(checkedOrders).reduce((total, orderId) => {
-                      const order = orders.find((o) => o.id === orderId);
-                      return total + (order?.totalAnimales || 0);
-                    }, 0)}
-                  </Badge>
-                </div>
-                <div>
+                {/* <div>
                   <span className="text-gray-600">Fecha de faenamiento: </span>
                   <span className="font-medium">
                     {format(fechaFaenamiento, "dd/MM/yyyy", { locale: es })}
                   </span>
-                </div>
+                </div> */}
               </div>
             </div>
           </CardContent>
@@ -409,7 +426,7 @@ export function OrderEntryManagement() {
         />
       )}
 
-      {/* Resumen Paso 2: Destinatario Seleccionado - Se muestra en paso 3 */}
+      {/* Resumen Paso 2: Destinatario Seleccionado - Se muestra en pasos 3 y 4 */}
       {step >= 3 && selectedAddressee && (
         <AddresseeSummaryCard
           addressee={selectedAddressee}
@@ -417,13 +434,29 @@ export function OrderEntryManagement() {
         />
       )}
 
-      {/* Paso 3: Productos y Subproductos */}
-      {step === 3 && selectedOrder && (
+      {/* Paso 3: Selección de Transportista */}
+      {step === 3 && (
+        <Step3CarrierSelection
+          onSelect={handleCarrierSelect}
+          onBack={() => setStep(2)}
+        />
+      )}
+
+      {/* Resumen Paso 3: Transportista Seleccionado - Se muestra en paso 4 */}
+      {step >= 4 && selectedCarrier && (
+        <CarrierSummaryCard
+          carrier={selectedCarrier}
+          onEdit={handleBackToStep3}
+        />
+      )}
+
+      {/* Paso 4: Productos y Subproductos */}
+      {step === 4 && selectedOrder && (
         <Card>
           <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-700">
-                3.- Agregar productos y subproductos
+                4.- Agregar productos y subproductos
               </h2>
               <div className="flex gap-2">
                 <Button
@@ -532,9 +565,9 @@ export function OrderEntryManagement() {
       {step === 1 && (
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               {/* Fecha de Faenamiento */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
                   Fecha de faenamiento:
                 </label>
@@ -545,7 +578,7 @@ export function OrderEntryManagement() {
                     newDate && setFechaFaenamiento(newDate)
                   }
                 />
-              </div>
+              </div> */}
 
               {/* Introductor */}
               <div className="space-y-2">
@@ -580,49 +613,21 @@ export function OrderEntryManagement() {
                 <label className="text-sm font-medium text-gray-700">
                   Especie:
                 </label>
-                <div className="flex gap-2">
-                  <Button
-                    variant={
-                      selectedEspecie === "Bovino" ? "default" : "outline"
-                    }
-                    onClick={() => setSelectedEspecie("Bovino")}
-                    className={
-                      selectedEspecie === "Bovino"
-                        ? "bg-teal-600 hover:bg-teal-700"
-                        : ""
-                    }
-                  >
-                    Bovino
-                  </Button>
-                  <Button
-                    variant={
-                      selectedEspecie === "Porcino" ? "default" : "outline"
-                    }
-                    onClick={() => setSelectedEspecie("Porcino")}
-                    className={
-                      selectedEspecie === "Porcino"
-                        ? "bg-teal-600 hover:bg-teal-700"
-                        : ""
-                    }
-                  >
-                    Porcino
-                  </Button>
-                  <Button
-                    variant={
-                      selectedEspecie === "Ovino-Caprino"
-                        ? "default"
-                        : "outline"
-                    }
-                    onClick={() => setSelectedEspecie("Ovino-Caprino")}
-                    className={
-                      selectedEspecie === "Ovino-Caprino"
-                        ? "bg-teal-600 hover:bg-teal-700"
-                        : ""
-                    }
-                  >
-                    Ovino-Caprino
-                  </Button>
-                </div>
+                <Select
+                  value={selectedEspecieId?.toString() || ""}
+                  onValueChange={(value) => setSelectedEspecieId(Number(value))}
+                >
+                  <SelectTrigger className="bg-secondary">
+                    <SelectValue placeholder="Seleccione una especie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {species.map((specie) => (
+                      <SelectItem key={specie.id} value={specie.id.toString()}>
+                        {specie.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
@@ -687,7 +692,7 @@ export function OrderEntryManagement() {
                     <TableHead className="text-center border font-bold text-white py-3">
                       <div className="flex flex-col items-center gap-1">
                         <Hash className="w-4 h-4" />
-                        <span className="text-xs">Código del animal </span>
+                        <span className="text-xs">Código del animal</span>
                       </div>
                     </TableHead>
                     <TableHead className="text-center border font-bold text-white py-3">
@@ -704,8 +709,8 @@ export function OrderEntryManagement() {
                     </TableHead>
                     <TableHead className="text-center border font-bold text-white py-3">
                       <div className="flex flex-col items-center gap-1">
-                        <Tag className="w-4 h-4" />
-                        <span className="text-xs">Marca</span>
+                        <Weight className="w-4 h-4" />
+                        <span className="text-xs">Peso</span>
                       </div>
                     </TableHead>
                     <TableHead className="text-center border font-bold text-white py-3">
@@ -717,52 +722,66 @@ export function OrderEntryManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedOrders.map((order) => {
-                    const [fecha, hora] = order.fechaIngreso.split(" ");
-
-                    return (
-                      <TableRow 
-                        key={order.id} 
-                        className="cursor-pointer hover:bg-teal-50/30 transition-colors"
-                        onClick={() => handleCheckOrder(order.id, !checkedOrders.has(order.id))}
+                  {paginatedOrders.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center py-8 text-gray-500"
                       >
-                        <TableCell className="text-center border">
-                          {order.codigo}
-                        </TableCell>
-                        <TableCell className="text-xs text-center border py-2">
-                          <div className="flex flex-col">
-                            <span className="font-medium">{fecha}</span>
-                            <span className="text-muted-foreground">
-                              {hora}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-center border">
-                          {order.codDestinatario}
-                        </TableCell>
-                        <TableCell className="text-center border">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-sm font-medium">
-                              {order.especie}:
-                            </span>
-                            <Badge className="bg-orange-500 hover:bg-orange-600">
-                              de {order.totalAnimales}
+                        {selectedEspecieId 
+                          ? "No hay animales disponibles para esta especie"
+                          : "Seleccione una especie para ver los animales disponibles"}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedOrders.map((animal) => {
+                      const fecha = format(new Date(animal.createAt), "dd/MM/yyyy", { locale: es });
+                      const hora = format(new Date(animal.createAt), "HH:mm:ss", { locale: es });
+
+                      return (
+                        <TableRow 
+                          key={animal.id} 
+                          className="cursor-pointer hover:bg-teal-50/30 transition-colors"
+                          onClick={() => handleCheckOrder(animal.id, !checkedOrders.has(animal.id))}
+                        >
+                          <TableCell className="text-center border">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{animal.code}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {animal.brandName}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs text-center border py-2">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{fecha}</span>
+                              <span className="text-muted-foreground">
+                                {hora}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-center border">
+                            {animal.introducer}
+                          </TableCell>
+                          <TableCell className="text-center border">
+                            <Badge className="bg-blue-500 hover:bg-blue-600">
+                              {animal.netWeight.toFixed(2)} kg
                             </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center border">
-                          <div className="flex justify-center">
-                            <Checkbox
-                              checked={checkedOrders.has(order.id)}
-                              onCheckedChange={(checked) =>
-                                handleCheckOrder(order.id, checked as boolean)
-                              }
-                            />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          </TableCell>
+                          <TableCell className="text-center border">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={checkedOrders.has(animal.id)}
+                                onCheckedChange={(checked) =>
+                                  handleCheckOrder(animal.id, checked as boolean)
+                                }
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -904,26 +923,27 @@ export function OrderEntryManagement() {
               </div>
               {currentAnimalId &&
                 (() => {
-                  const order = orders.find((o) => o.id === currentAnimalId);
-                  if (!order) return null;
+                  const animal = animalStock.find((a) => a.id === currentAnimalId);
+                  if (!animal) return null;
+                  const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
                   return (
                     <div className="p-4 rounded-lg border-2 bg-white border-teal-500">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-bold text-blue-600 text-lg">
-                          {order.codigo}
+                          {animal.code}
                         </span>
-                        <Badge className="bg-orange-500">
-                          {order.totalAnimales}
+                        <Badge className="bg-blue-500">
+                          {animal.netWeight.toFixed(2)} kg
                         </Badge>
                       </div>
                       <div className="text-sm text-gray-700 font-medium mb-2">
-                        {order.codDestinatario}
+                        {animal.introducer}
                       </div>
                       <div className="text-sm text-gray-600">
-                        {order.especie}
+                        {selectedSpecieName}
                       </div>
                       <div className="text-xs text-gray-500 mt-2">
-                        N° Ingreso: {order.nroIngreso}
+                        Marca: {animal.brandName}
                       </div>
                     </div>
                   );
@@ -935,29 +955,31 @@ export function OrderEntryManagement() {
                   Todos los animales:
                 </div>
                 <div className="space-y-1">
-                  {Array.from(checkedOrders).map((orderId) => {
-                    if (orderId === currentAnimalId) return null;
-                    const order = orders.find((o) => o.id === orderId);
-                    if (!order) return null;
+                  {Array.from(checkedOrders).map((animalId) => {
+                    if (animalId === currentAnimalId) return null;
+                    const animal = animalStock.find((a) => a.id === animalId);
+                    if (!animal) return null;
 
                     // Verificar si este animal ya tiene productos guardados
                     const hasProducts = products.some(
-                      (p) => p.nroIngreso === order.nroIngreso
+                      (p) => p.nroIngreso === animal.id.toString()
                     );
+
+                    const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
 
                     return (
                       <div
-                        key={orderId}
-                        onClick={() => setCurrentAnimalId(orderId)}
+                        key={animalId}
+                        onClick={() => setCurrentAnimalId(animalId)}
                         className="p-2 rounded bg-gray-100 hover:bg-teal-100 text-xs cursor-pointer transition-colors border-2 border-transparent hover:border-teal-500"
                       >
                         <div className="flex items-center justify-between">
                           <div>
                             <span className="font-bold text-blue-600">
-                              {order.codigo}
+                              {animal.code}
                             </span>
                             <span className="text-gray-500 ml-1">
-                              - {order.especie}
+                              - {selectedSpecieName}
                             </span>
                           </div>
                           {hasProducts && (
@@ -1008,27 +1030,40 @@ export function OrderEntryManagement() {
                     Seleccione{" "}
                     {productType === "producto" ? "productos" : "subproductos"}:
                   </h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    {currentOptions.map((option) => (
-                      <div
-                        key={option}
-                        className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg border transition-colors"
-                      >
-                        <Checkbox
-                          id={option}
-                          checked={selectedProducts.has(option)}
-                          onCheckedChange={() => handleToggleProduct(option)}
-                          className="h-5 w-5"
-                        />
-                        <label
-                          htmlFor={option}
-                          className="text-base font-medium leading-none cursor-pointer flex-1"
+                  {productsQuery.isLoading ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Cargando productos...
+                    </div>
+                  ) : currentAnimalProducts.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No hay {productType === "producto" ? "productos" : "subproductos"} disponibles para este animal
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-3">
+                      {currentAnimalProducts.map((product) => (
+                        <div
+                          key={product.id}
+                          className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg border transition-colors"
                         >
-                          {option}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+                          <Checkbox
+                            id={product.id.toString()}
+                            checked={selectedProducts.has(product.id)}
+                            onCheckedChange={() => handleToggleProduct(product.id)}
+                            className="h-5 w-5"
+                            disabled={!product.available || product.confiscation}
+                          />
+                          <label
+                            htmlFor={product.id.toString()}
+                            className={`text-base font-medium leading-none cursor-pointer flex-1 ${
+                              !product.available || product.confiscation ? 'text-gray-400 line-through' : ''
+                            }`}
+                          >
+                            {product.speciesProduct.productName}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Información adicional */}
