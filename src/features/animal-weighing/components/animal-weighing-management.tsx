@@ -1569,6 +1569,11 @@ export function AnimalWeighingManagement() {
             // Verificar si hay algún animal con idAnimalWeighing
             const hasDeleteButton = paginatedRows.some(row => row.idAnimalWeighing);
             
+            // Calcular el número total de columnas para el colspan
+            const totalColumns = weighingStageId !== 1 
+              ? (hasDeleteButton ? 8 : 7)  // CANAL/DISTRIBUCIÓN: 6 columnas + acción (+ delete si aplica)
+              : (hasDeleteButton ? 6 : 5); // EN PIE: 4 columnas + acción (+ delete si aplica)
+            
             return (
           <Table className="min-w-full border [&_td]:!rounded-none [&_th]:!rounded-none [&_tr]:!rounded-none">
             <TableHeader>
@@ -1626,7 +1631,7 @@ export function AnimalWeighingManagement() {
             <TableBody>
               {paginatedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={weighingStageId !== 1 ? 6 : 4} className="text-center py-8">
+                  <TableCell colSpan={totalColumns} className="text-center py-8 text-muted-foreground">
                     {isLoadingWeighingData ? "Cargando animales..." : "No hay registros disponibles"}
                   </TableCell>
                 </TableRow>
