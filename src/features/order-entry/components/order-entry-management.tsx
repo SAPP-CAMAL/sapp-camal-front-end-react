@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,10 +42,13 @@ import {
   CheckSquare,
   Tag,
   ChevronRight,
+  Loader2,
+  Weight,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "sonner";
 import type {
   OrderEntry,
   ProductSubproduct,
@@ -52,6 +56,8 @@ import type {
   AnimalStockItem,
   StockByIdsRequest,
   ProductStockItem,
+  SpecieProductConfig,
+  OrderByIdAndDetailResponse,
 } from "../domain/order-entry.types";
 import { Step2AddresseeSelection } from "./step-2-addressee-selection";
 import { AddresseeSummaryCard } from "./addressee-summary-card";
@@ -61,9 +67,7 @@ import { Addressees } from "@/features/addressees/domain";
 import { Carrier } from "@/features/carriers/domain";
 import { useAllSpecies } from "@/features/specie/hooks/use-all-species";
 import { Specie } from "@/features/specie/domain";
-import { useStockBySpecie, useStockByIds } from "../hooks";
-import { Weight } from "lucide-react";
-import { useMemo } from "react";
+import { useStockBySpecie, useStockByIds, useSaveOrder, useSpecieProductsByCode, useOrderByIdAndDetail } from "../hooks";
 
 export function OrderEntryManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,12 +93,24 @@ export function OrderEntryManagement() {
     null
   );
   const [selectedCarrier, setSelectedCarrier] = useState<Carrier | null>(null);
+  const [savedOrderId, setSavedOrderId] = useState<number | null>(null);
+  
+  // Cache en memoria de las selecciones de productos por animal (no se guarda en BD)
+  // Estructura: Map<animalId, Set<productStockId>>
+  const [productSelectionsCache, setProductSelectionsCache] = useState<Map<number, Set<number>>>(new Map());
 
+  const searchParams = useSearchParams();
+  const urlOrderId = searchParams.get("id");
+  // Usar el ID de la URL si existe, o el ID guardado después de crear la orden
+  const orderId = urlOrderId ? Number(urlOrderId) : savedOrderId;
+
+  // Hooks de API
+  const saveOrderMutation = useSaveOrder();
+  
   // Consumir API de especies
   const speciesQuery = useAllSpecies();
   const species: Specie[] = (speciesQuery.data?.data as Specie[]) || [];
 
-  // Preparar request para productos/subproductos
   const stockByIdsRequest: StockByIdsRequest | null = useMemo(() => {
     if (!isProductModalOpen || checkedOrders.size === 0) return null;
     
@@ -111,6 +127,71 @@ export function OrderEntryManagement() {
   // Consumir API de stock por especie
   const stockQuery = useStockBySpecie(selectedEspecieId);
   const stockData = (stockQuery.data?.data || []) as unknown as AnimalStock[];
+
+  // Consumir API de todos los productos configurados para la especie
+  const allProductsQuery = useSpecieProductsByCode(
+    selectedEspecieId, 
+    productType === "producto" ? "PRO" : "SUB"
+  );
+  const allConfiguredProducts = (allProductsQuery.data?.data || []) as SpecieProductConfig[];
+
+  // Consumir API de orden existente para obtener productos ya asignados a este animal
+  // Solo se llama si hay un orderId (editando orden existente) y un animal seleccionado
+  const existingOrderQuery = useOrderByIdAndDetail(orderId, currentAnimalId);
+  const existingOrderData = existingOrderQuery.data?.data as OrderByIdAndDetailResponse | undefined;
+
+  // Crear un Set de productCodes que están en la orden para este animal
+  const assignedProductCodes = useMemo(() => {
+    const codes = new Set<string>();
+    if (existingOrderData?.orderDetails) {
+      existingOrderData.orderDetails.forEach((detail) => {
+        if (detail.animalProduct?.speciesProduct?.productCode) {
+          codes.add(detail.animalProduct.speciesProduct.productCode);
+        }
+      });
+    }
+    return codes;
+  }, [existingOrderData]);
+
+  // Efecto para pre-seleccionar productos cuando cambia el animal
+  useEffect(() => {
+    if (!currentAnimalId) return;
+    
+    console.log('Pre-selección - Animal:', currentAnimalId);
+    console.log('Cache completo:', productSelectionsCache);
+    
+    // Primero verificar si hay selecciones en cache para este animal
+    const cachedSelections = productSelectionsCache.get(currentAnimalId);
+    console.log('Selecciones en cache este animal:', cachedSelections);
+    
+    if (cachedSelections && cachedSelections.size > 0) {
+      console.log('Aplicando cache:', Array.from(cachedSelections));
+      setSelectedProducts(new Set(cachedSelections));
+      return;
+    }
+    
+    // Si no hay cache, verificar si hay datos de la orden existente
+    if (existingOrderData?.orderDetails) {
+      console.log('Usando datos de orden existente');
+      const productIds = new Set<number>();
+      existingOrderData.orderDetails.forEach((detail) => {
+        // Buscar el producto en availableProducts que coincida con el productCode
+        if (detail.animalProduct?.speciesProduct?.productCode) {
+          const matchingProduct = availableProducts.find(
+            (p) => p.speciesProduct.productCode === detail.animalProduct?.speciesProduct?.productCode
+          );
+          if (matchingProduct) {
+            productIds.add(matchingProduct.id);
+          }
+        }
+      });
+      setSelectedProducts(productIds);
+    } else if (!existingOrderQuery.isLoading) {
+        // Si no hay datos (y no está cargando), limpiamos la selección
+        console.log('Limpiando selección');
+        setSelectedProducts(new Set());
+    }
+  }, [existingOrderData, existingOrderQuery.isLoading, currentAnimalId, availableProducts, productSelectionsCache]);
 
   // Aplanar el array de animales (cada elemento tiene un array animal[])
   const animalStock: AnimalStockItem[] = stockData.flatMap((item) => item.animal || []);
@@ -140,16 +221,8 @@ export function OrderEntryManagement() {
 
   const handleSelectOrder = (order: OrderEntry) => {
     setSelectedOrder(order);
-    // Datos de ejemplo para productos
-    setProducts([
-      {
-        id: 1,
-        especie: "PORCINO",
-        codigoAnimal: "[11]-[02P-023] - CERDO LEVANTE",
-        subproducto: "Vísceras",
-        nroIngreso: order.nroIngreso,
-      },
-    ]);
+    // Los productos se agregarán desde el modal
+    setProducts([]);
   };
 
   const handleClearSelection = () => {
@@ -169,8 +242,32 @@ export function OrderEntryManagement() {
   };
 
   const handleSave = () => {
-    console.log("Guardando productos:", products);
-    // Aquí iría la lógica para guardar
+    if (!selectedAddressee || !selectedCarrier || products.length === 0) {
+      toast.error("Faltan datos requeridos para guardar la orden");
+      return;
+    }
+
+    const orderData = {
+      idAddressee: selectedAddressee.id,
+      idShipping: selectedCarrier.id,
+      status: true,
+      orderDetails: products.map((product) => ({
+        idAnimalProduct: product.id,
+      })),
+    };
+
+    saveOrderMutation.mutate(orderData, {
+      onSuccess: () => {
+        // Limpiar formulario después de guardar y cerrar modal
+        setProducts([]);
+        setSelectedOrder(null);
+        setStep(1);
+        setSelectedAddressee(null);
+        setSelectedCarrier(null);
+        setCheckedOrders(new Set());
+        setIsProductModalOpen(false);
+      },
+    });
   };
 
   const handleCheckOrder = (orderId: number, checked: boolean) => {
@@ -199,7 +296,7 @@ export function OrderEntryManagement() {
       
       // Crear un OrderEntry temporal para mantener compatibilidad
       setSelectedOrder({
-        id: firstAnimal.id,
+        id: 0, // ID 0 indica que es una nueva orden (no persistida). Evita enviar el ID del animal como ID de orden.
         nroIngreso: firstAnimal.id.toString(),
         codigo: firstAnimal.code,
         fechaIngreso: firstAnimal.createAt,
@@ -213,15 +310,6 @@ export function OrderEntryManagement() {
         setSelectedIntroductor(firstAnimal.introducer);
       }
       
-      // Generar productos de ejemplo para cada animal seleccionado
-      const generatedProducts = selectedAnimalsList.map((animal, index) => ({
-        id: index + 1,
-        especie: selectedSpecieName,
-        codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
-        subproducto: "Vísceras",
-        nroIngreso: animal.id.toString(),
-      }));
-      setProducts(generatedProducts);
       setStep(2); // Move to Step 2 (Addressee Selection)
     }
   };
@@ -305,17 +393,21 @@ export function OrderEntryManagement() {
     const animal = animalStock.find((a) => a.id === currentAnimalId);
     if (!animal) return;
 
+    if (selectedProducts.size === 0) {
+      toast.error("Debe seleccionar al menos un producto");
+      return;
+    }
+
     const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
 
     // Crear productos solo para el animal actual usando los datos de la API
     const newProducts: ProductSubproduct[] = [];
-    let productId = products.length + 1;
 
     selectedProducts.forEach((productStockId) => {
       const productStock = availableProducts.find((p) => p.id === productStockId);
       if (productStock) {
         newProducts.push({
-          id: productId++,
+          id: productStock.id, // Usar el id real del producto de la API
           especie: selectedSpecieName,
           codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
           subproducto: productStock.speciesProduct.productName,
@@ -324,21 +416,62 @@ export function OrderEntryManagement() {
       }
     });
 
-    setProducts([...products, ...newProducts]);
-    setSelectedProducts(new Set());
+    // Agregar productos a la lista para mostrar en la tabla
+    const updatedProducts = [...products, ...newProducts];
+    setProducts(updatedProducts);
 
-    // Pasar al siguiente animal o cerrar
-    const animalsArray = Array.from(checkedOrders);
-    const currentIndex = animalsArray.indexOf(currentAnimalId);
+    // Guardar la selección en cache (para mantener los checks)
+    const newCache = new Map(productSelectionsCache);
+    newCache.set(currentAnimalId, new Set(selectedProducts));
+    setProductSelectionsCache(newCache);
 
-    if (currentIndex < animalsArray.length - 1) {
-      // Hay más animales, pasar al siguiente
-      setCurrentAnimalId(animalsArray[currentIndex + 1]);
-    } else {
-      // Era el último animal, cerrar modal
-      setIsProductModalOpen(false);
-      setCurrentAnimalId(null);
+    // Preparar datos para guardar en BD
+    if (!selectedAddressee || !selectedCarrier) {
+      toast.error("Faltan datos requeridos para guardar");
+      return;
     }
+
+    const orderData = {
+      idAddressee: selectedAddressee.id,
+      idShipping: selectedCarrier.id,
+      status: true,
+      orderDetails: updatedProducts.map((product) => ({
+        idAnimalProduct: product.id,
+      })),
+    };
+
+    // Guardar en BD
+    saveOrderMutation.mutate(orderData, {
+      onSuccess: (response) => {
+        // Guardar el orderId de la respuesta para usarlo en las siguientes llamadas
+        if (response && typeof response === 'object' && 'data' in response) {
+          const data = response.data as any;
+          if (data?.id && !savedOrderId) {
+            setSavedOrderId(data.id);
+          }
+        }
+        
+        // Limpiar selección actual (pero mantener en cache)
+        setSelectedProducts(new Set());
+        
+        // Pasar al siguiente animal si hay más
+        const animalsArray = Array.from(checkedOrders);
+        const currentIndex = animalsArray.indexOf(currentAnimalId);
+
+        if (currentIndex < animalsArray.length - 1) {
+          // Hay más animales, pasar al siguiente
+          setCurrentAnimalId(animalsArray[currentIndex + 1]);
+        } else {
+          // Era el último animal, cerrar modal
+          setIsProductModalOpen(false);
+          setCurrentAnimalId(null);
+        }
+      },
+      onError: () => {
+        // En caso de error, no limpiar la selección para que el usuario pueda reintentar
+        toast.error("Error al guardar los productos");
+      },
+    });
   };
 
   const handleToggleProduct = (productId: number) => {
@@ -349,6 +482,31 @@ export function OrderEntryManagement() {
       newSelected.add(productId);
     }
     setSelectedProducts(newSelected);
+    
+    // Guardar en cache para este animal
+    if (currentAnimalId) {
+      const newCache = new Map(productSelectionsCache);
+      newCache.set(currentAnimalId, newSelected);
+      setProductSelectionsCache(newCache);
+    }
+  };
+
+  // Función para finalizar el pedido y limpiar todo para empezar uno nuevo
+  const handleFinalize = () => {
+    toast.success("Pedido completado exitosamente");
+    
+    // Limpiar todo y volver al paso 1
+    setProducts([]);
+    setSelectedOrder(null);
+    setStep(1);
+    setSelectedAddressee(null);
+    setSelectedCarrier(null);
+    setCheckedOrders(new Set());
+    setIsProductModalOpen(false);
+    setCurrentAnimalId(null);
+    setSavedOrderId(null);
+    setProductSelectionsCache(new Map());
+    setSelectedProducts(new Set());
   };
 
   return (
@@ -463,19 +621,11 @@ export function OrderEntryManagement() {
                   variant="outline"
                   className="text-purple-600 border-purple-600 hover:bg-purple-50"
                   onClick={handleOpenProductModal}
+                  disabled={checkedOrders.size === 0}
                 >
                   <ShoppingBag className="h-4 w-4 mr-2" />
                   PRODUCTOS O SUBPRODUCTOS
                 </Button>
-                {products.length > 0 && (
-                  <Button
-                    className="bg-teal-600 hover:bg-teal-700"
-                    onClick={handleSave}
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    GUARDAR
-                  </Button>
-                )}
               </div>
             </div>
 
@@ -513,16 +663,21 @@ export function OrderEntryManagement() {
                 <TableBody>
                   {products.length === 0 ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-center py-8 text-gray-500"
-                      >
-                        No hay productos agregados
+                      <TableCell colSpan={4} className="text-center py-16">
+                        <div className="flex flex-col items-center justify-center">
+                          <ShoppingBag className="h-16 w-16 text-gray-400 mb-4" />
+                          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                            No hay productos agregados
+                          </h3>
+                          <p className="text-sm text-gray-500 text-center max-w-md">
+                            Haga clic en el botón "PRODUCTOS O SUBPRODUCTOS" para agregar productos a esta orden
+                          </p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    products.map((product) => (
-                      <TableRow key={product.id} className="hover:bg-gray-50/50 transition-colors">
+                    products.map((product, index) => (
+                      <TableRow key={`${product.id}-${product.nroIngreso}-${index}`} className="hover:bg-gray-50/50 transition-colors">
                         <TableCell className="text-sm text-center border">
                           <div className="flex flex-col">
                             <span className="font-medium">
@@ -557,6 +712,29 @@ export function OrderEntryManagement() {
                 </TableBody>
               </Table>
             </div>
+
+            {/* Botón Finalizar - Solo se muestra si hay productos */}
+            {products.length > 0 && (
+              <div className="flex justify-center pt-6">
+                <Button
+                  className="bg-primary hover:bg-primary-700 px-12 py-6 text-lg"
+                  onClick={handleFinalize}
+                  disabled={saveOrderMutation.isPending}
+                >
+                  {saveOrderMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      FINALIZANDO...
+                    </>
+                  ) : (
+                    <>
+                      <CheckSquare className="h-5 w-5 mr-2" />
+                      FINALIZAR PEDIDO
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -722,7 +900,16 @@ export function OrderEntryManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedOrders.length === 0 ? (
+                  {stockQuery.isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-16">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                          <span className="text-sm text-gray-500">Cargando animales...</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : paginatedOrders.length === 0 ? (
                     <TableRow>
                       <TableCell
                         colSpan={5}
@@ -1030,38 +1217,64 @@ export function OrderEntryManagement() {
                     Seleccione{" "}
                     {productType === "producto" ? "productos" : "subproductos"}:
                   </h3>
-                  {productsQuery.isLoading ? (
-                    <div className="text-center py-8 text-gray-500">
-                      Cargando productos...
+                  {allProductsQuery.isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3">
+                      <Loader2 className="h-10 w-10 animate-spin text-teal-600" />
+                      <span className="text-sm text-gray-500">Cargando {productType === "producto" ? "productos" : "subproductos"}...</span>
                     </div>
-                  ) : currentAnimalProducts.length === 0 ? (
+                  ) : allConfiguredProducts.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      No hay {productType === "producto" ? "productos" : "subproductos"} disponibles para este animal
+                      No hay {productType === "producto" ? "productos" : "subproductos"} configurados para esta especie
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-3">
-                      {currentAnimalProducts.map((product) => (
-                        <div
-                          key={product.id}
-                          className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg border transition-colors"
-                        >
-                          <Checkbox
-                            id={product.id.toString()}
-                            checked={selectedProducts.has(product.id)}
-                            onCheckedChange={() => handleToggleProduct(product.id)}
-                            className="h-5 w-5"
-                            disabled={!product.available || product.confiscation}
-                          />
-                          <label
-                            htmlFor={product.id.toString()}
-                            className={`text-base font-medium leading-none cursor-pointer flex-1 ${
-                              !product.available || product.confiscation ? 'text-gray-400 line-through' : ''
+                      {allConfiguredProducts.map((configProduct) => {
+                        // 1. Buscar si hay stock disponible de este producto
+                        const stockProduct = currentAnimalProducts.find(
+                          (p) => p.speciesProduct.id === configProduct.id
+                        );
+                        
+                        // 2. Buscar si este producto está en la orden existente (para obtener su ID)
+                        const orderProduct = existingOrderData?.orderDetails?.find(
+                          (d) => d.animalProduct?.speciesProduct?.productCode === configProduct.productCode
+                        );
+                        
+                        // 3. Verificar si este producto está en la orden (por productCode)
+                        const isInOrder = orderId && assignedProductCodes.has(configProduct.productCode);
+                        
+                        // Lógica de disponibilidad:
+                        // - Si hay stock → Disponible (sin importar si está en la orden)
+                        // - Si NO hay stock pero está en la orden → Disponible (ya lo guardaste en este pedido)
+                        // - Si NO hay stock y NO está en la orden → Bloqueado
+                        const isAvailable = !!stockProduct || isInOrder;
+                        
+                        // El ID del producto: usar el del stock si existe, sino el de la orden
+                        const productStockId = stockProduct?.id || orderProduct?.animalProduct?.id;
+                        
+                        return (
+                          <div
+                            key={configProduct.id}
+                            className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
+                              isAvailable ? "hover:bg-gray-50" : "bg-gray-100 opacity-60 cursor-not-allowed"
                             }`}
                           >
-                            {product.speciesProduct.productName}
-                          </label>
-                        </div>
-                      ))}
+                            <Checkbox
+                              id={`prod-${configProduct.id}`}
+                              checked={isAvailable && productStockId ? selectedProducts.has(productStockId) : false}
+                              onCheckedChange={() => isAvailable && productStockId && handleToggleProduct(productStockId)}
+                              disabled={!isAvailable}
+                            />
+                            <label
+                              htmlFor={`prod-${configProduct.id}`}
+                              className={`text-sm font-medium leading-none ${
+                                isAvailable ? "cursor-pointer" : "cursor-not-allowed text-gray-500"
+                              }`}
+                            >
+                              {configProduct.productName} - {configProduct.productCode}
+                            </label>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1080,7 +1293,7 @@ export function OrderEntryManagement() {
 
           {/* Footer con botones */}
           <div className="border-t px-6 py-4 bg-muted/20">
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-between gap-2">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1091,15 +1304,31 @@ export function OrderEntryManagement() {
                 Cancelar
               </Button>
               <Button
-                className="bg-teal-600 hover:bg-teal-700"
                 onClick={handleSaveProductsForAnimal}
-                disabled={selectedProducts.size === 0}
+                disabled={selectedProducts.size === 0 || saveOrderMutation.isPending}
               >
-                <Save className="h-4 w-4 mr-2" />
-                {Array.from(checkedOrders).indexOf(currentAnimalId!) <
-                checkedOrders.size - 1
-                  ? `Guardar y Siguiente (${selectedProducts.size})`
-                  : `Guardar y Finalizar (${selectedProducts.size})`}
+                {saveOrderMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    GUARDANDO...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {(() => {
+                      const hasProducts = products.some(
+                        (p) => p.nroIngreso === currentAnimalId?.toString()
+                      );
+                      const animalsArray = Array.from(checkedOrders);
+                      const isLastAnimal = animalsArray.indexOf(currentAnimalId!) === animalsArray.length - 1;
+                      
+                      if (hasProducts) {
+                        return isLastAnimal ? `Actualizar y Finalizar (${selectedProducts.size})` : `Actualizar y Siguiente (${selectedProducts.size})`;
+                      }
+                      return isLastAnimal ? `Guardar y Finalizar (${selectedProducts.size})` : `Guardar y Siguiente (${selectedProducts.size})`;
+                    })()}
+                  </>
+                )}
               </Button>
             </div>
           </div>

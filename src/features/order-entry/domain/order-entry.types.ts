@@ -59,3 +59,42 @@ export interface ProductSubproduct {
 export interface OrderEntryFilters {
   searchTerm: string;
 }
+
+export interface SpecieProductConfig {
+  id: number;
+  idSpecies: number;
+  idProductType: number;
+  productName: string;
+  productCode: string;
+  idAnimalSex: number | null;
+  displayOrder: number;
+  status: boolean;
+}
+
+export interface OrderDetailResponse {
+  id: number;
+  idOrder: number;
+  idAnimalProduct: number;
+  status: boolean;
+  animalProduct: {
+    id: number;
+    idDetailsSpeciesCertificate: number;
+    idSpeciesProduct: number;
+    available: boolean;
+    confiscation: boolean;
+    status: boolean;
+    speciesProduct: SpecieProductConfig;
+  };
+}
+
+export interface OrderByIdAndDetailResponse {
+  id: number;
+  idAddressee: number;
+  idOrderStatus: number;
+  idOrderType: number;
+  idShipping: number;
+  idVeterinarian: number;
+  requestedDate: string;
+  status: boolean;
+  orderDetails: OrderDetailResponse[];
+}
