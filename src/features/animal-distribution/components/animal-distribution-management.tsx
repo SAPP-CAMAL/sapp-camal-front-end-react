@@ -36,6 +36,11 @@ import {
   X,
   PencilLine,
   CircleEllipsis,
+  Calendar as CalendarIcon,
+  Info,
+  MoreVertical,
+  ShoppingBag,
+  Receipt,
 } from "lucide-react";
 import {
   Dialog,
@@ -43,13 +48,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { AnimalDistribution } from "../domain/animal-distribution.types";
+import type { AnimalDistribution, PaginationMeta, Order } from "../domain/animal-distribution.types";
+import { mapOrderToDistribution } from "../domain/animal-distribution.types";
+import { getActiveLinesDataService } from "@/features/antemortem/server/db/antemortem.service";
+import type { LineItem } from "@/features/antemortem/domain/line.types";
+import { getPaginatedOrders } from "../server/db/animal-distribution.service";
+import { ProductsModal } from "@/features/order-entry/components/products-modal";
 
 export function AnimalDistributionManagement() {
-  const [date, setDate] = useState<Date>(new Date());
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(new Date());
   const [selectedSpecie, setSelectedSpecie] = useState<string>("Bovino");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,6 +75,26 @@ export function AnimalDistributionManagement() {
     useState<AnimalDistribution | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const certificateRef = useRef<HTMLDivElement>(null);
+  
+  // Estados para cargar especies desde la API
+  const [availableLines, setAvailableLines] = useState<LineItem[]>([]);
+  const [isLoadingLines, setIsLoadingLines] = useState(false);
+  
+  // Estado para controlar si el filtro de fecha está activo
+  const [isDateFilterActive, setIsDateFilterActive] = useState(false);
+  
+  // Estados para los datos de distribuciones desde la API
+  const [distributions, setDistributions] = useState<AnimalDistribution[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]); // Pedidos completos para acceder a detalles
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+  const [isLoadingDistributions, setIsLoadingDistributions] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null); // Pedido seleccionado para el modal
+  
+  // Estados para el modal de productos
+  const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
+  const [selectedOrderForProducts, setSelectedOrderForProducts] = useState<Order | null>(null);
+  const [productType, setProductType] = useState<"producto" | "subproducto">("producto");
 
   const handleGeneratePDF = () => {
     if (!certificateRef.current) return;
@@ -244,74 +281,102 @@ export function AnimalDistributionManagement() {
     printWindow.document.close();
   };
 
-  // Datos de ejemplo
-  const distributions = [
-    {
-      id: 4615,
-      nroDistribucion: "4618",
-      fechaDistribucion: "2025-07-08 09:39:35",
-      nombreDestinatario: "MARIA NELY LIMA/Cód:109",
-      lugarDestino: "MACAS Amazonas.Puestos: 120 -121",
-      placaMedioTransporte: "ICM-0095/SEGUNDO MILLA",
-      idsIngresos: "[23552]",
-      estado: "REGISTRADO" as const,
-    },
-    {
-      id: 4619,
-      nroDistribucion: "4618",
-      fechaDistribucion: "2025-07-08 09:39:35",
-      nombreDestinatario: "MARIA NELY LIMA/Cód:109",
-      lugarDestino: "MACAS Amazonas.Puestos: 120 -121",
-      placaMedioTransporte: "ICM-0095/SEGUNDO MILLA",
-      idsIngresos: "[23552]",
-      estado: "REGISTRADO" as const,
-    },
-    {
-      id: 4618,
-      nroDistribucion: "4618",
-      fechaDistribucion: "2025-07-08 09:39:35",
-      nombreDestinatario: "MARIA NELY LIMA/Cód:109",
-      lugarDestino: "MACAS Amazonas.Puestos: 120 -121",
-      placaMedioTransporte: "ICM-0095/SEGUNDO MILLA",
-      idsIngresos: "[23552]",
-      estado: "REGISTRADO" as const,
-    },
-    {
-      id: 4617,
-      nroDistribucion: "4617",
-      fechaDistribucion: "2025-07-07 12:53:12",
-      nombreDestinatario: "ALEXANDER VASQUEZ/Cód:24",
-      lugarDestino: "MACAS Amazonas. S. Ampliación E234",
-      placaMedioTransporte: "IMA-1519/ESTEBAN ALIRIO",
-      idsIngresos: "[23485]",
-      estado: "ENTREGADO" as const,
-    },
-    {
-      id: 4616,
-      nroDistribucion: "4616",
-      fechaDistribucion: "2025-07-07 12:53:12",
-      nombreDestinatario: "ALEXANDER VASQUEZ/Cód:24",
-      lugarDestino: "MACAS Amazonas. S. Ampliación E234",
-      placaMedioTransporte: "IMA-1519/ESTEBAN ALIRIO",
-      idsIngresos: "[23359]",
-      estado: "ENTREGADO" as const,
-    },
-  ];
+  // Función para cargar todas las especies disponibles
+  const loadAvailableLines = async () => {
+    try {
+      setIsLoadingLines(true);
+      const response = await getActiveLinesDataService();
+      setAvailableLines(response);
 
-  const filteredDistributions = distributions.filter((dist) =>
-    Object.values(dist).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+      // Establecer la primera línea como especie activa si hay datos
+      if (response.length > 0) {
+        setSelectedSpecie(response[0].description);
+      }
+    } catch (error) {
+      console.error('Error cargando especies disponibles:', error);
+      setAvailableLines([]);
+    } finally {
+      setIsLoadingLines(false);
+    }
+  };
 
-  // Calcular paginación
-  const totalPages = Math.ceil(filteredDistributions.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedDistributions = filteredDistributions.slice(
-    startIndex,
-    endIndex
-  );
+  // Función para cargar distribuciones desde la API
+  const loadDistributions = async () => {
+    try {
+      setIsLoadingDistributions(true);
+      setLoadError(null);
+      
+      // Encontrar el ID de la especie seleccionada
+      const selectedLine = availableLines.find(line => line.description === selectedSpecie);
+      const idSpecie = selectedLine?.idSpecie;
+      
+      const filters: any = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
+      
+      // Agregar idSpecie si existe
+      if (idSpecie) {
+        filters.idSpecie = idSpecie;
+      }
+      
+      // Solo agregar filtros de fecha si está activo
+      if (isDateFilterActive) {
+        filters.startDate = format(startDate, "yyyy-MM-dd");
+        filters.endDate = format(endDate, "yyyy-MM-dd");
+      }
+      
+      // Agregar término de búsqueda si existe
+      if (searchTerm) {
+        filters.searchTerm = searchTerm;
+      }
+      
+      const response = await getPaginatedOrders(filters);
+      
+      if (response.code === 201 && response.data) {
+        // Guardar los pedidos completos
+        setOrders(response.data.items);
+        // Mapear los pedidos al formato de distribuciones
+        const mappedDistributions = response.data.items.map(mapOrderToDistribution);
+        setDistributions(mappedDistributions);
+        setMeta(response.data.meta);
+      } else {
+        setOrders([]);
+        setDistributions([]);
+        setMeta(null);
+      }
+    } catch (error) {
+      console.error("Error loading distributions:", error);
+      setLoadError("Error al cargar las distribuciones");
+      setOrders([]);
+      setDistributions([]);
+      setMeta(null);
+    } finally {
+      setIsLoadingDistributions(false);
+    }
+  };
+  
+  // Efecto para cargar especies disponibles al montar el componente
+  useEffect(() => {
+    loadAvailableLines();
+  }, []);
+  
+  // Efecto para cargar distribuciones cuando cambien los filtros
+  useEffect(() => {
+    // Solo cargar si ya tenemos las líneas disponibles
+    if (availableLines.length > 0) {
+      loadDistributions();
+    }
+  }, [currentPage, itemsPerPage, isDateFilterActive, startDate, endDate, searchTerm, selectedSpecie, availableLines]);
+
+  // Los datos ahora vienen de la API (estado: distributions)
+
+  // Los datos ya vienen filtrados de la API, solo mostramos lo que viene
+  const filteredDistributions = distributions;
+
+  // La paginación la maneja la API, solo mostramos los datos
+  const paginatedDistributions = filteredDistributions;
+  const totalPages = meta?.totalPages || 1;
 
   // Resetear a página 1 cuando cambie el filtro de búsqueda o el tamaño de página
   const handleSearchChange = (value: string) => {
@@ -319,10 +384,33 @@ export function AnimalDistributionManagement() {
     setCurrentPage(1);
   };
 
-  // Resetear a página 1 cuando cambie el tamaño de página
+  // Resetear a página 1 cuando cambie el tamaño de página, las fechas o el filtro de fecha
   useEffect(() => {
     setCurrentPage(1);
-  }, [itemsPerPage]);
+  }, [itemsPerPage, startDate, endDate, isDateFilterActive]);
+
+  // Función para aplicar el filtro de fecha
+  const handleApplyDateFilter = () => {
+    // Validar que la fecha fin no sea anterior a la fecha inicio
+    if (endDate < startDate) {
+      alert("La fecha fin no puede ser anterior a la fecha inicio");
+      return;
+    }
+    setIsDateFilterActive(true);
+  };
+
+  // Función para limpiar el filtro de fecha
+  const handleClearDateFilter = () => {
+    setIsDateFilterActive(false);
+  };
+
+  // Función para establecer las fechas de hoy
+  const handleTodayClick = () => {
+    const today = new Date();
+    setStartDate(today);
+    setEndDate(today);
+    setIsDateFilterActive(true); // Activar el filtro al seleccionar hoy
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -332,68 +420,146 @@ export function AnimalDistributionManagement() {
           DISTRIBUCIÓN DE ANIMALES
         </h1>
         <p className="text-sm text-gray-600">
-          Fecha de faenamiento:{" "}
-          {format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
+          {isDateFilterActive ? (
+            <>
+              Mostrando distribuciones del{" "}
+              <span className="font-semibold">{format(startDate, "dd/MM/yyyy")}</span>
+              {" "}al{" "}
+              <span className="font-semibold">{format(endDate, "dd/MM/yyyy")}</span>
+            </>
+          ) : (
+            "Mostrando todas las distribuciones"
+          )}
         </p>
       </div>
 
       {/* Filters Card */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            {/* Date Picker */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-end">
+            {/* Date Range Picker */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Fecha de faenamiento:
+                Rango de fechas:
               </label>
-              <DatePicker
-                inputClassName="bg-secondary"
-                selected={date}
-                onChange={(newDate) => newDate && setDate(newDate)}
-              />
+              <div className="flex gap-2 items-end">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500">Desde:</span>
+                  <DatePicker
+                    inputClassName="bg-secondary"
+                    selected={startDate}
+                    onChange={(newDate) => newDate && setStartDate(newDate)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500">Hasta:</span>
+                  <DatePicker
+                    inputClassName="bg-secondary"
+                    selected={endDate}
+                    onChange={(newDate) => newDate && setEndDate(newDate)}
+                  />
+                </div>
+                {!isDateFilterActive ? (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleApplyDateFilter}
+                    className="bg-teal-600 hover:bg-teal-700 whitespace-nowrap"
+                    title="Filtrar por este rango de fechas"
+                  >
+                    <CalendarIcon className="h-4 w-4 mr-1" />
+                    Filtrar
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTodayClick}
+                      className="whitespace-nowrap"
+                      title="Filtrar solo hoy"
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-1" />
+                      Hoy
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleClearDateFilter}
+                      className="whitespace-nowrap text-gray-700"
+                      title="Mostrar todas las fechas"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Limpiar filtro
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Species Buttons */}
-            <div className="flex-1 space-y-2">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Especie:
               </label>
-              <div className="flex gap-2">
-                <Button
-                  variant={selectedSpecie === "Bovino" ? "default" : "outline"}
-                  onClick={() => setSelectedSpecie("Bovino")}
-                  className={
-                    selectedSpecie === "Bovino"
-                      ? "bg-teal-600 hover:bg-teal-700"
-                      : ""
-                  }
-                >
-                  Bovino
-                </Button>
-                <Button
-                  variant={selectedSpecie === "Porcino" ? "default" : "outline"}
-                  onClick={() => setSelectedSpecie("Porcino")}
-                  className={
-                    selectedSpecie === "Porcino"
-                      ? "bg-teal-600 hover:bg-teal-700"
-                      : ""
-                  }
-                >
-                  Porcino
-                </Button>
-                <Button
-                  variant={
-                    selectedSpecie === "Ovino-Caprino" ? "default" : "outline"
-                  }
-                  onClick={() => setSelectedSpecie("Ovino-Caprino")}
-                  className={
-                    selectedSpecie === "Ovino-Caprino"
-                      ? "bg-teal-600 hover:bg-teal-700"
-                      : ""
-                  }
-                >
-                  Ovino-Caprino
-                </Button>
+              <div className="flex gap-2 flex-wrap">
+                {isLoadingLines ? (
+                  <div className="text-sm text-gray-500">Cargando especies...</div>
+                ) : availableLines.length > 0 ? (
+                  availableLines.map((line) => (
+                    <Button
+                      key={line.id}
+                      variant={selectedSpecie === line.description ? "default" : "outline"}
+                      onClick={() => setSelectedSpecie(line.description)}
+                      className={
+                        selectedSpecie === line.description
+                          ? "bg-teal-600 hover:bg-teal-700"
+                          : ""
+                      }
+                    >
+                      {line.description}
+                    </Button>
+                  ))
+                ) : (
+                  // Fallback a botones estáticos si no hay datos de la API
+                  <>
+                    <Button
+                      variant={selectedSpecie === "Bovino" ? "default" : "outline"}
+                      onClick={() => setSelectedSpecie("Bovino")}
+                      className={
+                        selectedSpecie === "Bovino"
+                          ? "bg-teal-600 hover:bg-teal-700"
+                          : ""
+                      }
+                    >
+                      Bovino
+                    </Button>
+                    <Button
+                      variant={selectedSpecie === "Porcino" ? "default" : "outline"}
+                      onClick={() => setSelectedSpecie("Porcino")}
+                      className={
+                        selectedSpecie === "Porcino"
+                          ? "bg-teal-600 hover:bg-teal-700"
+                          : ""
+                      }
+                    >
+                      Porcino
+                    </Button>
+                    <Button
+                      variant={
+                        selectedSpecie === "Ovino-Caprino" ? "default" : "outline"
+                      }
+                      onClick={() => setSelectedSpecie("Ovino-Caprino")}
+                      className={
+                        selectedSpecie === "Ovino-Caprino"
+                          ? "bg-teal-600 hover:bg-teal-700"
+                          : ""
+                      }
+                    >
+                      Ovino-Caprino
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -404,8 +570,27 @@ export function AnimalDistributionManagement() {
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="text-sm text-gray-600">
-              {filteredDistributions.length} registros
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-600">
+                {filteredDistributions.length} registros
+                {isDateFilterActive && (
+                  <span className="text-teal-600 font-medium"> (filtrados por fecha)</span>
+                )}
+              </div>
+              {/* Indicador de rango de fechas - solo visible si el filtro está activo */}
+              {isDateFilterActive && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-md">
+                  <CalendarIcon className="h-4 w-4 text-teal-600" />
+                  <span className="text-sm font-medium text-teal-700">
+                    {format(startDate, "dd/MM/yyyy")} - {format(endDate, "dd/MM/yyyy")}
+                  </span>
+                  {filteredDistributions.length > 0 && (
+                    <span className="ml-1 px-2 py-0.5 bg-teal-600 text-white text-xs font-semibold rounded-full">
+                      {filteredDistributions.length}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 items-center flex-1 max-w-md">
@@ -429,7 +614,93 @@ export function AnimalDistributionManagement() {
           </div>
 
           {/* Table */}
-          <div className="relative overflow-auto border-2 rounded-lg">
+          {isLoadingDistributions ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mb-4"></div>
+              <p className="text-sm text-gray-500">Cargando distribuciones...</p>
+            </div>
+          ) : loadError ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="bg-red-100 rounded-full p-4 mb-4">
+                <AlertCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                Error al cargar distribuciones
+              </h3>
+              <p className="text-sm text-gray-500 text-center max-w-md mb-4">
+                {loadError}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadDistributions()}
+              >
+                Reintentar
+              </Button>
+            </div>
+          ) : filteredDistributions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="bg-gray-100 rounded-full p-4 mb-4">
+                <Info className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                No hay distribuciones registradas
+              </h3>
+              <p className="text-sm text-gray-500 text-center max-w-md">
+                {isDateFilterActive ? (
+                  <>
+                    No se encontraron distribuciones entre el{" "}
+                    <span className="font-medium text-gray-700">
+                      {format(startDate, "dd/MM/yyyy")}
+                    </span>
+                    {" "}y el{" "}
+                    <span className="font-medium text-gray-700">
+                      {format(endDate, "dd/MM/yyyy")}
+                    </span>
+                  </>
+                ) : (
+                  "No se encontraron distribuciones"
+                )}
+                {searchTerm && (
+                  <>
+                    {" "}que coincidan con &quot;<span className="font-medium text-gray-700">{searchTerm}</span>&quot;
+                  </>
+                )}
+              </p>
+              <div className="flex gap-2 mt-4">
+                {isDateFilterActive ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTodayClick}
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      Ver distribuciones de hoy
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleClearDateFilter}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Ver todas las distribuciones
+                    </Button>
+                  </>
+                ) : searchTerm && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Limpiar búsqueda
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="relative overflow-auto border-2 rounded-lg">
         <Table>
           <TableHeader>
             <TableRow className="bg-teal-600 hover:bg-teal-600">
@@ -442,7 +713,7 @@ export function AnimalDistributionManagement() {
               <TableHead className="text-center border font-bold text-white py-3">
                 <div className="flex flex-col items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span className="text-xs leading-tight">Fecha de<br />Distribución</span>
+                  <span className="text-xs leading-tight">Fecha de<br />PEDIDO</span>
                 </div>
               </TableHead>
               <TableHead className="text-center border font-bold text-white py-3">
@@ -466,7 +737,7 @@ export function AnimalDistributionManagement() {
               <TableHead className="text-center border font-bold text-white py-3">
                 <div className="flex flex-col items-center gap-1">
                   <Package className="w-4 h-4" />
-                  <span className="text-xs leading-tight">Ids.<br />Ingresos</span>
+                  <span className="text-xs leading-tight">Ingresos</span>
                 </div>
               </TableHead>
               <TableHead className="text-center border font-bold text-white py-3">
@@ -488,11 +759,6 @@ export function AnimalDistributionManagement() {
               // Separar fecha y hora
               const [fecha, hora] = dist.fechaDistribucion.split(" ");
               
-              // Separar nombre y código del destinatario
-              const nombreParts = dist.nombreDestinatario.split("/");
-              const nombre = nombreParts[0] || "";
-              const codigo = nombreParts[1] || "";
-              
               // Separar placa y conductor
               const placaParts = dist.placaMedioTransporte.split("/");
               const placa = placaParts[0] || "";
@@ -510,10 +776,7 @@ export function AnimalDistributionManagement() {
                     </div>
                   </TableCell>
                   <TableCell className="text-xs text-center border py-2">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{nombre}</span>
-                      <span className="text-muted-foreground">{codigo}</span>
-                    </div>
+                    <span className="font-medium">{dist.nombreDestinatario}</span>
                   </TableCell>
                   <TableCell className="text-xs text-center border py-2">
                     <div className="flex flex-col">
@@ -535,13 +798,19 @@ export function AnimalDistributionManagement() {
                   <TableCell className="text-center border">
                     <Badge
                     className={
-                        dist.estado === "REGISTRADO"
+                        dist.estado === "PENDIENTE"
                           ? "bg-white text-orange-600 border border-orange-600 hover:bg-orange-600 hover:text-white hover:border-orange-700 flex items-center gap-1 justify-center mx-auto w-fit"
-                          : "bg-primary hover:bg-green-600 flex items-center gap-1 justify-center mx-auto w-fit"
+                          : dist.estado === "APROBADO"
+                          ? "bg-primary hover:bg-green-600 flex items-center gap-1 justify-center mx-auto w-fit"
+                          : dist.estado === "RECHAZADO"
+                          ? "bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white hover:border-red-700 flex items-center gap-1 justify-center mx-auto w-fit"
+                          : "bg-teal-600 hover:bg-teal-700 flex items-center gap-1 justify-center mx-auto w-fit"
                       }
                     >
-                      {dist.estado === "REGISTRADO" ? (
+                      {dist.estado === "PENDIENTE" ? (
                         <AlertCircle className="h-3 w-3" />
+                      ) : dist.estado === "RECHAZADO" ? (
+                        <X className="h-3 w-3" />
                       ) : (
                         <CheckCircle2 className="h-3 w-3" />
                       )}
@@ -550,17 +819,50 @@ export function AnimalDistributionManagement() {
                   </TableCell>
                   <TableCell className="text-center border">
                     <div className="flex justify-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
-                        onClick={() => {
-                          setSelectedDistribution(dist);
-                          setIsModalOpen(true);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedDistribution(dist);
+                              // Encontrar el pedido completo correspondiente
+                              const order = orders.find(o => o.id === dist.id);
+                              setSelectedOrder(order || null);
+                              setIsModalOpen(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver Certificado
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              const order = orders.find(o => o.id === dist.id);
+                              setSelectedOrderForProducts(order || null);
+                              setIsProductsModalOpen(true);
+                            }}
+                          >
+                            <ShoppingBag className="h-4 w-4 mr-2" />
+                            Productos y Subproductos
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              // TODO: Generar ticket
+                              console.log('Generar ticket para orden:', dist.id);
+                            }}
+                          >
+                            <Receipt className="h-4 w-4 mr-2" />
+                            Ticket
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -568,16 +870,17 @@ export function AnimalDistributionManagement() {
             })}
           </TableBody>
         </Table>
-          </div>
+            </div>
+          )}
 
           {/* Paginación */}
-          {filteredDistributions.length > 0 && (
+          {meta && meta.totalItems > 0 && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4">
               <div className="flex items-center gap-3">
                 <div className="text-sm text-muted-foreground">
-                  Mostrando {startIndex + 1} a{" "}
-                  {Math.min(endIndex, filteredDistributions.length)} de{" "}
-                  {filteredDistributions.length} registros
+                  Mostrando {((currentPage - 1) * itemsPerPage) + 1} a{" "}
+                  {Math.min(currentPage * itemsPerPage, meta.totalItems)} de{" "}
+                  {meta.totalItems} registros
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Mostrar:</span>
@@ -658,7 +961,7 @@ export function AnimalDistributionManagement() {
 
       {/* Modal de Detalles */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="!max-w-none w-[90vw] sm:w-[85vw] md:w-[90vw] max-h-[95vh] overflow-y-auto scrollbar-hide p-3 sm:p-4 md:p-6">
+        <DialogContent className="max-w-none! w-[90vw] sm:w-[85vw] md:w-[90vw] max-h-[95vh] overflow-y-auto scrollbar-hide p-3 sm:p-4 md:p-6">
           <DialogHeader>
             <DialogTitle className="text-center text-sm sm:text-base md:text-lg font-bold text-gray-700 uppercase px-2 sm:px-4">
               CERTIFICACIÓN SANITARIA DE ORIGEN Y MOVILIZACIÓN DE CANALES Y
@@ -866,41 +1169,54 @@ export function AnimalDistributionManagement() {
                           <span className="text-xs leading-tight">PESO DE TODA<br />LA CANAL</span>
                         </div>
                       </TableHead>
-                      <TableHead className="text-center border font-bold text-white py-2 px-1">
-                        <div className="flex flex-col items-center gap-1">
-                          <Hash className="w-4 h-4" />
-                          <span className="text-xs leading-tight">NRO.<br />Ingreso</span>
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-center border font-bold text-white py-2 px-1">
-                        <div className="flex flex-col items-center gap-1">
-                          <Eye className="w-4 h-4" />
-                          <span className="text-xs leading-tight">Opción<br />(PRODUCTO)</span>
-                        </div>
-                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow>
-                      <TableCell className="text-center border py-2 px-1">
-                        <div className="flex flex-col text-xs">
-                          <span className="font-medium">PORCINO [103]</span>
-                          <span className="text-muted-foreground">[02P-026] - CERDO LEVANTE DEPILADO</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center border py-2 px-1">
-                        <span className="text-xs">Vísceras</span>
-                      </TableCell>
-                      <TableCell className="text-center border py-2 px-1">
-                        <span className="text-xs">-</span>
-                      </TableCell>
-                      <TableCell className="text-center border py-2 px-1">
-                        <span className="text-xs font-medium">23552</span>
-                      </TableCell>
-                      <TableCell className="text-center border py-2 px-1">
-                        <span className="text-xs">-</span>
-                      </TableCell>
-                    </TableRow>
+                    {selectedOrder?.orderDetails && selectedOrder.orderDetails.length > 0 ? (
+                      selectedOrder.orderDetails.map((detail) => {
+                        // Calcular el peso total desde animalWeighing
+                        const totalWeight = detail.animalProduct?.detailsSpeciesCertificate?.animalWeighing
+                          ?.reduce((sum, weighing) => sum + weighing.totalWeight, 0) || 0;
+                        
+                        return (
+                          <TableRow key={detail.id}>
+                            <TableCell className="text-center border py-2 px-1">
+                              <div className="flex flex-col text-xs">
+                                <span className="font-medium">
+                                  {selectedSpecie} [{detail.animalProduct?.detailsSpeciesCertificate?.animalCode || '-'}]
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {detail.animalProduct?.detailsSpeciesCertificate?.detailCertificateBrands?.productiveStage?.name || '-'}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center border py-2 px-1">
+                              <div className="flex flex-col text-xs">
+                                <span className="font-medium">
+                                  {detail.animalProduct?.speciesProduct?.productName || '-'}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {detail.animalProduct?.speciesProduct?.productCode || '-'}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center border py-2 px-1">
+                              <span className="text-xs font-medium">
+                                {totalWeight > 0 ? `${totalWeight.toFixed(2)} LB` : '-'}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center border py-4">
+                          <span className="text-sm text-muted-foreground">
+                            No hay productos disponibles
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -908,6 +1224,35 @@ export function AnimalDistributionManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Productos y Subproductos */}
+      {selectedOrderForProducts && (
+        <ProductsModal
+          isOpen={isProductsModalOpen}
+          onClose={() => {
+            setIsProductsModalOpen(false);
+            setSelectedOrderForProducts(null);
+            // Recargar distribuciones después de cerrar el modal
+            loadDistributions();
+          }}
+          orderId={selectedOrderForProducts.id}
+          specieId={availableLines.find(line => line.description === selectedSpecie)?.idSpecie || 0}
+          productType={productType}
+          onProductTypeChange={setProductType}
+          readOnly={selectedOrderForProducts.orderStatus.name !== 'PENDIENTE'}
+          orderStatus={selectedOrderForProducts.orderStatus.name}
+          animalIds={
+            // Extraer IDs únicos de animales de los orderDetails
+            Array.from(
+              new Set(
+                selectedOrderForProducts.orderDetails
+                  ?.map(d => d.animalProduct?.detailsSpeciesCertificate?.id)
+                  .filter((id): id is number => id !== undefined && id !== null)
+              )
+            )
+          }
+        />
+      )}
     </div>
   );
 }
