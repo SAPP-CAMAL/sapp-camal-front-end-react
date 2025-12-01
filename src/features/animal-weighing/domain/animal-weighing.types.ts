@@ -29,6 +29,7 @@ export type AnimalWeighingRow = {
   sectionDescription?: string; // Descripción de la sección
   idChannelSection?: number; // ID de la sección de canal
   idAnimalWeighing?: number; // ID del registro de pesaje para actualizar
+  idDetailAnimalWeighing?: number; // ID del detalle específico de pesaje (el que se usa para el ticket)
   isComplete?: boolean; // Si el animal tiene todas sus secciones pesadas
   hasPartialConfiscation?: boolean; // Si la sección tiene decomiso parcial
   addressee?: any; // Destinatario asignado a esta fila
