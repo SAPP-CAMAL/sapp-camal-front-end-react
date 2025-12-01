@@ -25,9 +25,20 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Search,
   Trash2,
@@ -44,6 +55,7 @@ import {
   ChevronRight,
   Loader2,
   Weight,
+  Info,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
@@ -67,7 +79,7 @@ import { Addressees } from "@/features/addressees/domain";
 import { Carrier } from "@/features/carriers/domain";
 import { useAllSpecies } from "@/features/specie/hooks/use-all-species";
 import { Specie } from "@/features/specie/domain";
-import { useStockBySpecie, useStockByIds, useSaveOrder, useSpecieProductsByCode, useOrderByIdAndDetail } from "../hooks";
+import { useStockBySpecie, useStockByIds, useSaveOrder, useSpecieProductsByCode, useOrderByIdAndDetail, useRemoveOrderDetail } from "../hooks";
 
 export function OrderEntryManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,6 +106,18 @@ export function OrderEntryManagement() {
   );
   const [selectedCarrier, setSelectedCarrier] = useState<Carrier | null>(null);
   const [savedOrderId, setSavedOrderId] = useState<number | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    productId: number | null;
+    idAnimalProduct: number | null;
+    productName: string;
+  }>({
+    isOpen: false,
+    productId: null,
+    idAnimalProduct: null,
+    productName: "",
+  });
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   
   // Cache en memoria de las selecciones de productos por animal (no se guarda en BD)
   // Estructura: Map<animalId, Set<productStockId>>
@@ -106,6 +130,7 @@ export function OrderEntryManagement() {
 
   // Hooks de API
   const saveOrderMutation = useSaveOrder();
+  const removeOrderDetailMutation = useRemoveOrderDetail();
   
   // Consumir API de especies
   const speciesQuery = useAllSpecies();
@@ -157,22 +182,16 @@ export function OrderEntryManagement() {
   useEffect(() => {
     if (!currentAnimalId) return;
     
-    console.log('Pre-selección - Animal:', currentAnimalId);
-    console.log('Cache completo:', productSelectionsCache);
-    
     // Primero verificar si hay selecciones en cache para este animal
     const cachedSelections = productSelectionsCache.get(currentAnimalId);
-    console.log('Selecciones en cache este animal:', cachedSelections);
     
     if (cachedSelections && cachedSelections.size > 0) {
-      console.log('Aplicando cache:', Array.from(cachedSelections));
       setSelectedProducts(new Set(cachedSelections));
       return;
     }
     
     // Si no hay cache, verificar si hay datos de la orden existente
     if (existingOrderData?.orderDetails) {
-      console.log('Usando datos de orden existente');
       const productIds = new Set<number>();
       existingOrderData.orderDetails.forEach((detail) => {
         // Buscar el producto en availableProducts que coincida con el productCode
@@ -188,7 +207,6 @@ export function OrderEntryManagement() {
       setSelectedProducts(productIds);
     } else if (!existingOrderQuery.isLoading) {
         // Si no hay datos (y no está cargando), limpiamos la selección
-        console.log('Limpiando selección');
         setSelectedProducts(new Set());
     }
   }, [existingOrderData, existingOrderQuery.isLoading, currentAnimalId, availableProducts, productSelectionsCache]);
@@ -237,8 +255,67 @@ export function OrderEntryManagement() {
     setCurrentPage(1);
   };
 
-  const handleRemoveProduct = (productId: number) => {
-    setProducts(products.filter((p) => p.id !== productId));
+  const handleRemoveProductClick = (productId: number, idAnimalProduct: number) => {
+    // Encontrar el producto para mostrar su nombre en el modal
+    const product = products.find((p) => p.id === productId);
+    
+    setDeleteConfirmation({
+      isOpen: true,
+      productId,
+      idAnimalProduct,
+      productName: product?.subproducto || "este producto",
+    });
+  };
+
+  const handleConfirmRemoveProduct = async () => {
+    const { productId, idAnimalProduct } = deleteConfirmation;
+    
+    if (!productId || !idAnimalProduct) return;
+    
+    console.log("ID Animal Product:", idAnimalProduct);
+    
+    // Llamar a la API para eliminar el producto
+    try {
+      await removeOrderDetailMutation.mutateAsync(idAnimalProduct);
+      
+      // Encontrar el producto que se va a eliminar para obtener su nroIngreso (animalId)
+      const productToRemove = products.find((p) => p.id === productId);
+      
+      if (productToRemove) {
+        const animalId = parseInt(productToRemove.nroIngreso);
+        
+        // Actualizar el cache de selecciones para este animal
+        const newCache = new Map(productSelectionsCache);
+        const animalSelections = newCache.get(animalId);
+        
+        if (animalSelections) {
+          // Remover el producto del cache
+          animalSelections.delete(productId);
+          
+          // Si no quedan productos seleccionados, eliminar la entrada del cache
+          if (animalSelections.size === 0) {
+            newCache.delete(animalId);
+          } else {
+            newCache.set(animalId, animalSelections);
+          }
+          
+          setProductSelectionsCache(newCache);
+        }
+      }
+      
+      // Remover el producto de la lista
+      setProducts(products.filter((p) => p.id !== productId));
+      
+      // Cerrar el modal
+      setDeleteConfirmation({
+        isOpen: false,
+        productId: null,
+        idAnimalProduct: null,
+        productName: "",
+      });
+    } catch (error) {
+      // El error ya se maneja en el hook
+    }
   };
 
   const handleSave = () => {
@@ -408,6 +485,7 @@ export function OrderEntryManagement() {
       if (productStock) {
         newProducts.push({
           id: productStock.id, // Usar el id real del producto de la API
+          idAnimalProduct: productStock.id, // ID del producto animal
           especie: selectedSpecieName,
           codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
           subproducto: productStock.speciesProduct.productName,
@@ -491,8 +569,17 @@ export function OrderEntryManagement() {
     }
   };
 
-  // Función para finalizar el pedido y limpiar todo para empezar uno nuevo
-  const handleFinalize = () => {
+  // Función para abrir el modal de finalización
+  const handleFinalizeClick = () => {
+    if (savedOrderId) {
+      setShowFinalizeModal(true);
+    } else {
+      toast.error("No hay orden guardada para finalizar");
+    }
+  };
+
+  // Función para confirmar la finalización del pedido
+  const handleConfirmFinalize = () => {
     toast.success("Pedido completado exitosamente");
     
     // Limpiar todo y volver al paso 1
@@ -507,6 +594,10 @@ export function OrderEntryManagement() {
     setSavedOrderId(null);
     setProductSelectionsCache(new Map());
     setSelectedProducts(new Set());
+    setSelectedEspecieId(null);
+    setSelectedIntroductor("");
+    setIntroductorSearch("");
+    setShowFinalizeModal(false);
   };
 
   return (
@@ -701,9 +792,14 @@ export function OrderEntryManagement() {
                               variant="ghost"
                               size="sm"
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleRemoveProduct(product.id)}
+                              onClick={() => handleRemoveProductClick(product.id, product.idAnimalProduct)}
+                              disabled={removeOrderDetailMutation.isPending && deleteConfirmation.productId === product.id}
                             >
-                              <Trash2 className="h-5 w-5" />
+                              {removeOrderDetailMutation.isPending && deleteConfirmation.productId === product.id ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-5 w-5" />
+                              )}
                             </Button>
                           </div>
                         </TableCell>
@@ -719,7 +815,7 @@ export function OrderEntryManagement() {
               <div className="flex justify-center pt-6">
                 <Button
                   className="bg-primary hover:bg-primary-700 px-12 py-6 text-lg"
-                  onClick={handleFinalize}
+                  onClick={handleFinalizeClick}
                   disabled={saveOrderMutation.isPending}
                 >
                   {saveOrderMutation.isPending ? (
@@ -1097,6 +1193,9 @@ export function OrderEntryManagement() {
                 </div>
               </div>
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Seleccione los productos y subproductos para los animales seleccionados
+            </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-1 overflow-hidden">
@@ -1335,6 +1434,84 @@ export function OrderEntryManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Confirmación de Eliminación */}
+      <AlertDialog open={deleteConfirmation.isOpen} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteConfirmation({
+            isOpen: false,
+            productId: null,
+            idAnimalProduct: null,
+            productName: "",
+          });
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Está seguro de eliminar este producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará <span className="font-semibold text-gray-900">{deleteConfirmation.productName}</span> de la orden.
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRemoveProduct}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={removeOrderDetailMutation.isPending}
+            >
+              {removeOrderDetailMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Eliminar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de Confirmación de Finalización */}
+      <AlertDialog open={showFinalizeModal} onOpenChange={setShowFinalizeModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-blue-600" />
+              Finalizar Pedido
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Una vez finalizado el pedido, <span className="font-semibold text-gray-900">no podrá modificar los productos desde aquí</span>.
+                </p>
+                <div className="flex items-center gap-2 text-sm bg-blue-50 p-3 rounded-md border border-blue-200">
+                  <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span>
+                    Si necesita actualizar el pedido, diríjase a:{" "}
+                    <span className="font-semibold text-blue-700">Distribución → Mis pedidos</span>
+                  </span>
+                </div>
+                <p className="text-sm">
+                  ¿Está seguro de que desea finalizar este pedido?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmFinalize}
+              className="bg-primary hover:bg-green-700"
+            >
+              <CheckSquare className="h-4 w-4 mr-2" />
+              Sí, Finalizar Pedido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

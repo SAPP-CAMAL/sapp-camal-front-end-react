@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2, Receipt } from "lucide-react";
+import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2, Ticket  } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLines } from "@/features/postmortem/hooks/use-lines";
@@ -1490,26 +1490,26 @@ export function AnimalWeighingManagement() {
                       </div>
                       {animalRows[0].idAnimalWeighing && (
                         <div className="flex items-center gap-1">
-                          {animalRows[0].idDetailAnimalWeighing && (
+                          {weighingStageId === 2 && animalRows[0].idDetailAnimalWeighing && (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="text-blue-600 hover:bg-blue-50 h-8 w-8 p-0"
+                                    className="text-black hover:bg-blue-50 h-8 w-8 p-0"
                                     onClick={() => handleDownloadPdf(animalRows[0].idDetailAnimalWeighing!)}
                                     disabled={downloadingPdfId === animalRows[0].idDetailAnimalWeighing}
                                   >
                                     {downloadingPdfId === animalRows[0].idDetailAnimalWeighing ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (
-                                      <Receipt className="h-4 w-4" />
+                                      <Ticket className="h-4 w-4" />
                                     )}
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Descargar Ticket PDF</p>
+                                  <p>Descargar Ticket</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -1574,7 +1574,7 @@ export function AnimalWeighingManagement() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="text-teal-600 hover:text-teal-700 h-7 px-2"
+                                  className="text-white hover:text-teal-700 h-7 px-2"
                                   onClick={() => setAddresseeSelectionRowId(row.id)}
                                 >
                                   <Edit className="h-3 w-3 mr-1" />
@@ -1899,26 +1899,26 @@ export function AnimalWeighingManagement() {
                     {hasDeleteButton && index === 0 && (
                       <TableCell className="py-0.5 px-0" rowSpan={rowSpan}>
                         <div className="flex items-center justify-center gap-1">
-                          {row.idAnimalWeighing && row.idDetailAnimalWeighing && (
+                          {weighingStageId === 2 && row.idAnimalWeighing && row.idDetailAnimalWeighing && (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="text-blue-600 hover:bg-blue-50 h-6 w-6 p-0"
+                                    className="text-black hover:bg-blue-50 h-6 w-6 p-0"
                                     onClick={() => handleDownloadPdf(row.idDetailAnimalWeighing!)}
                                     disabled={downloadingPdfId === row.idDetailAnimalWeighing}
                                   >
                                     {downloadingPdfId === row.idDetailAnimalWeighing ? (
                                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                     ) : (
-                                      <Receipt className="h-3.5 w-3.5" />
+                                      <Ticket className="h-3.5 w-3.5" />
                                     )}
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Descargar Ticket PDF</p>
+                                  <p>Descargar Ticket</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
