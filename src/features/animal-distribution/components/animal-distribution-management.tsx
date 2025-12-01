@@ -852,7 +852,7 @@ export function AnimalDistributionManagement() {
                             <ShoppingBag className="h-4 w-4 mr-2" />
                             Productos y Subproductos
                           </DropdownMenuItem>
-                          <DropdownMenuItem
+                          {/* <DropdownMenuItem
                             onClick={() => {
                               // TODO: Generar ticket
                               console.log('Generar ticket para orden:', dist.id);
@@ -860,7 +860,7 @@ export function AnimalDistributionManagement() {
                           >
                             <Receipt className="h-4 w-4 mr-2" />
                             Ticket
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

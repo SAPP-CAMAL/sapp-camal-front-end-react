@@ -27,11 +27,13 @@ import { Carrier } from "@/features/carriers/domain";
 interface Step3CarrierSelectionProps {
   onSelect: (carrier: Carrier) => void;
   onBack: () => void;
+  filterByStatus?: boolean; // Opcional: filtrar solo transportistas activos
 }
 
 export function Step3CarrierSelection({
   onSelect,
   onBack,
+  filterByStatus = false, // Por defecto no filtra por status
 }: Step3CarrierSelectionProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,11 +56,19 @@ export function Step3CarrierSelection({
       }),
   });
 
-  // Filtrar solo transportistas con transportType.code === "PRS" (PRODUCTOS Y SUBPRODUCTOS)
+  // Filtrar transportistas
   const allCarriers = data?.data?.items || [];
-  const filteredCarriers = allCarriers.filter(
-    (carrier) => carrier.vehicle?.vehicleDetail?.transportType?.code === "PRS"
-  );
+  const filteredCarriers = allCarriers.filter((carrier) => {
+    // Siempre filtrar por tipo de transporte "PRS" (PRODUCTOS Y SUBPRODUCTOS)
+    const isCorrectType = carrier.vehicle?.vehicleDetail?.transportType?.code === "PRS";
+    
+    // Si filterByStatus es true, también filtrar por status === true
+    if (filterByStatus) {
+      return isCorrectType && carrier.status === true;
+    }
+    
+    return isCorrectType;
+  });
 
   // Paginación en el frontend
   const totalItems = filteredCarriers.length;

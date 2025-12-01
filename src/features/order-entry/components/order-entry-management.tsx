@@ -597,6 +597,7 @@ export function OrderEntryManagement() {
         <Step3CarrierSelection
           onSelect={handleCarrierSelect}
           onBack={() => setStep(2)}
+          filterByStatus={true}
         />
       )}
 

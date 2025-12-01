@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2 } from "lucide-react";
+import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2, Receipt } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLines } from "@/features/postmortem/hooks/use-lines";
@@ -72,6 +72,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { http } from "@/lib/ky";
+import { Loader2 } from "lucide-react";
 
 // Constantes de conversión
 const LB_TO_KG = 0.453592; // 1 lb = 0.453592 kg
@@ -136,6 +138,7 @@ export function AnimalWeighingManagement() {
     idAnimalWeighing: null,
     animalCode: "",
   });
+  const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -234,6 +237,44 @@ export function AnimalWeighingManagement() {
           setDeleteConfirmation({ isOpen: false, idAnimalWeighing: null, animalCode: "" });
         },
       });
+    }
+  };
+
+  const handleDownloadPdf = async (idDetailAnimalWeighing: number) => {
+    try {
+      setDownloadingPdfId(idDetailAnimalWeighing);
+      
+      const response = await http.get(
+        `v1/1.0.0/detail-specie-cert/pdf-report-animal-tag-data-by-id?idDetailsAnimalWeighing=${idDetailAnimalWeighing}`,
+        {
+          headers: {
+            'Accept': 'application/pdf',
+          },
+        }
+      );
+
+      // Convertir la respuesta a blob
+      const blob = await response.blob();
+      
+      // Crear un URL temporal para el blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Crear un elemento <a> temporal para descargar el archivo
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ticket-${idDetailAnimalWeighing}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Limpiar
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("PDF descargado exitosamente");
+    } catch (error) {
+      toast.error("Error al descargar el PDF");
+    } finally {
+      setDownloadingPdfId(null);
     }
   };
 
@@ -349,6 +390,7 @@ export function AnimalWeighingManagement() {
         // Buscar si tiene peso guardado para esta etapa
         let savedWeight = 0;
         let idAnimalWeighing: number | undefined = undefined;
+        let idDetailAnimalWeighing: number | undefined = undefined;
         let addresseeData = undefined;
         let carrierData = undefined;
         if (animal.animalWeighing && animal.animalWeighing.length > 0) {
@@ -359,6 +401,7 @@ export function AnimalWeighingManagement() {
             // Para EN PIE, tomar el primer detalle
             savedWeight = parseFloat(weighingForStage.detailAnimalWeighing[0].netWeight) || 0;
             idAnimalWeighing = weighingForStage.id;
+            idDetailAnimalWeighing = weighingForStage.detailAnimalWeighing[0].id; // Capturar el ID del detalle
           }
           // Extraer addressee si existe
           if (weighingForStage?.addressee?.personRole?.person) {
@@ -395,13 +438,14 @@ export function AnimalWeighingManagement() {
           addressee: addresseeData,
           carrier: carrierData,
           idAnimalWeighing: idAnimalWeighing,
+          idDetailAnimalWeighing: idDetailAnimalWeighing, // Agregar el ID del detalle
         });
       });
     } else {
       // Si hay secciones de canal, solo mostrar filas con datos guardados
       allAnimals.forEach((animal) => {
         // Obtener TODAS las secciones guardadas para este animal en esta etapa
-        const savedSections = new Map<number, number>(); // Map<idConfigSectionChannel, peso>
+        const savedSections = new Map<number, { weight: number; detailId: number }>(); // Map<idConfigSectionChannel, {peso, idDetail}>
         let idAnimalWeighing: number | undefined = undefined;
 
         if (animal.animalWeighing && animal.animalWeighing.length > 0) {
@@ -415,7 +459,10 @@ export function AnimalWeighingManagement() {
                 if (detail.idConfigSectionChannel) {
                   savedSections.set(
                     detail.idConfigSectionChannel,
-                    parseFloat(detail.netWeight) || 0
+                    {
+                      weight: parseFloat(detail.netWeight) || 0,
+                      detailId: detail.id // Guardar el ID del detalle (204)
+                    }
                   );
                 }
               });
@@ -461,7 +508,9 @@ export function AnimalWeighingManagement() {
         // (las guardadas con peso y las faltantes sin peso)
         if (savedSectionsInCurrentType.size > 0) {
           channelSectionsData.data.forEach((section) => {
-            const savedWeight = savedSections.get(section.id) || 0;
+            const sectionData = savedSections.get(section.id);
+            const savedWeight = sectionData?.weight || 0;
+            const detailId = sectionData?.detailId;
             const hasPartialConfiscation = checkPartialConfiscation(animal, section.sectionCode);
 
             newRows.push({
@@ -479,6 +528,7 @@ export function AnimalWeighingManagement() {
               sectionDescription: section.description,
               idChannelSection: section.id,
               idAnimalWeighing: savedWeight > 0 ? idAnimalWeighing : undefined,
+              idDetailAnimalWeighing: detailId, // ID del detalle específico (204)
               hasPartialConfiscation,
               addressee: addresseeData,
               carrier: carrierData,
@@ -486,7 +536,7 @@ export function AnimalWeighingManagement() {
           });
         } else if (savedSections.size > 0) {
           // Si tiene secciones guardadas pero NO del tipo actual, mostrar solo las guardadas
-          savedSections.forEach((weight, sectionId) => {
+          savedSections.forEach((sectionData, sectionId) => {
             const sectionInfo = allKnownSections.get(sectionId);
             if (sectionInfo) {
               const hasPartialConfiscation = checkPartialConfiscation(animal, sectionInfo.code);
@@ -497,8 +547,8 @@ export function AnimalWeighingManagement() {
                 code: animal.code,
                 producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
                 brandName: animal.detailCertificateBrands?.detailsCertificateBrand?.brand?.name,
-                peso: weight,
-                savedWeight: weight,
+                peso: sectionData.weight,
+                savedWeight: sectionData.weight,
                 fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
                 idDetailsCertificateBrands: animal.idDetailsCertificateBrands,
                 idAnimalSex: animal.idAnimalSex,
@@ -506,6 +556,7 @@ export function AnimalWeighingManagement() {
                 sectionDescription: sectionInfo.description,
                 idChannelSection: sectionId,
                 idAnimalWeighing: idAnimalWeighing,
+                idDetailAnimalWeighing: sectionData.detailId, // ID del detalle específico (204)
                 hasPartialConfiscation,
                 addressee: addresseeData,
                 carrier: carrierData,
@@ -826,7 +877,6 @@ export function AnimalWeighingManagement() {
       setCapturedWeight(null);
       lastCapturedWeightRef.current = null;
     } catch (error) {
-      console.error('Error al guardar:', error);
       toast.error("Error al guardar el peso");
     }
   };
@@ -1110,7 +1160,7 @@ export function AnimalWeighingManagement() {
                 <span className="text-sm text-muted-foreground">Cargando...</span>
               ) : (
                 <Select
-                  value={weighingStageId?.toString()}
+                  value={weighingStageId?.toString() || ""}
                   onValueChange={(value) => {
                     const stage = weighingStagesData?.data.find(s => s.id.toString() === value);
                     if (stage) {
@@ -1181,7 +1231,7 @@ export function AnimalWeighingManagement() {
               <span className="text-sm text-muted-foreground">Cargando...</span>
             ) : (
               <Select
-                value={selectedLineId}
+                value={selectedLineId || ""}
                 onValueChange={(value) => {
                   const line = lines?.find(l => l.id.toString() === value);
                   if (line) {
@@ -1246,7 +1296,7 @@ export function AnimalWeighingManagement() {
               <span className="text-sm text-muted-foreground">Cargando...</span>
             ) : (
               <Select
-                value={selectedHook?.toString()}
+                value={selectedHook?.toString() || ""}
                 onValueChange={(value) => handleHookSelect(parseInt(value))}
               >
                 <SelectTrigger>
@@ -1301,7 +1351,7 @@ export function AnimalWeighingManagement() {
                 <span className="text-sm text-muted-foreground">Cargando...</span>
               ) : (
                 <Select
-                  value={selectedChannelTypeId?.toString()}
+                  value={selectedChannelTypeId?.toString() || ""}
                   onValueChange={(value) => setSelectedChannelTypeId(parseInt(value))}
                 >
                   <SelectTrigger>
@@ -1439,14 +1489,49 @@ export function AnimalWeighingManagement() {
                         <div className="text-sm">{animalRows[0].producto}</div>
                       </div>
                       {animalRows[0].idAnimalWeighing && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                          onClick={() => handleDeleteClick(animalRows[0].idAnimalWeighing!, animalCode)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {animalRows[0].idDetailAnimalWeighing && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-blue-600 hover:bg-blue-50 h-8 w-8 p-0"
+                                    onClick={() => handleDownloadPdf(animalRows[0].idDetailAnimalWeighing!)}
+                                    disabled={downloadingPdfId === animalRows[0].idDetailAnimalWeighing}
+                                  >
+                                    {downloadingPdfId === animalRows[0].idDetailAnimalWeighing ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Receipt className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Descargar Ticket PDF</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                                  onClick={() => handleDeleteClick(animalRows[0].idAnimalWeighing!, animalCode)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Eliminar Registro</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1812,17 +1897,54 @@ export function AnimalWeighingManagement() {
                       </div>
                     </TableCell>
                     {hasDeleteButton && index === 0 && (
-                      <TableCell className="py-0.5 px-0 w-8" rowSpan={rowSpan}>
-                        {row.idAnimalWeighing && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-6 w-6 p-0 mx-auto"
-                            onClick={() => handleDeleteClick(row.idAnimalWeighing!, row.code)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
+                      <TableCell className="py-0.5 px-0" rowSpan={rowSpan}>
+                        <div className="flex items-center justify-center gap-1">
+                          {row.idAnimalWeighing && row.idDetailAnimalWeighing && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-blue-600 hover:bg-blue-50 h-6 w-6 p-0"
+                                    onClick={() => handleDownloadPdf(row.idDetailAnimalWeighing!)}
+                                    disabled={downloadingPdfId === row.idDetailAnimalWeighing}
+                                  >
+                                    {downloadingPdfId === row.idDetailAnimalWeighing ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <Receipt className="h-3.5 w-3.5" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Descargar Ticket PDF</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          {row.idAnimalWeighing && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-6 w-6 p-0"
+                              onClick={() => handleDeleteClick(row.idAnimalWeighing!, row.code)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              
+                            </Button>
+                             </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Eliminar Registro</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
@@ -1978,6 +2100,7 @@ export function AnimalWeighingManagement() {
                   setTempAddressee(null);
                   setModalStep(1);
                 }}
+                filterByStatus={true}
               />
             )}
 
