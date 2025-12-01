@@ -1383,10 +1383,10 @@ export function AnimalDistributionManagement() {
                 </>
               )}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription asChild>
               {confirmAction.type === "approve" ? (
                 <p>
-                  ¿Está seguro de que desea <span className="font-semibold text-primary">aprobar</span> la orden{" "}
+                  ¿Está seguro de que desea <span className="font-semibold text-green-700">aprobar</span> la orden{" "}
                   <span className="font-semibold text-gray-900">{confirmAction.orderNumber}</span>?
                 </p>
               ) : (
