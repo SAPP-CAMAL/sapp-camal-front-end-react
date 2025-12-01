@@ -50,6 +50,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -60,6 +70,7 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type { AnimalDistribution, PaginationMeta, Order } from "../domain/animal-distribution.types";
 import { mapOrderToDistribution } from "../domain/animal-distribution.types";
 import { getActiveLinesDataService } from "@/features/antemortem/server/db/antemortem.service";
@@ -98,6 +109,20 @@ export function AnimalDistributionManagement() {
   const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
   const [selectedOrderForProducts, setSelectedOrderForProducts] = useState<Order | null>(null);
   const [productType, setProductType] = useState<"producto" | "subproducto">("producto");
+  
+  // Estados para modales de confirmación
+  const [confirmAction, setConfirmAction] = useState<{
+    isOpen: boolean;
+    type: "approve" | "reject" | null;
+    orderId: number | null;
+    orderNumber: string;
+  }>({
+    isOpen: false,
+    type: null,
+    orderId: null,
+    orderNumber: "",
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleGeneratePDF = () => {
     if (!certificateRef.current) return;
@@ -415,27 +440,57 @@ export function AnimalDistributionManagement() {
     setIsDateFilterActive(true); // Activar el filtro al seleccionar hoy
   };
 
-  // Función para aprobar una orden
-  const handleApproveOrder = async (orderId: number) => {
-    try {
-      const { updateOrderStatus } = await import("../server/db/animal-distribution.service");
-      await updateOrderStatus(orderId, "APR");
-      // Recargar las distribuciones
-      loadDistributions();
-    } catch (error) {
-      console.error("Error al aprobar la orden:", error);
-    }
+  // Función para abrir modal de confirmación de aprobación
+  const handleApproveOrderClick = (orderId: number, orderNumber: string) => {
+    setConfirmAction({
+      isOpen: true,
+      type: "approve",
+      orderId,
+      orderNumber,
+    });
   };
 
-  // Función para rechazar una orden
-  const handleRejectOrder = async (orderId: number) => {
+  // Función para abrir modal de confirmación de rechazo
+  const handleRejectOrderClick = (orderId: number, orderNumber: string) => {
+    setConfirmAction({
+      isOpen: true,
+      type: "reject",
+      orderId,
+      orderNumber,
+    });
+  };
+
+  // Función para confirmar la acción (aprobar o rechazar)
+  const handleConfirmAction = async () => {
+    if (!confirmAction.orderId || !confirmAction.type) return;
+
+    setIsProcessing(true);
     try {
       const { updateOrderStatus } = await import("../server/db/animal-distribution.service");
-      await updateOrderStatus(orderId, "REC");
+      const statusCode = confirmAction.type === "approve" ? "APR" : "REC";
+      await updateOrderStatus(confirmAction.orderId, statusCode);
+      
+      // Mostrar toast de éxito
+      const message = confirmAction.type === "approve" 
+        ? "Orden aprobada exitosamente" 
+        : "Orden rechazada exitosamente";
+      toast.success(message);
+      
       // Recargar las distribuciones
       loadDistributions();
+      
+      // Cerrar el modal
+      setConfirmAction({
+        isOpen: false,
+        type: null,
+        orderId: null,
+        orderNumber: "",
+      });
     } catch (error) {
-      console.error("Error al rechazar la orden:", error);
+      console.error("Error al cambiar el estado de la orden:", error);
+      toast.error("Error al cambiar el estado de la orden");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -893,15 +948,15 @@ export function AnimalDistributionManagement() {
                               </DropdownMenuLabel>
                               
                               <DropdownMenuItem
-                                onClick={() => handleApproveOrder(dist.id)}
-                                className="text-primary focus:text-green-600"
+                                onClick={() => handleApproveOrderClick(dist.id, dist.nroDistribucion)}
+                                className="text-green-600 focus:text-green-600"
                               >
                                 <Check className="h-4 w-4 mr-2" />
                                 Aprobar
                               </DropdownMenuItem>
                               
                               <DropdownMenuItem
-                                onClick={() => handleRejectOrder(dist.id)}
+                                onClick={() => handleRejectOrderClick(dist.id, dist.nroDistribucion)}
                                 className="text-red-600 focus:text-red-600"
                               >
                                 <X className="h-4 w-4 mr-2" />
@@ -1301,6 +1356,74 @@ export function AnimalDistributionManagement() {
           }
         />
       )}
+
+      {/* Modal de Confirmación para Aprobar/Rechazar */}
+      <AlertDialog open={confirmAction.isOpen} onOpenChange={(open) => {
+        if (!open && !isProcessing) {
+          setConfirmAction({
+            isOpen: false,
+            type: null,
+            orderId: null,
+            orderNumber: "",
+          });
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {confirmAction.type === "approve" ? (
+                <>
+                  <Check className="h-5 w-5 text-primary" />
+                  Aprobar Orden
+                </>
+              ) : (
+                <>
+                  <X className="h-5 w-5 text-red-600" />
+                  Rechazar Orden
+                </>
+              )}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction.type === "approve" ? (
+                <p>
+                  ¿Está seguro de que desea <span className="font-semibold text-primary">aprobar</span> la orden{" "}
+                  <span className="font-semibold text-gray-900">{confirmAction.orderNumber}</span>?
+                </p>
+              ) : (
+                <p>
+                  ¿Está seguro de que desea <span className="font-semibold text-red-700">rechazar</span> la orden{" "}
+                  <span className="font-semibold text-gray-900">{confirmAction.orderNumber}</span>?
+                </p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isProcessing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              disabled={isProcessing}
+              className={confirmAction.type === "approve" ? "bg-primary hover:bg-primary" : "bg-red-600 hover:bg-red-700"}
+            >
+              {isProcessing ? (
+                <>
+                  <CircleEllipsis className="h-4 w-4 mr-2 animate-spin" />
+                  Procesando...
+                </>
+              ) : confirmAction.type === "approve" ? (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Sí, Aprobar
+                </>
+              ) : (
+                <>
+                  <X className="h-4 w-4 mr-2" />
+                  Sí, Rechazar
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
