@@ -52,7 +52,8 @@ export function SimpleCarousel({
             alt="Logo SAPP"
             width={150}
             height={60}
-            className="object-contain drop-shadow-lg"
+            className="drop-shadow-lg"
+            style={{ width: 'auto', height: 'auto' }}
             priority
           />
         </div>
@@ -63,7 +64,8 @@ export function SimpleCarousel({
               alt="Logo Matadero"
               width={190}
               height={150}
-              className="object-contain drop-shadow-lg"
+              className="drop-shadow-lg"
+              style={{ width: 'auto', height: 'auto' }}
               priority
             />
           </div>
