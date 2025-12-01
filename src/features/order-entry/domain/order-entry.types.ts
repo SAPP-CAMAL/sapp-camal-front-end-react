@@ -50,6 +50,7 @@ export interface StockByIdsRequest {
 
 export interface ProductSubproduct {
   id: number;
+  idAnimalProduct: number;
   especie: string;
   codigoAnimal: string;
   subproducto: string;

@@ -26,3 +26,24 @@ export async function getPaginatedOrders(filters: OrdersFilters = {}): Promise<O
         throw error;
     }
 }
+
+/**
+ * Servicio para cambiar el estado de una orden
+ * @param orderId ID de la orden
+ * @param orderStatusCode Código del estado (APR o REC)
+ * @returns Promise con la respuesta
+ */
+export async function updateOrderStatus(orderId: number, orderStatusCode: "APR" | "REC"): Promise<any> {
+    try {
+        const response = await http.patch(`v1/1.0.0/orders/${orderId}`, {
+            json: {
+                orderStatusCode,
+            },
+        }).json<any>();
+
+        return response;
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        throw error;
+    }
+}

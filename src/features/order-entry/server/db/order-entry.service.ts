@@ -94,3 +94,9 @@ export const updateOrderDetails = async (orderId: number, data: UpdateOrderDetai
 		})
 		.json<CommonHttpResponse<SaveOrderResponse>>();
 };
+
+export const removeOrderDetail = async (idAnimalProduct: number) => {
+	return http
+		.delete(`v1/1.0.0/orders/remove-order-detail/${idAnimalProduct}`)
+		.json<CommonHttpResponse<any>>();
+};

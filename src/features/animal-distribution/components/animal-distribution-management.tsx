@@ -34,6 +34,7 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Check,
   PencilLine,
   CircleEllipsis,
   Calendar as CalendarIcon,
@@ -52,6 +53,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
@@ -410,6 +413,30 @@ export function AnimalDistributionManagement() {
     setStartDate(today);
     setEndDate(today);
     setIsDateFilterActive(true); // Activar el filtro al seleccionar hoy
+  };
+
+  // Función para aprobar una orden
+  const handleApproveOrder = async (orderId: number) => {
+    try {
+      const { updateOrderStatus } = await import("../server/db/animal-distribution.service");
+      await updateOrderStatus(orderId, "APR");
+      // Recargar las distribuciones
+      loadDistributions();
+    } catch (error) {
+      console.error("Error al aprobar la orden:", error);
+    }
+  };
+
+  // Función para rechazar una orden
+  const handleRejectOrder = async (orderId: number) => {
+    try {
+      const { updateOrderStatus } = await import("../server/db/animal-distribution.service");
+      await updateOrderStatus(orderId, "REC");
+      // Recargar las distribuciones
+      loadDistributions();
+    } catch (error) {
+      console.error("Error al rechazar la orden:", error);
+    }
   };
 
   return (
@@ -830,6 +857,9 @@ export function AnimalDistributionManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuLabel className="text-xs text-muted-foreground">
+                            Opciones
+                          </DropdownMenuLabel>
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedDistribution(dist);
@@ -852,15 +882,33 @@ export function AnimalDistributionManagement() {
                             <ShoppingBag className="h-4 w-4 mr-2" />
                             Productos y Subproductos
                           </DropdownMenuItem>
-                          {/* <DropdownMenuItem
-                            onClick={() => {
-                              // TODO: Generar ticket
-                              console.log('Generar ticket para orden:', dist.id);
-                            }}
-                          >
-                            <Receipt className="h-4 w-4 mr-2" />
-                            Ticket
-                          </DropdownMenuItem> */}
+                          
+                          {/* Solo mostrar opciones de cambio de estado si el estado es PENDIENTE */}
+                          {dist.estado === "PENDIENTE" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              
+                              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                Cambiar Estado
+                              </DropdownMenuLabel>
+                              
+                              <DropdownMenuItem
+                                onClick={() => handleApproveOrder(dist.id)}
+                                className="text-primary focus:text-green-600"
+                              >
+                                <Check className="h-4 w-4 mr-2" />
+                                Aprobar
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem
+                                onClick={() => handleRejectOrder(dist.id)}
+                                className="text-red-600 focus:text-red-600"
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Rechazar
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
