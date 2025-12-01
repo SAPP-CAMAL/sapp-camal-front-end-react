@@ -120,3 +120,29 @@
 .react-datepicker__day--keyboard-selected {
 	background-color: var(--color-background) !important;
 }
+
+.react-datepicker__time-list-item {
+	background-color: var(--color-background);
+	padding: 0.5rem 0.75rem;
+	color: var(--color-primary);
+	border-radius: var(--radius-md);
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.react-datepicker__time-list-item:not([aria-disabled='true']):hover {
+	background-color: var(--color-border);
+	color: var(--color-foreground);
+	cursor: pointer;
+}
+
+.react-datepicker__time-list-item[aria-disabled='true'] {
+	opacity: 0.6;
+	cursor: default;
+}
+
+/* Make the selected time visually match the selected day */
+.react-datepicker__time-list-item[aria-selected='true'],
+.react-datepicker__time-list-item.react-datepicker__time-list-item--selected {
+	background-color: var(--color-foreground) !important;
+	color: white;
+}

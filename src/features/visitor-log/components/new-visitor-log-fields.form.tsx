@@ -31,6 +31,7 @@ import {
 import { getUserPersonByFilterService } from "@/features/security/server/db/security.queries";
 import { SelectCompany } from "../visitor-log-management";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
 export type BrandCreating = {
   id: number;
   name: string;
@@ -244,9 +245,29 @@ export function VisitorLogFormFields() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Hora de Entrada</FormLabel>
-              <FormControl>
-                <Input type="datetime-local" {...field} />
-              </FormControl>
+                <FormControl>
+                  <DatePicker
+                    inputClassName="bg-secondary h-10 flex items-center"
+                    iconClassName="mt-1"
+                    selected={field.value ? new Date(field.value) : null}
+                    onChange={(date: Date | null) => {
+                      if (!date) {
+                        field.onChange(null);
+                        return;
+                      }
+                      field.onChange(date.toISOString());
+                    }}
+                    showTimeSelect
+                    timeCaption="Hora"
+                    timeFormat="hh:mm aa"
+                    timeIntervals={1}
+                    dateFormat="dd/MM/yyyy hh:mm aa"
+                    placeholderText="dd/mm/yyyy, hh:mm AM/PM"
+                    popperClassName="!z-[10000]"
+                    popperPlacement="bottom-start"
+
+                  />
+                </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -258,7 +279,27 @@ export function VisitorLogFormFields() {
             <FormItem>
               <FormLabel>Hora de Salida</FormLabel>
               <FormControl>
-                <Input type="datetime-local" {...field} />
+                  <DatePicker
+                    inputClassName="bg-secondary h-10 flex items-center"
+                    iconClassName="mt-1"
+                    selected={field.value ? new Date(field.value) : null}
+                    onChange={(date: Date | null) => {
+                      if (!date) {
+                        field.onChange(null);
+                        return;
+                      }
+                      field.onChange(date.toISOString());
+                    }}
+                    showTimeSelect
+                    timeCaption="Hora"
+                    timeFormat="hh:mm aa"
+                    timeIntervals={1}
+                    dateFormat="dd/MM/yyyy hh:mm aa"
+                    placeholderText="dd/mm/yyyy, hh:mm AM/PM"
+                    popperClassName="!z-[10000]"
+                    popperPlacement="bottom-start"
+
+                  />
               </FormControl>
               <FormMessage />
             </FormItem>
