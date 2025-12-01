@@ -33,7 +33,7 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 					<Button variant='outline' size='sm' className='bg-primary hover:bg-primary hover:text-white text-white'>
 						<FileText className='h-4 w-4' />
 						Ticket
-					</Button>|
+					</Button>
 
 					<ConfirmationDialog
 						title='¿Estás seguro de que deseas eliminar este ingreso?'
