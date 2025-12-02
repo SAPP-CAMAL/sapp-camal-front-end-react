@@ -9,8 +9,9 @@ import { getCorralGroupById, getCorralGroupBySpecieAndType } from '@/features/co
 import { getCorralById, getCorralsByTypeAndGroup } from '@/features/corral/server/db/corral.service';
 import { getStatusCorralsByDate } from '@/features/corral/server/db/status-corral.service';
 import { getAllProductiveStages } from '@/features/productive-stage/server/db/productive-stage.service';
+import { downloadAnimalTicketById } from '@/features/setting-certificate-brand/hooks/download-animal-ticket-by-id';
 
-const currentDate = format(new Date(), "yyyy-MM-dd");
+const currentDate = format(new Date(), 'yyyy-MM-dd');
 
 export const useStep2Animals = () => {
 	const {
@@ -32,8 +33,7 @@ export const useStep2Animals = () => {
 	useEffect(() => {
 		if (!selectedSpecie?.id) return;
 
-		validateSettingCertBrandCodesGeneration(selectedSpecie.id, currentDate)
-		.then(response => setCanCreateAdmissions(!response.data));
+		validateSettingCertBrandCodesGeneration(selectedSpecie.id, currentDate).then(response => setCanCreateAdmissions(!response.data));
 	}, [selectedSpecie?.id]);
 
 	const totalAnimals = animalAdmissionList.reduce(
@@ -169,6 +169,14 @@ export const useStep2Animals = () => {
 		handleUpdateAnimalAdmission({ ...incompleteData, animalAdmission, isOpen: true, isRetrieveFormData: false });
 	};
 
+	const handleDownloadTicketById = async (idSettingCertificateBrand: number | string) => {
+		toast.promise(downloadAnimalTicketById(idSettingCertificateBrand), {
+			loading: 'Descargando ticket...',
+			success: 'Ticket descargado correctamente',
+			error: 'Error al descargar el ticket',
+		});
+	};
+
 	return {
 		step2Accordion,
 		selectedCertificate,
@@ -188,6 +196,7 @@ export const useStep2Animals = () => {
 		handleNextStep3,
 		handleSetSelectedSpecie,
 		handleRemoveSelectedSpecie,
+		handleDownloadTicketById,
 
 		// Reconstruct data
 		handleReconstructAnimalAdmissionData,
