@@ -354,11 +354,6 @@ export function AnimalDistributionManagement() {
         filters.endDate = format(endDate, "yyyy-MM-dd");
       }
       
-      // Agregar término de búsqueda si existe
-      if (searchTerm) {
-        filters.searchTerm = searchTerm;
-      }
-      
       const response = await getPaginatedOrders(filters);
       
       if (response.code === 201 && response.data) {
@@ -395,12 +390,25 @@ export function AnimalDistributionManagement() {
     if (availableLines.length > 0) {
       loadDistributions();
     }
-  }, [currentPage, itemsPerPage, isDateFilterActive, startDate, endDate, searchTerm, selectedSpecie, availableLines]);
+  }, [currentPage, itemsPerPage, isDateFilterActive, startDate, endDate, selectedSpecie, availableLines]);
 
-  // Los datos ahora vienen de la API (estado: distributions)
-
-  // Los datos ya vienen filtrados de la API, solo mostramos lo que viene
-  const filteredDistributions = distributions;
+  // Filtrado local: buscar en todas las columnas
+  const filteredDistributions = distributions.filter((dist) => {
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Buscar en todas las columnas
+    return (
+      dist.nroDistribucion.toString().toLowerCase().includes(searchLower) ||
+      dist.fechaDistribucion.toLowerCase().includes(searchLower) ||
+      dist.nombreDestinatario.toLowerCase().includes(searchLower) ||
+      dist.lugarDestino.toLowerCase().includes(searchLower) ||
+      dist.placaMedioTransporte.toLowerCase().includes(searchLower) ||
+      dist.idsIngresos.toString().toLowerCase().includes(searchLower) ||
+      dist.estado.toLowerCase().includes(searchLower)
+    );
+  });
 
   // La paginación la maneja la API, solo mostramos los datos
   const paginatedDistributions = filteredDistributions;
