@@ -99,6 +99,9 @@ export function OrderEntryManagement() {
   const [selectedProducts, setSelectedProducts] = useState<Set<number>>(
     new Set()
   );
+  const [selectedSubproducts, setSelectedSubproducts] = useState<Set<number>>(
+    new Set()
+  );
   const [currentAnimalId, setCurrentAnimalId] = useState<number | null>(null);
   const [step, setStep] = useState(1);
   const [selectedAddressee, setSelectedAddressee] = useState<Addressees | null>(
@@ -120,8 +123,11 @@ export function OrderEntryManagement() {
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   
   // Cache en memoria de las selecciones de productos por animal (no se guarda en BD)
-  // Estructura: Map<animalId, Set<productStockId>>
-  const [productSelectionsCache, setProductSelectionsCache] = useState<Map<number, Set<number>>>(new Map());
+  // Estructura: Map<animalId, {productos: Set<productStockId>, subproductos: Set<productStockId>}>
+  const [productSelectionsCache, setProductSelectionsCache] = useState<Map<number, {productos: Set<number>, subproductos: Set<number>}>>(new Map());
+  
+  // Cache de todos los productos cargados (productos y subproductos) para poder encontrarlos al finalizar
+  const [productStockCache, setProductStockCache] = useState<Map<number, ProductStockItem>>(new Map());
 
   const searchParams = useSearchParams();
   const urlOrderId = searchParams.get("id");
@@ -178,15 +184,20 @@ export function OrderEntryManagement() {
     return codes;
   }, [existingOrderData]);
 
-  // Efecto para pre-seleccionar productos cuando cambia el animal
+  // Efecto para pre-seleccionar productos cuando cambia el animal o el tipo de producto
   useEffect(() => {
     if (!currentAnimalId) return;
     
     // Primero verificar si hay selecciones en cache para este animal
     const cachedSelections = productSelectionsCache.get(currentAnimalId);
     
-    if (cachedSelections && cachedSelections.size > 0) {
-      setSelectedProducts(new Set(cachedSelections));
+    if (cachedSelections) {
+      // Cargar las selecciones según el tipo actual
+      if (productType === "producto") {
+        setSelectedProducts(new Set(cachedSelections.productos));
+      } else {
+        setSelectedProducts(new Set(cachedSelections.subproductos));
+      }
       return;
     }
     
@@ -209,7 +220,18 @@ export function OrderEntryManagement() {
         // Si no hay datos (y no está cargando), limpiamos la selección
         setSelectedProducts(new Set());
     }
-  }, [existingOrderData, existingOrderQuery.isLoading, currentAnimalId, availableProducts, productSelectionsCache]);
+  }, [existingOrderData, existingOrderQuery.isLoading, currentAnimalId, availableProducts, productSelectionsCache, productType]);
+
+  // Efecto para cachear todos los productos cargados (productos y subproductos)
+  useEffect(() => {
+    if (availableProducts.length > 0) {
+      const newCache = new Map(productStockCache);
+      availableProducts.forEach((product) => {
+        newCache.set(product.id, product);
+      });
+      setProductStockCache(newCache);
+    }
+  }, [availableProducts]);
 
   // Aplanar el array de animales (cada elemento tiene un array animal[])
   const animalStock: AnimalStockItem[] = stockData.flatMap((item) => item.animal || []);
@@ -267,55 +289,47 @@ export function OrderEntryManagement() {
     });
   };
 
-  const handleConfirmRemoveProduct = async () => {
+  const handleConfirmRemoveProduct = () => {
     const { productId, idAnimalProduct } = deleteConfirmation;
     
     if (!productId || !idAnimalProduct) return;
     
-    console.log("ID Animal Product:", idAnimalProduct);
+    // Encontrar el producto que se va a eliminar para obtener su nroIngreso (animalId)
+    const productToRemove = products.find((p) => p.id === productId);
     
-    // Llamar a la API para eliminar el producto
-    try {
-      await removeOrderDetailMutation.mutateAsync(idAnimalProduct);
+    if (productToRemove) {
+      const animalId = parseInt(productToRemove.nroIngreso);
       
-      // Encontrar el producto que se va a eliminar para obtener su nroIngreso (animalId)
-      const productToRemove = products.find((p) => p.id === productId);
+      // Actualizar el cache de selecciones para este animal
+      const newCache = new Map(productSelectionsCache);
+      const animalSelections = newCache.get(animalId);
       
-      if (productToRemove) {
-        const animalId = parseInt(productToRemove.nroIngreso);
+      if (animalSelections) {
+        // Remover el producto del cache (puede estar en productos o subproductos)
+        animalSelections.productos.delete(productId);
+        animalSelections.subproductos.delete(productId);
         
-        // Actualizar el cache de selecciones para este animal
-        const newCache = new Map(productSelectionsCache);
-        const animalSelections = newCache.get(animalId);
-        
-        if (animalSelections) {
-          // Remover el producto del cache
-          animalSelections.delete(productId);
-          
-          // Si no quedan productos seleccionados, eliminar la entrada del cache
-          if (animalSelections.size === 0) {
-            newCache.delete(animalId);
-          } else {
-            newCache.set(animalId, animalSelections);
-          }
-          
-          setProductSelectionsCache(newCache);
+        // Si no quedan productos ni subproductos seleccionados, eliminar la entrada del cache
+        if (animalSelections.productos.size === 0 && animalSelections.subproductos.size === 0) {
+          newCache.delete(animalId);
+        } else {
+          newCache.set(animalId, animalSelections);
         }
+        
+        setProductSelectionsCache(newCache);
       }
-      
-      // Remover el producto de la lista
-      setProducts(products.filter((p) => p.id !== productId));
-      
-      // Cerrar el modal
-      setDeleteConfirmation({
-        isOpen: false,
-        productId: null,
-        idAnimalProduct: null,
-        productName: "",
-      });
-    } catch (error) {
-      // El error ya se maneja en el hook
     }
+    
+    // Remover el producto de la lista
+    setProducts(products.filter((p) => p.id !== productId));
+    
+    // Cerrar el modal
+    setDeleteConfirmation({
+      isOpen: false,
+      productId: null,
+      idAnimalProduct: null,
+      productName: "",
+    });
   };
 
   const handleSave = () => {
@@ -470,86 +484,78 @@ export function OrderEntryManagement() {
     const animal = animalStock.find((a) => a.id === currentAnimalId);
     if (!animal) return;
 
-    if (selectedProducts.size === 0) {
-      toast.error("Debe seleccionar al menos un producto");
-      return;
+    // Obtener las selecciones actuales del cache o crear nuevas
+    const cachedSelections = productSelectionsCache.get(currentAnimalId) || {
+      productos: new Set<number>(),
+      subproductos: new Set<number>()
+    };
+
+    // SIEMPRE actualizar las selecciones según el tipo actual (incluso si está vacío)
+    if (productType === "producto") {
+      cachedSelections.productos = new Set(selectedProducts);
+    } else {
+      cachedSelections.subproductos = new Set(selectedProducts);
     }
+
+    // Guardar la selección en cache ANTES de procesar
+    const newCache = new Map(productSelectionsCache);
+    newCache.set(currentAnimalId, cachedSelections);
+    setProductSelectionsCache(newCache);
+
+    // Combinar productos y subproductos
+    const allSelectedIds = new Set([
+      ...cachedSelections.productos,
+      ...cachedSelections.subproductos
+    ]);
 
     const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
 
-    // Crear productos solo para el animal actual usando los datos de la API
-    const newProducts: ProductSubproduct[] = [];
+    // Primero, eliminar productos existentes de este animal
+    const productsWithoutCurrentAnimal = products.filter(p => p.nroIngreso !== animal.id.toString());
+    
+    // Si hay selecciones, crear los productos
+    if (allSelectedIds.size > 0) {
+      const newProducts: ProductSubproduct[] = [];
 
-    selectedProducts.forEach((productStockId) => {
-      const productStock = availableProducts.find((p) => p.id === productStockId);
-      if (productStock) {
-        newProducts.push({
-          id: productStock.id, // Usar el id real del producto de la API
-          idAnimalProduct: productStock.id, // ID del producto animal
-          especie: selectedSpecieName,
-          codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
-          subproducto: productStock.speciesProduct.productName,
-          nroIngreso: animal.id.toString(),
-        });
-      }
-    });
+      allSelectedIds.forEach((productStockId) => {
+        // Buscar en el cache de productos en lugar de availableProducts
+        const productStock = productStockCache.get(productStockId);
+        if (productStock) {
+          newProducts.push({
+            id: productStock.id,
+            idAnimalProduct: productStock.id,
+            especie: selectedSpecieName,
+            codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
+            subproducto: productStock.speciesProduct.productName,
+            nroIngreso: animal.id.toString(),
+          });
+        }
+      });
 
-    // Agregar productos a la lista para mostrar en la tabla
-    const updatedProducts = [...products, ...newProducts];
-    setProducts(updatedProducts);
-
-    // Guardar la selección en cache (para mantener los checks)
-    const newCache = new Map(productSelectionsCache);
-    newCache.set(currentAnimalId, new Set(selectedProducts));
-    setProductSelectionsCache(newCache);
-
-    // Preparar datos para guardar en BD
-    if (!selectedAddressee || !selectedCarrier) {
-      toast.error("Faltan datos requeridos para guardar");
-      return;
+      // Agregar productos a la lista para mostrar en la tabla
+      const updatedProducts = [...productsWithoutCurrentAnimal, ...newProducts];
+      setProducts(updatedProducts);
+    } else {
+      // Si no hay selecciones, solo mantener los productos de otros animales
+      setProducts(productsWithoutCurrentAnimal);
     }
 
-    const orderData = {
-      idAddressee: selectedAddressee.id,
-      idShipping: selectedCarrier.id,
-      status: true,
-      orderDetails: updatedProducts.map((product) => ({
-        idAnimalProduct: product.id,
-      })),
-    };
+    // Limpiar selección actual
+    setSelectedProducts(new Set());
+    setSelectedSubproducts(new Set());
+    
+    // Pasar al siguiente animal si hay más
+    const animalsArray = Array.from(checkedOrders);
+    const currentIndex = animalsArray.indexOf(currentAnimalId);
 
-    // Guardar en BD
-    saveOrderMutation.mutate(orderData, {
-      onSuccess: (response) => {
-        // Guardar el orderId de la respuesta para usarlo en las siguientes llamadas
-        if (response && typeof response === 'object' && 'data' in response) {
-          const data = response.data as any;
-          if (data?.id && !savedOrderId) {
-            setSavedOrderId(data.id);
-          }
-        }
-        
-        // Limpiar selección actual (pero mantener en cache)
-        setSelectedProducts(new Set());
-        
-        // Pasar al siguiente animal si hay más
-        const animalsArray = Array.from(checkedOrders);
-        const currentIndex = animalsArray.indexOf(currentAnimalId);
-
-        if (currentIndex < animalsArray.length - 1) {
-          // Hay más animales, pasar al siguiente
-          setCurrentAnimalId(animalsArray[currentIndex + 1]);
-        } else {
-          // Era el último animal, cerrar modal
-          setIsProductModalOpen(false);
-          setCurrentAnimalId(null);
-        }
-      },
-      onError: () => {
-        // En caso de error, no limpiar la selección para que el usuario pueda reintentar
-        toast.error("Error al guardar los productos");
-      },
-    });
+    if (currentIndex < animalsArray.length - 1) {
+      // Hay más animales, pasar al siguiente
+      setCurrentAnimalId(animalsArray[currentIndex + 1]);
+    } else {
+      // Era el último animal, cerrar modal
+      setIsProductModalOpen(false);
+      setCurrentAnimalId(null);
+    }
   };
 
   const handleToggleProduct = (productId: number) => {
@@ -563,41 +569,140 @@ export function OrderEntryManagement() {
     
     // Guardar en cache para este animal
     if (currentAnimalId) {
+      const cachedSelections = productSelectionsCache.get(currentAnimalId) || {
+        productos: new Set<number>(),
+        subproductos: new Set<number>()
+      };
+      
+      // Actualizar según el tipo actual
+      if (productType === "producto") {
+        cachedSelections.productos = newSelected;
+      } else {
+        cachedSelections.subproductos = newSelected;
+      }
+      
       const newCache = new Map(productSelectionsCache);
-      newCache.set(currentAnimalId, newSelected);
+      newCache.set(currentAnimalId, cachedSelections);
       setProductSelectionsCache(newCache);
+    }
+  };
+
+  // Función para cambiar el tipo de producto guardando las selecciones actuales
+  const handleChangeProductType = (newType: "producto" | "subproducto") => {
+    if (newType === productType) return; // No hacer nada si es el mismo tipo
+    
+    // Guardar las selecciones actuales en el cache antes de cambiar
+    if (currentAnimalId) {
+      const cachedSelections = productSelectionsCache.get(currentAnimalId) || {
+        productos: new Set<number>(),
+        subproductos: new Set<number>()
+      };
+      
+      // Guardar según el tipo ACTUAL (antes de cambiar)
+      if (productType === "producto") {
+        cachedSelections.productos = new Set(selectedProducts);
+      } else {
+        cachedSelections.subproductos = new Set(selectedProducts);
+      }
+      
+      const newCache = new Map(productSelectionsCache);
+      newCache.set(currentAnimalId, cachedSelections);
+      setProductSelectionsCache(newCache);
+      
+      // Cambiar el tipo
+      setProductType(newType);
+      
+      // Cargar las selecciones del NUEVO tipo
+      if (newType === "producto") {
+        setSelectedProducts(new Set(cachedSelections.productos));
+      } else {
+        setSelectedProducts(new Set(cachedSelections.subproductos));
+      }
+    } else {
+      // Si no hay animal actual, solo cambiar el tipo
+      setProductType(newType);
     }
   };
 
   // Función para abrir el modal de finalización
   const handleFinalizeClick = () => {
-    if (savedOrderId) {
-      setShowFinalizeModal(true);
-    } else {
-      toast.error("No hay orden guardada para finalizar");
+    // Validar que haya productos y datos requeridos
+    if (products.length === 0) {
+      toast.error("Debe agregar al menos un producto");
+      return;
     }
+
+    if (!selectedAddressee || !selectedCarrier) {
+      toast.error("Faltan datos requeridos para guardar");
+      return;
+    }
+
+    // Abrir modal de confirmación
+    setShowFinalizeModal(true);
   };
 
   // Función para confirmar la finalización del pedido
   const handleConfirmFinalize = () => {
-    toast.success("Pedido completado exitosamente");
-    
-    // Limpiar todo y volver al paso 1
-    setProducts([]);
-    setSelectedOrder(null);
-    setStep(1);
-    setSelectedAddressee(null);
-    setSelectedCarrier(null);
-    setCheckedOrders(new Set());
-    setIsProductModalOpen(false);
-    setCurrentAnimalId(null);
-    setSavedOrderId(null);
-    setProductSelectionsCache(new Map());
-    setSelectedProducts(new Set());
-    setSelectedEspecieId(null);
-    setSelectedIntroductor("");
-    setIntroductorSearch("");
-    setShowFinalizeModal(false);
+    // Validar que haya productos y datos requeridos
+    if (products.length === 0) {
+      toast.error("Debe agregar al menos un producto");
+      setShowFinalizeModal(false);
+      return;
+    }
+
+    if (!selectedAddressee || !selectedCarrier) {
+      toast.error("Faltan datos requeridos para guardar");
+      setShowFinalizeModal(false);
+      return;
+    }
+
+    // Obtener todos los idAnimalProduct únicos (sin repetir)
+    const uniqueProductIds = Array.from(new Set(products.map(p => p.idAnimalProduct)));
+
+    const orderData = {
+      idAddressee: selectedAddressee.id,
+      idShipping: selectedCarrier.id,
+      status: true,
+      orderDetails: uniqueProductIds.map((idAnimalProduct) => ({
+        idAnimalProduct,
+      })),
+    };
+
+    // Guardar en BD
+    saveOrderMutation.mutate(orderData, {
+      onSuccess: (response) => {
+        // Guardar el orderId de la respuesta
+        if (response && typeof response === 'object' && 'data' in response) {
+          const data = response.data as any;
+          if (data?.id) {
+            setSavedOrderId(data.id);
+          }
+        }
+
+        toast.success("Pedido completado exitosamente");
+        
+        // Limpiar todo y volver al paso 1
+        setProducts([]);
+        setSelectedOrder(null);
+        setStep(1);
+        setSelectedAddressee(null);
+        setSelectedCarrier(null);
+        setCheckedOrders(new Set());
+        setIsProductModalOpen(false);
+        setCurrentAnimalId(null);
+        setSavedOrderId(null);
+        setProductSelectionsCache(new Map());
+        setSelectedProducts(new Set());
+        setSelectedEspecieId(null);
+        setSelectedIntroductor("");
+        setIntroductorSearch("");
+        setShowFinalizeModal(false);
+      },
+      onError: () => {
+        toast.error("Error al guardar el pedido");
+        setShowFinalizeModal(false);
+      },
+    });
   };
 
   return (
@@ -740,12 +845,6 @@ export function OrderEntryManagement() {
                     </TableHead>
                     <TableHead className="text-center border font-bold text-white py-3">
                       <div className="flex flex-col items-center gap-1">
-                        <Hash className="w-4 h-4" />
-                        <span className="text-xs">N° DE INGRESO</span>
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-center border font-bold text-white py-3">
-                      <div className="flex flex-col items-center gap-1">
                         <Trash2 className="w-4 h-4" />
                         <span className="text-xs">OPCIÓN</span>
                       </div>
@@ -755,7 +854,7 @@ export function OrderEntryManagement() {
                 <TableBody>
                   {products.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-16">
+                      <TableCell colSpan={3} className="text-center py-16">
                         <div className="flex flex-col items-center justify-center">
                           <ShoppingBag className="h-16 w-16 text-gray-400 mb-4" />
                           <h3 className="text-lg font-semibold text-gray-700 mb-2">
@@ -783,9 +882,6 @@ export function OrderEntryManagement() {
                         <TableCell className="text-sm text-center border">
                           {product.subproducto}
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-center border">
-                          {product.nroIngreso}
-                        </TableCell>
                         <TableCell className="text-center border">
                           <div className="flex justify-center">
                             <Button
@@ -793,13 +889,8 @@ export function OrderEntryManagement() {
                               size="sm"
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               onClick={() => handleRemoveProductClick(product.id, product.idAnimalProduct)}
-                              disabled={removeOrderDetailMutation.isPending && deleteConfirmation.productId === product.id}
                             >
-                              {removeOrderDetailMutation.isPending && deleteConfirmation.productId === product.id ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-5 w-5" />
-                              )}
+                              <Trash2 className="h-5 w-5" />
                             </Button>
                           </div>
                         </TableCell>
@@ -1287,7 +1378,7 @@ export function OrderEntryManagement() {
                 <div className="flex gap-2 justify-center">
                   <Button
                     variant={productType === "producto" ? "default" : "outline"}
-                    onClick={() => setProductType("producto")}
+                    onClick={() => handleChangeProductType("producto")}
                     className={
                       productType === "producto"
                         ? "bg-teal-600 hover:bg-teal-700"
@@ -1300,7 +1391,7 @@ export function OrderEntryManagement() {
                     variant={
                       productType === "subproducto" ? "default" : "outline"
                     }
-                    onClick={() => setProductType("subproducto")}
+                    onClick={() => handleChangeProductType("subproducto")}
                     className={
                       productType === "subproducto"
                         ? "bg-teal-600 hover:bg-teal-700"
@@ -1399,36 +1490,105 @@ export function OrderEntryManagement() {
                 onClick={() => {
                   setIsProductModalOpen(false);
                   setSelectedProducts(new Set());
+                  setCurrentAnimalId(null);
                 }}
               >
                 Cancelar
               </Button>
               <Button
-                onClick={handleSaveProductsForAnimal}
-                disabled={selectedProducts.size === 0 || saveOrderMutation.isPending}
-              >
-                {saveOrderMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    GUARDANDO...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {(() => {
-                      const hasProducts = products.some(
-                        (p) => p.nroIngreso === currentAnimalId?.toString()
-                      );
-                      const animalsArray = Array.from(checkedOrders);
-                      const isLastAnimal = animalsArray.indexOf(currentAnimalId!) === animalsArray.length - 1;
+                variant="outline"
+                onClick={() => {
+                  // Guardar selecciones actuales antes de cerrar
+                  if (currentAnimalId) {
+                    const animal = animalStock.find((a) => a.id === currentAnimalId);
+                    if (animal) {
+                      const cachedSelections = productSelectionsCache.get(currentAnimalId) || {
+                        productos: new Set<number>(),
+                        subproductos: new Set<number>()
+                      };
                       
-                      if (hasProducts) {
-                        return isLastAnimal ? `Actualizar y Finalizar (${selectedProducts.size})` : `Actualizar y Siguiente (${selectedProducts.size})`;
+                      // Actualizar según el tipo actual
+                      if (productType === "producto") {
+                        cachedSelections.productos = new Set(selectedProducts);
+                      } else {
+                        cachedSelections.subproductos = new Set(selectedProducts);
                       }
-                      return isLastAnimal ? `Guardar y Finalizar (${selectedProducts.size})` : `Guardar y Siguiente (${selectedProducts.size})`;
-                    })()}
-                  </>
-                )}
+                      
+                      const newCache = new Map(productSelectionsCache);
+                      newCache.set(currentAnimalId, cachedSelections);
+                      setProductSelectionsCache(newCache);
+
+                      // Combinar productos y subproductos
+                      const allSelectedIds = new Set([
+                        ...cachedSelections.productos,
+                        ...cachedSelections.subproductos
+                      ]);
+
+                      const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
+
+                      // Eliminar productos existentes de este animal
+                      const productsWithoutCurrentAnimal = products.filter(p => p.nroIngreso !== animal.id.toString());
+                      
+                      // Si hay selecciones, crear los productos
+                      if (allSelectedIds.size > 0) {
+                        const newProducts: ProductSubproduct[] = [];
+
+                        allSelectedIds.forEach((productStockId) => {
+                          // Buscar en el cache de productos en lugar de availableProducts
+                          const productStock = productStockCache.get(productStockId);
+                          if (productStock) {
+                            newProducts.push({
+                              id: productStock.id,
+                              idAnimalProduct: productStock.id,
+                              especie: selectedSpecieName,
+                              codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
+                              subproducto: productStock.speciesProduct.productName,
+                              nroIngreso: animal.id.toString(),
+                            });
+                          }
+                        });
+
+                        const updatedProducts = [...productsWithoutCurrentAnimal, ...newProducts];
+                        setProducts(updatedProducts);
+                      } else {
+                        setProducts(productsWithoutCurrentAnimal);
+                      }
+                    }
+                  }
+                  
+                  setIsProductModalOpen(false);
+                  setSelectedProducts(new Set());
+                  setCurrentAnimalId(null);
+                }}
+              >
+                <CheckSquare className="h-4 w-4 mr-2" />
+                Finalizar Selección
+              </Button>
+              <Button
+                onClick={handleSaveProductsForAnimal}
+              >
+                <>
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                  {(() => {
+                    const animalsArray = Array.from(checkedOrders);
+                    const isLastAnimal = animalsArray.indexOf(currentAnimalId!) === animalsArray.length - 1;
+                    
+                    // Obtener el total de productos + subproductos seleccionados para este animal
+                    const cachedSelections = productSelectionsCache.get(currentAnimalId!) || {
+                      productos: new Set<number>(),
+                      subproductos: new Set<number>()
+                    };
+                    
+                    // Actualizar con la selección actual según el tipo
+                    const currentProductos = productType === "producto" ? selectedProducts : cachedSelections.productos;
+                    const currentSubproductos = productType === "subproducto" ? selectedProducts : cachedSelections.subproductos;
+                    
+                    // Combinar ambos Sets para obtener el total
+                    const totalCount = new Set([...currentProductos, ...currentSubproductos]).size;
+                    
+                    return isLastAnimal ? (totalCount > 0 ? `Siguiente (${totalCount})` : 'Siguiente') : (totalCount > 0 ? `Siguiente (${totalCount})` : 'Siguiente');
+                  })()}
+                </>
               </Button>
             </div>
           </div>
@@ -1459,16 +1619,8 @@ export function OrderEntryManagement() {
             <AlertDialogAction
               onClick={handleConfirmRemoveProduct}
               className="bg-red-600 hover:bg-red-700"
-              disabled={removeOrderDetailMutation.isPending}
             >
-              {removeOrderDetailMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Eliminando...
-                </>
-              ) : (
-                "Eliminar"
-              )}
+              Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
