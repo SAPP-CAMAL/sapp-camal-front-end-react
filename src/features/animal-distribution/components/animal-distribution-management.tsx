@@ -1090,7 +1090,7 @@ export function AnimalDistributionManagement() {
                     NOMBRE DEL CENTRO DE FAENAMIENTO :
                   </p>
                   <p className="text-sm font-semibold">
-                    EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO DEL CANTÓN IBARRA
+                    EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO DEL CANTÓN RIOBAMBA
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -1185,13 +1185,13 @@ export function AnimalDistributionManagement() {
                     </p>
                     <p className="text-sm">
                       <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
-                      IBARRA
+                      RIOBAMBA
                     </p>
                     <p className="text-sm">
                       <span className="font-bold text-gray-600">
                         PARROQUIA:
                       </span>{" "}
-                      SAN MIGUEL DE IBARRA
+                      RIOBAMBA
                     </p>
                   </div>
                 </div>
@@ -1237,7 +1237,7 @@ export function AnimalDistributionManagement() {
                   </p>
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
-                    IBARRA
+                    RIOBAMBA
                   </p>
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">PARROQUIA:</span>{" "}

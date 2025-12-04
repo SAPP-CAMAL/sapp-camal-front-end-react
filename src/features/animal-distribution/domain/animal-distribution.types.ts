@@ -172,11 +172,11 @@ export interface AnimalDistribution {
 
 // Función para mapear Order a AnimalDistribution
 export function mapOrderToDistribution(order: Order): AnimalDistribution {
-  const addresseeName = order.addressee.personRole.person.fullName;
-  const destination = order.addressee.addresses.firstStree;
-  const vehiclePlate = order.shipping.vehicle.plate;
-  const driverName = order.shipping.person.fullName;
-  const ingresosCount = order.orderDetails.length;
+  const addresseeName = order.addressee?.personRole?.person?.fullName || "Sin nombre";
+  const destination = order.addressee?.addresses?.firstStree || "Sin dirección";
+  const vehiclePlate = order.shipping?.vehicle?.plate || "Sin placa";
+  const driverName = order.shipping?.person?.fullName || "Sin conductor";
+  const ingresosCount = order.orderDetails?.length || 0;
 
   return {
     id: order.id,
@@ -186,6 +186,6 @@ export function mapOrderToDistribution(order: Order): AnimalDistribution {
     lugarDestino: destination,
     placaMedioTransporte: `${vehiclePlate}/${driverName}`,
     idsIngresos: ingresosCount.toString(),
-    estado: order.orderStatus.name as any,
+    estado: order.orderStatus?.name as any || "PENDIENTE",
   };
 }
