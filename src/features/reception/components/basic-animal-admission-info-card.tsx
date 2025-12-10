@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => {
-	const { selectedSpecie, handleRemoveAnimalAdmission, handleReconstructAnimalAdmissionData } = useStep2Animals();
+	const { selectedSpecie, handleRemoveAnimalAdmission, handleReconstructAnimalAdmissionData, handleDownloadTicketById } = useStep2Animals();
 	return (
 		<Card>
 			<CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
@@ -30,7 +30,7 @@ export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => 
 						<Edit className='h-4 w-4' />
 						{animalAdmissionItem.isRetrieveFormData ? 'Cargando...' : 'Editar'}
 					</Button>
-					<Button variant='outline' size='sm' className='bg-primary hover:bg-primary hover:text-white text-white'>
+					<Button variant='outline' size='sm' className='bg-primary hover:bg-primary hover:text-white text-white' onClick={() => handleDownloadTicketById(animalAdmissionItem?.animalAdmission?.id!)}>
 						<FileText className='h-4 w-4' />
 						Ticket
 					</Button>
