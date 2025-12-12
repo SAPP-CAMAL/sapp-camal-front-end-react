@@ -27,6 +27,12 @@ import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 import { capitalizeText } from "@/lib/utils";
 import { getVehicleByFilterService } from "../server/db/vehicle.service";
 import NewVehicleForm from "./new-vehicle.form";
+import { toCapitalize } from "@/lib/toCapitalize";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function VehiclesManagement({}) {
   const searchCarriersParams = useSearchParams();
@@ -39,8 +45,8 @@ export function VehiclesManagement({}) {
       limit: parseAsInteger.withDefault(10),
       plate: parseAsString.withDefault(""),
       brand: parseAsString.withDefault(""),
-      transportType: parseAsInteger.withDefault(0),
-      vehicleType: parseAsInteger.withDefault(0),
+      transportTypeId: parseAsInteger.withDefault(0),
+      vehicleTypeId: parseAsInteger.withDefault(0),
     },
     {
       history: "push",
@@ -53,19 +59,20 @@ export function VehiclesManagement({}) {
         page: searchParams.page,
         limit: searchParams.limit,
         ...(searchParams.plate != "" && { plate: searchParams.plate }),
-        ...(searchParams.transportType != 0 && {
-          transportTypeId: searchParams.transportType,
-          vehicleTypeId: searchParams.vehicleType,
+        ...(searchParams.brand != "" && { brand: searchParams.brand }),
+        ...(searchParams.transportTypeId != 0 && {
+          transportTypeId: searchParams.transportTypeId,
+          vehicleTypeId: searchParams.vehicleTypeId,
         }),
       }),
   });
 
   const debouncePlate = useDebouncedCallback(
-    (text: string) => setSearchParams({ plate: text }),
+    (text: string) => setSearchParams({ plate: text, page: 1 }),
     500
   );
   const debounceBrand = useDebouncedCallback(
-    (text: string) => setSearchParams({ brand: text }),
+    (text: string) => setSearchParams({ brand: text, page: 1 }),
     500
   );
 
@@ -73,23 +80,10 @@ export function VehiclesManagement({}) {
     <div>
       <section className="mb-4 flex justify-between">
         <div>
-          <h1 className="font-semibold text-xl">Vehículos</h1>
+          <h2>Vehículos</h2>
           <p className="text-gray-600 text-sm mt-1">
             Gestión de vehículos registrados en el sistema
           </p>
-        </div>
-        <div>
-          <NewVehicleForm
-            vehicleTypes={catalogueVehiclesType.data?.data ?? []}
-            transportsTypes={catalogueTransportsType.data?.data ?? []}
-            onSuccess={() => query.refetch()}
-            trigger={
-              <Button>
-                <PlusIcon className="h-4 w-4" />
-                Nuevo Vehículo
-              </Button>
-            }
-          />
         </div>
       </section>
       <Card className="mb-4">
@@ -103,8 +97,8 @@ export function VehiclesManagement({}) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-x-4 justify-between">
-            <div className="flex flex-col w-1/5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por placa
               </label>
@@ -120,7 +114,7 @@ export function VehiclesManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por marca
               </label>
@@ -128,7 +122,7 @@ export function VehiclesManagement({}) {
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
                 <Input
                   type="text"
-                  placeholder="Ingrese la placa"
+                  placeholder="Ingrese la marca"
                   className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
                   defaultValue={searchCarriersParams.get("brand") ?? ""}
                   onChange={(e) => debounceBrand(e.target.value)}
@@ -136,18 +130,18 @@ export function VehiclesManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Tipo de transporte
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ transportType: Number(value) });
+                  setSearchParams({ transportTypeId: Number(value), page: 1 });
                 }}
                 defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="Seleccione el tipo de transporte" />
+                  <SelectValue placeholder="Seleccione el tipo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="*">Todos los tipos</SelectItem>
@@ -157,7 +151,7 @@ export function VehiclesManagement({}) {
                         key={index}
                         value={String(transport.catalogueId)}
                       >
-                        {capitalizeText(transport.name)}
+                        {(transport.name ?? "").toUpperCase()}
                       </SelectItem>
                     )
                   )}
@@ -165,24 +159,24 @@ export function VehiclesManagement({}) {
               </Select>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Tipo de vehículo
               </label>
               <Select
                 onValueChange={(value) => {
-                  setSearchParams({ vehicleType: Number(value) });
+                  setSearchParams({ vehicleTypeId: Number(value), page: 1 });
                 }}
                 defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="Seleccione el tipo de transporte" />
+                  <SelectValue placeholder="Seleccione el vehículo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="*">Todos los vehículos</SelectItem>
                   {catalogueVehiclesType.data?.data.map((vehicle, index) => (
                     <SelectItem key={index} value={String(vehicle.catalogueId)}>
-                      {capitalizeText(vehicle.name)}
+                      {(vehicle.name ?? "").toUpperCase()}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -191,7 +185,19 @@ export function VehiclesManagement({}) {
           </div>
         </CardContent>
       </Card>
-
+      <div className="flex justify-end ml-auto mb-3">
+        <NewVehicleForm
+          vehicleTypes={catalogueVehiclesType.data?.data ?? []}
+          transportsTypes={catalogueTransportsType.data?.data ?? []}
+          onSuccess={() => query.refetch()}
+          trigger={
+            <Button>
+              <PlusIcon className="h-4 w-4" />
+              Nuevo Vehículo
+            </Button>
+          }
+        />
+      </div>
       <VehicleTable
         columns={[
           {
@@ -204,7 +210,7 @@ export function VehiclesManagement({}) {
             cell: ({ row }) => {
               const brand = row.original.brand ?? "";
               const model = row.original.model ?? "";
-              return `${brand} - ${model}`;
+              return toCapitalize(`${brand} - ${model}`, true);
             },
           },
           {
@@ -281,7 +287,7 @@ export function VehiclesManagement({}) {
                       id: row.original.id,
                       plate: row.original.plate,
                       vehicleTypeId: String(
-                        row.original.vehicleDetail?.vehicleType?.id ?? ""
+                        row.original.vehicleDetailId ?? ""
                       ),
                       brand: row.original.brand ?? "",
                       model: row.original.model ?? "",
@@ -301,7 +307,6 @@ export function VehiclesManagement({}) {
                         className="flex items-center gap-1"
                       >
                         <Edit className="h-4 w-4" />
-                        Editar
                       </Button>
                     }
                   />

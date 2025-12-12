@@ -41,9 +41,16 @@ import {
   CalendarDays,
   Users,
   Badge as BadgeIcon,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DatePicker } from "@/components/ui/date-picker";
+import { parseLocalDateString, getLocalDateString } from "@/lib/formatDate";
+import { downloadListVehicleReport } from "../utils/download-list-vehicle-report";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function ListAnimalsManagement() {
   const [fechaIngreso, setFechaIngreso] = useState<Date | null>(null);
@@ -100,10 +107,10 @@ export function ListAnimalsManagement() {
 
         const filters = {
           entryDate: fechaIngreso
-            ? fechaIngreso.toISOString().split("T")[0]
+            ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
             : getCurrentDate(),
           slaughterDate: fechaFaenamiento
-            ? fechaFaenamiento.toISOString().split("T")[0]
+            ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
             : null,
           idSpecie:
             selectedSpecieIds && selectedSpecieIds.length > 0
@@ -187,20 +194,59 @@ export function ListAnimalsManagement() {
   const totals = {
     registros: apiData.length,
     totalEnGuia: apiData.reduce(
-      (acc, item) => acc + (item.certificate?.quantity || 0),
-      0
-    ),
-    totalFaenamiento: apiData.reduce(
       (acc, item) => acc + (item.males || 0) + (item.females || 0),
       0
     ),
+    totalFaenamiento: apiData.reduce((acc, item) => {
+      const targetDateObj = fechaFaenamiento || new Date();
+      const targetDate = getLocalDateString(targetDateObj);
+
+      const itemSlaughterDate = item.slaughterDate ? parseLocalDateString(item.slaughterDate.split('T')[0]) : null;
+      const itemSlaughter = itemSlaughterDate
+        ? getLocalDateString(itemSlaughterDate)
+        : null;
+
+      if (itemSlaughter && itemSlaughter === targetDate) {
+        return acc + (item.males || 0) + (item.females || 0);
+      }
+
+      return acc;
+    }, 0),
   };
+
+  const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+    const selectedSpecieIds =
+      selectedSpecies.length > 0 && availableSpecies.length > 0
+        ? availableSpecies.filter(specie => selectedSpecies.includes(specie.name as Species)).map(specie => specie.id)
+        : null;
+    const filters = {
+      entryDate: fechaIngreso
+        ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
+        : getCurrentDate(),
+      slaughterDate: fechaFaenamiento
+        ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
+        : null,
+      idSpecie: selectedSpecieIds && selectedSpecieIds.length > 0 ? selectedSpecieIds[0] : null,
+      idFinishType: selectedFinishType,
+      brandName: marca.trim() || null,
+    };
+
+    toast.promise(
+      downloadListVehicleReport(filters, type),
+      {
+        loading: 'Generando reporte...',
+        success: `Reporte ${type} descargado correctamente`,
+        error: 'Error al descargar el reporte',
+      }
+    );
+  };
+
 
   // Componente para mostrar los datos en formato de tarjeta (móvil)
   const MobileCard = ({ item }: { item: any }) => (
     <Card className="mb-4">
       <CardContent className="p-4 space-y-3">
-        {/* Header con fecha y CSM */}
+        {/* Header con fecha y CZPM-M */}
         <div className="flex justify-between items-start border-b pb-3">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -214,7 +260,7 @@ export function ListAnimalsManagement() {
             </div>
           </div>
           <Badge variant="outline" className="text-xs">
-            CSM: {item.certificate?.code || "N/A"}
+            CZPM-M: {item.certificate?.code || "N/A"}
           </Badge>
         </div>
 
@@ -262,7 +308,7 @@ export function ListAnimalsManagement() {
                   Fecha de Faenamiento
                 </div>
                 <div className="text-sm font-medium">
-                  {format(new Date(item.slaughterDate), "dd/LL/yyyy")}
+                  {format(parseLocalDateString(item.slaughterDate.split('T')[0]), "dd/LL/yyyy")}
                 </div>
               </div>
             </div>
@@ -305,7 +351,7 @@ export function ListAnimalsManagement() {
             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
               {item.species?.name || "N/A"}
             </Badge>
-            <Badge className="bg-emerald-600">
+            <Badge className="bg-primary">
               {item.brand?.name || "N/A"}
             </Badge>
           </div>
@@ -363,7 +409,7 @@ export function ListAnimalsManagement() {
               <span className="text-xs text-muted-foreground font-medium">
                 Fecha de Ingreso
               </span>
-              <div className="relative">
+              {/* <div className="relative">
                 <Calendar
                   className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                   onClick={() => {
@@ -379,24 +425,32 @@ export function ListAnimalsManagement() {
                   className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   value={
                     fechaIngreso
-                      ? fechaIngreso.toISOString().slice(0, 10)
+                      ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
                       : getCurrentDate()
                   }
                   onChange={(e) => {
                     const date = e.target.value
-                      ? new Date(e.target.value)
+                      ? parseLocalDateString(e.target.value)
                       : null;
                     setFechaIngreso(date);
                   }}
                   title="Selecciona la fecha de ingreso de los animales"
                 />
-              </div>
+              </div> */}
+
+              <DatePicker
+                inputClassName='bg-secondary'
+                iconClassName="text-muted-foreground"
+                selected={fechaIngreso || new Date()}
+                onChange={date => setFechaIngreso(date as Date)}
+              />
+
             </div>
             <div className="flex flex-col gap-1 min-w-0">
               <span className="text-xs text-muted-foreground font-medium">
                 Fecha de Faenamiento
               </span>
-              <div className="relative">
+              {/* <div className="relative">
                 <CalendarDays
                   className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                   onClick={() => {
@@ -412,18 +466,25 @@ export function ListAnimalsManagement() {
                   className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   value={
                     fechaFaenamiento
-                      ? fechaFaenamiento.toISOString().slice(0, 10)
+                      ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
                       : ""
                   }
                   onChange={(e) => {
                     const date = e.target.value
-                      ? new Date(e.target.value)
+                      ? parseLocalDateString(e.target.value)
                       : null;
                     setFechaFaenamiento(date);
                   }}
                   title="Selecciona la fecha de faenamiento de los animales"
                 />
-              </div>
+              </div> */}
+
+              <DatePicker
+                inputClassName='bg-secondary'
+                selected={fechaFaenamiento}
+                onChange={date => setFechaFaenamiento(date as Date)}
+                icon={<CalendarDays className="text-muted-foreground" />}
+              />
             </div>
             <SpeciesMenu
               className="w-full"
@@ -457,13 +518,42 @@ export function ListAnimalsManagement() {
               </div>
             </div>
             <div className="flex flex-col gap-2 lg:items-end lg:justify-end">
-              <Button
-                className="bg-emerald-600 hover:bg-emerald-600/90 text-white w-full"
-                title="Generar reporte de los registros actuales"
-              >
-                <FileUp className="h-4 w-4" />
-                <span className="ml-2">Reporte</span>
-              </Button>
+
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="w-full"
+                    title="Generar reporte de los registros actuales"
+                    disabled={isLoading || apiData.length === 0}
+                  >
+                    <FileUp className="h-4 w-4" />
+                    <span className="ml-2">Reporte</span>
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56"
+                  sideOffset={5}
+                  alignOffset={0}
+                >
+                  <DropdownMenuItem
+                    onClick={() => handleDownloadReport('EXCEL')}
+                    className="cursor-pointer"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                    <span>Descargar Excel</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDownloadReport('PDF')}
+                    className="cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 mr-2 text-red-600" />
+                    <span>Descargar PDF</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant="outline"
                 onClick={clear}
@@ -550,7 +640,7 @@ export function ListAnimalsManagement() {
               <Table className="min-w-[1200px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-32 whitespace-normal leading-tight text-center sticky left-0 bg-background border-r">
+                    <TableHead className="w-32 whitespace-normal leading-tight text-center sticky left-0  border-r">
                       <span className="block text-xs font-semibold">
                         Fecha y hora
                       </span>
@@ -584,7 +674,9 @@ export function ListAnimalsManagement() {
                       <span className="block text-xs font-semibold">
                         No. de
                       </span>
-                      <span className="block text-xs font-semibold">CSM</span>
+                      <span className="block text-xs font-semibold">
+                        CZPM-M
+                      </span>
                     </TableHead>
                     <TableHead className="w-32 whitespace-normal leading-tight text-center">
                       <span className="block text-xs font-semibold">
@@ -685,18 +777,18 @@ export function ListAnimalsManagement() {
                         </TableCell>
                         <TableCell className="whitespace-normal text-center text-sm">
                           {item.slaughterDate
-                            ? format(new Date(item.slaughterDate), "dd/LL")
+                            ? format(parseLocalDateString(item.slaughterDate.split('T')[0]), "dd/LL")
                             : "-"}
                         </TableCell>
                         <TableCell className="whitespace-normal text-center border-x">
                           <div className="grid grid-cols-3 gap-2 text-center">
-                            <div className="font-semibold text-blue-600">
+                            <div className="font-semibold text-pink-600">
                               {item.females || 0}
                             </div>
-                            <div className="border-l font-semibold text-pink-600 pl-2">
+                            <div className="border-l font-semibold text-blue-600 pl-2">
                               {item.males || 0}
                             </div>
-                            <div className="border-l font-semibold text-emerald-600 pl-2">
+                            <div className="border-l font-semibold text-primary pl-2">
                               {(item.males || 0) + (item.females || 0)}
                             </div>
                           </div>
@@ -714,10 +806,10 @@ export function ListAnimalsManagement() {
                         </TableCell>
                         <TableCell className="whitespace-normal text-center">
                           <div className="flex flex-col items-center gap-1">
-                            <Badge className="bg-emerald-600 text-xs">
+                            <Badge className="bg-primary text-xs">
                               {item.brand?.name || "N/A"}
                             </Badge>
-                            <div className="text-xs font-semibold text-emerald-600">
+                            <div className="text-xs font-semibold text-primary">
                               {item.statusCorrals?.corral?.name || "N/A"}
                             </div>
                             {item.codes && (

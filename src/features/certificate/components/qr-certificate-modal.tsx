@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 import 'ldrs/react/Ring.css';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface RenderSuccessButtonProps {
 	closeModal: () => void;
@@ -47,7 +46,7 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 	return (
 		<Dialog open={isModalOpen} onOpenChange={open => setIsModalOpen(open)}>
 			<DialogTrigger asChild>
-				<Button variant={btnVariant}>
+				<Button variant='ghost'>
 					<QrCode />
 					{btnText}
 				</Button>
@@ -76,19 +75,33 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 							{qrData ? (
 								<>
 									<QrInfo qrData={qrData} />
-									<Label className={isInvalidOrigin ? 'text-red-500' : ''}>Procedencia</Label>
-									<Select name='origin' value={origin?.id.toString() ?? ''} onValueChange={value => setOrigin(value)}>
-										<SelectTrigger className={'w-full bg-secondary' + (isInvalidOrigin ? ' border-red-500' : '')}>
-											<SelectValue placeholder='Seleccione una procedencia' />
-										</SelectTrigger>
-										<SelectContent>
-											{origins.map(origin => (
-												<SelectItem key={origin.id} value={String(origin.id)}>
-													{origin.description}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+									<div className='space-y-2'>
+										<Label className={isInvalidOrigin ? 'text-red-500' : ''}>Procedencia</Label>
+										<div className='flex flex-col gap-2 p-3 border-secondary rounded-md border'>
+											{origins && origins.length > 0 ? (
+												origins.map(originOption => (
+													<label
+														key={originOption.id}
+														className='flex items-center gap-3 p-2 hover:bg-background rounded-md cursor-pointer transition-colors'
+													>
+														<input
+															type="radio"
+															name="origin"
+															value={originOption.id}
+															checked={origin?.id === originOption.id}
+															onChange={() => setOrigin(String(originOption.id))}
+															className='w-4 h-4 text-primary focus:ring-primary focus:ring-2 border-gray-300 bg-primary'
+														/>
+														<span className='text-sm font-medium text-primary'>{originOption.description}</span>
+													</label>
+												))
+											) : (
+												<p className='text-sm text-muted-foreground text-center py-2'>
+													No hay procedencias disponibles
+												</p>
+											)}
+										</div>
+									</div>
 								</>
 							) : (
 								<div className='flex flex-col items-center space-y-4'>
@@ -123,12 +136,12 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 								</Button>
 
 								<div className='flex justify-end gap-2'>
-									<Button className='bg-green-600 hover:bg-green-700' onClick={setDefaultValues} disabled={!isInvalid && !qrData}>
+									<Button className=' hover:bg-primary' onClick={setDefaultValues} disabled={!isInvalid && !qrData}>
 										Volver a escanear
 										<RotateCcw />
 									</Button>
 
-									<Button className='bg-green-600 hover:bg-green-700' onClick={handleSaveQrData}>
+									<Button className=' hover:bg-primary' onClick={handleSaveQrData}>
 										{isSaving ? 'Guardando...' : 'Guardar y Continuar'}
 										<MoveRight />
 									</Button>
@@ -158,10 +171,10 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 						<div className='space-y-6 mt-2'>
 							<div className='text-center space-y-4'>
 								<div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto'>
-									<CircleCheckBig className='text-green-500' />
+									<CircleCheckBig className='text-primary' />
 								</div>
 								<div>
-									<h3 className='text-xl font-medium text-green-600'>¡Código QR Procesado Exitosamente!</h3>
+									<h3 className='text-xl font-medium text-primary'>¡Código QR Procesado Exitosamente!</h3>
 									<p className='text-muted-foreground mt-1'>Toda la información del certificado ha sido extraída correctamente.</p>
 								</div>
 							</div>
@@ -174,7 +187,7 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 							{extraSuccessInfoCard}
 
 							<div className='flex justify-between pt-4'>
-								<Button className='bg-green-600 hover:bg-green-700' onClick={() => setCurrentTab(1)}>
+								<Button className=' hover:bg-green-700' onClick={() => setCurrentTab(1)}>
 									<Edit />
 									Editar
 								</Button>
@@ -202,11 +215,11 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 
 const QrInfo = ({ qrData }: { qrData: Certificate | null }) => (
 	<>
-		<h4 className='font-medium text-green-600'>Información del Certificado</h4>
+		<h4 className='font-medium text-primary'>Información del Certificado</h4>
 		<div className='space-y-3 text-sm'>
 			<div className='flex justify-between'>
 				<span className='text-muted-foreground'>No. Certificado</span>
-				<span className='font-medium text-green-600'>{qrData && 'code' in qrData && qrData.code}</span>
+				<span className='font-medium text-primary'>{qrData && 'code' in qrData && qrData.code}</span>
 			</div>
 			<div className='flex justify-between gap-2'>
 				<span className='text-muted-foreground'>Autorizado a:</span>
@@ -222,7 +235,7 @@ const QrInfo = ({ qrData }: { qrData: Certificate | null }) => (
 			</div>
 			<div className='flex justify-between gap-2'>
 				<span className='text-muted-foreground'>Total productos:</span>
-				<span className='font-medium text-green-600'>{qrData?.quantity || 0}</span>
+				<span className='font-medium text-primary'>{qrData?.quantity || 0}</span>
 			</div>
 			<div className='flex justify-between gap-2'>
 				<span className='text-muted-foreground'>Válido hasta:</span>

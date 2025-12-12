@@ -1,12 +1,11 @@
 import { toast } from 'sonner';
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useReceptionContext } from './use-reception-context';
 import { useAllBedType } from '@/features/bed-type/hooks';
-import { useForm } from 'react-hook-form';
 import { useAllArrivalConditions } from '@/features/arrival-conditions/hooks';
 import { ConditionTransportRequest } from '@/features/condition-transport/domain';
 import { saveConditionTransport, updateConditionTransport } from '@/features/condition-transport/server/db/condition-transport.service';
-import { readConditionTransportFromLocalStorage, saveConditionTransportInLocalStorage } from '../utils';
 import { useStep2Animals } from './use-step-2-animals';
 
 export type AnimalTransportForm = {
@@ -14,20 +13,20 @@ export type AnimalTransportForm = {
 	bedTypeId?: number;
 	arrivalConditionId?: number;
 	ownMedium?: 'si' | 'no';
+	commentary?: string;
 };
 
 const defaultValues: AnimalTransportForm = {};
 
 export const useStep3Transport = () => {
-	const { step3Accordion, selectedCertificate, handleSetAccordionState } = useReceptionContext();
-	const { isCompleted, handleResetPage } = useStep2Animals();
-	const form = useForm<AnimalTransportForm>({ defaultValues: { ...defaultValues } });
+	const { isCompleted } = useStep2Animals();
+	const { step3Accordion, animalTransportData, selectedCertificate, handleSetAccordionState, handleResetState } = useReceptionContext();
+
+	const form = useForm<AnimalTransportForm>({ defaultValues });
 
 	useEffect(() => {
-		const condition = readConditionTransportFromLocalStorage().find(transport => transport.certificateId === selectedCertificate?.code);
-
-		if (condition) form.reset(condition);
-	}, [selectedCertificate?.code, readConditionTransportFromLocalStorage, form]);
+		if (animalTransportData) form.reset(animalTransportData);
+	}, [animalTransportData]);
 
 	const bedTypeQuery = useAllBedType();
 	const arrivalConditionsQuery = useAllArrivalConditions();
@@ -36,7 +35,15 @@ export const useStep3Transport = () => {
 	const arrivalConditions = arrivalConditionsQuery.data.data.filter(condition => condition.status);
 
 	const handleSaveTransport = async (data: AnimalTransportForm) => {
-		if (!selectedCertificate) return toast.error('No se encontró el certificado seleccionado');
+		if (!selectedCertificate) {
+			toast.error('No se encontró el certificado seleccionado');
+			return;
+		}
+
+		if (!isCompleted) {
+			toast.error('Debe completar el paso 2 (registro de animales) antes de finalizar.');
+			return;
+		}
 
 		let { id } = data;
 
@@ -45,6 +52,7 @@ export const useStep3Transport = () => {
 			idBedType: data.bedTypeId ?? NaN,
 			idConditionsArrival: data.arrivalConditionId ?? NaN,
 			ownMedium: data.ownMedium === 'si',
+			commentary: data.commentary || undefined,
 			status: true,
 		};
 
@@ -52,14 +60,16 @@ export const useStep3Transport = () => {
 			if (id) await updateConditionTransport(id.toString(), request);
 			else id = (await saveConditionTransport(request)).data.id;
 
-			saveConditionTransportInLocalStorage({ ...data, id, certificateId: selectedCertificate.code });
+			handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: false, state: 'completed' } });
 
-			handleSetAccordionState({ name: 'step3Accordion', accordionState: { isOpen: true, state: 'completed' } });
+			form.reset(defaultValues);
 
-			if (!isCompleted) toast.error('Debe completar el paso 2 para finalizar el ingreso.');
-			else handleResetPage();
-
-			toast.success('Información de transporte guardada');
+			toast.success('¡Ingreso de animales completado exitosamente!');
+			
+			// Resetear el estado después de un breve delay para que el usuario vea el mensaje de éxito
+			setTimeout(() => {
+				handleResetState();
+			}, 1500);
 		} catch (error) {
 			toast.error('Error al guardar la información de transporte');
 		}

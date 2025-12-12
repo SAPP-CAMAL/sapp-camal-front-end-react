@@ -1,9 +1,9 @@
 import { http } from "@/lib/ky";
-import { 
-  GetAllLinesResponse, 
-  LineItem, 
-  updateLineIds, 
-  mapLineItemToLineaType, 
+import {
+  GetAllLinesResponse,
+  LineItem,
+  updateLineIds,
+  mapLineItemToLineaType,
   LineaType,
   GetCorralDetailsResponse,
   StatusCorralDetail,
@@ -53,7 +53,7 @@ export const getAllLinesService = async (): Promise<GetAllLinesResponse> => {
 export const getActiveLinesService = async (): Promise<LineaType[]> => {
   try {
     const response = await getAllLinesService();
-    
+
     if (response.code !== 200 || !response.data) {
       return [];
     }
@@ -78,7 +78,7 @@ export const getActiveLinesService = async (): Promise<LineaType[]> => {
 export const getActiveLinesDataService = async (): Promise<LineItem[]> => {
   try {
     const response = await getAllLinesService();
-    
+
     if (response.code !== 200 || !response.data) {
       return [];
     }
@@ -99,13 +99,13 @@ export const getActiveLinesDataService = async (): Promise<LineItem[]> => {
 export const getLineByDescriptionService = async (description: string): Promise<LineItem | null> => {
   try {
     const response = await getAllLinesService();
-    
+
     if (response.code !== 200 || !response.data) {
       return null;
     }
 
     const normalizedDescription = description.toLowerCase();
-    return response.data.find(line => 
+    return response.data.find(line =>
       line.description?.toLowerCase().includes(normalizedDescription) ||
       line.specie?.description?.toLowerCase().includes(normalizedDescription)
     ) || null;
@@ -116,17 +116,17 @@ export const getLineByDescriptionService = async (description: string): Promise<
 };
 
 /**
- * Obtiene los detalles de corrales filtrados por fecha y línea
+ * Obtiene los detalles de corrales con observaciones filtrados por fecha y línea
  * @param admissionDate - Fecha de admisión en formato YYYY-MM-DD
  * @param idLine - ID de la línea
- * @returns Promise con los detalles de corrales
+ * @returns Promise con los detalles de corrales incluyendo haveObservations
  */
 export const getCorralDetailsService = async (
-  admissionDate: string, 
+  admissionDate: string,
   idLine: number
 ): Promise<GetCorralDetailsResponse> => {
   try {
-    const response = await http.get("v1/1.0.0/status-corrals/detail-corrals", {
+    const response = await http.get("v1/1.0.0/status-corrals/detail-corrals-observations", {
       searchParams: {
         admissionDate,
         idLine: idLine.toString()
@@ -150,12 +150,12 @@ export const getCorralDetailsService = async (
  * @returns Array de AntemortemRow
  */
 export const getAntemortemDataService = async (
-  admissionDate: string, 
+  admissionDate: string,
   idLine: number
 ): Promise<AntemortemRow[]> => {
   try {
     const response = await getCorralDetailsService(admissionDate, idLine);
-    
+
     if (response.code !== 200 || !response.data) {
       return [];
     }
@@ -382,4 +382,36 @@ export const getObservationsByStatusCorralService = async (
     console.error('Error fetching observations by status corral:', error);
     throw error;
   }
+};
+
+
+/**
+ * Obtiene el reporte de ANTEMORTEM para una fecha y línea específica
+ * @param admissionDate - Fecha de admisión en formato YYYY-MM-DD
+ * @param idLine - ID de la línea
+ * @param typeReport - Tipo de reporte: 'EXCEL' o 'PDF'
+ * @returns Promise con un arreglo de AntemortemRow
+ */
+export const getStatusCorralsReport = async (
+  admissionDate: string,
+  idLine: number,
+  typeReport: 'EXCEL' | 'PDF'
+) => {
+	try {
+		const response = await http.get('v1/1.0.0/status-corrals/report-detail-corrals-observations', {
+			searchParams: { typeReport , admissionDate, idLine: idLine.toString() },
+		});
+
+		const blob = await response.blob();
+		const contentType = response.headers.get('content-type') || '';
+		const contentDisposition = response.headers.get('content-disposition') || '';
+
+		const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+		const defaultFilename = `Reporte-antemortem-interno-${admissionDate}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
+		const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
+
+		return { blob, filename, contentType };
+	} catch (error) {
+		throw error;
+	}
 };

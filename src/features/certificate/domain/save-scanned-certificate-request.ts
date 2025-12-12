@@ -12,6 +12,7 @@ export interface SaveScannedCertificateRequest {
 	destinationAreaCode?: string;
 	shippingsId?: number;
 	status: boolean;
+	idDetailsRegisterVehicles?: number;
 }
 
 export interface SaveScannedCertificateResponse {

@@ -1,18 +1,23 @@
 'use client';
 
+import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 import { parseAsString, useQueryStates } from 'nuqs';
 import { ColumnDef, flexRender, Row } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight, FileText, Info, Save } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, FileSpreadsheet, FileText, FileUp, Info } from 'lucide-react';
 
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { usePaginated } from '@/hooks/use-paginated';
+import { DatePicker } from '@/components/ui/date-picker';
 import { useGetRegisterVehicleByDate } from '@/features/vehicles/hooks';
 import { DetailRegisterVehicleByDate } from '@/features/vehicles/domain';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useDailyDisinfectionRegisterContext } from '../hooks/use-daily-disinfection-register-context';
 import { RegisterVehicleTimeOut } from './register-vehicle-time-out';
+import { toCapitalize } from '../../../lib/toCapitalize';
+import { handleDownloadRegisterVehicleReport } from '../utils/handle-download-register-vehicle-report';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
@@ -26,18 +31,22 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	{
 		accessorKey: 'registerVehicle.shipping.person.fullName',
 		header: 'Chofer',
+		cell: ({ row }) => toCapitalize(row.original.registerVehicle?.shipping?.person?.fullName ?? '', true),
 	},
 	{
 		accessorKey: 'registerVehicle.shipping.vehicle.plate',
 		header: 'Placa',
+		cell: ({ row }) => row.original.registerVehicle?.shipping?.vehicle?.plate ?? '',
 	},
 	{
 		accessorKey: 'registerVehicle.shipping.vehicle.vehicleDetail.vehicleType.name',
 		header: 'Tipo Vehículo',
+		cell: ({ row }) => toCapitalize(row.original.registerVehicle?.shipping?.vehicle?.vehicleDetail?.vehicleType?.name ?? '', true),
 	},
 	{
 		accessorKey: 'species.name',
 		header: 'Especies',
+		cell: ({ row }) => toCapitalize(row.original.species.name ?? '', true),
 	},
 	{
 		accessorKey: 'disinfectant.name',
@@ -73,7 +82,9 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
 	},
 ];
 
-const currentDate = new Date().toISOString().split('T').at(0)!;
+// Obtener fecha actual en zona horaria local
+const today = new Date();
+const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
 export function DailyDisinfectionLogTable() {
 	const [searchParams, setSearchParams] = useQueryStates({ date: parseAsString.withDefault(currentDate) }, { history: 'push' });
@@ -92,17 +103,59 @@ export function DailyDisinfectionLogTable() {
 		else handleSetDailyDisinfectionRegister(row.original);
 	};
 
+	const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+		const parsedDate = parseISO(searchParams.date);
+		if (Number.isNaN(parsedDate.getTime())) {
+			toast.error('Fecha inválida');
+			return;
+		}
+		const formattedDate = format(parsedDate, 'yyyy-MM-dd');
+
+		toast.promise(handleDownloadRegisterVehicleReport(formattedDate, type), {
+			loading: 'Generando reporte...',
+			success: `Reporte ${type} descargado correctamente`,
+			error: 'Error al descargar el reporte',
+		});
+	};
+
 	return (
 		<div className='overflow-hidden rounded-lg border p-4'>
 			<div className='py-4 px-2 flex justify-between'>
 				<h2>Registros Diarios</h2>
 				<div className='flex items-center gap-3'>
 					<span className='whitespace-nowrap'>Filtrar por fecha</span>
-					<Input value={searchParams.date} type='date' onChange={e => setSearchParams({ date: e.target.value })} />
-					<Button variant='outline'>
-						<FileText />
-						Generar Reporte
-					</Button>
+					<DatePicker
+						inputClassName='bg-secondary'
+						selected={parseISO(searchParams.date)}
+						onChange={date => {
+							if (!date) return;
+							const formattedDate = format(date, 'yyyy-MM-dd');
+							setSearchParams({ date: formattedDate });
+						}}
+					/>
+
+					<div>
+						<DropdownMenu modal={false}>
+							<DropdownMenuTrigger asChild>
+								<Button className='w-full' title='Generar reporte de los registros actuales' disabled={!query.data || query.data.data.length === 0}>
+									<FileUp className='h-4 w-4' />
+									<span className='ml-2'>Reporte</span>
+									<ChevronDown className='h-3 w-3 ml-1' />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align='end' className='w-56' sideOffset={5} alignOffset={0}>
+								<DropdownMenuItem onClick={() => handleDownloadReport('EXCEL')} className='cursor-pointer'>
+									<FileSpreadsheet className='h-4 w-4 mr-2 text-green-600' />
+									<span>Descargar Excel</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => handleDownloadReport('PDF')} className='cursor-pointer'>
+									<FileText className='h-4 w-4 mr-2 text-red-600' />
+									<span>Descargar PDF</span>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+
 				</div>
 			</div>
 			<Table>
@@ -153,7 +206,7 @@ export function DailyDisinfectionLogTable() {
 					Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()} páginas (filtrado por fecha: {searchParams.date})
 				</span>
 
-				<Button variant='outline' disabled={!table.getCanPreviousPage()} onClick={() => table.nextPage()}>
+				<Button variant='outline' disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>
 					Siguiente
 					<ChevronRight className='w-4 h-4' />
 				</Button>

@@ -15,11 +15,11 @@ export const ShipperDataCard = ({ shipper, onSetShipper, addShipper, addVehicle 
 	if (!shipper) return null;
 
 	return (
-		<div className='p-4 bg-green-50 border border-green-200 rounded-lg'>
+		<div className='p-4 bg-green-50 border border-primary rounded-lg'>
 			<div className='flex items-start justify-between'>
 				<div>
-					<h4 className='font-medium text-green-900'>{toCapitalize(shipper.firstName + ' ' + shipper.lastName, true)}</h4>
-					<div className='text-sm text-green-700 space-y-1 mt-1'>
+					<h4 className='font-medium text-primary'>{toCapitalize(`${shipper?.firstName} ${shipper?.lastName}`, true)}</h4>
+					<div className='text-sm text-primary space-y-1 mt-1'>
 						{/* <p>
 							<span className='font-medium'>ID:</span> {shipper.id}
 						</p> */}
@@ -41,7 +41,7 @@ export const ShipperDataCard = ({ shipper, onSetShipper, addShipper, addVehicle 
 				<div className='grid grid-cols-2 gap-2' style={{ direction: 'rtl' }}>
 					<div className='flex col-span-2 gap-2'>
 						{onSetShipper && (
-							<Button variant='outline' onClick={() => onSetShipper()}>
+							<Button variant='ghost' onClick={() => onSetShipper()}>
 								<Trash2 />
 								Quitar
 							</Button>
@@ -52,7 +52,7 @@ export const ShipperDataCard = ({ shipper, onSetShipper, addShipper, addVehicle 
 							shipperData={shipper}
 							onSetShipper={onSetShipper}
 							triggerButton={
-								<Button variant='outline'>
+								<Button variant='ghost'>
 									<Edit />
 									Editar
 								</Button>
@@ -72,7 +72,7 @@ export const ShipperDataCard = ({ shipper, onSetShipper, addShipper, addVehicle 
 							}}
 							onSetShipper={onSetShipper}
 							triggerButton={
-								<Button variant='outline'>
+								<Button variant='default'>
 									<Car />
 									Agregar Vehículo
 								</Button>
@@ -91,7 +91,7 @@ export const ShipperDataCard = ({ shipper, onSetShipper, addShipper, addVehicle 
 							}}
 							onSetShipper={onSetShipper}
 							triggerButton={
-								<Button variant='outline'>
+								<Button variant='default'>
 									<CircleUserRound />
 									Agregar Transportista
 								</Button>

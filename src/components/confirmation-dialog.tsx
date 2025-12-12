@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
 interface Props {
@@ -8,10 +9,10 @@ interface Props {
 	description?: string;
 	onConfirm?: () => void;
 }
-
 export const ConfirmationDialog = ({ triggerBtn, cancelBtn, confirmBtn, description, title, onConfirm }: Props) => {
+	const [isOpen, setIsOpen] = useState(false);
 	return (
-		<Dialog>
+		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>{triggerBtn}</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
@@ -20,10 +21,16 @@ export const ConfirmationDialog = ({ triggerBtn, cancelBtn, confirmBtn, descript
 				</DialogHeader>
 
 				<div className='flex justify-end items-center gap-2'>
-					<DialogClose asChild>{cancelBtn}</DialogClose>
-					<DialogClose asChild>
-						<div onClick={() => onConfirm?.()}>{confirmBtn}</div>
-					</DialogClose>
+					<div onClick={() => setIsOpen(false)}>{cancelBtn}</div>
+
+					<div
+						onClick={() => {
+							setIsOpen(false);
+							onConfirm?.();
+						}}
+					>
+						{confirmBtn}
+					</div>
 				</div>
 			</DialogContent>
 		</Dialog>

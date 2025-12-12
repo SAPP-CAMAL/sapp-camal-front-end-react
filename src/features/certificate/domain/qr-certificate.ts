@@ -79,10 +79,30 @@ export interface QrCertificateVariant3 extends Omit<BaseQrCertificate, FieldsToO
 }
 
 /**
+ * Represents the structure of a QR Certificate for Variant 4.
+ *
+ * @property czpmmNumber - The qr certificate code.
+ * @property authorizedTo - The name of the entity or person authorized by the certificate.
+ * @property originAreaCode - The area code representing the origin location.
+ * @property destinationAreaCode - The area code representing the destination location.
+ * @property totalProducts - The total number of products covered by the certificate.
+ * @property totalSubProducts - The total number of sub products covered by the certificate.
+ * @property validUntil - The expiration date of the certificate.
+ * @property vehicle - The vehicle plate.
+ */
+export interface QrCertificateVariant4 extends BaseQrCertificate {
+	/** The qr certificate code for variant 4. */
+	czpmmNumber: string;
+	/** The total subProducts for variant 4. */
+	totalSubProducts: number;
+}
+
+/**
  * Represents the possible types of QR certificates.
  * This is a union type that can be one of the following variants:
  * - `QrCertificateVariant1`: Represents the first variant of the QR certificate.
  * - `QrCertificateVariant2`: Represents the second variant of the QR certificate.
  * - `QrCertificateVariant3`: Represents the third variant of the QR certificate.
+ * - `QrCertificateVariant4`: Represents the fourth variant of the QR certificate.
  */
-export type QrCertificateTypes = QrCertificateVariant1 | QrCertificateVariant2 | QrCertificateVariant3;
+export type QrCertificateTypes = QrCertificateVariant1 | QrCertificateVariant2 | QrCertificateVariant3 | QrCertificateVariant4;

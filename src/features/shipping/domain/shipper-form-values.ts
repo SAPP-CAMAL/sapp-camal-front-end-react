@@ -34,6 +34,9 @@ export interface ShipperFormValues {
 
 	/** The type of transport. */
 	transportType: string;
+
+	/** The full name of the person (first name + last name). */
+	fullName: string;
 }
 
 /** Use all field to create new shipper. */

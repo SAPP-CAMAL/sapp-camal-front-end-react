@@ -8,6 +8,7 @@ export const toCapitalize = (text: string, allWord: boolean = false) => {
 
 	return text
 		.split(' ')
+		.map(word => word.trim())
 		.map(word => (word.length > 1 ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase()))
 		.join(' ');
 };

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { format, parseISO } from "date-fns";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -15,15 +15,447 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CalendarIcon, Download, Settings } from "lucide-react";
-import { format } from "date-fns";
-import { useEffect, useRef } from "react";
+import {
+  CalendarIcon,
+  Download,
+  Settings,
+  ChevronDown,
+  BookText,
+} from "lucide-react";
+import { useState } from "react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { AnimalSelectionModal } from "./animal-selection-modal";
+import { DatePicker } from "@/components/ui/date-picker";
+import { TotalConfiscationModal } from "./total-confiscation-modal";
+import { PartialConfiscationModal } from "./partial-confiscation-modal";
+import { DynamicTableHeaders } from "./dynamic-table-headers";
+import { CorralTypeFilters } from "./corral-type-filters";
+import { useLines } from "../hooks/use-lines";
+import { useSpeciesDisease } from "../hooks/use-species-disease";
+import { usePostmortemByFilters } from "../hooks/use-postmortem-by-filters";
+import { useCertificates } from "../hooks/use-certificates";
+import { isToday } from "@/lib/date-utils";
+import { groupDiseasesByProduct } from "../server/db/species-disease.service";
+import { getIntroductoresFromCertificates } from "../server/db/certificates.service";
+import {
+  countAnimalsWithDisease,
+  countAnimalsWithTotalConfiscation,
+  countAnimalsWithPartialConfiscation,
+  getIntroductorIdsWithPostmortem,
+  getLocalDateString,
+} from "../utils/postmortem-helpers";
+import type {
+  Introductor,
+  IntroductorRow,
+  ModalState,
+  ColumnConfig,
+} from "../domain/postmortem.types";
+import type {
+  CorralTypeFilter,
+  GetCertificatesRequest,
+} from "../domain/certificates.types";
+import type { GetPostmortemByFiltersRequest } from "../domain/save-postmortem.types";
+import { useMemo, useEffect } from "react";
 
 export function PostmortemManagement() {
+  const [rows, setRows] = useState<IntroductorRow[]>([
+    { id: "row-1", introductor: null, values: Array(50).fill(0) }, // Inicializar con más columnas
+  ]);
+
+  const [openPopover, setOpenPopover] = useState<string | null>(null);
+  const [selectedLineId, setSelectedLineId] = useState<string>("");
+  const [selectedSpecieId, setSelectedSpecieId] = useState<number | null>(4); // Bovinos por defecto (idSpecie = 4)
+  const [slaughterDate, setSlaughterDate] = useState<string>(
+    getLocalDateString() // Usar función que maneja zona horaria local correctamente
+  );
+  const [corralTypeFilter, setCorralTypeFilter] =
+    useState<CorralTypeFilter>("TODOS");
+
+  // Verificar si la fecha seleccionada es hoy (solo se puede editar hoy)
+  const canEdit = isToday(slaughterDate);
+
+  const [modalState, setModalState] = useState<ModalState>({
+    isOpen: false,
+    rowId: null,
+    columnIndex: null,
+    localizacion: "",
+    patologia: "",
+  });
+
+  const [totalConfiscationModalState, setTotalConfiscationModalState] =
+    useState({
+      isOpen: false,
+      rowId: null as string | null,
+    });
+
+  const [partialConfiscationModalState, setPartialConfiscationModalState] =
+    useState({
+      isOpen: false,
+      rowId: null as string | null,
+    });
+
+  // Estado para controlar qué órganos están expandidos
+  const [expandedOrgans, setExpandedOrgans] = useState<Set<string>>(new Set());
+
+  // Construir request para certificados
+  const certificatesRequest: GetCertificatesRequest | null = useMemo(() => {
+    if (!selectedSpecieId || !slaughterDate) return null;
+
+    const request: GetCertificatesRequest = {
+      slaughterDate,
+      idSpecies: selectedSpecieId,
+    };
+
+    if (corralTypeFilter === "NORMAL") {
+      request.type = "NOR";
+    } else if (corralTypeFilter === "EMERGENCIA") {
+      request.type = "EME";
+    }
+
+    return request;
+  }, [selectedSpecieId, slaughterDate, corralTypeFilter]);
+
+  // Obtener líneas desde la API
+  const { data: lines, isLoading: isLoadingLines } = useLines();
+
+  // Seleccionar Bovinos por defecto cuando se carguen las líneas
+  useEffect(() => {
+    if (lines && lines.length > 0 && !selectedLineId) {
+      const bovinosLine = lines.find((line) =>
+        line.description.toLowerCase().includes("bovino")
+      );
+      if (bovinosLine) {
+        setSelectedLineId(bovinosLine.id.toString());
+        setSelectedSpecieId(bovinosLine.idSpecie);
+      }
+    }
+  }, [lines, selectedLineId]);
+
+  // Obtener enfermedades por especie
+  const { data: speciesDiseaseData, isLoading: isLoadingDiseases } =
+    useSpeciesDisease(selectedSpecieId);
+
+  // Obtener certificados y marcas
+  const { data: certificatesData, isLoading: isLoadingCertificates } =
+    useCertificates(certificatesRequest);
+
+  // Obtener datos de postmortem guardados
+  const postmortemFiltersRequest = useMemo(() => {
+    if (!selectedSpecieId || !slaughterDate) return null;
+
+    const request: GetPostmortemByFiltersRequest = {
+      slaughterDate,
+      idSpecies: selectedSpecieId,
+    };
+
+    // Agregar filtro de tipo de corral si aplica
+    if (corralTypeFilter === "EMERGENCIA") {
+      request.type = "EME";
+    }
+
+    return request;
+  }, [selectedSpecieId, slaughterDate, corralTypeFilter]);
+
+  const { data: postmortemData } = usePostmortemByFilters(
+    postmortemFiltersRequest
+  );
+
+  // Obtener introductores desde los certificados
+  const introductores = useMemo(() => {
+    if (!certificatesData?.data) return [];
+    return getIntroductoresFromCertificates(certificatesData.data);
+  }, [certificatesData]);
+
+  // Calcular contadores para los filtros
+  const filterCounts = useMemo(() => {
+    if (!certificatesData?.data) {
+      return { todos: 0, normal: 0, emergencia: 0 };
+    }
+
+    const normal = certificatesData.data.filter(
+      (cert) => cert.corralType.code === "NOR"
+    ).length;
+    const emergencia = certificatesData.data.filter(
+      (cert) => cert.corralType.code === "EME"
+    ).length;
+
+    return {
+      todos: certificatesData.data.length,
+      normal,
+      emergencia,
+    };
+  }, [certificatesData]);
+
+  // Agrupar enfermedades por producto
+  const groupedColumns = useMemo(() => {
+    if (!speciesDiseaseData?.data) return [];
+    return groupDiseasesByProduct(speciesDiseaseData.data);
+  }, [speciesDiseaseData]);
+
+  // Generar configuración de columnas dinámicamente
+  const dynamicColumnConfig = useMemo(() => {
+    const config: ColumnConfig[] = [];
+    groupedColumns.forEach((group) => {
+      group.diseases.forEach((disease) => {
+        config.push({
+          localizacion: group.product,
+          patologia: disease.name,
+          idSpeciesDisease: disease.id, // Agregar el ID de la enfermedad
+          idProduct: disease.idProduct, // Agregar el ID del producto
+        });
+      });
+    });
+    return config;
+  }, [groupedColumns]);
+
+  // Actualizar filas cuando cambia la configuración de columnas
+  // +3 para TOTAL, Decomiso Total y Decomiso Parcial
+  useMemo(() => {
+    if (dynamicColumnConfig.length > 0) {
+      setRows((prev) =>
+        prev.map((row) => ({
+          ...row,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        }))
+      );
+    }
+  }, [dynamicColumnConfig.length]);
+
+  // Pre-cargar filas con introductores que tienen datos de postmortem
+  useEffect(() => {
+    // Si no hay configuración de columnas, no hacer nada
+    if (dynamicColumnConfig.length === 0) return;
+
+    // Si no hay introductores disponibles, mostrar fila vacía
+    if (introductores.length === 0) {
+      setRows([
+        {
+          id: "row-1",
+          introductor: null,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        },
+      ]);
+      return;
+    }
+
+    // Obtener IDs de introductores con datos de postmortem
+    const introductorIdsWithData = getIntroductorIdsWithPostmortem(
+      postmortemData?.data
+    );
+
+    // Si no hay datos de postmortem, mostrar fila vacía
+    if (introductorIdsWithData.length === 0) {
+      setRows([
+        {
+          id: "row-1",
+          introductor: null,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        },
+      ]);
+      return;
+    }
+
+    // Filtrar solo los introductores que están en la lista actual (según filtro de tipo)
+    const filteredIntroductorIds = introductorIdsWithData.filter((certId) =>
+      introductores.some((intro) => intro.certId === certId)
+    );
+
+    // Si después de filtrar no hay coincidencias, mostrar fila vacía
+    if (filteredIntroductorIds.length === 0) {
+      setRows([
+        {
+          id: "row-1",
+          introductor: null,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        },
+      ]);
+      return;
+    }
+
+    // Crear filas con los introductores que tienen datos
+    const newRows: IntroductorRow[] = filteredIntroductorIds.map(
+      (certId, index) => {
+        const introductor = introductores.find(
+          (intro) => intro.certId === certId
+        );
+        return {
+          id: `row-${index + 1}`,
+          introductor: introductor || null,
+          values: Array(dynamicColumnConfig.length + 3).fill(0),
+        };
+      }
+    );
+
+    // Agregar una fila vacía al final
+    newRows.push({
+      id: `row-${newRows.length + 1}`,
+      introductor: null,
+      values: Array(dynamicColumnConfig.length + 3).fill(0),
+    });
+
+    setRows(newRows);
+  }, [postmortemData, introductores, dynamicColumnConfig.length]);
+
+  const handleIntroductorSelect = (rowId: string, introductor: Introductor) => {
+    setRows((prev) => {
+      // Verificar si el introductor ya está seleccionado en otra fila
+      const isAlreadySelected = prev.some(
+        (row) =>
+          row.id !== rowId && row.introductor?.certId === introductor.certId
+      );
+
+      // Si ya está seleccionado, no hacer nada
+      if (isAlreadySelected) {
+        return prev;
+      }
+
+      const updatedRows = prev.map((row) =>
+        row.id === rowId ? { ...row, introductor } : row
+      );
+
+      // Verificar si todas las filas tienen un introductor seleccionado
+      const allRowsHaveIntroductor = updatedRows.every(
+        (row) => row.introductor !== null
+      );
+
+      // Si todas las filas tienen introductor, agregar una nueva fila vacía
+      if (allRowsHaveIntroductor) {
+        const newRowId = `row-${updatedRows.length + 1}`;
+        const columnCount = (dynamicColumnConfig.length || 19) + 3; // +3 para TOTAL y PRODUCTOS
+        updatedRows.push({
+          id: newRowId,
+          introductor: null,
+          values: Array(columnCount).fill(0),
+        });
+      }
+
+      return updatedRows;
+    });
+    setOpenPopover(null);
+  };
+
+  const handleCellClick = (
+    rowId: string,
+    columnIndex: number,
+    columnType: "disease" | "total-confiscation" | "partial-confiscation"
+  ) => {
+    const row = rows.find((r) => r.id === rowId);
+    if (!row || !row.introductor) return;
+
+    if (columnType === "total-confiscation") {
+      setTotalConfiscationModalState({
+        isOpen: true,
+        rowId,
+      });
+      return;
+    }
+
+    if (columnType === "partial-confiscation") {
+      setPartialConfiscationModalState({
+        isOpen: true,
+        rowId,
+      });
+      return;
+    }
+
+    // Para columnas de enfermedades
+    const config = dynamicColumnConfig[columnIndex];
+    if (!config || config.isTotal) return;
+
+    setModalState({
+      isOpen: true,
+      rowId,
+      columnIndex,
+      localizacion: config.localizacion,
+      patologia: config.patologia,
+      idSpeciesDisease: config.idSpeciesDisease,
+      idProduct: config.idProduct,
+    });
+  };
+
+  const handleSaveAnimals = (selectedCount: number) => {
+    if (modalState.rowId !== null && modalState.columnIndex !== null) {
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === modalState.rowId
+            ? {
+                ...row,
+                values: row.values.map((v, i) =>
+                  i === modalState.columnIndex ? selectedCount : v
+                ),
+              }
+            : row
+        )
+      );
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalState({
+      isOpen: false,
+      rowId: null,
+      columnIndex: null,
+      localizacion: "",
+      patologia: "",
+    });
+  };
+
+  // Función para expandir/colapsar órganos
+  const handleToggleOrgan = (organ: string) => {
+    setExpandedOrgans((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(organ)) {
+        newSet.delete(organ);
+      } else {
+        newSet.add(organ);
+      }
+      return newSet;
+    });
+  };
+
+  // Función para dividir el nombre en dos líneas (apellidos y nombres)
+  const splitName = (fullName: string) => {
+    const words = fullName.trim().split(/\s+/);
+    if (words.length <= 2) {
+      return { line1: fullName, line2: "" };
+    }
+    
+    // Dividir aproximadamente a la mitad
+    const midPoint = Math.ceil(words.length / 2);
+    const line1 = words.slice(0, midPoint).join(" ");
+    const line2 = words.slice(midPoint).join(" ");
+    
+    return { line1, line2 };
+  };
+
+  const currentIntroductor = modalState.rowId
+    ? rows.find((r) => r.id === modalState.rowId)?.introductor
+    : null;
+
+  const totalConfiscationIntroductor = totalConfiscationModalState.rowId
+    ? rows.find((r) => r.id === totalConfiscationModalState.rowId)?.introductor
+    : null;
+
+  const partialConfiscationIntroductor = partialConfiscationModalState.rowId
+    ? rows.find((r) => r.id === partialConfiscationModalState.rowId)
+        ?.introductor
+    : null;
+
   return (
     <div className="space-y-4 p-4">
       <div className="text-center">
@@ -36,11 +468,11 @@ export function PostmortemManagement() {
       </div>
 
       {/* Filtros */}
-      <Card className="p-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="flex items-center gap-3">
-            <Label className="min-w-40">Fecha de Inspección</Label>
-            <div className="relative w-[200px]">
+      <Card className="p-3 sm:p-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 justify-start">
+            <Label className="sm:min-w-34 text-sm">Fecha de Inspección</Label>
+            {/* <div className="relative w-full sm:w-[200px]">
               <CalendarIcon
                 className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                 onClick={() => {
@@ -54,196 +486,710 @@ export function PostmortemManagement() {
                 id="fecha-postmortem"
                 type="date"
                 className="w-full bg-white transition-colors focus:bg-white pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                defaultValue={format(new Date(), "yyyy-MM-dd")}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  // Handle date change if needed
-                }}
+                value={slaughterDate}
+                onChange={(e) => setSlaughterDate(e.target.value)}
               />
-            </div>
+            </div> */}
+
+            <DatePicker
+						  inputClassName='bg-secondary'
+						  selected={parseISO(slaughterDate)}
+						  onChange={date => {
+						  	if (!date) return;
+						  	const formattedDate = format(date, 'yyyy-MM-dd');
+						  	setSlaughterDate(formattedDate);
+						  }}
+					  />
+
           </div>
-          <div className="flex items-center gap-3">
-            <Label className="min-w-40 inline-flex">Línea de Producción</Label>
-            <Select defaultValue="ovinos">
-              <SelectTrigger className="max-w-64">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <Label className="sm:min-w-34 inline-flex text-sm">
+              Línea de Producción
+            </Label>
+            <Select
+              value={selectedLineId}
+              onValueChange={(value) => {
+                setSelectedLineId(value);
+                const selectedLine = lines?.find(
+                  (line) => line.id.toString() === value
+                );
+                if (selectedLine) {
+                  setSelectedSpecieId(selectedLine.idSpecie);
+                }
+              }}
+              disabled={isLoadingLines}
+            >
+              <SelectTrigger className="w-full sm:max-w-64">
                 <SelectValue placeholder="Selecciona una línea" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ovinos">Línea de Ovinos</SelectItem>
-                <SelectItem value="bovinos">Línea de Bovinos</SelectItem>
-                <SelectItem value="caprinos">Línea de Caprinos</SelectItem>
+                {isLoadingLines ? (
+                  <SelectItem value="loading" disabled>
+                    Cargando líneas...
+                  </SelectItem>
+                ) : lines && lines.length > 0 ? (
+                  lines.map((line) => (
+                    <SelectItem key={line.id} value={line.id.toString()}>
+                      {line.description}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-lines" disabled>
+                    No hay líneas disponibles
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
         </div>
       </Card>
 
-      {/* Acciones */}
-      <div className="flex justify-end gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className=" text-teal-600 border-teal-600 bg-white hover:bg-teal-50"
-        >
-          <Settings className="h-4 w-4 mr-1" />
-          Configuración de Reportes
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className=" text-teal-600 border-teal-600 bg-white hover:bg-teal-50"
-        >
-          <Download className="h-4 w-4 mr-1" />
-          Generar Reportes
-        </Button>
-      </div>
-
       {/* Tabla de Decomisos */}
-      <Card className="p-3">
-        <div className="mb-2 flex items-center gap-2">
-          <div className="i-lucide-clipboard-list text-muted-foreground" />
-          <h2 className="text-sm font-medium">
-            Registro de Decomisos por Patologías
-          </h2>
+      <Card className="p-2 sm:p-4">
+        <div className="mb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <BookText className="h-4 w-4 text-primary flex-shrink-0" />
+            <h2 className="text-sm sm:text-base font-medium">
+              Registro de Decomisos por Patologías
+            </h2>
+          </div>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <Popover
+              open={openPopover === "add-new"}
+              onOpenChange={(open) => setOpenPopover(open ? "add-new" : null)}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-teal-600 hover:bg-teal-700 text-white flex-1 sm:flex-none"
+                >
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  Agregar Introductor
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[90vw] sm:w-[400px] p-0" align="end">
+                <Command shouldFilter={true}>
+                  <CommandInput
+                    placeholder="Buscar por nombre o marca..."
+                    className="h-9"
+                  />
+                  <CommandList>
+                    <CommandEmpty>
+                      No se encontraron introductores.
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {introductores.map((intro) => {
+                        // Verificar si este introductor ya está seleccionado en alguna fila
+                        const isAlreadySelected = rows.some(
+                          (r) => r.introductor?.certId === intro.certId
+                        );
+
+                        return (
+                          <CommandItem
+                            key={intro.id}
+                            value={`${intro.nombre} ${intro.marca} ${intro.certificado}`}
+                            onSelect={() => {
+                              if (!isAlreadySelected) {
+                                // Encontrar la primera fila vacía
+                                const firstEmptyRowIndex = rows.findIndex(
+                                  (r) => r.introductor === null
+                                );
+
+                                const newRowId = `row-${Date.now()}`;
+                                const newRow = {
+                                  id: newRowId,
+                                  introductor: intro,
+                                  values: Array(
+                                    dynamicColumnConfig.length + 3
+                                  ).fill(0),
+                                };
+
+                                if (firstEmptyRowIndex !== -1) {
+                                  // Insertar antes de la primera fila vacía
+                                  setRows((prev) => [
+                                    ...prev.slice(0, firstEmptyRowIndex),
+                                    newRow,
+                                    ...prev.slice(firstEmptyRowIndex),
+                                  ]);
+                                } else {
+                                  // No hay filas vacías, agregar al final
+                                  setRows((prev) => [...prev, newRow]);
+                                }
+                                setOpenPopover(null);
+                              }
+                            }}
+                            disabled={isAlreadySelected}
+                            className={`flex flex-col items-start py-3 ${
+                              isAlreadySelected
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
+                          >
+                            <div className="font-medium">
+                              {intro.nombre}
+
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Marca: {intro.marca} | Cert: {intro.certificado} |
+                              Animales: {intro.animales}
+                            </div>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-teal-600 border-teal-600 bg-white hover:bg-teal-50 hidden sm:flex"
+            >
+              <Settings className="h-4 w-4 mr-1" />
+              <span className="hidden lg:inline">Configuración</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-teal-600 border-teal-600 bg-white hover:bg-teal-50 flex-1 sm:flex-none"
+            >
+              <Download className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Reportes</span>
+            </Button>
+          </div>
         </div>
 
-        <Table className="min-w-[1400px] border">
-          {/* Fila principal de SUBPRODUCTOS Y PRODUCTOS */}
-          <TableHeader className="sticky top-0 z-20 [&_th]:text-center">
-            <TableRow>
-              <TableHead rowSpan={3} className="min-w-60 bg-secondary align-middle sticky left-0 z-30">
-                INTRODUCTOR
-              </TableHead>
-              <TableHead className="bg-blue-50 text-black font-medium" colSpan={18}>
-                SUBPRODUCTOS
-              </TableHead>
-              <TableHead className="bg-blue-50 text-black font-medium" colSpan={2}>
-                PRODUCTOS
-              </TableHead>
-            </TableRow>
+        {/* Filtros de tipo de corral */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+          <CorralTypeFilters
+            selectedFilter={corralTypeFilter}
+            onFilterChange={setCorralTypeFilter}
+            counts={filterCounts}
+          />
+          
+          {/* Botón para expandir/colapsar todos */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (expandedOrgans.size === groupedColumns.length) {
+                // Si todos están expandidos, colapsar todos
+                setExpandedOrgans(new Set());
+              } else {
+                // Si no todos están expandidos, expandir todos
+                setExpandedOrgans(
+                  new Set(groupedColumns.map((g) => g.product))
+                );
+              }
+            }}
+            className="text-xs"
+          >
+            {expandedOrgans.size === groupedColumns.length
+              ? "Colapsar Todos"
+              : "Expandir Todos"}
+          </Button>
+        </div>
 
-            {/* Fila de grupos de patologías */}
-            <TableRow>
-              <TableHead className="bg-green-100 text-green-900" colSpan={7}>
-                HÍGADO
-              </TableHead>
-              <TableHead className="bg-blue-100 text-blue-900" colSpan={5}>
-                PULMÓN
-              </TableHead>
-              <TableHead className="bg-red-50 text-red-900" rowSpan={2}>
-                Corazón
-              </TableHead>
-              <TableHead className="bg-red-50 text-red-900" rowSpan={2}>
-                Intestino
-              </TableHead>
-              <TableHead className="bg-red-50 text-red-900" rowSpan={2}>
-                Otros
-              </TableHead>
-              <TableHead className="bg-red-50 text-red-900" rowSpan={2}>
-                Mastitis
-              </TableHead>
-              <TableHead className="bg-red-50 text-red-900" rowSpan={2}>
-                Metritis
-              </TableHead>
-              <TableHead className="bg-red-50 text-red-900" rowSpan={2}>
-                TOTAL
-              </TableHead>
-              <TableHead className="bg-indigo-50 text-indigo-900" rowSpan={2}>
-                Decomiso Total
-              </TableHead>
-              <TableHead className="bg-indigo-50 text-indigo-900" rowSpan={2}>
-                Decomiso Parcial
-              </TableHead>
-            </TableRow>
+        {/* Mostrar loader mientras se cargan los datos */}
+        {isLoadingCertificates || isLoadingDiseases ? (
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <div className="relative">
+              <div className="h-12 w-12 rounded-full border-4 border-gray-200"></div>
+              <div className="absolute top-0 left-0 h-12 w-12 rounded-full border-4 border-teal-600 border-t-transparent animate-spin"></div>
+            </div>
+            <p className="text-sm text-gray-600">Cargando datos...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto border rounded-lg bg-white -mx-2 sm:mx-0">
+            <Table className="min-w-[1200px] bg-white text-xs sm:text-sm">
+              <TableHeader className="sticky top-0 [&_th]:!text-gray-900">
+                <DynamicTableHeaders
+                  groupedColumns={groupedColumns}
+                  isLoading={isLoadingDiseases}
+                  expandedOrgans={expandedOrgans}
+                  onToggleOrgan={handleToggleOrgan}
+                />
+              </TableHeader>
 
-            {/* Fila de columnas individuales */}
-            <TableRow>
-              {/* Hígado */}
-              <TableHead className="bg-green-50 text-center">
-                Distomatosis
-              </TableHead>
-              <TableHead className="bg-green-50 text-center">
-                Absceso Hep.
-              </TableHead>
-              <TableHead className="bg-green-50 text-center">
-                Adherencias
-              </TableHead>
-              <TableHead className="bg-green-50 text-center">
-                Triquinosis
-              </TableHead>
-              <TableHead className="bg-green-50 text-center">
-                Cirrosis
-              </TableHead>
-              <TableHead className="bg-green-50 text-center">
-                Esteatósis
-              </TableHead>
-              <TableHead className="bg-green-50 text-center">
-                Fibrosis
-              </TableHead>
-              {/* Pulmón */}
-              <TableHead className="bg-blue-50 text-center">
-                Neumonía
-              </TableHead>
-              <TableHead className="bg-blue-50 text-center">Hemorragias</TableHead>
-              <TableHead className="bg-blue-50 text-center">
-                Enfisema
-              </TableHead>
-              <TableHead className="bg-blue-50 text-center">
-                Hemorragias
-              </TableHead>
-              <TableHead className="bg-blue-50 text-center">Otros</TableHead>
-            </TableRow>
-          </TableHeader>
+              <TableBody>
+                {rows.map((row) => {
+                  // Verificar si esta fila tiene datos guardados (contadores > 0)
+                  const hasPostmortemData = row.introductor
+                    ? dynamicColumnConfig.some(
+                        (config) =>
+                          countAnimalsWithDisease(
+                            postmortemData?.data,
+                            row.introductor!.certId,
+                            config.idSpeciesDisease!
+                          ) > 0
+                      ) ||
+                      countAnimalsWithTotalConfiscation(
+                        postmortemData?.data,
+                        row.introductor.certId
+                      ) > 0 ||
+                      countAnimalsWithPartialConfiscation(
+                        postmortemData?.data,
+                        row.introductor.certId
+                      ) > 0
+                    : false;
 
-          <TableBody>
-            {/* Fila del selector de introductor */}
-            <TableRow>
-              <TableCell className="sticky left-0 z-20 bg-background">
-                <Select>
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Seleccionar introductor…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Introductor #1</SelectItem>
-                    <SelectItem value="2">Introductor #2</SelectItem>
-                    <SelectItem value="3">Introductor #3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              {Array(18)
-                .fill(0)
-                .map((_, i) => (
-                  <TableCell key={i} className="text-center">
-                    -
-                  </TableCell>
-                ))}
-            </TableRow>
+                  return (
+                    <TableRow key={row.id} className="hover:bg-gray-50/50">
+                      <TableCell className="sticky left-0 z-20 bg-white border-r-2 p-1 w-[130px] sm:w-[145px] min-w-[130px] sm:min-w-[145px] max-w-[130px] sm:max-w-[145px]">
+                        {row.introductor ? (
+                          <div className="space-y-0.5 text-left">
+                            <div className="font-semibold text-[9px] sm:text-[10px] text-black leading-[1.1]">
+                              {(() => {
+                                const { line1, line2 } = splitName(row.introductor.nombre);
+                                return (
+                                  <>
+                                    <div>{line1}</div>
+                                    {line2 && <div>{line2}</div>}
+                                  </>
+                                );
+                              })()}
+                            </div>
+                            <div className="text-[8px] sm:text-[9px] text-gray-600 space-y-0 leading-[1.1]">
+                              <div>M: {row.introductor.marca}</div>
+                              <div>C: {row.introductor.certificado}</div>
+                              <div>A: {row.introductor.animales}</div>
+                            </div>
+                            {!hasPostmortemData && (
+                              <Popover
+                                open={openPopover === row.id}
+                                onOpenChange={(open) =>
+                                  setOpenPopover(open ? row.id : null)
+                                }
+                              >
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-full justify-center text-xs mt-0.5 hover:bg-gray-100 p-0"
+                                  >
+                                    <ChevronDown className="h-3 w-3" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-[400px] p-0"
+                                  align="start"
+                                >
+                                  <Command>
+                                    <CommandInput
+                                      placeholder="Buscar por nombre o marca..."
+                                      className="h-9"
+                                    />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        No se encontraron introductores.
+                                      </CommandEmpty>
+                                      <CommandGroup>
+                                        {introductores.map((intro) => {
+                                          // Verificar si este introductor ya está seleccionado en otra fila
+                                          const isAlreadySelected = rows.some(
+                                            (r) =>
+                                              r.id !== row.id &&
+                                              r.introductor?.certId ===
+                                                intro.certId
+                                          );
 
-            {/* Filas de ejemplo */}
-            {Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>
-                <TableCell className="text-muted-foreground sticky left-0 z-20 bg-background">
-                  Introductor #{i + 1}
-                </TableCell>
-                {/* Hígado (7) */}
-                {Array.from({ length: 7 }).map((__, j) => (
-                  <TableCell key={`h-${i}-${j}`}>-</TableCell>
-                ))}
-                {/* Pulmón (5) */}
-                {Array.from({ length: 5 }).map((__, j) => (
-                  <TableCell key={`p-${i}-${j}`}>-</TableCell>
-                ))}
-                {/* Rosados (6) */}
-                {Array.from({ length: 6 }).map((__, j) => (
-                  <TableCell key={`r-${i}-${j}`}>-</TableCell>
-                ))}
-                {/* Productos (2) */}
-                <TableCell>-</TableCell>
-                <TableCell>-</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                                          return (
+                                            <CommandItem
+                                              key={intro.id}
+                                              onSelect={() => {
+                                                if (!isAlreadySelected) {
+                                                  handleIntroductorSelect(
+                                                    row.id,
+                                                    intro
+                                                  );
+                                                }
+                                              }}
+                                              disabled={isAlreadySelected}
+                                              className={`flex flex-col items-start py-3 ${
+                                                isAlreadySelected
+                                                  ? "opacity-50 cursor-not-allowed"
+                                                  : ""
+                                              }`}
+                                            >
+                                              <div className="font-medium">
+                                                {intro.nombre}
+
+                                              </div>
+                                              <div className="text-xs text-muted-foreground">
+                                                Marca: {intro.marca} | Cert:{" "}
+                                                {intro.certificado} | Animales:{" "}
+                                                {intro.animales}
+                                              </div>
+                                            </CommandItem>
+                                          );
+                                        })}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-0.5 text-left">
+                            <div className="text-[9px] text-gray-400 leading-[1.1]">
+                              Seleccionar...
+                            </div>
+                            <div className="text-[8px] sm:text-[9px] text-gray-400 space-y-0 leading-[1.1]">
+                              <div>M: --</div>
+                              <div>C: --</div>
+                              <div>A: --</div>
+                            </div>
+                            <Popover
+                              open={openPopover === row.id}
+                              onOpenChange={(open) =>
+                                setOpenPopover(open ? row.id : null)
+                              }
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="h-5 w-full justify-center hover:bg-gray-100 p-0"
+                                >
+                                  <ChevronDown className="h-3 w-3" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-[400px] p-0"
+                                align="start"
+                              >
+                                <Command>
+                                  <CommandInput
+                                    placeholder="Buscar por nombre o marca..."
+                                    className="h-9"
+                                  />
+                                  <CommandList>
+                                    <CommandEmpty>
+                                      No se encontraron introductores.
+                                    </CommandEmpty>
+                                    <CommandGroup>
+                                      {introductores.map((intro) => {
+                                        // Verificar si este introductor ya está seleccionado en otra fila
+                                        const isAlreadySelected = rows.some(
+                                          (r) =>
+                                            r.id !== row.id &&
+                                            r.introductor?.certId ===
+                                              intro.certId
+                                        );
+
+                                        return (
+                                          <CommandItem
+                                            key={intro.id}
+                                            onSelect={() => {
+                                              if (!isAlreadySelected) {
+                                                handleIntroductorSelect(
+                                                  row.id,
+                                                  intro
+                                                );
+                                              }
+                                            }}
+                                            disabled={isAlreadySelected}
+                                            className={`flex flex-col items-start py-3 ${
+                                              isAlreadySelected
+                                                ? "opacity-50 cursor-not-allowed"
+                                                : ""
+                                            }`}
+                                          >
+                                            <div className="font-medium">
+                                              {intro.nombre}
+                                              {/* {isAlreadySelected && (
+                                                <span className="ml-2 text-xs text-red-500">
+                                                  (Ya seleccionado)
+                                                </span>
+                                              )} */}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                              Marca: {intro.marca} | Cert:{" "}
+                                              {intro.certificado} | Animales:{" "}
+                                              {intro.animales}
+                                            </div>
+                                          </CommandItem>
+                                        );
+                                      })}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        )}
+                      </TableCell>
+
+                      {/* Columnas de enfermedades */}
+                      {(() => {
+                        const cells: React.ReactElement[] = [];
+                        let currentIndex = 0;
+
+                        groupedColumns.forEach((group) => {
+                          const isExpanded = expandedOrgans.has(group.product);
+
+                          if (!isExpanded) {
+                            // Mostrar solo el total del órgano cuando está colapsado
+                            const totalForOrgan = group.diseases.reduce(
+                              (sum, disease) => {
+                                const diseaseConfig = dynamicColumnConfig.find(
+                                  (c) => c.idSpeciesDisease === disease.id
+                                );
+                                if (!diseaseConfig) return sum;
+
+                                const count = row.introductor
+                                  ? countAnimalsWithDisease(
+                                      postmortemData?.data,
+                                      row.introductor.certId,
+                                      disease.id
+                                    )
+                                  : 0;
+                                return sum + count;
+                              },
+                              0
+                            );
+
+                            cells.push(
+                              <TableCell
+                                key={`organ-total-${group.product}`}
+                                className="p-1 text-center bg-gray-50 font-semibold cursor-pointer hover:bg-gray-100 w-[45px] min-w-[45px]"
+                                onClick={() => {
+                                  // Expandir el órgano al hacer click en el total
+                                  handleToggleOrgan(group.product);
+                                }}
+                                title="Click para expandir y ver detalles"
+                              >
+                                {totalForOrgan > 0 ? (
+                                  <div className="flex items-center justify-center">
+                                    <div className="h-6 w-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-semibold">
+                                      {totalForOrgan}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="text-gray-400 text-xs">-</div>
+                                )}
+                              </TableCell>
+                            );
+
+                            // Saltar las enfermedades de este órgano
+                            currentIndex += group.diseases.length;
+                          } else {
+                            // Mostrar todas las columnas de enfermedades cuando está expandido
+                            group.diseases.forEach((disease) => {
+                              const config = dynamicColumnConfig[currentIndex];
+                              if (!config) {
+                                currentIndex++;
+                                return;
+                              }
+                              
+                              const count = row.introductor
+                                ? countAnimalsWithDisease(
+                                    postmortemData?.data,
+                                    row.introductor.certId,
+                                    config.idSpeciesDisease!
+                                  )
+                                : 0;
+
+                              const cellIndex = currentIndex; // Capturar el índice actual
+
+                              cells.push(
+                                <TableCell
+                                  key={`col-${cellIndex}`}
+                                  className="p-1 text-center cursor-pointer hover:bg-gray-100 w-[45px] min-w-[45px]"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (row.introductor) {
+                                      handleCellClick(row.id, cellIndex, "disease");
+                                    }
+                                  }}
+                                >
+                                  {count > 0 ? (
+                                    <div className="flex items-center justify-center">
+                                      <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
+                                        {count}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="text-gray-400 text-xs">-</div>
+                                  )}
+                                </TableCell>
+                              );
+
+                              currentIndex++;
+                            });
+                          }
+                        });
+
+                        return cells;
+                      })()}
+
+                      {/* Columna TOTAL (suma de todas las enfermedades) */}
+                      <TableCell className="p-1 text-center bg-orange-50 font-bold w-[45px] min-w-[45px]">
+                        {(() => {
+                          if (!row.introductor) return <span className="text-gray-400 text-xs">-</span>;
+
+                          // Sumar todos los animales con enfermedades
+                          const total = dynamicColumnConfig.reduce(
+                            (sum, config) => {
+                              return (
+                                sum +
+                                countAnimalsWithDisease(
+                                  postmortemData?.data,
+                                  row.introductor!.certId,
+                                  config.idSpeciesDisease!
+                                )
+                              );
+                            },
+                            0
+                          );
+
+                          return total > 0 ? (
+                            <div className="flex items-center justify-center">
+                              <div className="h-6 w-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-semibold">
+                                {total}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          );
+                        })()}
+                      </TableCell>
+
+                      {/* Columnas de PRODUCTOS (Decomiso Total y Parcial) */}
+                      {[0, 1].map((i) => {
+                        const columnType =
+                          i === 0
+                            ? "total-confiscation"
+                            : "partial-confiscation";
+
+                        // Contar animales con decomiso total o parcial
+                        const count = row.introductor
+                          ? i === 0
+                            ? countAnimalsWithTotalConfiscation(
+                                postmortemData?.data,
+                                row.introductor.certId
+                              )
+                            : countAnimalsWithPartialConfiscation(
+                                postmortemData?.data,
+                                row.introductor.certId
+                              )
+                          : 0;
+
+                        return (
+                          <TableCell
+                            key={`prod-${i}`}
+                            className="p-1 text-center cursor-pointer hover:bg-gray-100 w-[45px] min-w-[45px]"
+                            onClick={() =>
+                              handleCellClick(row.id, 0, columnType)
+                            }
+                          >
+                            {count > 0 ? (
+                              <div className="flex items-center justify-center">
+                                <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
+                                  {count}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-gray-400 text-xs">-</div>
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </Card>
+
+      {/* Modal de Selección de Animales (para enfermedades) */}
+      <AnimalSelectionModal
+        isOpen={modalState.isOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveAnimals}
+        introductor={
+          currentIntroductor
+            ? `${currentIntroductor.nombre} (${currentIntroductor.marca})`
+            : ""
+        }
+        localizacion={modalState.localizacion}
+        patologia={modalState.patologia}
+        idSpeciesDisease={modalState.idSpeciesDisease ?? 0}
+        idProduct={modalState.idProduct ?? null}
+        idSpecie={selectedSpecieId}
+        certId={currentIntroductor?.certId ?? null}
+        canEdit={canEdit}
+      />
+
+      {/* Modal de Decomiso Total */}
+      <TotalConfiscationModal
+        isOpen={totalConfiscationModalState.isOpen}
+        onClose={() =>
+          setTotalConfiscationModalState({ isOpen: false, rowId: null })
+        }
+        onSave={(count) => {
+          if (totalConfiscationModalState.rowId) {
+            setRows((prev) =>
+              prev.map((row) =>
+                row.id === totalConfiscationModalState.rowId
+                  ? {
+                      ...row,
+                      values: row.values.map((v, i) =>
+                        i === dynamicColumnConfig.length ? count : v
+                      ),
+                    }
+                  : row
+              )
+            );
+          }
+          setTotalConfiscationModalState({ isOpen: false, rowId: null });
+        }}
+        introductor={
+          totalConfiscationIntroductor
+            ? `${totalConfiscationIntroductor.nombre} (${totalConfiscationIntroductor.marca})`
+            : ""
+        }
+        localizacion="CANAL"
+        certId={totalConfiscationIntroductor?.certId ?? null}
+        canEdit={canEdit}
+      />
+
+      {/* Modal de Decomiso Parcial */}
+      <PartialConfiscationModal
+        isOpen={partialConfiscationModalState.isOpen}
+        onClose={() =>
+          setPartialConfiscationModalState({ isOpen: false, rowId: null })
+        }
+        onSave={(count) => {
+          if (partialConfiscationModalState.rowId) {
+            setRows((prev) =>
+              prev.map((row) =>
+                row.id === partialConfiscationModalState.rowId
+                  ? {
+                      ...row,
+                      values: row.values.map((v, i) =>
+                        i === dynamicColumnConfig.length + 1 ? count : v
+                      ),
+                    }
+                  : row
+              )
+            );
+          }
+          setPartialConfiscationModalState({ isOpen: false, rowId: null });
+        }}
+        introductor={
+          partialConfiscationIntroductor
+            ? `${partialConfiscationIntroductor.nombre} (${partialConfiscationIntroductor.marca})`
+            : ""
+        }
+        localizacion="CANAL"
+        certId={partialConfiscationIntroductor?.certId ?? null}
+        canEdit={canEdit}
+      />
     </div>
   );
 }

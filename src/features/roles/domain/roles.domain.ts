@@ -1,4 +1,4 @@
-import { CommonHttpResponsePagination } from "@/features/people/domain"
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain"
 
 export type CreateRoleBody = {
     name: string
@@ -8,13 +8,14 @@ export type CreateRoleBody = {
 export type SearchParamsRole = Partial<CreateRoleBody> & {
     page?: number
     limit?: number
-    status?: boolean,
-    isLogin?: boolean
+    status?: string,
+    isLogin?: string
 }
 
 export type Role = {
     id: number,
     name: string,
+    code: string,
     description: string | null,
     isLogin: boolean,
     isStaff: boolean,
@@ -23,3 +24,4 @@ export type Role = {
 
 
 export type ResponseRolesService = CommonHttpResponsePagination<Role>
+export type ResponseRolesServiceAll = CommonHttpResponseSingle<Role[]>

@@ -1,4 +1,5 @@
-import { Origin } from '@/features/origin/domain';
+import type { Origin } from '@/features/origin/domain';
+import type { DetailRegisterVehicle } from '@/features/vehicles/domain';
 
 /**
  * Represents the structure of a valid Certificate saved in DB.
@@ -16,6 +17,7 @@ import { Origin } from '@/features/origin/domain';
  * @property urlFile - The URL of the certificate file (nullable).
  * @property origin - The origin details associated with the certificate (nullable).
  * @property status - The status of the certificate (active/inactive).
+ * @property idDetailsRegisterVehicles - The details register vehicles identifier associated with the certificate (nullable).
  */
 export interface Certificate {
 	/** The unique identifier of the certificate. */
@@ -46,4 +48,8 @@ export interface Certificate {
 	origin?: Origin;
 	/** The status of the certificate. */
 	status: boolean;
+	/** The details register vehicles identifier associated with the certificate. */
+	idDetailsRegisterVehicles?: number;
+	/** The details register vehicle associated with the certificate. */
+	detailsRegisterVehicle?: DetailRegisterVehicle;
 }

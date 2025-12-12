@@ -4,6 +4,7 @@ import { SHIPPING_LIST_TAG } from '@/features/shipping/constants';
 import {
 	CreateShipperValues,
 	DetailRegisterVehicleResponseByCodeAndIdShipping,
+	DetailRegisterVehicleResponseById,
 	Shipper,
 	ShipperFilter,
 	ShipperResponse,
@@ -31,10 +32,19 @@ export const getShippersByIdService = (id: number | string) => {
 export const getDetailRegisterVehicleByIdShippingAndCertificateCodeService = (idShipping: number | string, certificateCode: string) => {
 	return http
 		.get(`v1/1.0.0/detail-register-vehicle/by-shipping-certificate`, {
-			next: { tags: ['detail-register-vehicle'] },
+			next: { tags: ['detail-register-vehicle-by-certificate'] },
 			searchParams: { idShipping, certificateCode },
 		})
 		.json<CreateOrUpdateHttpResponse<DetailRegisterVehicleResponseByCodeAndIdShipping>>();
+};
+
+export const getDetailRegisterVehicleById = (idDetailRegisterVehicle: number) => {
+	return http
+		.get(`v1/1.0.0/detail-register-vehicle`, {
+			next: { tags: ['detail-register-vehicle-by-certificate'] },
+			searchParams: { id: idDetailRegisterVehicle },
+		})
+		.json<CreateOrUpdateHttpResponse<DetailRegisterVehicleResponseById>>();
 };
 
 export const createShipperService = async (newShipper: CreateShipperValues) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, EyeOff, Save, Check, Loader2, X, GripVertical, Venus, Mars, BringToFront } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, Save, Loader2, X, GripVertical, Venus, Mars, BringToFront, CircleCheckBig, FileSpreadsheet, FileUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { QuantitySelector } from "@/components/quantity-selector";
 import { format } from "date-fns";
@@ -20,30 +21,33 @@ import { ObservacionesModal } from "./observaciones-modal";
 import { AntemortemMobileCard } from "./antemortem-mobile-card";
 import { getActiveLinesDataService, getAntemortemDataService, updateArgollasService } from "../server/db/antemortem.service";
 import { LineItem, mapLineItemToLineaType, getLineIdByType } from "../domain/line.types";
+import { DatePicker } from "@/components/ui/date-picker";
+import { downloadStatusCorralsReport } from "../utils/download-antemortem-report";
+import { isToday } from "@/lib/date-utils";
 
-function SelectLinea({ 
-  value, 
-  onChange, 
+function SelectLinea({
+  value,
+  onChange,
   availableLines = [],
-  isLoading = false 
-}: { 
-  value: Linea; 
+  isLoading = false
+}: {
+  value: Linea;
   onChange: (v: Linea) => void;
   availableLines?: LineItem[];
   isLoading?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  
+
   // Mapear las líneas de la API a los valores de Linea usando description
-  const opciones: Linea[] = availableLines.length > 0 
+  const opciones: Linea[] = availableLines.length > 0
     ? availableLines.map(mapLineItemToLineaType)
     : ["Bovinos", "Porcinos", "Ovinos Caprinos"];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="justify-between w-full bg-muted/40"
           disabled={isLoading}
         >
@@ -83,7 +87,7 @@ export function AntemortemManagement() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }, []);
-  
+
   const [fecha, setFecha] = useState<Date>(today);
   const [linea, setLinea] = useState<Linea>("Bovinos");
   const [signosOpen, setSignosOpen] = useState(false);
@@ -91,7 +95,7 @@ export function AntemortemManagement() {
   const [signosMarca, setSignosMarca] = useState<string>("");
   const [signosIdSpecie, setSignosIdSpecie] = useState<number>(1); // Default: Bovinos = 1
   const isMobile = useMediaQuery('(max-width: 768px)');
-  
+
   // Estados para editar argollas
   const [editingArgollasCorral, setEditingArgollasCorral] = useState<string | null>(null);
   const [tempArgollasValue, setTempArgollasValue] = useState<number>(0);
@@ -106,7 +110,7 @@ export function AntemortemManagement() {
   // Inicializar posición flotante en el cliente
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setFloatingPosition({ 
+      setFloatingPosition({
         x: 20, // Esquina inferior izquierda
         y: window.innerHeight - 150
       });
@@ -144,10 +148,11 @@ export function AntemortemManagement() {
   // Estados para cargar líneas desde la nueva API
   const [availableLines, setAvailableLines] = useState<LineItem[]>([]);
   const [isLoadingLines, setIsLoadingLines] = useState(false);
-  
+
   // Estados para datos de antemortem
   const [antemortemData, setAntemortemData] = useState<AntemortemRow[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Renderizado de marcas: colorea H (azul) y M (rosa) mostrando numero primero, robusto ante "6H", "H:6", comas y corchetes
   const renderMarcaPieces = (m: string) => {
@@ -212,7 +217,7 @@ export function AntemortemManagement() {
       setIsLoadingLines(true);
       const response = await getActiveLinesDataService();
       setAvailableLines(response);
-      
+
       // Establecer la primera línea como línea activa (siempre línea 1)
       if (response.length > 0) {
         const firstLine = mapLineItemToLineaType(response[0]);
@@ -232,13 +237,13 @@ export function AntemortemManagement() {
       setIsLoadingData(true);
       const admissionDate = format(selectedFecha, "yyyy-MM-dd");
       const lineId = getLineIdByType(selectedLinea);
-      
+
       if (lineId === 0) {
         console.warn(`No se encontró ID para la línea: ${selectedLinea}`);
         setAntemortemData([]);
         return;
       }
-      
+
       const data = await getAntemortemDataService(admissionDate, lineId);
       setAntemortemData(data);
     } catch (error) {
@@ -296,13 +301,19 @@ export function AntemortemManagement() {
   }, []);
 
   const showArgollas = linea === "Bovinos";
-  
+
+  // Verificar si la fecha seleccionada es hoy (solo se puede editar hoy)
+  const canEdit = isToday(fecha);
+
   // Funciones para editar argollas
   const handleArgollasClick = (corral: string, currentValue: number) => {
+    // Solo permitir edición si es la fecha actual
+    if (!canEdit) return;
+
     setEditingArgollasCorral(corral);
     setTempArgollasValue(currentValue || 0);
   };
-  
+
   const handleSaveArgollas = async (row: AntemortemRow) => {
     if (!row.statusCorralId) {
       return;
@@ -310,19 +321,19 @@ export function AntemortemManagement() {
 
     try {
       setSavingArgollasCorral(row.corral);
-      
+
       const response = await updateArgollasService(row.statusCorralId, tempArgollasValue);
-      
+
       if (response.code === 200) {
         // Actualizar los datos localmente
-        setAntemortemData(prevData => 
-          prevData.map(item => 
-            item.corral === row.corral 
+        setAntemortemData(prevData =>
+          prevData.map(item =>
+            item.corral === row.corral
               ? { ...item, argollas: tempArgollasValue }
               : item
           )
         );
-        
+
         // Limpiar estado de edición
         setEditingArgollasCorral(null);
         setTempArgollasValue(0);
@@ -333,11 +344,24 @@ export function AntemortemManagement() {
       setSavingArgollasCorral(null);
     }
   };
-  
+
   const handleCancelArgollas = () => {
     setEditingArgollasCorral(null);
     setTempArgollasValue(0);
   };
+
+  const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+      const admissionDate = format(fecha, "yyyy-MM-dd");
+
+      toast.promise(
+        downloadStatusCorralsReport(admissionDate, getLineIdByType(linea), type),
+        {
+          loading: 'Generando reporte...',
+          success: `Reporte ${type} descargado correctamente`,
+          error: 'Error al descargar el reporte',
+        }
+      );
+    };
 
   return (
     <div className="space-y-4">
@@ -346,7 +370,12 @@ export function AntemortemManagement() {
         <div className="mx-auto max-w-screen-xl px-3 md:px-4 py-3 md:py-4">
           {/* Título */}
           <div className="text-center">
-            <h1 className="text-2xl font-normal">ANTEMORTEM INTERNO- {linea.toUpperCase()}</h1>
+            <h1 className="text-2xl font-normal flex items-center justify-center gap-2">
+              ANTEMORTEM INTERNO- {linea.toUpperCase()}
+              {isRefreshing && (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              )}
+            </h1>
             <p className="text-sm text-muted-foreground">Marcas generadas para: {format(fecha, "dd 'de' MMMM 'de' yyyy", { locale: es })}</p>
           </div>
           {/* Filtros */}
@@ -357,9 +386,9 @@ export function AntemortemManagement() {
                 Fecha:
               </Label>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-[200px]">
-                  <CalendarIcon 
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer" 
+                {/* <div className="relative w-full sm:w-[200px]">
+                  <CalendarIcon
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
                     onClick={() => {
                       const input = document.getElementById('fecha-antemortem') as HTMLInputElement;
                       if (input) input.showPicker();
@@ -381,7 +410,15 @@ export function AntemortemManagement() {
                     }}
                     title="Selecciona la fecha"
                   />
-                </div>
+                </div> */}
+
+                <DatePicker
+                  inputClassName='bg-secondary'
+                  selected={fecha}
+                  onChange={date => setFecha(date || today)}
+                />
+
+
                 {/* Botón para volver a hoy */}
                 {format(fecha, "yyyy-MM-dd") !== format(today, "yyyy-MM-dd") && (
                   <Button
@@ -400,7 +437,7 @@ export function AntemortemManagement() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 lg:ml-2">
               <span className="text-sm text-black font-semibold whitespace-nowrap">Línea:</span>
               <div className="flex items-center gap-2 w-full">
-                <SelectLinea 
+                <SelectLinea
                   value={linea}
                   onChange={setLinea}
                   availableLines={availableLines}
@@ -411,25 +448,71 @@ export function AntemortemManagement() {
             </div>
             {/* Reporte */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start lg:justify-end gap-2">
-              <DropdownMenu>
+
+              <div>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-600 w-full sm:w-auto">
+
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary w-full sm:w-auto">
                     <FileText className="h-4 w-4" />
                     <span className="mx-2">Generar Reporte</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                    <FileText className="h-4 w-4" />
-                    <span>Antemortem Interno</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                    <FileText className="h-4 w-4" />
-                    <span>Antemortem Agrocalidad</span>
-                  </DropdownMenuItem>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-60"
+                  sideOffset={5}
+                  alignOffset={0}>
+
+                    {/* Antemortem - Interno */}
+                     <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="flex items-center">
+                        <FileText className="h-4 w-4 mr-2" />
+                        <span>Antemortem Interno</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-48">
+                        <DropdownMenuItem
+                        onClick={() => handleDownloadReport('EXCEL')}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                          Descargar Excel
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                        onClick={() => handleDownloadReport('PDF')}
+                        >
+                          <FileText className="h-4 w-4 mr-2 text-red-600" />
+                          Descargar PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
+                    {/* Antemortem - Agrocalidad*/}
+                     <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="flex items-center">
+                        <FileText className="h-4 w-4 mr-2" />
+                        <span>Antemortem Agrocalidad</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-48">
+                        <DropdownMenuItem
+                        // onClick={() => handleDownloadReport('EXCEL')}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                          Descargar Excel
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                        // onClick={() => handleDownloadReport('PDF')}
+                        >
+                          <FileText className="h-4 w-4 mr-2 text-red-600" />
+                          Descargar PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
+
             </div>
           </div>
         </div>
@@ -446,8 +529,8 @@ export function AntemortemManagement() {
           <CardTitle className="text-3xl font-semibold text-emerald-600">{totals.total}</CardTitle>
           <span className="text-sm text-muted-foreground">TOTAL ANIMALES</span>
         </div>
-        <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
-          <div className="h-6 w-6 rounded-full bg-emerald-600"></div>
+        <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
+          <div className="h-6 w-6 rounded-full bg-primary"></div>
         </div>
         </CardHeader>
       </Card>
@@ -489,7 +572,7 @@ export function AntemortemManagement() {
     </div>
 
       {/* Contenedor de la tabla o tarjetas */}
-      <div className={`relative overflow-auto ${!isMobile ? 'border-2 rounded-lg' : 'space-y-3'}`} 
+      <div className={`relative overflow-auto ${!isMobile ? 'border-2 rounded-lg' : 'space-y-3'}`}
            style={{ maxHeight: 'calc(100vh - 280px)' }}>
         {isLoadingData ? (
           <div className="flex items-center justify-center py-8">
@@ -511,10 +594,10 @@ export function AntemortemManagement() {
               <TableHead className="text-center border font-bold border-l-0"> <Hash className="inline-block w-4 h-4 mb-1 mr-2" />CORRAL</TableHead>
               <TableHead className="text-center border font-bold"> <Hash className="inline-block w-4 h-4 mb-1 mr-2" />MARCAS</TableHead>
               <TableHead className="text-center border font-bold"> <Eye className="inline-block w-4 h-4 mb-1 mr-2" />OBSERVACIONES</TableHead>
-              {showArgollas && <TableHead className="text-center border font-bold"> <Coins className="inline-block w-4 h-4 mb-1 mr-2 text-amber-600" />ARGOLLAS</TableHead>}
-              <TableHead className="text-center border font-bold"><User className="inline-block w-4 h-4 mb-1 mr-2 text-blue-600" />MACHOS</TableHead>
-              <TableHead className="text-center border font-bold"><User className="inline-block w-4 h-4 mb-1 mr-2 text-rose-600" />HEMBRAS</TableHead>
-              <TableHead className="text-center border font-bold"> <Users className="inline-block w-4 h-4 mb-1 mr-2" />TOTAL</TableHead>
+              {showArgollas && <TableHead className="text-center border font-bold"> <BringToFront className="inline-block w-4 h-4 mb-1 mr-2 text-white" />ARGOLLAS</TableHead>}
+              <TableHead className="text-center border font-bold"><Venus className="inline-block w-4 h-4 mb-1 mr-2 text-white" />MACHOS</TableHead>
+              <TableHead className="text-center border font-bold"><Mars className="inline-block w-4 h-4 mb-1 mr-2 text-white" />HEMBRAS</TableHead>
+              <TableHead className="text-center border font-bold"> <CircleCheckBig className="inline-block w-4 h-4 mb-1 mr-2" />TOTAL</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -549,17 +632,19 @@ export function AntemortemManagement() {
                   </div>
                 </TableCell>
                 <TableCell className="text-center border">
-                  {r.observaciones ? (
-                    <ObservacionesModal 
-                      observaciones={r.observaciones}
+                  {r.haveObservations ? (
+                    <ObservacionesModal
+                      observaciones={r.observaciones || "Sin observaciones"}
                       statusCorralId={r.statusCorralId}
                       admissionDate={format(fecha, "yyyy-MM-dd")}
                       marcasInfo={r.marcasInfo}
                     >
-                      <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Ver observaciones
-                      </Button>
+                        <div className="flex justify-center">
+                        <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700 justify-center items-center">
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver observaciones
+                        </Button>
+                        </div>
                     </ObservacionesModal>
                   ) : (
                     <span className="text-muted-foreground">Sin observaciones</span>
@@ -591,7 +676,7 @@ export function AntemortemManagement() {
                             size="sm"
                             onClick={() => handleSaveArgollas(r)}
                             disabled={savingArgollasCorral === r.corral}
-                            className="h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-700 text-white"
+                            className="h-8 w-8 p-0 bg-primary hover:bg-primary/80 text-white"
                             title="Guardar argollas"
                           >
                             {savingArgollasCorral === r.corral ? (
@@ -605,7 +690,13 @@ export function AntemortemManagement() {
                     ) : (
                       <button
                         onClick={() => handleArgollasClick(r.corral, r.argollas ?? 0)}
-                        className="text-amber-600 hover:text-amber-700 hover:underline font-medium cursor-pointer w-full"
+                        className={`font-medium w-full ${
+                          canEdit
+                            ? "text-amber-600 hover:text-amber-700 hover:underline cursor-pointer"
+                            : "text-gray-500 cursor-not-allowed"
+                        }`}
+                        disabled={!canEdit}
+                        title={canEdit ? "Editar argollas" : "Solo se puede editar en la fecha actual"}
                       >
                         {r.argollas ?? 0}
                       </button>
@@ -635,9 +726,9 @@ export function AntemortemManagement() {
         ) : (
           <div className="px-2 pb-16">
             {data.filas.map((item: AntemortemRow, idx: number) => (
-              <AntemortemMobileCard 
-                key={idx} 
-                item={item} 
+              <AntemortemMobileCard
+                key={idx}
+                item={item}
                 showArgollas={showArgollas}
                 editingArgollasCorral={editingArgollasCorral}
                 tempArgollasValue={tempArgollasValue}
@@ -659,13 +750,13 @@ export function AntemortemManagement() {
           </div>
         )}
       </div>
-        
+
         {/* Resumen total flotante y draggable */}
         {!isMobile && showFloatingTotals && (
-          <div 
+          <div
             className="fixed bg-white rounded-md shadow-lg border border-gray-200 overflow-hidden z-50 select-none"
-            style={{ 
-              left: `${floatingPosition.x}px`, 
+            style={{
+              left: `${floatingPosition.x}px`,
               top: `${floatingPosition.y}px`,
               width: '160px'
             }}
@@ -681,7 +772,7 @@ export function AntemortemManagement() {
               }
             }}
           >
-            <div className="px-2 py-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 drag-handle cursor-move">
+            <div className="px-2 py-1.5 bg-primary drag-handle cursor-move">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-0.5">
                   <GripVertical className="h-2.5 w-2.5 text-white/70" />
@@ -772,6 +863,11 @@ export function AntemortemManagement() {
         marcaLabel={signosMarca}
         settingCertificateBrandsId={signosSettingId}
         idSpecie={signosIdSpecie}
+        onSave={async () => {
+          setIsRefreshing(true);
+          await loadAntemortemData(fecha, linea);
+          setIsRefreshing(false);
+        }}
       />
 
 

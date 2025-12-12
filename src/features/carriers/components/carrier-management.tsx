@@ -11,7 +11,7 @@ import { NewCarrier } from "./new-carrier.form";
 import { CarriersTable } from "./table-carriers";
 import { Badge } from "@/components/ui/badge";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
-import { EditIcon, Ellipsis, PlusIcon, SearchIcon, Truck } from "lucide-react";
+import { CreditCardIcon, EditIcon, PlusIcon, SearchIcon, Truck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -27,13 +27,13 @@ import { useDebouncedCallback } from "use-debounce";
 import { Button } from "@/components/ui/button";
 import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 import { capitalizeText } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { toCapitalize } from "@/lib/toCapitalize";
 import { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function CarriersManagement({}) {
   const searchCarriersParams = useSearchParams();
@@ -46,12 +46,13 @@ export function CarriersManagement({}) {
       identification: parseAsString.withDefault(""),
       fullName: parseAsString.withDefault(""),
       plate: parseAsString.withDefault(""),
-      transportType: parseAsInteger.withDefault(0),
+      transportTypeId: parseAsInteger.withDefault(0),
       shippingStatus: parseAsString.withDefault("*"),
       vehicleStatus: parseAsString.withDefault("*"),
     },
     {
       history: "push",
+      clearOnDefault: true,
     }
   );
   const query = useQuery({
@@ -67,26 +68,32 @@ export function CarriersManagement({}) {
           fullName: searchParams.fullName,
         }),
         ...(searchParams.plate != "" && { plate: searchParams.plate }),
-        ...(searchParams.transportType != 0 && {
-          transportType: searchParams.transportType,
+        ...(searchParams.transportTypeId != 0 && {
+          transportTypeId: searchParams.transportTypeId,
         }),
-        ...(searchParams.shippingStatus === "true" && { shippingStatus: true }),
-        ...(searchParams.vehicleStatus === "true" && { vehicleStatus: true }),
+        ...(searchParams.shippingStatus !== "*" && {
+          shippingStatus: searchParams.shippingStatus === "true",
+        }),
+        ...(searchParams.vehicleStatus !== "*" && {
+          vehicleStatus: searchParams.vehicleStatus === "true",
+        }),
       }),
+    enabled: searchParams !== null,
+    staleTime: 1000,
   });
 
   const debounceFullName = useDebouncedCallback(
-    (text: string) => setSearchParams({ fullName: text }),
+    (text: string) => setSearchParams({ fullName: text, page: 1 }),
     500
   );
 
   const debounceIdentification = useDebouncedCallback(
-    (text: string) => setSearchParams({ identification: text }),
+    (text: string) => setSearchParams({ identification: text, page: 1 }),
     500
   );
 
   const debouncePlate = useDebouncedCallback(
-    (text: string) => setSearchParams({ plate: text }),
+    (text: string) => setSearchParams({ plate: text, page: 1 }),
     500
   );
 
@@ -94,20 +101,10 @@ export function CarriersManagement({}) {
     <div>
       <section className="mb-4 flex justify-between">
         <div>
-          <h1 className="font-semibold text-xl">Transportistas</h1>
+          <h2 className="font-semibold text-xl">Transportistas</h2>
           <p className="text-gray-600 text-sm mt-1">
             Gestión de transportistas y vehículos registrados en el sistema
           </p>
-        </div>
-        <div>
-          <NewCarrier
-            trigger={
-              <Button>
-                <PlusIcon className="h-4 w-4" />
-                Nuevo Transportista
-              </Button>
-            }
-          />
         </div>
       </section>
       <Card className="mb-4">
@@ -121,8 +118,8 @@ export function CarriersManagement({}) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-x-4 justify-between">
-            <div className="flex flex-col w-1/5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por nombre
               </label>
@@ -138,12 +135,12 @@ export function CarriersManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por identificación
               </label>
               <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <CreditCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
                 <Input
                   type="text"
                   placeholder="Ingrese Identificación"
@@ -156,7 +153,7 @@ export function CarriersManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por placa
               </label>
@@ -172,21 +169,21 @@ export function CarriersManagement({}) {
               </div>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Tipo de transporte
               </label>
               <Select
+                value={String(searchParams.transportTypeId)}
                 onValueChange={(value) => {
-                  setSearchParams({ transportType: Number(value) });
+                  setSearchParams({ transportTypeId: Number(value), page: 1 });
                 }}
-                defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="Seleccione el tipo de transporte" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="*">Todos los estados</SelectItem>
+                  <SelectItem value="0">Todos los tipos</SelectItem>
                   {catalogueTransportsType.data?.data.map(
                     (transport, index) => (
                       <SelectItem
@@ -201,39 +198,18 @@ export function CarriersManagement({}) {
               </Select>
             </div>
 
-            <div className="flex flex-col w-1/5">
+            <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Estado Transportista
               </label>
               <Select
+                value={searchParams.shippingStatus}
                 onValueChange={(value) => {
-                  setSearchParams({ shippingStatus: value });
+                  setSearchParams({ shippingStatus: value, page: 1 });
                 }}
-                defaultValue={"*"}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={"*"}>Todos los estados</SelectItem>
-                  <SelectItem value={"true"}>Activo</SelectItem>
-                  <SelectItem value={"false"}>Inactivo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col w-1/5">
-              <label className="mb-1 text-sm font-medium text-gray-700">
-                Estado Vehículo
-              </label>
-              <Select
-                onValueChange={(value) => {
-                  setSearchParams({ vehicleStatus: value });
-                }}
-                defaultValue={"*"}
-              >
-                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="" />
+                  <SelectValue placeholder="Seleccione un estado" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={"*"}>Todos los estados</SelectItem>
@@ -245,7 +221,16 @@ export function CarriersManagement({}) {
           </div>
         </CardContent>
       </Card>
-
+      <div className="flex justify-end ml-auto mb-3">
+        <NewCarrier
+          trigger={
+            <Button>
+              <PlusIcon className="h-4 w-4" />
+              Nuevo Transportista
+            </Button>
+          }
+        />
+      </div>
       <CarriersTable
         columns={[
           {
@@ -262,15 +247,19 @@ export function CarriersManagement({}) {
             accessorFn: (row) => row.vehicle,
             cell: ({ row }) => {
               const vehicle = row.original.vehicle;
+              const vehicleName = vehicle.vehicleDetail?.vehicleType?.name?.trim() ?? "";
+              let value = vehicleName === 'N/A' ? vehicleName: toCapitalize(vehicleName);
+
+              if (vehicle.color) value += ` • ${vehicle.color}`;
+              if (vehicle.manufactureYear)
+                value += ` • ${vehicle.manufactureYear}`;
+
               return (
                 <div className="flex flex-col">
                   <span className="font-medium">
                     {vehicle.brand} {vehicle.model}
                   </span>
-                  <span className="text-sm text-muted-foreground">
-                    {vehicle.vehicleDetail?.vehicleType?.name} • {vehicle.color}{" "}
-                    • {vehicle.manufactureYear}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{value}</span>
                 </div>
               );
             },
@@ -313,14 +302,7 @@ export function CarriersManagement({}) {
           },
           {
             accessorKey: "status",
-            header: "Estado Transportista",
-            cell: ({ row }) => (
-              <Badge>{row.original.status ? "Activo" : "Inactivo"}</Badge>
-            ),
-          },
-          {
-            accessorKey: "vehicle.status",
-            header: "Estado Vehículo",
+            header: "Estado",
             cell: ({ row }) => (
               <Badge>{row.original.status ? "Activo" : "Inactivo"}</Badge>
             ),
@@ -328,21 +310,31 @@ export function CarriersManagement({}) {
           {
             header: "Acciones",
             cell: ({ row }) => {
+              const [open, setOpen] = useState(false);
               return (
                 <div className="flex items-center space-x-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Ellipsis className="h-4 w-4" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" onClick={() => setOpen(true)}>
+                        <EditIcon />
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem disabled>
-                        <EditIcon className="h-4 w-4 mr-2" />
-                        Editar Transportista (Próximamente)
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      align="center"
+                      sideOffset={5}
+                      avoidCollisions
+                    >
+                      Editar Tranportista
+                    </TooltipContent>
+                  </Tooltip>
+                  <NewCarrier
+                    shipping={row.original}
+                    isUpdate={true}
+                    open={open}
+                    onOpenChange={setOpen}
+                    onSuccess={() => query.refetch()}
+                  />
                 </div>
               );
             },

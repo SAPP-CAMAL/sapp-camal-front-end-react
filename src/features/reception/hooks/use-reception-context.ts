@@ -3,6 +3,7 @@ import { Specie } from '@/features/specie/domain';
 import { ShipperBasicData } from '@/features/shipping/domain';
 import { Certificate } from '@/features/certificate/domain';
 import { AccordionState, AccordionStepKeys, AnimalAdmissionItem, ReceptionContext } from '@/features/reception/context/reception-provider';
+import { AnimalTransportForm } from './use-step-3-transport';
 
 export const useReceptionContext = () => {
 	const context = useContext(ReceptionContext);
@@ -18,6 +19,7 @@ export const useReceptionContext = () => {
 		animalAdmissionList,
 		selectedSpecie,
 		isFromQR,
+		animalTransportData,
 
 		receptionDispatch,
 	} = context;
@@ -54,6 +56,7 @@ export const useReceptionContext = () => {
 				animalAdmission: {},
 				state: 'created',
 				isOpen: true,
+				isRetrieveFormData: false,
 			},
 		});
 	};
@@ -92,6 +95,10 @@ export const useReceptionContext = () => {
 		receptionDispatch({ type: 'SET_IS_FROM_QR', payload });
 	};
 
+	const handleSetAnimalTransportData = (payload: AnimalTransportForm) => {
+		receptionDispatch({ type: 'SET_ANIMAL_TRANSPORT_DATA', payload });
+	};
+
 	return {
 		// Data
 		selectedShipper,
@@ -102,6 +109,7 @@ export const useReceptionContext = () => {
 		animalAdmissionList,
 		selectedSpecie,
 		isFromQR,
+		animalTransportData,
 
 		// Actions
 		// Selected shipper
@@ -124,6 +132,9 @@ export const useReceptionContext = () => {
 		// Selected specie
 		handleSetSelectedSpecie,
 		handleRemoveSelectedSpecie,
+
+		// Condition transport
+		handleSetAnimalTransportData,
 
 		// QR flag
 		handleSetIsFromQR,

@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { IDetectedBarcode } from '@yudiel/react-qr-scanner';
 import { Certificate } from '../domain';
-import { parseQrCertificateData } from '../utils';
+import { formatCertificateDate, parseQrCertificateData } from '../utils';
 import {
 	getCertificateByCodeService,
 	saveScannedCertificateService,
@@ -10,6 +10,7 @@ import {
 } from '@/features/certificate/server/db/certificate.service';
 import { Origin } from '@/features/origin/domain';
 import { useAllOrigins } from '@/features/origin/hooks';
+import { isBefore, parseISO, startOfDay } from 'date-fns';
 
 type QrState = 'active' | 'loading' | 'invalid' | 'saving';
 
@@ -37,7 +38,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 	const [qrModalState, setQrModalState] = useState(defaultValues);
 	const query = useAllOrigins();
 
-	const origins = query.data.data;
+	const origins = query.data?.data || [];
 
 	// State Handlers
 	const setQrState = (state: QrState) => setQrModalState(data => ({ ...data, state }));
@@ -68,17 +69,16 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 	const closeModal = async () => {
 		if (!qrModalState?.qrData?.code) return setIsModalOpen(false);
 
-		const certificate = await getCertificateByCodeService(qrModalState.qrData.code);
+		const certificate = (await getCertificateByCodeService(qrModalState.qrData.code)).data ?? null;
 
-		setQrData(certificate.data);
-		onSetQrData?.(certificate.data);
 		setIsModalOpen(false);
+		setQrData(certificate);
+		if (certificate) onSetQrData?.(certificate);
 	};
 
 	/**
-	 * Save valid scanned qr certificate data in db
-	 * @param data Represents the detected codes
-	 *
+	 * Scan a valid QR code.
+	 * @param data Represents the detected codes from the QR scanner.
 	 */
 	const handleScanQrData = async (data: IDetectedBarcode[]) => {
 		setQrState('loading');
@@ -88,7 +88,8 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		const code =
 			('czpmNumber' in parsedQrData && parsedQrData.czpmNumber) ||
 			('csmiNumber' in parsedQrData && parsedQrData.csmiNumber) ||
-			('certificateNumber' in parsedQrData && parsedQrData.certificateNumber);
+			('certificateNumber' in parsedQrData && parsedQrData.certificateNumber) ||
+			('czpmmNumber' in parsedQrData && parsedQrData.czpmmNumber);
 
 		if (!code) {
 			setQrState('invalid');
@@ -118,7 +119,10 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		try {
 			const placeOrigin = ('origin' in parsedQrData && parsedQrData.origin) || '';
 			const originAreaCode = ('originAreaCode' in parsedQrData && parsedQrData.originAreaCode) || 'N/A';
-			const destinationAreaCode = ('destinationAreaCode' in parsedQrData && parsedQrData.destinationAreaCode) || 'N/A';
+			const destinationAreaCode =
+				('destinationAreaCode' in parsedQrData && parsedQrData.destinationAreaCode) ||
+				('destination' in parsedQrData && parsedQrData.destination) ||
+				'N/A';
 
 			const scannedQr = {
 				id: NaN,
@@ -151,11 +155,27 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		if (!qrModalState.selectedOrigin) return toast.error('Por favor seleccione una procedencia');
 		setQrState('saving');
 
+		// Validate the issue date
+		const issueDate = formatCertificateDate(qrModalState.qrData.issueDate);
+
+		if (!issueDate) {
+			setQrState('active');
+			return toast.error('La fecha de caducidad del certificado no es válida');
+		}
+
+		const currentDate = startOfDay(new Date());
+		const expirationDate = startOfDay(issueDate);
+
+		if (isBefore(expirationDate, currentDate)) {
+			setQrState('active');
+			return toast.error('El certificado ha caducado. No se puede procesar un certificado vencido.');
+		}
+
 		try {
 			const request = {
 				code: qrModalState.qrData.code,
 				placeOrigin: qrModalState.qrData.placeOrigin || 'N/A',
-				issueDate: qrModalState.qrData.issueDate,
+				issueDate: issueDate.toISOString().split('T')[0],
 				quantity: qrModalState.qrData.quantity,
 				plateVehicle: qrModalState.qrData.plateVehicle,
 				authorizedTo: qrModalState.qrData.authorizedTo,
@@ -166,8 +186,6 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 			};
 
 			let response;
-
-			if (qrModalState.qrData.id) request.placeOrigin = qrModalState.selectedOrigin.description || 'N/A';
 
 			if (qrModalState.qrData.id) response = await updateCertificateService(qrModalState.qrData.id, request);
 			else response = await saveScannedCertificateService(request);
@@ -181,7 +199,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 			toast.success(`Código QR ${qrModalState.qrData.id ? 'actualizado' : 'guardado'} correctamente`);
 			setQrState('active');
 		} catch (error: any) {
-			const { data, message } = await error.response.json();
+			const { data, message } = await error?.response?.json?.();
 			toast.error(data ?? message ?? 'Ocurrió un error al guardar el código QR');
 			setQrState('active');
 		}

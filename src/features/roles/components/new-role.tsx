@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 export type NewRoleForm = {
   name: string;
   description: string;
-  modules: ResponseModuleWithMenus;
+  modules?: ResponseModuleWithMenus;
 };
 
 const defaultValues: NewRoleForm = {
@@ -78,7 +78,7 @@ export function NewRol() {
           Crear rol
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-5xl">
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[60vw]">
         <DialogHeader>
           <DialogTitle>Nuevo Rol</DialogTitle>
           <DialogDescription>
@@ -101,7 +101,12 @@ export function NewRol() {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting || form.formState.isLoading}>
+              <Button
+                type="submit"
+                disabled={
+                  form.formState.isSubmitting || form.formState.isLoading
+                }
+              >
                 {form.formState.isSubmitting ? "Guardando..." : "Guardar"}
               </Button>
             </div>

@@ -22,17 +22,18 @@ export const ShipperListCard = ({ className, shippers = [], onSelectShipper }: P
 					onClick={() =>
 						onSelectShipper({
 							id: shipper.id,
-							personId: shipper.person.id,
-							firstName: shipper.person.firstName,
-							lastName: shipper.person.lastName,
-							identification: shipper.person.identification,
-							identificationTypeId: shipper.person.identificationTypeId.toString(),
-							plate: shipper.vehicle.plate,
-							vehicleId: shipper.vehicle.id.toString(),
-							vehicleTypeId: shipper.vehicle.vehicleDetail.vehicleType.id.toString(),
-							vehicleType: shipper.vehicle.vehicleDetail.vehicleType.name,
-							transportTypeId: shipper.vehicle.vehicleDetail.transportType.id.toString(),
-							transportType: shipper.vehicle.vehicleDetail.transportType.name,
+							personId: shipper.person?.id,
+							firstName: shipper.person?.firstName ?? '',
+							lastName: shipper.person?.lastName ?? '',
+							fullName: shipper.person?.fullName ?? '',
+							identification: shipper.person?.identification ?? '',
+							identificationTypeId: shipper.person?.identificationTypeId?.toString() ?? '',
+							plate: shipper.vehicle?.plate ?? '',
+							vehicleId: shipper.vehicle?.id?.toString() ?? '',
+							vehicleTypeId: shipper.vehicle?.vehicleDetail?.vehicleType?.id?.toString() ?? '',
+							vehicleType: shipper.vehicle?.vehicleDetail?.vehicleType?.name ?? '',
+							transportTypeId: shipper.vehicle?.vehicleDetail?.transportType?.id?.toString() ?? '',
+							transportType: shipper.vehicle?.vehicleDetail?.transportType?.name ?? '',
 						})
 					}
 				>

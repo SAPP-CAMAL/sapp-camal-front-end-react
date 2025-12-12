@@ -101,7 +101,7 @@ export function TableStaffList<TData, TValue>({
             }}
             defaultValue={"*"}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-64">
               <SelectValue placeholder="" />
             </SelectTrigger>
             <SelectContent>
@@ -114,7 +114,7 @@ export function TableStaffList<TData, TValue>({
             onValueChange={(value) => meta?.setSearchParams({ status: value })}
             defaultValue={"todos"}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-64">
               <SelectValue placeholder="" />
             </SelectTrigger>
             <SelectContent>
@@ -171,7 +171,7 @@ export function TableStaffList<TData, TValue>({
                 colSpan={columns.length}
                 className="h-96 text-center animate-pulse font-semibold"
               >
-                Loading...
+                Cargando...
               </TableCell>
             </TableRow>
           ) : table.getRowModel().rows?.length ? (
@@ -190,7 +190,7 @@ export function TableStaffList<TData, TValue>({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                No se encontró resultados.
               </TableCell>
             </TableRow>
           )}

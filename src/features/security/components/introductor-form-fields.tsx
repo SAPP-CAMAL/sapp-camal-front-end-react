@@ -109,9 +109,17 @@ export function IntroductorFormFields({
       setIntroducerId(introductor.data.items[0].id);
       setIsSuccess(true);
     } catch (error: any) {
-      console.log({ error });
-      const { data } = await error.response.json();
-      toast.error(data);
+      console.error("Error al crear introductor:", error);
+      if (error.response) {
+        try {
+          const { data } = await error.response.json();
+          toast.error(data || "Error al crear el introductor");
+        } catch {
+          toast.error("Error al crear el introductor");
+        }
+      } else {
+        toast.error("Error de conexión. Por favor, intente nuevamente.");
+      }
     }
   };
   const handleSaveBrands = async () => {
@@ -141,7 +149,6 @@ export function IntroductorFormFields({
         species: brand.data.species.map((s) => s.name),
       };
       setCreatedBrands((prev) => [...prev, newBrand]);
-      console.log({ brand });
       toast.success("Marca creada exitosamente");
 
       form.reset({ description: "" });
@@ -375,7 +382,7 @@ export function IntroductorFormFields({
                     >
                       <div className="text-sm">
                         <span className="font-bold">{brand.name}</span>[
-                        {brand.species.join(", ").toUpperCase()}]
+                        {(brand.species ?? []).join(", ").toUpperCase()}]
                       </div>
                     </div>
                   ))}
@@ -401,7 +408,6 @@ export function PersonSearch({
   onSelectPerson,
 }: PersonSearchProps) {
   if (!activeField) return null;
-  console.log("a", data.length);
 
   return (
     <Command className="rounded-lg border shadow-md w-full mt-2">
@@ -439,11 +445,13 @@ export function PersonSearch({
 interface SelectedPersonCardProps {
   person: UserPerson;
   onRemove: () => void;
+  showEmail?: boolean;
 }
 
 export function SelectedPersonCard({
   person,
   onRemove,
+  showEmail = true,
 }: SelectedPersonCardProps) {
   return (
     <div className="w-full mt-4 space-y-4">
@@ -471,15 +479,21 @@ export function SelectedPersonCard({
           </button>
         </div>
       </div>
-      <Separator />
-      <div>
-        <label className="font-semibold text-sm">Correo Electrónico *</label>
-        <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
-          <p className="text-sm text-muted-foreground truncate">
-            {person.email}
-          </p>
-        </div>
-      </div>
+      {showEmail && (
+        <>
+          <Separator />
+          <div>
+            <label className="font-semibold text-sm">
+              Correo Electrónico *
+            </label>
+            <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
+              <p className="text-sm text-muted-foreground truncate">
+                {person.email}
+              </p>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -496,7 +510,7 @@ export function SuccessView({ person }: SuccessViewProps) {
       .split(" ")
       .map((name) => name.charAt(0))
       .join("")
-      .toUpperCase()
+  .toUpperCase()
       .slice(0, 3);
   };
 

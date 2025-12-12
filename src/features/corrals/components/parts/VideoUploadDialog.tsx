@@ -71,13 +71,12 @@ export function VideoUploadDialog({
 	const validItems = videoList.filter(v => v.valid.isValid);
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
-			<DialogContent className='sm:max-w-[520px]'>
-				<DialogHeader>
+			<DialogContent className='sm:max-w-[520px] max-h-[90vh] flex flex-col'>
+				<DialogHeader className="flex-shrink-0">
 					<DialogTitle>
 						<span className='inline-flex items-center gap-2'>
 							<span className='relative inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-50 text-emerald-600'>
 								<VideoIcon className='' />
-								{/* <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 bg-emerald-500 rounded-full border border-white" /> */}
 							</span>
 							{title}
 						</span>
@@ -86,6 +85,8 @@ export function VideoUploadDialog({
 						Máximo {limitVideosToUpload} videos por corral. Duración máxima: {maxDurationPerVideo} segundos cada uno.
 					</DialogDescription>
 				</DialogHeader>
+				
+				<div className="flex-1 overflow-y-auto min-h-0">{/* Scrollable content */}
 
 				{videoList.length < limitVideosToUpload && !selectedVideo && <DragAndDropArea onAddVideos={handleFiles} canSaveItems={canDeleteItems} />}
 
@@ -124,14 +125,18 @@ export function VideoUploadDialog({
 					</div>
 				)}
 
-				{/* Cancel and save button */}
-				<DialogFooter className='mt-3'>
-					<Button variant='outline' onClick={() => handleOpenChange(false)}>
-						Cancelar
-					</Button>
-					<Button onClick={onSave} className='bg-emerald-600 hover:bg-emerald-700 text-white' disabled={!canSaveItems}>
-						{`Guardar Videos (${validItems.length})`}
-					</Button>
+				</div>{/* End scrollable content */}
+				
+				{/* Cancel and save button - Fixed at bottom */}
+				<DialogFooter className='mt-3 flex-shrink-0 sticky bottom-0 bg-white pt-4 border-t'>
+					<div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-end">
+						<Button variant='outline' onClick={() => handleOpenChange(false)} className="w-full sm:w-auto">
+							Cancelar
+						</Button>
+						<Button onClick={onSave} className='bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto' disabled={!canSaveItems}>
+							{`Guardar Videos (${validItems.length})`}
+						</Button>
+					</div>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>

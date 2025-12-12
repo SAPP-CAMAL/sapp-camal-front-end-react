@@ -1,9 +1,14 @@
 import { toast } from 'sonner';
+import { useEffect } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 import { useQueryClient } from '@tanstack/react-query';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { SHIPPING_LIST_TAG } from '@/features/shipping/constants';
 import type { CreateShipperValues, ShipperBasicData, ShipperFormValues } from '@/features/shipping/domain';
 import { createShipperService, updateShipperService } from '@/features/shipping/server/db/shipping.service';
+import { useCatalogue } from '@/features/catalogues/hooks/use-catalogue';
+import { personValidateDocument, validateDocumentTypeService } from '@/features/people/server/db/people.service';
+import { toCapitalize } from '@/lib/toCapitalize';
 
 type NewShipperFormValues = ShipperFormValues & { open: boolean };
 
@@ -46,6 +51,38 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 	const addShipper = createOrUpdateType === 'update' && shipperData?.vehicleId && !editAllData;
 	const addVehicle = createOrUpdateType === 'update' && shipperData?.personId && !editAllData;
 
+	const identification = form.watch('identification');
+	const identificationType = form.watch('identificationTypeId');
+
+	const catalogueIdentityTypes = useCatalogue('TID');
+
+	const debounceData = useDebouncedCallback(async (identificationValue: string) => {
+		const identificationTypeCode = catalogueIdentityTypes?.data?.data.find(data => data.catalogueId === Number(identificationType))?.code;
+
+		if (identificationTypeCode !== 'CED') return;
+
+		try {
+			const validateResponse = await validateDocumentTypeService(identificationTypeCode, identificationValue);
+
+			if (!validateResponse.data.isValid) return;
+
+			const response = await personValidateDocument(identificationValue);
+
+			const personData = response.data;
+
+			if (personData.firstName) form.setValue('firstName', toCapitalize(personData.firstName, true));
+			if (personData.lastName) form.setValue('lastName', toCapitalize(personData.lastName, true));
+		} catch (error) {}
+	}, 500);
+
+	useEffect(() => {
+		if (!identification) return;
+		if (identification.length < 1) return;
+		if (identification.length !== 10) return;
+
+		debounceData(identification);
+	}, [identification, debounceData]);
+
 	const handleSaveOrUpdateShipper: SubmitHandler<NewShipperFormValues> = async data => {
 		try {
 			const { open: _, id, identificationTypeId, transportTypeId, vehicleTypeId, firstName, identification, lastName, plate } = data;
@@ -79,6 +116,7 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 					vehicleType: updatedShipper.vehicle.vehicleDetail.vehicleType.name,
 					transportTypeId: updatedShipper.vehicle.vehicleDetail.transportType.id.toString(),
 					transportType: updatedShipper.vehicle.vehicleDetail.transportType.name,
+					fullName: `${updatedShipper.person.firstName} ${updatedShipper.person.lastName}`,
 				});
 
 				toast.success('Transportista creado exitosamente');
@@ -108,6 +146,7 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 					vehicleType: updatedShipper.vehicle.vehicleDetail.vehicleType.name,
 					transportTypeId: updatedShipper.vehicle.vehicleDetail.transportType.id.toString(),
 					transportType: updatedShipper.vehicle.vehicleDetail.transportType.name,
+					fullName: `${updatedShipper.person.firstName} ${updatedShipper.person.lastName}`,
 				});
 
 				toast.success('Agregado transportista exitosamente');
@@ -136,6 +175,7 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 					vehicleType: updatedShipper.vehicle.vehicleDetail.vehicleType.name,
 					transportTypeId: updatedShipper.vehicle.vehicleDetail.transportType.id.toString(),
 					transportType: updatedShipper.vehicle.vehicleDetail.transportType.name,
+					fullName: `${updatedShipper.person.firstName} ${updatedShipper.person.lastName}`,
 				});
 
 				toast.success('Transportista actualizado exitosamente');
@@ -158,6 +198,7 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 					vehicleType: updatedShipper.vehicle.vehicleDetail.vehicleType.name,
 					transportTypeId: updatedShipper.vehicle.vehicleDetail.transportType.id.toString(),
 					transportType: updatedShipper.vehicle.vehicleDetail.transportType.name,
+					fullName: `${updatedShipper.person.firstName} ${updatedShipper.person.lastName}`,
 				});
 
 				toast.success('Transportista actualizado exitosamente');

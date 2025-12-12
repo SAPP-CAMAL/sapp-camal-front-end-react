@@ -39,11 +39,14 @@ export function SpeciesMenu({
   const selectedSpecies = selected[0] || null;
   
   // Encontrar la especie PORCINO y sus finish types
-  const porcinoSpecie = speciesList.find(specie => 
-    specie.id === 3 || 
-    specie.name.toUpperCase().includes('PORCINO') || 
-    specie.name.toUpperCase().includes('CERDO')
-  );
+  const porcinoSpecie = speciesList.find(specie => {
+    const name = (specie.name || '').toString();
+    return (
+      specie.id === 3 ||
+      name.toUpperCase().includes('PORCINO') ||
+      name.toUpperCase().includes('CERDO')
+    );
+  });
   
   const availableFinishTypes = porcinoSpecie?.finishType || [];
 
@@ -53,9 +56,7 @@ export function SpeciesMenu({
       onSelectSpecies([]);
       onSelectFinishType(null);
     } else {
-      // Seleccionar solo esta especie
       onSelectSpecies([speciesName]);
-      // Si no es PORCINO, limpiar finish type
       if (speciesName !== "PORCINO") {
         onSelectFinishType(null);
       }
@@ -91,7 +92,7 @@ export function SpeciesMenu({
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className={`justify-between w-full bg-muted hover:bg-muted text-left ${
+            className={`justify-between w-full hover:bg-muted text-left ${
               selectedSpecies === "PORCINO" ? 'border-primary/50 bg-primary/5' : ''
             }`}
           >
@@ -103,7 +104,6 @@ export function SpeciesMenu({
         </DropdownMenuTrigger>
         
         <DropdownMenuContent className="w-[280px]" align="start">
-          {/* Opción para limpiar selección */}
           {selectedSpecies && (
             <>
               <DropdownMenuItem 
@@ -120,8 +120,9 @@ export function SpeciesMenu({
           )}
           
           {speciesList.map((specie) => {
-            const isSelected = selected.includes(specie.name as Species);
-            const isPorcino = specie.name.toUpperCase().includes('PORCINO');
+            const specieName = (specie.name || '') as string;
+            const isSelected = selected.includes(specieName as Species);
+            const isPorcino = specieName.toUpperCase().includes('PORCINO');
             
             // Si es PORCINO y tiene finish types, mostrar como submenu
             if (isPorcino && availableFinishTypes.length > 0) {
@@ -129,7 +130,7 @@ export function SpeciesMenu({
                 <DropdownMenuSub key={specie.id}>
                   <DropdownMenuSubTrigger className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className={`h-4 w-4 rounded-full border ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+                      <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
                         {isSelected && <Check className="h-3 w-3 text-white" />}
                       </div>
                       <span>{specie.name}</span>
@@ -143,7 +144,7 @@ export function SpeciesMenu({
                       onClick={() => handleSpeciesSelect(specie.name as Species)}
                       className="flex items-center gap-2"
                     >
-                      <div className={`h-4 w-4 rounded-full border ${isSelected && !selectedFinishType ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+                      <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected && !selectedFinishType ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
                         {isSelected && !selectedFinishType && <Check className="h-3 w-3 text-white" />}
                       </div>
                       <span>Todos los tipos</span>
@@ -161,7 +162,7 @@ export function SpeciesMenu({
                         }}
                         className="flex items-center gap-2"
                       >
-                        <div className={`h-4 w-4 rounded-full border ${isSelected && selectedFinishType === finishType.id ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+                        <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected && selectedFinishType === finishType.id ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
                           {isSelected && selectedFinishType === finishType.id && <Check className="h-3 w-3 text-white" />}
                         </div>
                         <span>{finishType.name}</span>
@@ -171,14 +172,13 @@ export function SpeciesMenu({
                 </DropdownMenuSub>
               );
             } else {
-              // Especies normales sin submenu
               return (
                 <DropdownMenuItem 
                   key={specie.id}
                   onClick={() => handleSpeciesSelect(specie.name as Species)}
                   className="flex items-center gap-2"
                 >
-                  <div className={`h-4 w-4 rounded-full border ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+                  <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
                     {isSelected && <Check className="h-3 w-3 text-white" />}
                   </div>
                   <span>{specie.name}</span>

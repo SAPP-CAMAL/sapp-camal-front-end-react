@@ -9,9 +9,14 @@ import { useShippersList } from '@/features/shipping/hooks';
 import { DailyRegisterFormData } from '@/features/disinfectant/domain';
 import { CreateDetailRegisterVehicle, UpdateDetailRegisterVehicle } from '@/features/vehicles/domain';
 import { useDailyDisinfectionRegisterContext } from './use-daily-disinfection-register-context';
-import { createRegisterVehicleService, updateRegisterVehicleService } from '@/features/vehicles/server/db/detail-register-vehicle.service';
+import {
+	createRegisterVehicleService,
+	updateDetailRegisterVehicleService,
+	updateRegisterVehicleService,
+} from '@/features/vehicles/server/db/detail-register-vehicle.service';
 import { DETAIL_REGISTER_VEHICLE_TAG } from '@/features/vehicles/constants';
 import { updateCertificateService } from '@/features/certificate/server/db/certificate.service';
+import { ShipperBasicData } from '@/features/shipping/domain';
 
 const getCurrentTime = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
@@ -73,15 +78,19 @@ export const useRegisterDisinfectantData = () => {
 
 	useEffect(() => {
 		handleSearchFields('plate', dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '');
-		setSearchParams(prev => ({ ...prev, plate: dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '' }));
+		setSearchParams(prev => ({
+			...prev,
+			plate: dailyDisinfectionRegister?.registerVehicle.shipping.vehicle.plate || selectedCertificatePlate || '',
+		}));
 
 		if (formData) return form.reset(formData);
 
-        form.reset({
+		form.reset({
 			id: dailyDisinfectionRegister?.id,
-		dosage: dailyDisinfectionRegister?.dosage ?? '',
+			idRegisterVehicle: dailyDisinfectionRegister?.idRegisterVehicle,
+			dosage: dailyDisinfectionRegister?.dosage ?? '',
 			disinfectant: dailyDisinfectionRegister?.disinfectant.id.toString() ?? '',
-		admissionApplicationTime: dailyDisinfectionRegister?.timeStar ?? getCurrentTime(),
+			admissionApplicationTime: dailyDisinfectionRegister?.timeStar ?? getCurrentTime(),
 			departureApplicationTime: dailyDisinfectionRegister?.timeEnd ?? '',
 			observations: dailyDisinfectionRegister?.commentary ?? '',
 			transportedSpecie: dailyDisinfectionRegister?.species.id,
@@ -90,13 +99,14 @@ export const useRegisterDisinfectantData = () => {
 				firstName: dailyDisinfectionRegister.registerVehicle.shipping.person.fullName ?? '',
 				lastName: dailyDisinfectionRegister.registerVehicle.shipping.person.lastName ?? '',
 				identification: dailyDisinfectionRegister.registerVehicle.shipping.person.identification ?? '',
-				identificationTypeId: dailyDisinfectionRegister.registerVehicle.shipping.person.identificationTypeId.toString() ?? '',
+				identificationTypeId: dailyDisinfectionRegister.registerVehicle.shipping.person.identificationTypeId?.toString() ?? '',
 				plate: dailyDisinfectionRegister.registerVehicle.shipping.vehicle.plate ?? '',
 				transportType: dailyDisinfectionRegister.registerVehicle.shipping.vehicle.vehicleDetail.transportType.name ?? '',
 				transportTypeId: dailyDisinfectionRegister.registerVehicle.shipping.vehicle.vehicleDetail.transportTypeId.toString() ?? '',
 				vehicleId: dailyDisinfectionRegister.registerVehicle.shipping.vehicleId.toString() ?? '',
 				vehicleType: dailyDisinfectionRegister.registerVehicle.shipping.vehicle.vehicleDetail.vehicleType.name ?? '',
 				vehicleTypeId: dailyDisinfectionRegister.registerVehicle.shipping.vehicle.vehicleDetail.vehicleTypeId.toString() ?? '',
+				idDetailsRegisterVehicles: dailyDisinfectionRegister.id,
 			},
 			fullName: dailyDisinfectionRegister?.registerVehicle.shipping.person.fullName ?? '',
 			identification: dailyDisinfectionRegister?.registerVehicle.shipping.person.identification ?? '',
@@ -123,9 +133,44 @@ export const useRegisterDisinfectantData = () => {
 		}
 
 		const timeEnd = departureApplicationTime ? departureApplicationTime.split(':').slice(0, 2).join(':') : null;
+		let idDetailsRegisterVehicles = shipper.idDetailsRegisterVehicles ?? data.id;
 
 		try {
-			// 1. Update the certificate if it exists with shipping id.
+			// 3. Create or update the daily disinfection register
+			if (data.id) {
+				const requestData: UpdateDetailRegisterVehicle = {
+					idDisinfectant: +disinfectant,
+					commentary: observations,
+					dosage,
+					status: true,
+					timeStar: admissionApplicationTime.split(':').slice(0, 2).join(':'),
+					idSpecies: transportedSpecie,
+					...(timeEnd && { timeEnd }),
+				};
+
+				if (data.idRegisterVehicle) await updateRegisterVehicleService(data.idRegisterVehicle, { idShipping: shipper.id });
+				await updateDetailRegisterVehicleService(data.id, requestData);
+
+				toast.success('Registro actualizado exitosamente');
+			} else {
+				const requestData: CreateDetailRegisterVehicle = {
+					idDisinfectant: +disinfectant,
+					commentary: observations,
+					dosage,
+					status: true,
+					timeStar: admissionApplicationTime,
+					idSpecies: transportedSpecie,
+					...(timeEnd && { timeEnd }),
+				};
+
+				const response = await createRegisterVehicleService(shipper.id, requestData);
+
+				idDetailsRegisterVehicles = response.data.id;
+
+				toast.success('Registro creado exitosamente');
+			}
+
+			// 2. Update the certificate if it exists with shipping id.
 			if (selectedCertificate) {
 				const response = await updateCertificateService(selectedCertificate.id, {
 					code: selectedCertificate.code,
@@ -140,52 +185,26 @@ export const useRegisterDisinfectantData = () => {
 					urlFile: selectedCertificate.urlFile,
 					idOrigin: selectedCertificate.origin?.id ?? 0,
 					shippingsId: shipper.id,
+					idDetailsRegisterVehicles,
 				});
 
 				handleSetSelectedCertificate(response.data);
 			}
 
-			// 2. Create or update the daily disinfection register
-			if (data.id) {
-				const requestData: UpdateDetailRegisterVehicle = {
-					idDisinfectant: +disinfectant,
-					commentary: observations,
-					dosage,
-					status: true,
-					timeStar: admissionApplicationTime.split(':').slice(0, 2).join(':'),
-					idSpecies: transportedSpecie,
-					...(timeEnd && { timeEnd }),
-				};
-
-				await updateRegisterVehicleService(data.id, requestData);
-
-				toast.success('Registro actualizado exitosamente');
-			} else {
-				const requestData: CreateDetailRegisterVehicle = {
-					idDisinfectant: +disinfectant,
-					commentary: observations,
-					dosage,
-					status: true,
-					timeStar: admissionApplicationTime,
-					idSpecies: transportedSpecie,
-					...(timeEnd && { timeEnd }),
-				};
-
-				await createRegisterVehicleService(shipper.id, requestData);
-
-				toast.success('Registro creado exitosamente');
-			}
-
 			form.reset({ ...defaultValues, admissionApplicationTime: getCurrentTime() });
 			form.setValue('id', undefined);
+			form.setValue('shipper', undefined);
 			form.clearErrors();
 
+			// Reset search params
+			setSearchParams(defaultSearchParams);
 			handleSearchFields('plate', '');
 			handleSearchFields('fullName', '');
 			handleSearchFields('identification', '');
 
 			handleRemoveSelectedCertificate();
 			handleRemoveSelectedFormData();
+			handleRemoveDailyDisinfectionRegister();
 
 			await queryClient.invalidateQueries({ queryKey: [DETAIL_REGISTER_VEHICLE_TAG] });
 		} catch (error: any) {
@@ -195,8 +214,43 @@ export const useRegisterDisinfectantData = () => {
 	};
 
 	const handleRemoveSelected = () => {
+		// Reset form to default values
+		form.reset({ ...defaultValues, admissionApplicationTime: getCurrentTime() });
+		form.setValue('id', undefined);
+		form.setValue('shipper', undefined);
+		form.clearErrors();
+
+		// Reset search params
+		setSearchParams(defaultSearchParams);
+
+		// Remove selected data from context
 		handleRemoveSelectedFormData();
 		handleRemoveDailyDisinfectionRegister();
+		handleRemoveSelectedCertificate();
+	};
+
+	const handleSetShipper = async (shipper?: ShipperBasicData) => {
+		form.setValue('shipper', shipper);
+
+		if (!selectedCertificate) return;
+		if (selectedCertificate?.plateVehicle) return;
+
+		const response = await updateCertificateService(selectedCertificate.id, {
+			code: selectedCertificate.code,
+			issueDate: selectedCertificate.issueDate,
+			placeOrigin: selectedCertificate.placeOrigin,
+			quantity: selectedCertificate.quantity,
+			plateVehicle: shipper?.plate || '',
+			status: selectedCertificate.status,
+			authorizedTo: selectedCertificate.authorizedTo,
+			originAreaCode: selectedCertificate.originAreaCode,
+			destinationAreaCode: selectedCertificate.destinationAreaCode,
+			urlFile: selectedCertificate.urlFile,
+			idOrigin: selectedCertificate.origin?.id ?? 0,
+			shippingsId: shipper?.id,
+		});
+
+		handleSetSelectedCertificate(response.data);
 	};
 
 	const isEditing = !!dailyDisinfectionRegister || !!formData;
@@ -227,9 +281,10 @@ export const useRegisterDisinfectantData = () => {
 		showCreateShippingFromSomeFields: isSomeFieldFilled && !selectedShipper && shippers?.length < 1 && !isShippersLoading,
 
 		// actions
+		handleSetShipper,
 		handleSearchFields,
+		handleRemoveSelected,
 		handleRegisterDisinfectantData,
 		handleRemoveSelectedCertificate,
-		handleRemoveSelected,
 	};
 };

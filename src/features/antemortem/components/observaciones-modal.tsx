@@ -19,9 +19,9 @@ type ObservacionesModalProps = {
   marcasInfo?: MarcaInfo[];
 };
 
-export function ObservacionesModal({ 
-  observaciones, 
-  children, 
+export function ObservacionesModal({
+  observaciones,
+  children,
   statusCorralId,
   admissionDate,
   marcasInfo = []
@@ -43,7 +43,7 @@ export function ObservacionesModal({
       return match ? match[1].trim() : m.label.split(' ')[0];
     }).filter((value, index, self) => self.indexOf(value) === index).join(', ');
   };
-  
+
   const getAllMarcasNames = (): string[] => {
     if (marcasInfo.length === 0) return [];
     return marcasInfo.map(m => {
@@ -65,10 +65,11 @@ export function ObservacionesModal({
       setLoading(true);
       setError(null);
       const response = await getObservationsByStatusCorralService(admissionDate, statusCorralId);
-      
+
       if (response.code === 200) {
         const withObservations = response.data.filter(
-          (obs) => obs.observationsText && obs.observationsText.trim() !== ""
+          (obs) => (obs.observationsText && obs.observationsText.trim() !== "")
+            || (obs.deathCause && obs.deathCause.trim() !== "")
         );
         setObservationsData(withObservations);
       } else {
@@ -131,7 +132,7 @@ export function ObservacionesModal({
           ) : (
             <div className="space-y-3">
               {/* Contador de animales */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+              <div className="bg-muted/40 border border-blue-200 rounded-lg p-3 sm:p-4 shadow-sm">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-2">
                     <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
@@ -146,9 +147,9 @@ export function ObservacionesModal({
                     <div className="flex flex-wrap gap-2">
                       <p className="text-xs text-muted-foreground w-full sm:w-auto">Marcas en este corral:</p>
                       {getAllMarcasNames().map((marca, idx) => (
-                        <Badge 
+                        <Badge
                           key={idx}
-                          variant="outline" 
+                          variant="outline"
                           className="bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-300 font-semibold text-xs"
                         >
                           <Tag className="h-3 w-3 mr-1" />
@@ -167,9 +168,9 @@ export function ObservacionesModal({
                   : obs.observationsText;
 
                 return (
-                  <Card 
+                  <Card
                     key={obs.code}
-                    className="overflow-hidden border-l-4 border-l-blue-500 hover:shadow-md transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
+                    className="overflow-hidden border-l-4 border-l-gray-300 hover:shadow-md transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="p-3 sm:p-4">
@@ -179,7 +180,7 @@ export function ObservacionesModal({
                             #{obs.code}
                           </Badge>
                           {getMarcaName(obs.code) && (
-                            <Badge variant="outline" className="bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-300 font-semibold text-xs px-2.5 py-1 gap-1.5">
+                            <Badge variant="outline" className="bg-gradient-to-r from-purple-50 to-red-50 text-purple-700 border-purple-300 font-semibold text-xs px-2.5 py-1 gap-1.5">
                               <Tag className="h-3 w-3" />
                               {obs.brandName}
                             </Badge>
@@ -190,15 +191,15 @@ export function ObservacionesModal({
                               Muerte
                             </Badge>
                           )}
-                        </div>                        
+                        </div>
                         {(() => {
-                          const hasDeathInfoContent = hasDeathInfo && 
+                          const hasDeathInfoContent = hasDeathInfo &&
                             (obs.deathCause || obs.deathUse !== undefined || obs.deathConfiscation !== undefined);
                           const hasOpinions = obs.opinions && obs.opinions.length > 0;
                           const hasLongText = obs.observationsText && obs.observationsText.length > 100;
                           const hasMultipleItems = [hasDeathInfoContent, hasOpinions, hasLongText].filter(Boolean).length > 1;
                           const shouldShowButton = hasMultipleItems || hasLongText;
-                          
+
                           return shouldShowButton ? (
                             <Button
                               variant="ghost"
@@ -224,7 +225,7 @@ export function ObservacionesModal({
                             <FileText className="h-3 w-3" />
                             Observaciones
                           </p>
-                          <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                          <div className="bg-muted/40 border border-muted/60 rounded-md p-3">
                             <p className="text-sm text-gray-700 leading-relaxed">
                               {isExpanded ? obs.observationsText : observationPreview}
                             </p>
@@ -241,10 +242,10 @@ export function ObservacionesModal({
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {obs.opinions.map((opinion, idx) => (
-                              <Badge 
+                              <Badge
                                 key={idx}
                                 variant="secondary"
-                                className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs px-2 py-1"
+                                className=" text-emerald-600 border border-primary text-xs px-2 py-1"
                               >
                                 {opinion}
                               </Badge>
@@ -254,15 +255,15 @@ export function ObservacionesModal({
                       )}
 
                       {/* Información de muerte (solo si está expandido y hay datos de muerte) */}
-                      {isExpanded && hasDeathInfo && (obs.deathCause || obs.deathUse !== undefined || obs.deathConfiscation !== undefined) && (
+                      {hasDeathInfo && (obs.deathCause || obs.deathUse !== undefined || obs.deathConfiscation !== undefined) && (
                         <>
                           <Separator className="my-3" />
-                          <div className="bg-red-50 border border-red-200 rounded-md p-3 space-y-2">
+                          <div className="bg-muted/40 rounded-md p-3 space-y-2">
                             <p className="text-xs font-semibold text-red-700 uppercase flex items-center gap-1 mb-2">
                               <Skull className="h-3 w-3" />
                               Información de Muerte
                             </p>
-                            
+
                             {obs.deathCause && (
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div>
@@ -273,7 +274,7 @@ export function ObservacionesModal({
                             )}
 
                             <div className="grid grid-cols-2 gap-2 mt-2">
-                              {obs.deathUse !== undefined && (
+                              {obs.deathUse && (
                                 <div className="flex items-center gap-2 bg-white rounded px-2 py-1.5">
                                   {obs.deathUse ? (
                                     <CheckCircle className="h-4 w-4 text-green-600" />
@@ -283,7 +284,7 @@ export function ObservacionesModal({
                                   <span className="text-xs">Aprovechamiento</span>
                                 </div>
                               )}
-                              {obs.deathConfiscation !== undefined && (
+                              {obs.deathConfiscation && (
                                 <div className="flex items-center gap-2 bg-white rounded px-2 py-1.5">
                                   {obs.deathConfiscation ? (
                                     <CheckCircle className="h-4 w-4 text-red-600" />
@@ -308,4 +309,3 @@ export function ObservacionesModal({
     </Dialog>
   );
 }
-

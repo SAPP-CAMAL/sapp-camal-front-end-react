@@ -1,26 +1,34 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { HttpProvider } from "@/features/security/components/http.context";
 import { Providers } from "@/features/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-const geistSans = Geist({
+const geistSans = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = JetBrains_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "CAMAL MUNICIPAL DE RIOBAMBA",
+  title: "SAPP",
   description: "CAMAL MUNICIPAL DE RIOBAMBA",
+  icons: {
+    icon: [
+      { url: "/images/ico.ico", type: "image/ico" },
+    ],
+    apple: [
+      { url: "/images/ico.ico", type: "image/ico" },
+    ],
+    shortcut: ["/images/ico.ico"],
+  }
 };
-
 export const viewport = {
   width: 'device-width',
   initialScale: 1,

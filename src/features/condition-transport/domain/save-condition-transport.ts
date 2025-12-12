@@ -3,6 +3,7 @@ export interface ConditionTransportRequest {
   idBedType:           number;
   idConditionsArrival: number;
   ownMedium:           boolean;
+  commentary?:         string;
   status:              boolean;
 }
 export interface ConditionTransportResponse {

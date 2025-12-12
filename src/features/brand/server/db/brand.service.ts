@@ -11,3 +11,7 @@ export const getBrandByFilter = (filters: Partial<BrandFilter>) => {
 		})
 		.json<CommonHttpResponse<BrandByFilterResponse>>();
 };
+
+export const updateBrandsStatus = (brandId: string | number, status: boolean) => {
+	return http.patch(`v1/1.0.0/brands/update-status/${brandId.toString()}/${status}`);
+};

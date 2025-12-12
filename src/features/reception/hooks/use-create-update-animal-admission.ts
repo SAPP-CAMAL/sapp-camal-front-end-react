@@ -1,12 +1,12 @@
 import { add } from 'date-fns';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
+import { useDebouncedCallback } from 'use-debounce';
 import { CorralGroupBySpecieResponse } from '@/features/corral-group/domain';
 import { useAllSpecies } from '@/features/specie/hooks';
 import { useAnimalAdmissionParams } from './use-animal-admission-params';
 import { getCorralGroupBySpecieAndType } from '@/features/corral-group/server/db/corral-group.service';
 import { useBrandByFilter } from '@/features/brand/hooks/use-brand-by-filter';
-import { IntroducerByIDResponse } from '@/features/introducer/domain';
 import { useAllCorralType } from '@/features/corral/hooks';
 import { Corral, CorralType } from '@/features/corral/domain';
 import { getCorralsByTypeAndGroup } from '@/features/corral/server/db/corral.service';
@@ -20,14 +20,11 @@ import { AnimalSexCodes } from '@/features/animal-sex/constants';
 import { ProductiveStage } from '@/features/productive-stage/domain';
 import { FinishType } from '@/features/finish-type/domain';
 import { useFinishTypeBySpecies } from '@/features/finish-type/hooks';
-import { SPECIES_CODE } from '@/features/specie/constants';
 import { BrandByFilterMapped } from '@/features/brand/domain/get-brand-by-filter';
-import { useDebouncedCallback } from 'use-debounce';
 
 export type AnimalAdmissionForm = {
 	/** setting cert brand id */
 	id?: number;
-	// specie?: Specie;
 	corralGroup?: CorralGroupBySpecieResponse;
 	brand?: BrandByFilterMapped;
 	corralGroups?: CorralGroupBySpecieResponse[];
@@ -44,8 +41,9 @@ export type AnimalAdmissionForm = {
 	selectedProductiveStages: (ProductiveStage & { quantity: number })[];
 };
 
+const today = new Date();
 const defaultValues: AnimalAdmissionForm = {
-	date: new Date().toISOString(),
+	date: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`,
 	males: 0,
 	females: 0,
 	selectedProductiveStages: [],
@@ -95,7 +93,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 	const animalSexQuery = useAllAnimalSex();
 	const speciesQuery = useAllSpecies();
 
-	const brands = brandsQuery.data.filter(brand => brand.status);
+	const brands = brandsQuery.data?.filter(brand => brand.status);
 	const corralTypes = corralTypesQuery.data.data.filter(corralType => corralType.status);
 	const species = speciesQuery.data.data.filter(specie => specie.status);
 	const productiveStages = productiveStagesQuery.data.data.filter(stage => stage.status);
@@ -159,26 +157,6 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 		}
 	};
 
-	const getFinishTypeForNormalCorralType = () => {
-		const finishType = form.watch('finishType');
-
-		if (finishType) return finishType;
-
-		const specie = selectedSpecie;
-
-		if (!specie?.name.toLowerCase().startsWith(SPECIES_CODE.PORCINO.toLowerCase())) return;
-
-		const corralType = form.watch('corralType')?.description?.toLowerCase();
-		const isNormalCorral = corralType?.startsWith(corralTypesCode.NORMAL.toLowerCase());
-		const corralGroup = form.watch('corralGroup');
-
-		if (!corralType) return;
-		if (!corralGroup) return;
-		if (!isNormalCorral) return;
-
-		return finishTypes.find(type => type.name.toLowerCase().startsWith(corralGroup.description.toLowerCase()));
-	};
-
 	const handleSearchCorrals = async () => {
 		const corralTypeId = form.watch('corralType')?.id;
 		const groupId = form.watch('corralGroup')?.id;
@@ -196,7 +174,9 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 
 			const corrals = (await getCorralsByTypeAndGroup(corralTypeId.toString(), groupId.toString()))?.data ?? [];
 
-			const corralsStatus = (await getStatusCorralsByDate(new Date().toISOString().split('T')[0]))?.data ?? [];
+			const today = new Date();
+		const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+		const corralsStatus = (await getStatusCorralsByDate(todayStr))?.data ?? [];
 
 			availableCorrals = corrals
 				.filter(corral => !corralsStatus.find(status => status.idCorrals === corral.id))
@@ -255,6 +235,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 			slaughterDate: data.date,
 			idSpecies: selectedSpecie.id,
 			idCorralType: data.corralType?.id ?? NaN,
+			idCorralGroup: data.corralGroup?.id ?? NaN,
 			status: true,
 			...(idFinishType && { idFinishType }),
 		};
@@ -278,8 +259,6 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 				onSave?.({ ...data, id: response.data.id, males: quantityMale, females: quantityFemale });
 			}
 
-			// handleContinue();
-
 			toast.success('Ingreso de animales guardado con éxito');
 		} catch (error) {
 			toast.error('Ocurrió un error al guardar el ingreso de animales');
@@ -287,12 +266,15 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 	};
 
 	const handleSetDate = () => {
-		const corral = form.watch('corralType')?.description?.toLowerCase();
+		const corral = form.watch('corralType')?.code?.toLowerCase();
 
-		// if (corral?.startsWith(corralTypesCode.CUARENTENA.toLowerCase())) return form.setValue('date', undefined);
-		if (corral?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase())) return form.setValue('date', new Date().toISOString());
+		const formatLocalDateTime = (date: Date): string => {
+			return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+		};
 
-		form.setValue('date', add(new Date(), { days: 1 }).toISOString());
+		if (corral?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase())) return form.setValue('date', formatLocalDateTime(new Date()));
+
+		form.setValue('date', formatLocalDateTime(add(new Date(), { days: 1 })));
 	};
 
 	const handleUpdateSelectedProductiveStages = (stageId: string | number, quantity: number) => {
@@ -329,7 +311,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 	const showEmptyBrandsAlert =
 		!!(searchParams.introducerName || searchParams.introducerIdentification || searchParams.introducerBrand) &&
 		!brandsQuery.isFetching &&
-		brands.length === 0;
+		brands?.length === 0;
 
 	const totalFormAnimals = +form.watch('females') + +form.watch('males');
 

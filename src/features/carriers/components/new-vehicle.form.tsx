@@ -27,7 +27,7 @@ export interface VehicleData {
 interface CreateVehicleFormProps {
   onGetVehicleById?: (vehicleId: number) => void;
   onCancel: () => void;
-  vehicleTypes: TransportType[];
+  vehicleTypes: any[];
   selectedTransportIds?: number[];
   onSubmit?: () => void;
 }
@@ -89,7 +89,7 @@ export function CreateVehicleForm({
     try {
       const vehicle = await createVehicleService({
         vehicleDetailId: Number(vehicleData.vehicleTypeId),
-        plate: vehicleData.plate.toUpperCase(),
+        plate: vehicleData.plate.toUpperCase().replace(/-/g, ""),
         brand: vehicleData.brand.trim(),
         model: vehicleData.model.trim(),
         color: vehicleData.color.trim(),
@@ -160,7 +160,7 @@ export function CreateVehicleForm({
             {/* plate */}
             <div className="space-y-2">
               <Label htmlFor="plate" className="text-sm font-medium">
-                plate <span className="text-red-500">*</span>
+                Placa <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="plate"
@@ -187,13 +187,16 @@ export function CreateVehicleForm({
                 required
                 disabled={isSubmitting}
               >
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 w-full">
                   <SelectValue placeholder="Seleccione el tipo" />
                 </SelectTrigger>
                 <SelectContent>
                   {vehicleTypes && vehicleTypes.length > 0 ? (
-                    vehicleTypes.map((tipo: TransportType) => (
-                      <SelectItem key={tipo.id} value={String(tipo.id)}>
+                    vehicleTypes.map((tipo) => (
+                      <SelectItem
+                        key={tipo.catalogueId}
+                        value={String(tipo.catalogueId)}
+                      >
                         {tipo.name}
                       </SelectItem>
                     ))
@@ -208,7 +211,7 @@ export function CreateVehicleForm({
 
             <div className="space-y-2">
               <Label htmlFor="brand" className="text-sm font-medium">
-                brand
+                Marca
               </Label>
               <Input
                 id="brand"
@@ -223,7 +226,7 @@ export function CreateVehicleForm({
 
             <div className="space-y-2">
               <Label htmlFor="model" className="text-sm font-medium">
-                model
+                Modelo
               </Label>
               <Input
                 id="model"
@@ -253,7 +256,7 @@ export function CreateVehicleForm({
 
             <div className="space-y-2">
               <Label htmlFor="year" className="text-sm font-medium">
-                year
+                Año
               </Label>
               <Input
                 id="year"

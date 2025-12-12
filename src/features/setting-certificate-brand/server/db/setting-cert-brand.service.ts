@@ -42,3 +42,39 @@ export const getCertBrandById = (id: number | string) => {
 		})
 		.json<CreateOrUpdateHttpResponse<SettingCertBrandByID>>();
 };
+
+export const getSimpleSettingCertBrandByCertificateId = (id: number | string) => {
+	return http
+		.get('v1/1.0.0/setting-cert-brand/registers/by-certificate-id', {
+			searchParams: { certificateId: id.toString() },
+		})
+		.json<CommonHttpResponse<SaveCertificateBrandResponse>>();
+};
+
+export const validateSettingCertBrandCodesGeneration = (idSpecies: number | string, admissionDate: string) => {
+	return http
+		.get('v1/1.0.0/setting-cert-brand/validate-codes-generation', {
+			searchParams: { idSpecie: idSpecies.toString(), admissionDate },
+		})
+		.json<CreateOrUpdateHttpResponse<boolean>>();
+};
+
+export const getAnimalTicketById = async (idSettingCertificateBrand: number | string) => {
+	try {
+		const response = await http.get('v1/1.0.0/setting-cert-brand/animal-ticket-by-id', {
+			searchParams: { idSettingCertificateBrand },
+		});
+
+		const blob = await response.blob();
+		const contentType = response.headers.get('content-type') || '';
+		const contentDisposition = response.headers.get('content-disposition') || '';
+
+		const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+		const defaultFilename = `Ticket-Animal-${idSettingCertificateBrand}.pdf`;
+		const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
+
+		return { blob, filename, contentType };
+	} catch (error) {
+		throw error;
+	}
+};

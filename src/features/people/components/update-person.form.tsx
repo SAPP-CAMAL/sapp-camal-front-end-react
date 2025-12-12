@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { EditIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { EditIcon, SaveIcon, BriefcaseIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -15,39 +15,68 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import { updatePersonService } from "../server/db/people.service";
 import { NewPeopleFields } from "./person-form-fields";
 import {
   getEmployeesByPersonIdService,
   updateEmployeeService,
+  createEmployeeService,
+  deleteEmployeeService,
+  deleteEmployeesByPersonIdService,
 } from "@/features/employees/server/db/employees.services";
+import { useSearchParams } from "next/navigation";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function UpdatePerson({ person }: { person: any }) {
+  const searchParams = useSearchParams();
+
   const queryClient = useQueryClient();
   const defaultValues = {
     open: false,
     identificationType: String(person.identificationType.id),
-    identification: person.identification,
+    identification: person.identification ?? "",
     genderId: String(person.genderId),
-    mobileNumber: person.mobileNumber,
-    firstName: person.firstName,
-    lastName: person.lastName,
+    mobileNumber: person.mobileNumber ?? "",
+    firstName: toCapitalize(person.firstName ?? "", true),
+    lastName: toCapitalize(person.lastName ?? "", true),
     slaughterhouse: false,
-    address: person.address,
+    address: person.address ?? "",
     positions: [],
+    status: person.status?.toString() ?? "",
   };
   const form = useForm<any>({ defaultValues });
   const personId = person.id;
   const open = form.watch("open");
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const [hasExistingEmployees, setHasExistingEmployees] = useState(false);
   // const positions = useWatch({ name: "positions", control: form.control });
 
   useEffect(() => {
     if (open) {
       getEmployeesByPersonIdService(personId)
         .then((resp) => {
-          if (resp.data.length === 0) return;
+          if (resp.data.length === 0) {
+            setHasExistingEmployees(false);
+            return;
+          }
 
+          setHasExistingEmployees(true);
           form.reset({
             ...defaultValues,
             open: true,
@@ -57,8 +86,8 @@ export function UpdatePerson({ person }: { person: any }) {
               personId: employee.personId,
               catalogueId: String(employee.positionId),
               suitable: employee.suitable,
-              suitableLimitations: employee.suitableLimitations,
-              suitableObservation: employee.suitableObservation,
+              suitableLimitations: employee.suitableLimitations || "",
+              suitableObservation: employee.suitableObservation || "",
             })),
           });
         })
@@ -66,10 +95,44 @@ export function UpdatePerson({ person }: { person: any }) {
     }
   }, [open, person]);
 
-  const onSubmit = async (data: any) => {
-    try {
-      if (!form.formState.isDirty) return;
+  const handleSlaughterhouseChange = (checked: boolean) => {
+    // Si se desmarca y hay empleados existentes, mostrar confirmación
+    if (!checked && hasExistingEmployees) {
+      setDeleteAllDialogOpen(true);
+    }
+  };
 
+  const handleDeleteAllEmployees = async () => {
+    try {
+      await deleteEmployeesByPersonIdService(personId);
+      
+      form.setValue("positions", []);
+      form.reset({
+        ...form.getValues(),
+        open: true,
+        slaughterhouse: false,
+        positions: [],
+      });
+
+      setHasExistingEmployees(false);
+      setDeleteAllDialogOpen(false);
+
+      const searchParamsObject = Object.fromEntries(searchParams.entries());
+      await queryClient.invalidateQueries({
+        queryKey: ["people", searchParamsObject],
+      });
+
+      toast.success("Todos los cargos han sido eliminados exitosamente");
+    } catch (error: any) {
+      console.log({ error });
+      toast.error("Ocurrió un error al eliminar los cargos");
+      // Revertir el checkbox si falla
+      form.setValue("slaughterhouse", true);
+    }
+  };
+
+  const onSubmitPersonInfo = async (data: any) => {
+    try {
       const shouldUpdatePerson =
         form.formState.dirtyFields.identification ||
         form.formState.dirtyFields.identificationType ||
@@ -77,88 +140,149 @@ export function UpdatePerson({ person }: { person: any }) {
         form.formState.dirtyFields.mobileNumber ||
         form.formState.dirtyFields.firstName ||
         form.formState.dirtyFields.lastName ||
-        form.formState.dirtyFields.address;
+        form.formState.dirtyFields.address ||
+        form.formState.dirtyFields.status;
 
-      if (shouldUpdatePerson) {
-        await updatePersonService(person.id, {
-          ...(form.formState.dirtyFields.identification && {
-            identification: data.identification,
-          }),
-          ...(form.formState.dirtyFields.identificationType && {
-            identificationTypeId: Number(data.identificationType),
-          }),
-          ...(form.formState.dirtyFields.genderId && {
-            genderId: Number(data.genderId),
-          }),
-          ...(form.formState.dirtyFields.mobileNumber && {
-            mobileNumber: data.mobileNumber,
-          }),
-          ...(form.formState.dirtyFields.firstName && {
-            firstName: data.firstName,
-          }),
-          ...(form.formState.dirtyFields.lastName && {
-            lastName: data.lastName,
-          }),
-          ...(form.formState.dirtyFields.address && {
-            address: data.address,
-          }),
-        });
+      if (!shouldUpdatePerson) {
+        toast.info("No hay cambios en la información personal");
+        return;
       }
 
-      console.log(form.formState.dirtyFields.positions);
-
-      if (form.formState.dirtyFields.positions) {
-        await Promise.all(
-          data.positions.map((position: any) => {
-            const changePositionId =
-              form.formState.dirtyFields.positions?.[0]?.catalogueId;
-
-            return updateEmployeeService(position.employeeId, {
-              ...(changePositionId && {
-                positionId: Number(position.catalogueId),
-                personId,
-              }),
-              ...(form.formState.dirtyFields?.positions?.[0]?.suitable && {
-                suitable: position.suitable,
-              }),
-              ...(form.formState.dirtyFields?.positions?.[0]
-                ?.suitableLimitations && {
-                suitableLimitations: position.suitableLimitations,
-              }),
-              ...(form.formState.dirtyFields?.positions?.[0]
-                ?.suitableObservation && {
-                suitableObservation: position.suitableObservation,
-              }),
-            });
-          })
-        );
-      }
+      await updatePersonService(person.id, {
+        ...(form.formState.dirtyFields.identification && {
+          identification: data.identification,
+        }),
+        ...(form.formState.dirtyFields.identificationType && {
+          identificationTypeId: Number(data.identificationType),
+        }),
+        ...(form.formState.dirtyFields.genderId && {
+          genderId: Number(data.genderId),
+        }),
+        ...(form.formState.dirtyFields.mobileNumber && {
+          mobileNumber: data.mobileNumber,
+        }),
+        ...(form.formState.dirtyFields.firstName && {
+          firstName: data.firstName,
+        }),
+        ...(form.formState.dirtyFields.lastName && {
+          lastName: data.lastName,
+        }),
+        ...(form.formState.dirtyFields.address && {
+          address: data.address,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
+        }),
+      });
 
       form.reset({
-        ...form.formState.defaultValues,
-        open: false,
+        ...form.getValues(),
+        open: true,
       });
+
+      const searchParamsObject = Object.fromEntries(searchParams.entries());
 
       await queryClient.invalidateQueries({
-        queryKey: ["people"],
+        queryKey: ["people", searchParamsObject],
       });
 
-      toast.success("Persona actualizada exitosamente");
+      toast.success("Información personal actualizada exitosamente");
     } catch (error: any) {
       console.log({ error });
-      const { data } = await error.response.json();
-      toast.error(data);
+      if (error.response) {
+        try {
+          const { data } = await error.response.json();
+          toast.error(
+            data || "Ocurrió un error al actualizar la información personal"
+          );
+        } catch {
+          toast.error("Ocurrió un error al actualizar la información personal");
+        }
+      } else {
+        toast.error("Error de conexión. Por favor, intente nuevamente.");
+      }
+    }
+  };
+
+  const onSubmitPositions = async (data: any) => {
+    try {
+      if (!form.formState.dirtyFields.positions && !data.slaughterhouse) {
+        toast.info("No hay cambios en los cargos");
+        return;
+      }
+
+      await Promise.all(
+        data.positions.map((position: any) => {
+          // Si el cargo tiene employeeId, actualizar; si no, crear nuevo
+          if (position.employeeId) {
+            return updateEmployeeService(position.employeeId, {
+              personId,
+              positionId: Number(position.catalogueId),
+              suitable: position.suitable,
+              suitableLimitations: position.suitableLimitations,
+              suitableObservation: position.suitableObservation,
+            });
+          } else {
+            // Crear nuevo empleado
+            return createEmployeeService({
+              personId,
+              positionId: Number(position.catalogueId),
+              suitable: position.suitable,
+              suitableLimitations: position.suitableLimitations,
+              suitableObservation: position.suitableObservation,
+            });
+          }
+        })
+      );
+
+      form.reset({
+        ...form.getValues(),
+        open: true,
+      });
+
+      const searchParamsObject = Object.fromEntries(searchParams.entries());
+
+      await queryClient.invalidateQueries({
+        queryKey: ["people", searchParamsObject],
+      });
+
+      toast.success("Cargos actualizados exitosamente");
+    } catch (error: any) {
+      console.log({ error });
+      if (error.response) {
+        try {
+          const { data } = await error.response.json();
+          toast.error(data || "Ocurrió un error al actualizar los cargos");
+        } catch {
+          toast.error("Ocurrió un error al actualizar los cargos");
+        }
+      } else {
+        toast.error("Error de conexión. Por favor, intente nuevamente.");
+      }
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={(open) => form.setValue("open", open)}>
-      <DialogTrigger asChild>
-        <Button variant={"outline"}>
-          <EditIcon />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="min-w-[80vw] min-h-[80vh]">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant={"outline"}>
+              <EditIcon />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          align="center"
+          sideOffset={5}
+          avoidCollisions
+        >
+          Editar persona
+        </TooltipContent>
+      </Tooltip>
+
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
         <DialogHeader>
           <DialogTitle>Editar Persona</DialogTitle>
           <DialogDescription>
@@ -167,24 +291,84 @@ export function UpdatePerson({ person }: { person: any }) {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="gap-y-4 grid grid-cols-2 gap-2"
-          >
-            <NewPeopleFields isUpdate />
-            <div className="flex justify-end col-span-2">
-              <Button
-                type="submit"
-                disabled={
-                  form.formState.isSubmitting || !form.formState.isDirty
-                }
-              >
-                {form.formState.isSubmitting ? "Actualizando..." : "Actualizar"}
-              </Button>
-            </div>
+          <form className="gap-y-4 grid grid-cols-2 gap-2">
+            <NewPeopleFields
+              isUpdate
+              onDeleteEmployee={deleteEmployeeService}
+              onSlaughterhouseChange={handleSlaughterhouseChange}
+              updatePersonButton={
+                <div className="col-span-2 border-t pt-4 flex justify-end">
+                  <Button
+                    type="button"
+                    onClick={form.handleSubmit(onSubmitPersonInfo)}
+                    disabled={
+                      form.formState.isSubmitting ||
+                      !(
+                        form.formState.dirtyFields.identification ||
+                        form.formState.dirtyFields.identificationType ||
+                        form.formState.dirtyFields.genderId ||
+                        form.formState.dirtyFields.mobileNumber ||
+                        form.formState.dirtyFields.firstName ||
+                        form.formState.dirtyFields.lastName ||
+                        form.formState.dirtyFields.address ||
+                        form.formState.dirtyFields.status ||
+                        (form.formState.dirtyFields.slaughterhouse && !form.watch("slaughterhouse"))
+                      )
+                    }
+                  >
+                    <SaveIcon className="mr-2 h-4 w-4" />
+                    {form.formState.isSubmitting
+                      ? "Actualizando..."
+                      : "Actualizar Información"}
+                  </Button>
+                </div>
+              }
+              updatePositionsButton={
+                form.watch("slaughterhouse") &&
+                form.watch("positions")?.length > 0 ? (
+                  <div className="col-span-2 mt-4 flex justify-end">
+                    <Button
+                      type="button"
+                      onClick={form.handleSubmit(onSubmitPositions)}
+                      disabled={
+                        form.formState.isSubmitting ||
+                        (!form.formState.dirtyFields.positions &&
+                          form
+                            .watch("positions")
+                            ?.every((p: any) => p.employeeId))
+                      }
+                    >
+                      <BriefcaseIcon className="mr-2 h-4 w-4" />
+                      {form.formState.isSubmitting
+                        ? "Actualizando..."
+                        : "Actualizar Cargo"}
+                    </Button>
+                  </div>
+                ) : null
+              }
+            />
           </form>
         </Form>
       </DialogContent>
+
+      <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Está seguro de remover el cargo del personal del camal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará el cargo asociado a esta persona de forma permanente. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => form.setValue("slaughterhouse", true)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAllEmployees}>
+              Eliminar 
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

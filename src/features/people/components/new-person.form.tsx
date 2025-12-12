@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useDebouncedCallback } from "use-debounce";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import {
@@ -12,13 +14,19 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { createPersonService } from "../server/db/people.service";
+import { createPersonService, personValidateDocument, validateDocumentTypeService } from "../server/db/people.service";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { createEmployeeService } from "@/features/employees/server/db/employees.services";
 import { NewPeopleFields } from "./person-form-fields";
+import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
+import { toCapitalize } from "@/lib/toCapitalize";
 
-export function NewPerson() {
+export function NewPerson({
+  isUpdateVisitorLog = false
+}: {
+  isUpdateVisitorLog?: boolean;
+}) {
   const queryClient = useQueryClient();
 
   const defaultValues = {
@@ -32,9 +40,48 @@ export function NewPerson() {
     slaughterhouse: false,
     positions: [],
     address: "",
+    status: "true",
   };
 
+
   const form = useForm({ defaultValues });
+
+  const identification = form.watch("identification");
+  const identificationType = form.watch("identificationType");
+
+  const catalogueIdentityTypes = useCatalogue("TID");
+
+  const debounceData = useDebouncedCallback(async (identificationValue: string) => {
+
+    const identificationTypeCode = catalogueIdentityTypes?.data?.data.find(
+        (data) => data.catalogueId === Number(identificationType)
+    )?.code;
+
+    if (identificationTypeCode !== "CED") return;
+
+    try {
+      const validateResponse = await validateDocumentTypeService(identificationTypeCode, identificationValue);
+
+      if (!validateResponse.data.isValid) return;
+
+      const response = await personValidateDocument(identificationValue);
+
+      const personData = response.data
+
+      if(personData.firstName) form.setValue("firstName", toCapitalize(personData.firstName, true));
+      if(personData.lastName) form.setValue("lastName", toCapitalize(personData.lastName, true));
+
+    } catch (error) {}
+  }, 500);
+
+  useEffect(() => {
+    if(!identification) return;
+    if(identification.length < 1) return;
+    if(identification.length !== 10) return;
+
+    debounceData(identification);
+  }, [identification, debounceData]);
+
 
   const onSubmit = async (data: any) => {
     try {
@@ -46,9 +93,10 @@ export function NewPerson() {
         mobileNumber: data.mobileNumber,
         firstName: data.firstName,
         lastName: data.lastName,
+        fullName: `${data.firstName ?? ""} ${data.lastName ?? ""}`,
         address: data.address,
         affiliationDate: new Date(),
-        fullName: data.lastName + " " + data.firstName,
+        status: data.status === "true",
       });
 
       const employeeMap = data?.positions.map((position: any) => {
@@ -71,8 +119,17 @@ export function NewPerson() {
 
       toast.success("Persona creada exitosamente");
     } catch (error: any) {
-      const { data } = await error.response.json();
-      toast.error(data);
+      console.error("Error al crear persona:", error);
+      if (error.response) {
+        try {
+          const { data } = await error.response.json();
+          toast.error(data || "Error al crear la persona");
+        } catch {
+          toast.error("Error al crear la persona");
+        }
+      } else {
+        toast.error("Error de conexión. Por favor, intente nuevamente.");
+      }
     }
   };
 
@@ -82,12 +139,12 @@ export function NewPerson() {
       onOpenChange={(open) => form.setValue("open", open)}
     >
       <DialogTrigger asChild>
-        <Button>
+        <Button type="button">
           <PlusIcon />
           Nueva Persona
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-2xl">
+      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
         <DialogHeader>
           <DialogTitle>Nueva Persona</DialogTitle>
           <DialogDescription>
@@ -98,9 +155,11 @@ export function NewPerson() {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8 grid grid-cols-2 gap-2"
+            className="space-y-2 grid grid-cols-2 gap-2"
           >
-            <NewPeopleFields />
+            <NewPeopleFields
+              isUpdateVisitorLog={isUpdateVisitorLog}
+            />
             <div className="flex justify-end col-span-2">
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Guardando..." : "Guardar"}

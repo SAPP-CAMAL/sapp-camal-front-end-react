@@ -33,7 +33,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { CreateVehicleForm } from "./new-vehicle.form";
-import { parseAsInteger, useQueryStates } from "nuqs";
 import { getPeopleByFilterService } from "@/features/people/server/db/people.service";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -45,12 +44,17 @@ import {
 import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 import { capitalizeText } from "@/lib/utils";
 import { getDetailVehicleByTransportIdService } from "@/features/vehicles/server/db/vehicle-detail.service";
-import { TransportType, Vehicle } from "@/features/vehicles/domain/vehicle-detail-service";
+import {
+  TransportType,
+  Vehicle,
+} from "@/features/vehicles/domain/vehicle-detail-service";
 import {
   createShippingService,
   updateShippingService,
 } from "../server/carriers.service";
 import { Separator } from "@/components/ui/separator";
+import { toCapitalize } from "@/lib/toCapitalize";
+import { useDebouncedCallback } from "use-debounce";
 
 interface NewCarrierProps {
   shipping?: any;
@@ -58,6 +62,7 @@ interface NewCarrierProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 export function NewCarrier({
@@ -66,23 +71,19 @@ export function NewCarrier({
   trigger,
   onOpenChange,
   open,
+  onSuccess,
 }: NewCarrierProps) {
   const catalogueTransportsType = useCatalogue("TTR");
+  const catalogueVehiclesType = useCatalogue("TVH");
   const [selectedTransportIds, setSelectedTransportIds] = useState<number[]>(
     []
   );
   const [filterFullName, setfilterFullName] = useState("");
   const [filterIdentification, setfilterIdentification] = useState("");
 
-  const [searchParams, setSearchParams] = useQueryStates(
-    {
-      page: parseAsInteger.withDefault(1),
-      limit: parseAsInteger.withDefault(10),
-    },
-    {
-      history: "push",
-    }
-  );
+  const [debouncedFullName, setDebouncedFullName] = useState("");
+  const [debouncedIdentification, setDebouncedIdentification] = useState("");
+  const [debouncedPlate, setDebouncedPlate] = useState("");
 
   const defaultValues = {
     open: false,
@@ -102,32 +103,48 @@ export function NewCarrier({
   const [loadingVehicles, setLoadingVehicles] = useState<
     Record<number, boolean>
   >({});
+
+  const updateDebouncedFullName = useDebouncedCallback((value: string) => {
+    setDebouncedFullName(value);
+  }, 500);
+
+  const updateDebouncedIdentification = useDebouncedCallback(
+    (value: string) => {
+      setDebouncedIdentification(value);
+    },
+    500
+  );
+
+  const updateDebouncedPlate = useDebouncedCallback((value: string) => {
+    setDebouncedPlate(value);
+  }, 500);
+
   const query = useQuery<ResponsePeopleByFilter>({
-    queryKey: ["people", searchParams],
+    queryKey: ["people", debouncedFullName, debouncedIdentification],
     queryFn: () =>
       getPeopleByFilterService({
-        page: searchParams.page,
-        limit: searchParams.limit,
-        ...(filterIdentification != "" && {
-          identificacion: filterIdentification,
+        ...(debouncedIdentification.trim() !== "" && {
+          identificacion: debouncedIdentification,
         }),
-        ...(filterFullName.length > 2 && {
-          fullName: filterFullName,
+        ...(debouncedFullName.trim().length >= 2 && {
+          fullName: debouncedFullName,
         }),
       }),
-    enabled: false,
+    enabled:
+      debouncedFullName.trim().length >= 2 ||
+      debouncedIdentification.trim().length >= 3,
   });
 
   const queryVehicle = useQuery({
-    queryKey: ["vehicle", searchParams],
+    queryKey: ["vehicle", debouncedPlate],
     queryFn: () =>
       getVehicleByFilterService({
-        page: searchParams.page,
-        limit: searchParams.limit,
-        ...(filterPlate.trim().length >= 3 && { plate: filterPlate.trim() }),
+        ...(debouncedPlate.trim().length >= 3 && {
+          plate: debouncedPlate.trim(),
+        }),
         status: true,
       }),
-    enabled: false,
+    enabled: debouncedPlate.trim().length >= 3,
   });
 
   const onSubmit = async (vehicleId: number) => {
@@ -161,6 +178,7 @@ export function NewCarrier({
       setSelectedTransportIds([]);
       setVehiclesList([]);
       form.setValue("open", false);
+      onSuccess?.();
     } catch (error: any) {
       console.error("Error creating shippings:", error);
 
@@ -190,6 +208,7 @@ export function NewCarrier({
       setVehiclesList([]);
       onOpenChange?.(false);
       form.setValue("open", false);
+      onSuccess?.();
     } catch (error: any) {
       let errorMessage = "Error al actualizar";
       if (error.response?.data?.message) {
@@ -218,19 +237,6 @@ export function NewCarrier({
       ? transport.name.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase())
       : "";
   };
-
-  useEffect(() => {
-    const hasSearch =
-      filterFullName.trim() !== "" || filterIdentification.trim() !== "";
-    if (hasSearch) {
-      query.refetch();
-    } else {
-      setSelectedPerson(null);
-    }
-    if (filterPlate.trim() !== "") {
-      queryVehicle.refetch();
-    }
-  }, [filterFullName, filterIdentification, filterPlate]);
 
   useEffect(() => {
     const fetchAllVehicleTypes = async () => {
@@ -274,12 +280,6 @@ export function NewCarrier({
     }
   }, [queryVehicle?.data?.data?.items]);
 
-  useEffect(() => {
-    if (query?.data?.data?.items) {
-      setPersonData(query.data.data.items);
-    }
-  }, [query?.data?.data?.items]);
-
   const handleCheckboxChange = (catalogueId: number, isChecked: boolean) => {
     if (isChecked) {
       setSelectedTransportIds((prev) => [...prev, catalogueId]);
@@ -300,10 +300,6 @@ export function NewCarrier({
     }
   };
 
-  const getAllVehicleTypes = (): TransportType[] => {
-    return Object.values(vehicleTypes).flat();
-  };
-
   const handlePlateInput = (value: string) => {
     let formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (formatted.length > 7) {
@@ -313,16 +309,51 @@ export function NewCarrier({
       formatted = formatted.slice(0, 3) + "-" + formatted.slice(3);
     }
     setFilterPlate(formatted);
+    updateDebouncedPlate(formatted);
+    if (formatted.trim().length < 3) {
+      setVehiclesList([]);
+    }
   };
+
+  useEffect(() => {
+    if (query?.data?.data?.items) {
+      setPersonData(query.data.data.items);
+    } else if (
+      (debouncedFullName.trim() === "" &&
+        debouncedIdentification.trim() === "") ||
+      query.data?.data?.items?.length === 0
+    ) {
+      setPersonData([]);
+    }
+  }, [query?.data?.data?.items, debouncedFullName, debouncedIdentification]);
+
+  useEffect(() => {
+    if (
+      debouncedFullName.trim().length < 2 &&
+      debouncedIdentification.trim().length < 3
+    ) {
+      setPersonData([]);
+      setSelectedPerson(null);
+      return;
+    }
+
+    if (query?.data?.data?.items) {
+      setPersonData(query.data.data.items);
+    }
+  }, [query?.data?.data?.items, debouncedFullName, debouncedIdentification]);
+
+  useEffect(() => {
+    if (queryVehicle?.data?.data?.items && debouncedPlate.trim().length >= 3) {
+      setVehiclesList(queryVehicle.data.data.items);
+    } else if (debouncedPlate.trim().length < 3) {
+      setVehiclesList([]);
+    }
+  }, [queryVehicle?.data?.data?.items, debouncedPlate]);
 
   return (
     <Dialog
       open={open ?? form.watch("open")}
       onOpenChange={(newOpen) => {
-        setSearchParams({
-          page: 1,
-          limit: 10,
-        });
         setFilterPlate("");
         setVehiclesList([]);
         setSelectedTransportIds([]);
@@ -375,7 +406,9 @@ export function NewCarrier({
                           className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
                           value={filterFullName}
                           onChange={(e) => {
-                            setfilterFullName(e.target.value);
+                            const value = e.target.value;
+                            setfilterFullName(value);
+                            updateDebouncedFullName(value);
                           }}
                         />
                       </div>
@@ -390,7 +423,9 @@ export function NewCarrier({
                           className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10"
                           value={filterIdentification}
                           onChange={(e) => {
-                            setfilterIdentification(e.target.value);
+                            const value = e.target.value;
+                            setfilterIdentification(value);
+                            updateDebouncedIdentification(value);
                           }}
                         />
                       </div>
@@ -614,8 +649,10 @@ export function NewCarrier({
                                 Vehículos disponibles para{" "}
                                 {getTransportName(transportId).toLowerCase()}:
                               </span>{" "}
-                              {vehicleTypes[transportId]
-                                .map((vehicle) => vehicle.name)
+                              {catalogueVehiclesType.data?.data
+                                .map((vehicle) =>
+                                  toCapitalize(vehicle.name ?? "", true)
+                                )
                                 .join(", ")}
                             </Label>
                           ) : null}
@@ -627,7 +664,7 @@ export function NewCarrier({
                   {showCreateVehicle && (
                     <CreateVehicleForm
                       onCancel={handleCancelVehicle}
-                      vehicleTypes={getAllVehicleTypes()}
+                      vehicleTypes={catalogueVehiclesType.data?.data ?? []}
                       onGetVehicleById={onSubmit}
                     />
                   )}
@@ -690,42 +727,30 @@ export function NewCarrier({
 
                       <Separator className="my-4" />
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">Estado:</span>
-                          <Badge
-                            className="text-sm px-3 py-1 rounded-full"
-                            variant={isActive ? "tertiary" : "outline"}
+                      <div className="col-span-2">
+                        <label className="font-semibold text-sm">
+                          Estado del Usuario
+                        </label>
+                        <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
+                          <button
+                            type="button"
+                            onClick={handleToggleStatus}
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors w-full justify-between"
                           >
-                            {isActive ? "Activo" : "Inactivo"}
-                          </Badge>
+                            <span
+                              className={
+                                isActive ? "font-bold" : "text-gray-400"
+                              }
+                            >
+                              {isActive ? "Activo" : "Inactivo"}
+                            </span>
+                            {isActive ? (
+                              <ToggleRightIcon className="w-8 h-8 text-primary" />
+                            ) : (
+                              <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
+                            )}
+                          </button>
                         </div>
-
-                        <button
-                          onClick={handleToggleStatus}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-none transition-colors"
-                        >
-                          <span
-                            className={`${
-                              !isActive ? "font-bold" : "text-gray-400"
-                            }`}
-                          >
-                            Inactivo
-                          </span>
-                          {isActive ? (
-                            <ToggleRightIcon className="w-8 h-8 text-green-500" />
-                          ) : (
-                            <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
-                          )}
-
-                          <span
-                            className={`${
-                              isActive ? "font-bold" : "text-gray-400"
-                            }`}
-                          >
-                            Activo
-                          </span>
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -741,10 +766,6 @@ export function NewCarrier({
             variant={"outline"}
             disabled={form.formState.isSubmitting}
             onClick={() => {
-              setSearchParams({
-                page: 1,
-                limit: 10,
-              });
               setFilterPlate("");
               setSelectedPerson(null);
               setSelectedTransportIds([]);
@@ -753,6 +774,7 @@ export function NewCarrier({
               setfilterFullName("");
               setfilterIdentification("");
               form.setValue("open", false);
+              onOpenChange?.(false);
             }}
           >
             Cancelar

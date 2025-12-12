@@ -119,9 +119,8 @@ export function processClinicalSigns(clinicalSignWrappers: ClinicalSignWrapper[]
     const sign = wrapper.clinicalSign;
     
     if (sign.settingSignsBodies && sign.settingSignsBodies.length > 0) {
-      // Signo con partes del cuerpo
       signsWithBodyParts.push({
-        id: sign.id,
+        id: wrapper.id, 
         description: sign.description,
         bodyParts: sign.settingSignsBodies.map(ssb => ({
           id: ssb.bodyParts.id,
@@ -130,9 +129,8 @@ export function processClinicalSigns(clinicalSignWrappers: ClinicalSignWrapper[]
         }))
       });
     } else {
-      // Signo simple
       simpleSigns.push({
-        id: sign.id,
+        id: wrapper.id, 
         description: sign.description
       });
     }
@@ -474,12 +472,19 @@ export function convertSelectionToUpdateRequest(
     };
   }
   
-  return {
+  // Construir el request final
+  const updateRequest: UpdateAntemortemRequest = {
     idDetailsSpeciesCertificate: animalId,
     status: true,
     settingAntemortemClinicalSignSpecie: clinicalSigns,
-    antemortemOpinion: opinions,
-    antemortemDeadAnimal: deadAnimal
+    antemortemOpinion: opinions
   };
+  
+  // Solo incluir deadAnimal si existe (no enviar undefined)
+  if (deadAnimal !== undefined) {
+    updateRequest.antemortemDeadAnimal = deadAnimal;
+  }
+  
+  return updateRequest;
 }
 

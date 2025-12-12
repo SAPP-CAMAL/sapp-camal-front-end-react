@@ -16,12 +16,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { MetaPagination } from "@/features/people/domain";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -38,15 +36,12 @@ interface DataTableProps<TData, TValue> {
   children?: React.ReactNode;
 }
 
-
-
 export function CarriersTable<TData, TValue>({
   columns,
   data,
   meta,
   isLoading,
 }: DataTableProps<TData, TValue>) {
-
   const table = useReactTable({
     data: data,
     columns: columns,
@@ -54,13 +49,16 @@ export function CarriersTable<TData, TValue>({
   });
 
   const start = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + 1;
-  const end = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + (meta?.itemCount ?? 0);
+  const end =
+    ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) +
+    (meta?.itemCount ?? 0);
 
   return (
     <div className="overflow-hidden rounded-lg border p-4">
       <div className="py-4 px-2 flex flex-col">
-        <Label className="font-semibold">Lista de Transportistas por Vehículo</Label>
-        <p className="text-sm text-muted-foreground">{`${meta?.totalItems} registro(s) encontrado(s)`} </p>
+        <Label className="font-semibold">
+          Lista de Transportistas por Vehículo
+        </Label>
       </div>
       <Table>
         <TableHeader>
@@ -88,7 +86,7 @@ export function CarriersTable<TData, TValue>({
                 colSpan={columns.length}
                 className="h-96 text-center animate-pulse font-semibold"
               >
-                Loading...
+                Cargando...
               </TableCell>
             </TableRow>
           ) : table.getRowModel().rows?.length ? (
@@ -105,18 +103,36 @@ export function CarriersTable<TData, TValue>({
               </TableRow>
             ))
           ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+             <TableRow>
+              <TableCell colSpan={columns.length} className="h-96 text-center">
+                <Card className="max-w-full border-0 shadow-none bg-transparent">
+                  <CardContent className="py-20">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-full bg-muted p-3">
+                        <Search className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-medium text-muted-foreground mb-1">
+                          No se encontraron registros
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Intenta ajustar los filtros.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
       <div className="h-10 flex items-end justify-between mt-4">
-        <p className="text-sm text-gray-600">
-          Mostrando {start} a {end} de {meta?.totalItems} personas
-        </p>
+        {meta?.totalItems && meta?.totalItems > 0 && (
+          <p className="text-sm text-gray-600">
+            Mostrando {start} a {end} de {meta?.totalItems} personas
+          </p>
+        )}
         <div className="flex items-center gap-x-2">
           <Button
             disabled={meta?.disabledPreviousPage}

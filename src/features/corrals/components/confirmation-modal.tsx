@@ -21,6 +21,11 @@ import {
   MapPin,
   Loader2,
   X,
+  Venus,
+  Mars,
+  Check,
+  CheckCheckIcon,
+  CheckCircle2Icon,
 } from "lucide-react";
 import { type BrandDetail } from "../domain";
 
@@ -51,17 +56,17 @@ export function ConfirmationModal({
 
   return (
     <Dialog open={confirmationModal.isOpen} onOpenChange={(open) => !open && onReset()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <CheckCircle className="h-5 w-5 text-blue-600" />
             Confirmar Transferencia
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 overflow-y-auto">
           {/* Transfer flow visualization */}
-          <div className="flex items-center justify-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+          <div className="flex items-center justify-center gap-3 p-3 bg-muted/40 rounded-lg border">
             <div className="text-center">
               <div className="p-2 bg-blue-100 rounded-full mb-1">
                 <Building className="h-4 w-4 text-blue-600" />
@@ -71,9 +76,9 @@ export function ConfirmationModal({
             
             <div className="flex flex-col items-center gap-1">
               <ArrowRight className="h-5 w-5 text-gray-400" />
-              <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-full">
-                <Users className="h-3 w-3 text-yellow-700" />
-                <span className="text-xs font-bold text-yellow-700">
+              <div className="flex items-center gap-1 bg-primary-100 px-2 py-1 rounded-full">
+                <Check className="h-3 w-3 text-purple-700" />
+                <span className="text-xs font-bold text-purple-700">
                   {(confirmationModal.selectedMales ?? 0) + (confirmationModal.selectedFemales ?? 0)}
                 </span>
               </div>
@@ -88,23 +93,23 @@ export function ConfirmationModal({
           </div>
 
           {/* Transfer summary - Enhanced */}
-          <div className="relative overflow-hidden rounded-xl border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-100">
+          <div className="relative overflow-hidden rounded-xl border-2 border-sidebar-primary-200 bg-muted/40">
             <div className="absolute top-2 right-2">
-              <div className="p-1 bg-yellow-200 rounded-full">
-                <Info className="h-3 w-3 text-yellow-700" />
+              <div className="p-1  rounded-full">
+                <Info className="h-3 w-3 text-muted-700" />
               </div>
             </div>
             
             <div className="p-4">
-              <h4 className="flex items-center gap-2 font-bold text-yellow-800 mb-3">
+              <h4 className="flex items-center gap-2 font-semibold text-gray-700 mb-3">
                 <AlertCircle className="h-4 w-4" />
                 Resumen de transferencia
               </h4>
               
               <div className="space-y-3">
                 {/* Brand info */}
-                <div className="flex items-center gap-2 p-2 bg-white/60 rounded-lg border border-yellow-200">
-                  <Users className="h-4 w-4 text-blue-600" />
+                <div className="flex items-center gap-2 p-2 bg-white/60 rounded-lg border border-muted-200">
+                  <CheckCheckIcon className="h-4 w-4 text-blue-600" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">{confirmationModal.brand.nameBrand}</p>
                     <p className="text-xs text-gray-600">Marca a transferir</p>
@@ -115,7 +120,7 @@ export function ConfirmationModal({
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-2 bg-blue-50 rounded-lg border border-blue-200 text-center">
                     <div className="flex items-center justify-center mb-1">
-                      <User className="h-3 w-3 text-blue-600" />
+                      <Venus className="h-3 w-3 text-blue-600" />
                     </div>
                     <p className="text-lg font-bold text-blue-700">{confirmationModal.selectedMales ?? 0}</p>
                     <p className="text-xs text-blue-600">Machos</p>
@@ -123,7 +128,7 @@ export function ConfirmationModal({
                   
                   <div className="p-2 bg-pink-50 rounded-lg border border-pink-200 text-center">
                     <div className="flex items-center justify-center mb-1">
-                      <UserCheck className="h-3 w-3 text-pink-600" />
+                      <Mars className="h-3 w-3 text-pink-600" />
                     </div>
                     <p className="text-lg font-bold text-pink-700">{confirmationModal.selectedFemales ?? 0}</p>
                     <p className="text-xs text-pink-600">Hembras</p>
@@ -134,7 +139,7 @@ export function ConfirmationModal({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-2 bg-purple-50 rounded-lg border border-purple-200">
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-purple-600" />
+                      <CheckCircle2Icon className="h-4 w-4 text-purple-600" />
                       <span className="text-sm font-medium text-purple-700">Total animales:</span>
                     </div>
                     <span className="text-lg font-bold text-purple-600">
@@ -164,11 +169,11 @@ export function ConfirmationModal({
           </div>
 
           {/* Action buttons - Enhanced */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2 sticky bottom-0 bg-white pb-2 flex-shrink-0">
             <Button 
               variant="outline" 
               onClick={onReset}
-              className="flex-1 gap-2 border-gray-300 hover:bg-gray-50"
+              className="flex-1 gap-2 border-gray-300 hover:bg-gray-50 h-11"
               disabled={isTransferring}
             >
               <X className="h-4 w-4" />
@@ -176,7 +181,7 @@ export function ConfirmationModal({
             </Button>
             <Button 
               onClick={onConfirm}
-              className="flex-1 gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+              className="flex-1 gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-11"
               disabled={isTransferring}
             >
               {isTransferring ? (
@@ -187,7 +192,7 @@ export function ConfirmationModal({
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4" />
-                  Confirmar Transferencia
+                  Confirmar
                 </>
               )}
             </Button>

@@ -14,38 +14,6 @@ export const ShipperFields = () => {
 
 	return (
 		<>
-			{/* firstName */}
-			<FormField
-				control={form.control}
-				name='firstName'
-				rules={{ required: { value: true, message: 'El nombre es requerido' } }}
-				render={({ field }) => (
-					<FormItem>
-						<FormLabel>Nombre</FormLabel>
-						<FormControl>
-							<Input className='bg-secondary' placeholder='Ingrese el nombre' {...field} />
-						</FormControl>
-						<FormMessage />
-					</FormItem>
-				)}
-			/>
-
-			{/* lastName */}
-			<FormField
-				control={form.control}
-				name='lastName'
-				rules={{ required: { value: true, message: 'El apellido es requerido' } }}
-				render={({ field }) => (
-					<FormItem>
-						<FormLabel>Apellido</FormLabel>
-						<FormControl>
-							<Input className='bg-secondary' placeholder='Ingrese el apellido' {...field} />
-						</FormControl>
-						<FormMessage />
-					</FormItem>
-				)}
-			/>
-
 			{/* identificationTypeId */}
 			<FormField
 				control={form.control}
@@ -88,9 +56,7 @@ export const ShipperFields = () => {
 					required: { value: true, message: 'El número de documento es requerido' },
 					validate: {
 						validateDocumentTypeService: async (value, formData) => {
-							const currentValue = catalogueIdentityTypes?.data?.data.find(
-								data => data.catalogueId === Number(formData.identificationTypeId)
-							);
+							const currentValue = catalogueIdentityTypes?.data?.data.find(data => data.catalogueId === Number(formData.identificationTypeId));
 
 							const isCedula = currentValue?.code === 'CED';
 							const isRUCJ = currentValue?.code === 'RUCJ';
@@ -100,13 +66,13 @@ export const ShipperFields = () => {
 
 							if (isCedula && value.length !== 10) return 'El número de documento debe tener 10 caracteres';
 
-							if (isRUCJ && value.length !== 13) return 'El número de documento debe tener 11 caracteres';
+							if (isRUCJ && value.length !== 13) return 'El número de documento debe tener 13 caracteres';
 
 							if (isRUCN && value.length !== 13) return 'El número de documento debe tener 13 caracteres';
 
 							try {
-								await validateDocumentTypeService(currentValue.code, value);
-								return true;
+								const response = await validateDocumentTypeService(currentValue.code, value);
+								return !!response?.data?.isValid
 							} catch (error: any) {
 								const { message } = await error.response.json();
 								return message;
@@ -119,6 +85,38 @@ export const ShipperFields = () => {
 						<FormLabel>Identificación</FormLabel>
 						<FormControl>
 							<Input className='bg-secondary' placeholder='Ingrese el número de identificación' {...field} />
+						</FormControl>
+						<FormMessage />
+					</FormItem>
+				)}
+			/>
+
+			{/* firstName */}
+			<FormField
+				control={form.control}
+				name='firstName'
+				rules={{ required: { value: true, message: 'El nombre es requerido' } }}
+				render={({ field }) => (
+					<FormItem>
+						<FormLabel>Nombre</FormLabel>
+						<FormControl>
+							<Input className='bg-secondary' placeholder='Ingrese el nombre' {...field} />
+						</FormControl>
+						<FormMessage />
+					</FormItem>
+				)}
+			/>
+
+			{/* lastName */}
+			<FormField
+				control={form.control}
+				name='lastName'
+				rules={{ required: { value: true, message: 'El apellido es requerido' } }}
+				render={({ field }) => (
+					<FormItem>
+						<FormLabel>Apellido</FormLabel>
+						<FormControl>
+							<Input className='bg-secondary' placeholder='Ingrese el apellido' {...field} />
 						</FormControl>
 						<FormMessage />
 					</FormItem>

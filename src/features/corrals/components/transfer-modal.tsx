@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -25,11 +26,11 @@ import {
   MapPin,
   Loader2,
   X,
+  Venus,
+  Mars,
 } from "lucide-react";
 import { type BrandDetail, type Corral } from "../domain";
 import { type ProductiveStage } from "@/features/productive-stage/domain";
-import { getCorralTypeById } from '../server/db/corral-type.service';
-import { toast } from 'sonner';
 
 interface CorralType {
   id: number;
@@ -67,8 +68,8 @@ export function TransferModal({
 }: TransferModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isEmergencyCorral, setIsEmergencyCorral] = useState(false);
-  
+  // const [isEmergencyCorral, setIsEmergencyCorral] = useState(false);
+
   if (!transferModal.brand) return null;
 
   const brand = transferModal.brand;
@@ -98,13 +99,13 @@ export function TransferModal({
 
   const handleTransfer = async () => {
     if (!transferModal.targetCorralId || getTotalSelected() <= 0) return;
-    
+
     // Prevent transfer if source is emergency corral
     if (isSourceEmergency) {
       setError('No se puede transferir desde un corral de emergencia');
       return;
     }
-    
+
     try {
       setIsLoading(true);
       const targetCorral = corrales.find(c => c.id === transferModal.targetCorralId);
@@ -112,12 +113,12 @@ export function TransferModal({
         setError('Corral de destino no encontrado');
         return;
       }
-      
+
       // Get corral type to determine if target is emergency
-      const corralType = await getCorralTypeById(targetCorral.idCorralType);
-      const isEmergency = corralType.data.id === 2;
-      
-      setIsEmergencyCorral(isEmergency);
+      // const corralType = await getCorralTypeById(targetCorral.idCorralType);
+      // const isEmergency = corralType.data.code === corralTypesCode.EMERGENCIA;
+
+      // setIsEmergencyCorral(isEmergency);
       onTransfer(transferModal.targetCorralId);
     } catch (error) {
       toast.error('Error al validar el tipo de corral');
@@ -149,7 +150,7 @@ export function TransferModal({
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="space-y-6 p-1">{/* Add some padding for better scroll */}
-          
+
           {/* Emergency corral warning */}
           {isSourceEmergency && (
             <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border-2 border-red-200 mb-4">
@@ -162,7 +163,7 @@ export function TransferModal({
               </div>
             </div>
           )}
-          
+
           <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl border">
             <div className="flex items-center gap-3 mb-3 sm:mb-0">
               <div className="p-2 bg-blue-100 rounded-full">
@@ -199,27 +200,27 @@ export function TransferModal({
                   <Info className="h-4 w-4 text-blue-600" />
                 </div>
               </div>
-              
+
               <div className="p-4 md:p-6">
-                <h4 className="flex items-center gap-3 font-bold text-lg md:text-xl text-gray-900 mb-4">
-                  <Users className="h-5 w-5 text-blue-600" />
+                <h4 className="flex items-center gap-1 font-bold text-lg md:text-xl text-gray-900 mb-4">
+                  <span>Marca:</span>
                   {brand.nameBrand}
                 </h4>
-                
+
                 <div className="flex justify-center gap-8 mb-4">
                   <div className="flex flex-col items-center text-center p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-sm w-24">
                     <div className="flex items-center justify-center mb-2">
-                      <User className="h-4 w-4 text-blue-600" />
+                      <Venus className="h-4 w-4 text-blue-600" />
                     </div>
                     <p className="text-xl md:text-2xl font-bold text-blue-700">
                       {brand.males}
                     </p>
                     <p className="text-xs text-blue-600">Machos</p>
                   </div>
-                  
+
                   <div className="flex flex-col items-center text-center p-4 bg-pink-50 rounded-lg border border-pink-200 shadow-sm w-24">
                     <div className="flex items-center justify-center mb-2">
-                      <UserCheck className="h-4 w-4 text-pink-600" />
+                      <Mars className="h-4 w-4 text-pink-600" />
                     </div>
                     <p className="text-xl md:text-2xl font-bold text-pink-700">
                       {brand.females}
@@ -235,7 +236,7 @@ export function TransferModal({
                       {maleStages.length > 0 && (
                         <div>
                           <h6 className="text-xs font-medium text-blue-600 mb-2 flex items-center gap-1">
-                            <User className="h-3 w-3" />
+                            <Venus className="h-3 w-3" />
                             Machos:
                           </h6>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -250,11 +251,11 @@ export function TransferModal({
                           </div>
                         </div>
                       )}
-                      
+
                       {femaleStages.length > 0 && (
                         <div>
                           <h6 className="text-xs font-medium text-pink-600 mb-2 flex items-center gap-1">
-                            <UserCheck className="h-3 w-3" />
+                            <Mars className="h-3 w-3" />
                             Hembras:
                           </h6>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -345,18 +346,18 @@ export function TransferModal({
               <CheckCircle className="h-5 w-5 text-green-600" />
               <h5 className="font-semibold text-base md:text-lg text-gray-900">Seleccionar cantidades por etapa productiva:</h5>
             </div>
-            
+
             {productiveStages.length === 0 && (
               <div className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                 <Info className="h-5 w-5 text-yellow-600" />
                 <p className="text-sm text-yellow-800">No hay etapas productivas disponibles para esta especie</p>
               </div>
             )}
-            
+
             {maleStages.length > 0 && (
               <div className="space-y-4">
                 <h6 className="text-base font-semibold text-blue-700 flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                  <Venus className="h-5 w-5" />
                   Machos
                 </h6>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -365,7 +366,7 @@ export function TransferModal({
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="p-1 bg-blue-100 rounded-full flex-shrink-0">
-                            <User className="h-3 w-3 text-blue-600" />
+                            <Venus className="h-3 w-3 text-blue-600" />
                           </div>
                           <Label htmlFor={`stage-${stage.id}`} className="text-xs font-medium text-blue-700 truncate">
                             {stage.name}
@@ -405,7 +406,7 @@ export function TransferModal({
             {femaleStages.length > 0 && (
               <div className="space-y-4">
                 <h6 className="text-base font-semibold text-pink-700 flex items-center gap-2">
-                  <UserCheck className="h-5 w-5" />
+                  <Mars className="h-5 w-5" />
                   Hembras
                 </h6>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -414,7 +415,7 @@ export function TransferModal({
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="p-1 bg-pink-100 rounded-full flex-shrink-0">
-                            <UserCheck className="h-3 w-3 text-pink-600" />
+                            <Mars className="h-3 w-3 text-pink-600" />
                           </div>
                           <Label htmlFor={`stage-${stage.id}`} className="text-xs font-medium text-pink-700 truncate">
                             {stage.name}
@@ -457,13 +458,13 @@ export function TransferModal({
               <MapPin className="h-5 w-5 text-green-600" />
               <h5 className="font-semibold text-base md:text-lg text-gray-900">Seleccionar corral de destino:</h5>
             </div>
-            
+
             <div className="max-h-80 overflow-y-auto space-y-3 pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {corrales.filter(c => c && c.id !== transferModal.sourceCorralId).map(corral => {
                 const totalToTransfer = getTotalSelected();
                 const isSelected = transferModal.targetCorralId === corral.id;
                 const utilizationPercent = corral.ocupacionPorcentaje || 0; // Usar el porcentaje ya calculado
-                
+
                 return (
                   <div
                     key={corral.id}
@@ -475,14 +476,14 @@ export function TransferModal({
                       }));
                     }}
                     className={`w-full p-4 md:p-5 text-left rounded-xl border-2 transition-all duration-200 ${
-                      isSourceEmergency 
-                        ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200' 
-                        : isLoading 
-                        ? 'opacity-70 cursor-not-allowed' 
+                      isSourceEmergency
+                        ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'
+                        : isLoading
+                        ? 'opacity-70 cursor-not-allowed'
                         : 'cursor-pointer hover:scale-[1.02]'
                     } ${
                       isSelected && !isSourceEmergency
-                        ? 'border-green-500 bg-gradient-to-br from-green-100 to-green-200 shadow-lg' 
+                        ? 'border-green-500 bg-gradient-to-br from-green-100 to-green-200 shadow-lg'
                         : !isSourceEmergency
                         ? 'border-gray-200 bg-gradient-to-br from-gray-50 to-white hover:border-green-300 hover:from-green-50 hover:to-green-100'
                         : ''
@@ -491,10 +492,10 @@ export function TransferModal({
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3">
                       <h4 className="text-base md:text-lg font-semibold text-gray-900 mb-2 sm:mb-0">{corral.name}</h4>
                       <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                        utilizationPercent < 70 
-                          ? 'bg-green-100 text-green-700' 
-                          : utilizationPercent < 90 
-                          ? 'bg-yellow-100 text-yellow-700' 
+                        utilizationPercent < 70
+                          ? 'bg-green-100 text-green-700'
+                          : utilizationPercent < 90
+                          ? 'bg-yellow-100 text-yellow-700'
                           : 'bg-red-100 text-red-700'
                       }`}>
                         {utilizationPercent}% ocupado
@@ -505,20 +506,20 @@ export function TransferModal({
                       <span>Ocupación: {corral.ocupacion}/{corral.limite}</span>
                       <span className="font-medium">Disponibles: {corral.limite - corral.ocupacion}</span>
                     </div>
-                    
+
                     <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
-                      <div 
+                      <div
                         className={`h-3 rounded-full transition-all duration-300 ${
-                          utilizationPercent < 70 
-                            ? 'bg-green-500' 
-                            : utilizationPercent < 90 
-                            ? 'bg-yellow-500' 
+                          utilizationPercent < 70
+                            ? 'bg-green-500'
+                            : utilizationPercent < 90
+                            ? 'bg-yellow-500'
                             : 'bg-red-500'
                         }`}
                         style={{ width: `${utilizationPercent}%` }}
                       ></div>
                     </div>
-                    
+
                     {isSelected && totalToTransfer > 0 && (
                       <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
                         <p className="text-sm text-green-700 font-medium text-center">
@@ -530,14 +531,14 @@ export function TransferModal({
                 );
               })}
             </div>
-            
+
             {getTotalSelected() === 0 && (
               <div className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                 <AlertCircle className="h-5 w-5 text-yellow-600" />
                 <p className="text-sm text-yellow-800">Selecciona al menos un animal para transferir</p>
               </div>
             )}
-            
+
             {!transferModal.targetCorralId && getTotalSelected() > 0 && (
               <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <Info className="h-5 w-5 text-blue-600" />
@@ -547,12 +548,12 @@ export function TransferModal({
           </div>
           </div>
         </div>
-        
+
         {/* Fixed bottom buttons with backdrop */}
         <div className="flex-shrink-0 sticky bottom-0 bg-white/95 backdrop-blur-sm border-t">
           <div className="flex flex-col sm:flex-row gap-3 p-6">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={onReset}
               className="flex-1 gap-2 text-sm h-12 hover:bg-gray-50"
               disabled={isTransferring}
@@ -560,11 +561,11 @@ export function TransferModal({
               <X className="h-4 w-4" />
               Cancelar
             </Button>
-            
+
             <Button
               variant="default"
               disabled={
-                isTransferring || 
+                isTransferring ||
                 getTotalSelected() === 0 ||
                 !transferModal.targetCorralId ||
                 isSourceEmergency

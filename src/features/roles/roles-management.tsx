@@ -1,14 +1,14 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { ShieldIcon } from "lucide-react";
 import { TableRoles } from "./table-roles";
 import { useQuery } from "@tanstack/react-query";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { getRolesService } from "./server/db/roles.service";
-import { FileTextIcon, ShieldIcon, SquarePenIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { NewRol } from "./components/new-role";
 import { UpdateRol } from "./components/update-rol";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function RolesManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
@@ -31,7 +31,7 @@ export function RolesManagement() {
         limit: searchParams.limit,
         ...(!!searchParams.name && { name: searchParams.name }),
         ...(searchParams.status !== "*" && {
-          status: Boolean(searchParams.status),
+          status: searchParams.status,
         }),
       }),
   });
@@ -52,14 +52,14 @@ export function RolesManagement() {
           </div>
         </div>
         <div className="flex gap-x-2">
-          <Button variant={"outline"}>
+          {/* <Button variant={"outline"}>
             <FileTextIcon />
             Exportar
           </Button>
           <Button variant={"outline"}>
             <SquarePenIcon />
             Exportar
-          </Button>
+          </Button> */}
           <NewRol />
         </div>
       </section>
@@ -70,14 +70,15 @@ export function RolesManagement() {
             header: "Nombre",
             cell: ({ row }) => (
               <div className="flex items-center gap-x-2">
-                <p className="bg-gray-900 h-2 w-2 rounded-full" />
-                {row.original.name}
+                {/* <p className="bg-gray-900 h-2 w-2 rounded-full" /> */}
+                {toCapitalize(row.original.name, true)}
               </div>
             ),
           },
           {
             accessorKey: "description",
             header: "Descripción",
+            cell: ({ row }) => <span>{toCapitalize(row.original.description ?? '')}</span>,
           },
           {
             accessorKey: "status",
@@ -95,7 +96,7 @@ export function RolesManagement() {
             header: "Acciones",
             cell: ({ row }) => {
               return (
-                <div>
+                <div className="flex justify-center">
                   <UpdateRol role={row.original} />
                 </div>
               );

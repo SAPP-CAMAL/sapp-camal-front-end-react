@@ -222,6 +222,7 @@ import { AdministrationMenu } from "@/features/modules/domain/module.domain";
 // };
 
 export function AppSidebar({
+ 
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   user: LoginResponse;
