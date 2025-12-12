@@ -1,0 +1,116 @@
+name: Admin Frontend CD (No Docker)
+
+on:
+  push:
+    branches:
+      - prod-riobamba
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Next.js app
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # PASO 1: Crear .env para el Build (Vital para NEXT_PUBLIC_*)
+      - name: Create .env file for Build
+        run: |
+          echo "${{ secrets.ENV_FILE_FRONTEND_BASE64 }}" | base64 -d > .env
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        # Ya no necesitamos pasar variables 'env' aquí manuales,
+        # Next las leerá del archivo .env que acabamos de crear.
+        run: npm run build
+
+      # Comprimimos .next, public y config files necesarios
+      - name: Compress Build
+        run: tar -czf build.tar.gz .next public next.config.js package.json package-lock.json ecosystem.config.js
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build
+          path: build.tar.gz
+
+  deploy:
+    name: Deploy to Server
+    needs: build
+    runs-on: ubuntu-latest
+    environment: DEVELOPMENT
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-build
+
+      - name: Transfer Build to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: "build.tar.gz"
+          target: "${{ secrets.APP_DIR }}"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          # Inyectamos el secreto para decodificarlo dentro del servidor
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          envs: ENV_FILE
+          script: |
+            set -euo pipefail
+            
+            APP_DIR="${{ secrets.APP_DIR }}"
+            mkdir -p "$APP_DIR"
+            cd "$APP_DIR"
+
+            # PASO 2: Crear .env en el Servidor (Vital para PM2 y PORT)
+            echo "$ENV_FILE" | base64 -d > .env
+            
+            # Descomprimir la nueva versión
+            if [ -f "build.tar.gz" ]; then
+              # Limpiamos carpeta anterior de build
+              rm -rf .next
+            
+              # Descomprimimos
+              tar -xzf build.tar.gz
+              rm build.tar.gz
+            else
+              echo "❌ Error: No se encontró el archivo build.tar.gz"
+              exit 1
+            fi
+            
+            # Instalar dependencias de producción (mucho más rápido)
+            npm ci --omit=dev
+            
+            # Iniciar o Recargar PM2
+            echo "Reiniciando aplicación..."
+            if pm2 list | grep -q "sapp"; then
+                # update-env es crucial para que PM2 relea el archivo .env nuevo
+                pm2 reload sapp --update-env
+            else
+                pm2 start ecosystem.config.js
+            fi
+            
+            pm2 save
+            echo "🚀 Despliegue completado."

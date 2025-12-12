@@ -3,7 +3,7 @@ import ky from "ky";
 import { cookies } from "next/headers";
 
 export const httpSSR = ky.create({
-    prefixUrl: "http://localhost:3001",
+    prefixUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000",
     credentials: "include",
     retry: 0,
     hooks: {
