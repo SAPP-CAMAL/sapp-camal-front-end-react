@@ -29,7 +29,7 @@ export default async function Page() {
       dashboardImages = Array.isArray(parsed) ? parsed : [];
     }
   } catch (error) {
-    console.error("Error al cargar imágenes del dashboard:", error);
+    console.error("❌ Error al cargar imágenes del dashboard:", error);
   }
 
   // Obtener logo del matadero desde la API
@@ -44,6 +44,11 @@ export default async function Page() {
     console.error("Error al cargar logo del matadero:", error);
   }
 
+  // Fallback: si por permisos o configuración no viene el logo aún, usar uno local
+  if (!slaughterhouseLogo || slaughterhouseLogo.trim() === "") {
+    slaughterhouseLogo = "/images/LOGO_VERDE_HORIZONTAL.svg";
+  }
+
   // Convertir URLs a formato de imágenes para el carrusel
   const carouselImages = dashboardImages.map((url, index) => ({
     src: url,
@@ -52,9 +57,9 @@ export default async function Page() {
 
   // Si no hay imágenes, usar imágenes por defecto
   const finalImages = carouselImages.length > 0 ? carouselImages : [
-    { src: "/images/FND_01.svg", alt: "SAPP Sistema 1" },
-    { src: "/images/FND_02.svg", alt: "SAPP Sistema 2" },
-    { src: "/images/FND_03.svg", alt: "SAPP Sistema 3" },
+    { src: "/images/sapp-fondo-ingreso.svg", alt: "SAPP Sistema 1" },
+    { src: "/images/corrals-color.png", alt: "SAPP Sistema 2" },
+    { src: "/images/sapp-loggin.png", alt: "SAPP Sistema 3" },
   ];
 
   return (

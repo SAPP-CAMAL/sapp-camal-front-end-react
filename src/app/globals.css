@@ -87,6 +87,13 @@
   --primary-inactive: #85c6c5;
 }
 
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ========================================
    SELECCIÓN DE TEXTO - COLOR VERDE
    ======================================== */
@@ -108,6 +115,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -119,6 +127,7 @@
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -130,6 +139,7 @@
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -141,6 +151,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -151,16 +162,19 @@
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.8;
   }
@@ -253,7 +267,7 @@ button[class*="sidebar-trigger"] {
 
 /* Items del menú con transiciones suaves */
 [data-sidebar="sidebar"] [data-sidebar-item],
-[data-sidebar="sidebar"] nav > *,
+[data-sidebar="sidebar"] nav>*,
 [data-sidebar="sidebar"] a,
 [data-sidebar="sidebar"] button {
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -294,8 +308,7 @@ button[class*="sidebar-trigger"] {
 }
 
 /* Indicador visual para item activo */
-[data-sidebar="sidebar"]
-  [data-slot="sidebar-menu-sub-button"][data-active="true"],
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-sub-button"][data-active="true"],
 [data-sidebar="sidebar"] [data-slot="sidebar-menu-sub-button"].active {
   background-color: rgba(14, 163, 141, 0.15) !important;
   border-left: 3px solid var(--primary);
@@ -303,12 +316,8 @@ button[class*="sidebar-trigger"] {
 }
 
 /* Animación suave del chevron en collapsibles */
-[data-sidebar="sidebar"]
-  [data-slot="sidebar-menu-button"]
-  svg[class*="chevron"],
-[data-sidebar="sidebar"]
-  [data-slot="sidebar-menu-button"]
-  svg.lucide-chevron-right {
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"] svg[class*="chevron"],
+[data-sidebar="sidebar"] [data-slot="sidebar-menu-button"] svg.lucide-chevron-right {
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -390,9 +399,7 @@ button:not([data-sidebar] button):not([role="tab"]) {
 /* Botones primarios */
 button[class*="bg-primary"]:not([data-sidebar] button):not([role="tab"]),
 .bg-primary,
-button[type="submit"]:not([class*="variant"]):not([data-sidebar] button):not(
-    [role="tab"]
-  ) {
+button[type="submit"]:not([class*="variant"]):not([data-sidebar] button):not([role="tab"]) {
   background-color: var(--primary) !important;
   color: var(--primary-foreground) !important;
   box-shadow: 0 2px 4px rgba(14, 163, 141, 0.2);
@@ -402,9 +409,7 @@ button[type="submit"]:not([class*="variant"]):not([data-sidebar] button):not(
 
 button[class*="bg-primary"]:hover:not([data-sidebar] button):not([role="tab"]),
 .bg-primary:hover,
-button[type="submit"]:not([class*="variant"]):hover:not(
-    [data-sidebar] button
-  ):not([role="tab"]) {
+button[type="submit"]:not([class*="variant"]):hover:not([data-sidebar] button):not([role="tab"]) {
   background-color: var(--primary-hover) !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(14, 163, 141, 0.3);
@@ -412,17 +417,13 @@ button[type="submit"]:not([class*="variant"]):hover:not(
 
 button[class*="bg-primary"]:active:not([data-sidebar] button):not([role="tab"]),
 .bg-primary:active,
-button[type="submit"]:not([class*="variant"]):active:not(
-    [data-sidebar] button
-  ):not([role="tab"]) {
+button[type="submit"]:not([class*="variant"]):active:not([data-sidebar] button):not([role="tab"]) {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(14, 163, 141, 0.2);
 }
 
 /* Efecto ripple en botones (excepto sidebar, tabs y tooltips) */
-button:not([data-sidebar] button):not([role="tab"]):not(
-    [data-slot="tooltip-trigger"]
-  )::after {
+button:not([data-sidebar] button):not([role="tab"]):not([data-slot="tooltip-trigger"])::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -436,9 +437,7 @@ button:not([data-sidebar] button):not([role="tab"]):not(
   pointer-events: none;
 }
 
-button:active:not([data-sidebar] button):not([role="tab"]):not(
-    [data-slot="tooltip-trigger"]
-  )::after {
+button:active:not([data-sidebar] button):not([role="tab"]):not([data-slot="tooltip-trigger"])::after {
   width: 300px;
   height: 300px;
 }
@@ -450,9 +449,7 @@ button[class*="border"]:not([data-sidebar] button):not([role="tab"]) {
   transition: all 0.2s ease;
 }
 
-button[class*="variant-outline"]:hover:not([data-sidebar] button):not(
-    [role="tab"]
-  ),
+button[class*="variant-outline"]:hover:not([data-sidebar] button):not([role="tab"]),
 button[class*="border"]:hover:not([data-sidebar] button):not([role="tab"]) {
   border-color: var(--primary) !important;
   color: var(--primary);
@@ -467,9 +464,7 @@ button[class*="destructive"]:not([data-sidebar] button):not([role="tab"]) {
   border: none;
 }
 
-button[class*="destructive"]:hover:not([data-sidebar] button):not(
-    [role="tab"]
-  ) {
+button[class*="destructive"]:hover:not([data-sidebar] button):not([role="tab"]) {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(14, 163, 141, 0.25);
 }
@@ -481,9 +476,7 @@ button[class*="variant-ghost"]:not([data-sidebar] button):not([role="tab"]) {
   background: transparent;
 }
 
-button[class*="variant-ghost"]:hover:not([data-sidebar] button):not(
-    [role="tab"]
-  ) {
+button[class*="variant-ghost"]:hover:not([data-sidebar] button):not([role="tab"]) {
   background-color: rgba(14, 163, 141, 0.08);
 }
 
@@ -535,18 +528,15 @@ button[data-slot="checkbox"][data-state="checked"] *,
 [data-slot="checkbox"][data-state="checked"] *,
 button[data-slot="checkbox"][data-state="checked"] svg,
 [data-slot="checkbox"][data-state="checked"] svg,
-button[data-slot="checkbox"][data-state="checked"]
-  [data-slot="checkbox-indicator"],
+button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"],
 [data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
 
 /* Ocultar el check cuando NO está marcado */
-button[data-slot="checkbox"]:not([data-state="checked"])
-  [data-slot="checkbox-indicator"],
-[data-slot="checkbox"]:not([data-state="checked"])
-  [data-slot="checkbox-indicator"] {
+button[data-slot="checkbox"]:not([data-state="checked"]) [data-slot="checkbox-indicator"],
+[data-slot="checkbox"]:not([data-state="checked"]) [data-slot="checkbox-indicator"] {
   display: none !important;
 }
 
@@ -576,17 +566,13 @@ div.bg-primary .lucide {
    ======================================== */
 /* Solo aplicar animación a cards de menor jerarquía (cards dentro de otros cards) */
 .card:not(:has(.card)),
-[class*="rounded"]:not([data-sidebar]):not(table):not([data-slot]):not(
-    :has(.card)
-  ):not(:has([class*="rounded"])) {
+[class*="rounded"]:not([data-sidebar]):not(table):not([data-slot]):not( :has(.card)):not(:has([class*="rounded"])) {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Hover solo en cards de nivel más bajo */
 .card:not(:has(.card)):hover,
-[class*="rounded"]:not([data-sidebar]):not(table):not([data-slot]):not(
-    :has(.card)
-  ):not(:has([class*="rounded"])):hover {
+[class*="rounded"]:not([data-sidebar]):not(table):not([data-slot]):not( :has(.card)):not(:has([class*="rounded"])):hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
@@ -656,11 +642,9 @@ table {
 
 /* Header de tabla */
 thead tr {
-  background: linear-gradient(
-    135deg,
-    var(--sidebar-primary) 0%,
-    #0d9179 100%
-  ) !important;
+  background: linear-gradient(135deg,
+      var(--sidebar-primary) 0%,
+      #0d9179 100%) !important;
   color: white !important;
 }
 
@@ -691,11 +675,9 @@ tbody tr:nth-child(even) {
 
 /* Hover effect elegante */
 tbody tr:hover {
-  background: linear-gradient(
-    90deg,
-    rgba(14, 163, 141, 0.06) 0%,
-    rgba(14, 163, 141, 0.02) 100%
-  ) !important;
+  background: linear-gradient(90deg,
+      rgba(14, 163, 141, 0.06) 0%,
+      rgba(14, 163, 141, 0.02) 100%) !important;
   box-shadow: 0 2px 8px rgba(14, 163, 141, 0.08);
   border-left: 3px solid var(--primary);
 }
@@ -740,11 +722,9 @@ tbody tr:last-child {
 /* Estado de fila seleccionada */
 tbody tr.selected,
 tbody tr[data-selected="true"] {
-  background: linear-gradient(
-    90deg,
-    rgba(14, 163, 141, 0.15) 0%,
-    rgba(14, 163, 141, 0.05) 100%
-  ) !important;
+  background: linear-gradient(90deg,
+      rgba(14, 163, 141, 0.15) 0%,
+      rgba(14, 163, 141, 0.05) 100%) !important;
   border-left: 4px solid var(--primary);
   box-shadow: 0 2px 8px rgba(14, 163, 141, 0.15);
 }
@@ -792,20 +772,25 @@ span[class*="rounded-full"] {
 
 /* Ensure Radix dialog content/close are positioned correctly globally */
 [data-slot="dialog-content"] {
-  position: fixed; /* anchor element */
-  overflow: visible; /* allow close button to be visible */
+  position: fixed;
+  /* anchor element */
+  overflow: visible;
+  /* allow close button to be visible */
 }
 
 [data-slot="dialog-close"] {
   position: absolute !important;
-  top: 0.75rem !important; /* 12px */
+  top: 0.75rem !important;
+  /* 12px */
   right: 0.75rem !important;
   z-index: 999 !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem; /* 28px */
-  height: 1.75rem; /* 28px */
+  width: 1.75rem;
+  /* 28px */
+  height: 1.75rem;
+  /* 28px */
   border-radius: 0.25rem;
 }
 
@@ -880,6 +865,7 @@ span[class*="rounded-full"] {
    RESPONSIVE MEJORADO
    ======================================== */
 @media (max-width: 768px) {
+
   thead tr th,
   tbody tr td {
     padding: 0.75rem 0.875rem;
@@ -927,6 +913,7 @@ span[class*="rounded-full"] {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
     margin: 0;
@@ -954,15 +941,14 @@ span[class*="rounded-full"] {
   }
 
   h1 {
-    font-size: 2.5rem; /* 40px */
+    font-size: 2.5rem;
+    /* 40px */
     margin-bottom: 1.5rem;
     margin-top: 0;
     font-weight: 800;
-    background: linear-gradient(
-      135deg,
-      var(--foreground) 0%,
-      var(--primary) 100%
-    );
+    background: linear-gradient(135deg,
+        var(--foreground) 0%,
+        var(--primary) 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -977,7 +963,8 @@ span[class*="rounded-full"] {
   }
 
   h2 {
-    font-size: 2rem; /* 32px */
+    font-size: 2rem;
+    /* 32px */
     margin-bottom: 1.25rem;
     margin-top: 2rem;
     font-weight: 700;
@@ -998,7 +985,8 @@ span[class*="rounded-full"] {
   }
 
   h3 {
-    font-size: 1.5rem; /* 24px */
+    font-size: 1.5rem;
+    /* 24px */
     margin-bottom: 1rem;
     margin-top: 1.5rem;
     font-weight: 600;
@@ -1006,21 +994,24 @@ span[class*="rounded-full"] {
   }
 
   h4 {
-    font-size: 1.25rem; /* 20px */
+    font-size: 1.25rem;
+    /* 20px */
     margin-bottom: 0.875rem;
     margin-top: 1.25rem;
     font-weight: 600;
   }
 
   h5 {
-    font-size: 1.125rem; /* 18px */
+    font-size: 1.125rem;
+    /* 18px */
     margin-bottom: 0.75rem;
     margin-top: 1rem;
     font-weight: 600;
   }
 
   h6 {
-    font-size: 1rem; /* 16px */
+    font-size: 1rem;
+    /* 16px */
     margin-bottom: 0.625rem;
     margin-top: 0.875rem;
     font-weight: 600;
@@ -1036,15 +1027,18 @@ span[class*="rounded-full"] {
   /* Responsive headings */
   @media (max-width: 768px) {
     h1 {
-      font-size: 2rem; /* 32px */
+      font-size: 2rem;
+      /* 32px */
     }
 
     h2 {
-      font-size: 1.75rem; /* 28px */
+      font-size: 1.75rem;
+      /* 28px */
     }
 
     h3 {
-      font-size: 1.375rem; /* 22px */
+      font-size: 1.375rem;
+      /* 22px */
     }
   }
 }
@@ -1065,7 +1059,7 @@ span[class*="rounded-full"] {
 }
 
 /* Layout principal */
-body > div,
+body>div,
 #__next,
 [data-layout],
 main {
@@ -1222,35 +1216,31 @@ html:has([data-login-page]) {
 }
 
 /* Login gradient background enhancement */
-[data-login-page] > div:last-child {
+[data-login-page]>div:last-child {
   background: linear-gradient(135deg, #0ea38d 0%, #0d9179 50%, #0b7f68 100%);
   position: relative;
 }
 
 /* Add subtle overlay pattern */
-[data-login-page] > div:last-child::before {
+[data-login-page]>div:last-child::before {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(
-      circle at 20% 50%,
+  background-image: radial-gradient(circle at 20% 50%,
       rgba(255, 255, 255, 0.05) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 80%,
+      transparent 50%),
+    radial-gradient(circle at 80% 80%,
       rgba(255, 255, 255, 0.05) 0%,
-      transparent 50%
-    );
+      transparent 50%);
   pointer-events: none;
 }
 
 /* Password input eye button fix */
-input[type="password"] + button,
-input[type="text"] + button {
+input[type="password"]+button,
+input[type="text"]+button {
   z-index: 10;
   pointer-events: auto;
 }
@@ -1290,8 +1280,7 @@ input[type="text"] + button {
 }
 
 /* Mejorar visibilidad de tooltips cuando el sidebar está colapsado */
-[data-sidebar="sidebar"][data-state="collapsed"]
-  [data-slot="sidebar-menu-button"] {
+[data-sidebar="sidebar"][data-state="collapsed"] [data-slot="sidebar-menu-button"] {
   justify-content: center;
 }
 
@@ -1318,9 +1307,7 @@ input[type="text"] + button {
 }
 
 /* Separador visual entre secciones del menú */
-[data-sidebar="sidebar"]
-  [data-slot="sidebar-group"]
-  + [data-slot="sidebar-group"] {
+[data-sidebar="sidebar"] [data-slot="sidebar-group"]+[data-slot="sidebar-group"] {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -1341,7 +1328,7 @@ button[data-slot="tooltip-trigger"]::after,
 }
 
 /* Ocultar solo los spans vacíos de Radix (flechas), no el texto */
-[data-radix-popper-content-wrapper] > div > span:empty,
+[data-radix-popper-content-wrapper]>div>span:empty,
 span[data-radix-popper-arrow-wrapper],
 span[class*="Arrow"]:empty {
   display: none !important;
@@ -1380,7 +1367,7 @@ button[data-slot="tooltip-trigger"],
 }
 
 /* Reducir z-index de botones del dialog cuando el select está abierto */
-[data-state="open"] ~ * button,
+[data-state="open"]~* button,
 [data-slot="dialog-content"] button:not([data-slot="select-trigger"]) {
   position: relative;
   z-index: 1;
@@ -1410,6 +1397,7 @@ button[data-slot="checkbox"][data-state="checked"],
   background-image: none !important;
   background: hsl(var(--primary)) !important;
 }
+
 /* Asegurar que el contenedor del submenú tenga un z-index alto */
 [data-sidebar] .sidebar-submenu {
   z-index: 10000 !important;
@@ -1586,38 +1574,41 @@ button[data-slot="checkbox"][data-state="checked"],
 }
 
 /* Mejorar el contenedor de badges */
-[role="combobox"] > div > div:first-child {
+[role="combobox"]>div>div:first-child {
   max-height: 80px;
   overflow-y: auto;
   padding-right: 0.25rem;
 }
 
 /* Scrollbar para el contenedor de badges */
-[role="combobox"] > div > div:first-child::-webkit-scrollbar {
+[role="combobox"]>div>div:first-child::-webkit-scrollbar {
   width: 4px;
 }
 
-[role="combobox"] > div > div:first-child::-webkit-scrollbar-track {
+[role="combobox"]>div>div:first-child::-webkit-scrollbar-track {
   background: transparent;
 }
 
-[role="combobox"] > div > div:first-child::-webkit-scrollbar-thumb {
+[role="combobox"]>div>div:first-child::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
   border-radius: 10px;
 }
 
-[role="combobox"] > div > div:first-child::-webkit-scrollbar-thumb:hover {
+[role="combobox"]>div>div:first-child::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
 
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* ========================================
@@ -1628,6 +1619,7 @@ button[data-slot="checkbox"][data-state="checked"],
     height: 0;
     opacity: 0;
   }
+
   to {
     height: var(--radix-collapsible-content-height);
     opacity: 1;
@@ -1639,6 +1631,7 @@ button[data-slot="checkbox"][data-state="checked"],
     height: var(--radix-collapsible-content-height);
     opacity: 1;
   }
+
   to {
     height: 0;
     opacity: 0;
@@ -1657,7 +1650,8 @@ button[data-slot="checkbox"][data-state="checked"],
 /* ========================================
    FIX SCROLL PARA PANTALLAS 1080x1920
    ======================================== */
-html, body {
+html,
+body {
   height: 100%;
   overflow: auto !important;
 }
@@ -1683,18 +1677,87 @@ main {
    WAVE ANIMATION FOR HAND EMOJI
    ======================================== */
 @keyframes wave {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(14deg); }
-  20% { transform: rotate(-8deg); }
-  30% { transform: rotate(14deg); }
-  40% { transform: rotate(-4deg); }
-  50% { transform: rotate(10deg); }
-  60% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  10% {
+    transform: rotate(14deg);
+  }
+
+  20% {
+    transform: rotate(-8deg);
+  }
+
+  30% {
+    transform: rotate(14deg);
+  }
+
+  40% {
+    transform: rotate(-4deg);
+  }
+
+  50% {
+    transform: rotate(10deg);
+  }
+
+  60% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 .animate-wave {
   animation: wave 2s ease-in-out infinite;
   transform-origin: 70% 70%;
   display: inline-block;
+}
+
+/* ========================================
+   ANIMACIÓN DE SCROLL VERTICAL PARA HEADERS - EFECTO MARQUESINA
+   ======================================== */
+@keyframes scroll-marquee-vertical {
+  0% {
+    transform: translateY(50%);
+  }
+
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+.animate-scroll-text {
+  animation: scroll-marquee-vertical 25s linear infinite;
+  display: inline-block;
+}
+
+/* Contenedor para el efecto de marquesina */
+.marquee-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.marquee-content {
+  display: flex;
+  flex-direction: column;
+  animation: scroll-marquee-vertical 25s linear infinite;
+}
+
+@keyframes scroll-marquee-vertical { 0%, 40% { transform: translateY(0%); } 50%, 90% { transform: translateY(-50%); } 100% { transform: translateY(-50%); } }
+
+/* Animacion super lenta y constante para marquesina */
+.marquee-content-slow {
+  display: flex;
+  flex-direction: column;
+  animation: scroll-marquee-slow 60s linear infinite;
+}
+
+@keyframes scroll-marquee-slow {
+  0% { transform: translateY(0%); }
+  100% { transform: translateY(-50%); }
 }

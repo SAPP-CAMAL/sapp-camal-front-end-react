@@ -5,6 +5,10 @@ import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 
+function isSvgSrc(src: string) {
+  return src.toLowerCase().split("?")[0].endsWith(".svg");
+}
+
 interface SimpleCarouselProps {
   images: { src: string; alt: string }[];
   autoplayInterval?: number;
@@ -43,31 +47,40 @@ export function SimpleCarousel({
       {/* Carousel Container */}
       <div className="relative h-[600px] bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-gray-200">
         {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/40" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/40" />
 
         {/* Static Logos - Always Visible */}
-        <div className="absolute top-4 left-4 z-40">
-          <Image
+        <div className="absolute top-4 left-4 z-50 pointer-events-none rounded-lg px-2 py-1">
+          {/* Local SVG: <img> is the most reliable renderer */}
+          <img
             src="/images/LOGO_VERDE_HORIZONTAL.svg"
             alt="Logo SAPP"
             width={150}
             height={60}
-            className="drop-shadow-lg"
-            style={{ width: 'auto', height: 'auto' }}
-            priority
+            className="drop-shadow-lg block w-[150px] h-auto"
           />
         </div>
         {slaughterhouseLogo && (
-          <div className="absolute top-4 right-4 z-40">
-            <Image
-              src={slaughterhouseLogo}
-              alt="Logo Matadero"
-              width={190}
-              height={150}
-              className="drop-shadow-lg"
-              style={{ width: 'auto', height: 'auto' }}
-              priority
-            />
+          <div className="absolute top-4 right-4 z-50 pointer-events-none rounded-lg px-2 py-1">
+            {isSvgSrc(slaughterhouseLogo) ? (
+              <img
+                src={`/api/image-proxy?url=${encodeURIComponent(slaughterhouseLogo)}`}
+                alt="Logo Matadero"
+                width={190}
+                height={150}
+                className="drop-shadow-lg block w-[190px] h-auto"
+              />
+            ) : (
+              <Image
+                src={slaughterhouseLogo}
+                alt="Logo Matadero"
+                width={190}
+                height={150}
+                className="drop-shadow-lg"
+                style={{ width: 'auto', height: 'auto' }}
+                priority
+              />
+            )}
           </div>
         )}
 
@@ -80,7 +93,7 @@ export function SimpleCarousel({
         </div>
 
         {/* Images - Full Size */}
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-full z-10">
           {images.map((image, index) => (
             <div
               key={index}

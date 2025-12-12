@@ -20,6 +20,7 @@ import {
   Bubbles,
   XIcon,
   Check,
+  FileSpreadsheet,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -246,6 +247,41 @@ export function HygieneControlManagement() {
     queryClient.invalidateQueries({ queryKey: ["locker-room-data"] });
   };
 
+  const handleDownloadReport = async () => {
+    try {
+      const formattedDate = format(fecha, "yyyy-MM-dd");
+      const token = await window.cookieStore.get("accessToken");
+      
+      const response = await fetch(
+        `http://localhost:3001/sappriobamba/v1/1.0.0/hygiene-control/by-date-register-report?dateRegister=${formattedDate}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: token ? `Bearer ${token.value}` : "",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al descargar el reporte");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reporte-higiene-${formattedDate}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("Reporte descargado exitosamente");
+    } catch (error) {
+      toast.error("No se pudo descargar el reporte");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
@@ -313,7 +349,17 @@ export function HygieneControlManagement() {
               </div>
             </div>
 
-            <div className="flex justify-start lg:justify-end">
+            <div className="flex justify-start lg:justify-end gap-2">
+              {lockerRoomData.length > 0 && (
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={handleDownloadReport}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Reporte
+                </Button>
+              )}
               <NewLockerRoomControlForm
                 onSuccess={handleRefresh}
                 trigger={
