@@ -251,9 +251,9 @@ export function HygieneControlManagement() {
     try {
       const formattedDate = format(fecha, "yyyy-MM-dd");
       const token = await window.cookieStore.get("accessToken");
-      
+
       const response = await fetch(
-        `http://localhost:3001/sappriobamba/v1/1.0.0/hygiene-control/by-date-register-report?dateRegister=${formattedDate}`,
+        `http://localhost:3001/v1/1.0.0/hygiene-control/by-date-register-report?dateRegister=${formattedDate}`,
         {
           method: "GET",
           headers: {
@@ -275,7 +275,7 @@ export function HygieneControlManagement() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       toast.success("Reporte descargado exitosamente");
     } catch (error) {
       toast.error("No se pudo descargar el reporte");

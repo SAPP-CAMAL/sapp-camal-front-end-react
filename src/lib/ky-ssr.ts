@@ -3,7 +3,7 @@ import ky from "ky";
 import { cookies } from "next/headers";
 
 export const httpSSR = ky.create({
-    prefixUrl: "http://localhost:3001/sappriobamba",
+    prefixUrl: "http://localhost:3001",
     credentials: "include",
     retry: 0,
     hooks: {
