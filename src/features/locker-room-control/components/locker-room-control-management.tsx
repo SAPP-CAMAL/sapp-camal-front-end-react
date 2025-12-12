@@ -274,7 +274,7 @@ export function LockerRoomControlManagement() {
       const token = await window.cookieStore.get("accessToken");
 
       const response = await fetch(
-        `http://localhost:3001/sappriobamba/v1/1.0.0/locker-room-control/by-date-register-report?dateRegister=${formattedDate}&idLine=${selectedLine}`,
+        `http://localhost:3001/v1/1.0.0/locker-room-control/by-date-register-report?dateRegister=${formattedDate}&idLine=${selectedLine}`,
         {
           method: "GET",
           headers: {
