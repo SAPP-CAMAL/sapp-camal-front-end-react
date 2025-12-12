@@ -2,7 +2,7 @@
 import ky from 'ky'
 
 export const http = ky.create({
-    prefixUrl: "http://localhost:3001/sappriobamba",
+    prefixUrl: "http://localhost:3001",
     credentials: "include",
     retry: 0,
     // timeout: 15000, // 15 second timeout
