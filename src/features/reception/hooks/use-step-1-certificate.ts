@@ -46,6 +46,7 @@ export const useStep1Certificate = () => {
 		handleSetAccordionState,
 		handleAddAnimalAdmission,
 		handleSetSelectedSpecie,
+		handleRemoveSelectedSpecie,
 		handleResetAnimalAdmission,
 		handleSetIsFromQR,
 		handleSetAnimalTransportData,
@@ -149,7 +150,9 @@ export const useStep1Certificate = () => {
 				shippingsId: selectedShipper.id,
 				idOrigin: selectedCertificate.idOrigin ?? 0,
 				status: true,
-				idDetailsRegisterVehicles: selectedShipper.idDetailsRegisterVehicles,
+				// NO sobrescribir idDetailsRegisterVehicles - mantener el del certificado original
+				// porque ese tiene la especie correcta del certificado, no del transportista
+				idDetailsRegisterVehicles: selectedCertificate.idDetailsRegisterVehicles,
 			});
 
 			const updatedCertificate = response.data;
@@ -213,13 +216,37 @@ export const useStep1Certificate = () => {
 			}));
 		}
 
+		// PRIMERO: Limpiar la especie anterior y obtener la especie del certificado
+		// Obtenemos la especie desde setting-cert-brand que tiene la especie correcta del certificado
+		handleRemoveSelectedSpecie(); // Limpiar especie anterior
+		
 		try {
-			if (!selectedSpecie && certificate.idDetailsRegisterVehicles) {
-				const registerVehicle = (await getDetailRegisterVehicleById(certificate.idDetailsRegisterVehicles )).data;
+			// Obtener la especie desde la API de setting-cert-brand
+			const settingCertBrandResponse = await getCertBrandByCertificateId(certificate.id.toString());
+			const settingCertBrand = settingCertBrandResponse?.data || [];
 
-				if (registerVehicle.specie) handleSetSelectedSpecie(registerVehicle.specie);
+			// La especie viene en el primer elemento del array
+			if (settingCertBrand.length > 0 && settingCertBrand[0].species) {
+				const specieFromApi = settingCertBrand[0].species;
+				// Crear objeto Specie completo con las propiedades requeridas
+				const specieFromCertificate = {
+					id: specieFromApi.id,
+					name: specieFromApi.name,
+					description: specieFromApi.name,
+					status: true,
+					finishType: [],
+				};
+				handleSetSelectedSpecie(specieFromCertificate);
 			}
-		} catch (error) {}
+
+			// Validar si se puede editar basado en si ya hay ingresos registrados
+			// Si settingCertBrand tiene datos, significa que ya hay ingresos y no se puede editar
+			const canEdit = settingCertBrand.length === 0;
+			setCanEditDetailsRegisterVehicle(canEdit);
+		} catch (error) {
+			// Si hay error, permitir edición por defecto
+			setCanEditDetailsRegisterVehicle(true);
+		}
 
 		// Si el certificado no tiene transportista asociado, limpiar el transportista seleccionado
 		if (!certificate?.shippingsId) {
@@ -227,6 +254,7 @@ export const useStep1Certificate = () => {
 			return;
 		}
 
+		// SEGUNDO: Obtener el transportista asociado al certificado
 		try {
 			const shipperResponse = await getShippersByIdService(certificate.shippingsId);
 
@@ -250,17 +278,6 @@ export const useStep1Certificate = () => {
 		} catch (error) {
 			// Si hay error al obtener el transportista, también limpiarlo
 			handleRemoveSelectedShipper();
-		}
-
-		// Validate if can edit details register vehicle
-		try {
-			const settingCertsResponse = await getSimpleSettingCertBrandByCertificateId(certificate.id);
-			const settingCerts = settingCertsResponse.data
-			const canEdit = settingCerts.length === 0;
-
-			setCanEditDetailsRegisterVehicle(canEdit)
-		} catch (error) {
-			setCanEditDetailsRegisterVehicle(true)
 		}
 	};
 

@@ -43,7 +43,16 @@ export const uiReducer = (
 			return { ...receptionState, selectedCertificate: action.payload };
 
 		case 'REMOVE_SELECTED_CERTIFICATE':
-			return { ...receptionState, selectedCertificate: undefined, isFromQR: false };
+			return {
+				...receptionState,
+				selectedCertificate: undefined,
+				isFromQR: false,
+				animalAdmissionList: [],
+				animalTransportData: undefined,
+				selectedSpecie: undefined,
+				step2Accordion: { ...initialState.step2Accordion },
+				step3Accordion: { ...initialState.step3Accordion },
+			};
 
 		case 'SET_IS_FROM_QR':
 			return { ...receptionState, isFromQR: action.payload };

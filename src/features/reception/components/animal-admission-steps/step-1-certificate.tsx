@@ -295,11 +295,11 @@ export const Step1Certificate = () => {
                           idDetailsRegisterVehicles: registerVehicle.id,
                         });
 
-                        handleSetSelectedSpecie(registerVehicle.species);
+                        // No establecer la especie del transportista, debe venir del certificado
                       }
                     }}
                     triggerButton={
-                      <Button variant="ghost" disabled={!canEditDetailsRegisterVehicle}>
+                      <Button variant="ghost">
                         <Edit />
                         Editar
                       </Button>
@@ -312,7 +312,7 @@ export const Step1Certificate = () => {
                       handleSetSelectedShipper(shipper!)
                     }
                     triggerButton={
-                      <Button variant="ghost" disabled={!canEditDetailsRegisterVehicle}>
+                      <Button variant="ghost">
                         <Edit />
                         Editar
                       </Button>
@@ -404,7 +404,7 @@ export const Step1Certificate = () => {
                           });
                           setShipperSearch(""); // Limpiar búsqueda al seleccionar
 
-                          handleSetSelectedSpecie(shipper.specie);
+                          // No establecer la especie del transportista, debe venir del certificado
                         }}
                       />
                     ))}

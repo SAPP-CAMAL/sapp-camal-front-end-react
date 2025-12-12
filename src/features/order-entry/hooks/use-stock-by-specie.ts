@@ -7,7 +7,7 @@ export const useStockBySpecie = (specieId: number | null) => {
 		queryKey: ['stock-by-specie', specieId],
 		queryFn: () => getStockBySpecie(specieId!),
 		enabled: !!specieId,
-		initialData: { data: [] as AnimalStock[], code: 200, message: 'initial data' },
+		initialData: { data: [] as AnimalStock[][], code: 200, message: 'initial data' },
 	});
 
 	return query;

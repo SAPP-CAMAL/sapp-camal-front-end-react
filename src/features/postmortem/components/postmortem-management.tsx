@@ -109,6 +109,9 @@ export function PostmortemManagement() {
       rowId: null as string | null,
     });
 
+  // Estado para controlar qué órganos están expandidos
+  const [expandedOrgans, setExpandedOrgans] = useState<Set<string>>(new Set());
+
   // Construir request para certificados
   const certificatesRequest: GetCertificatesRequest | null = useMemo(() => {
     if (!selectedSpecieId || !slaughterDate) return null;
@@ -412,6 +415,34 @@ export function PostmortemManagement() {
     });
   };
 
+  // Función para expandir/colapsar órganos
+  const handleToggleOrgan = (organ: string) => {
+    setExpandedOrgans((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(organ)) {
+        newSet.delete(organ);
+      } else {
+        newSet.add(organ);
+      }
+      return newSet;
+    });
+  };
+
+  // Función para dividir el nombre en dos líneas (apellidos y nombres)
+  const splitName = (fullName: string) => {
+    const words = fullName.trim().split(/\s+/);
+    if (words.length <= 2) {
+      return { line1: fullName, line2: "" };
+    }
+    
+    // Dividir aproximadamente a la mitad
+    const midPoint = Math.ceil(words.length / 2);
+    const line1 = words.slice(0, midPoint).join(" ");
+    const line2 = words.slice(midPoint).join(" ");
+    
+    return { line1, line2 };
+  };
+
   const currentIntroductor = modalState.rowId
     ? rows.find((r) => r.id === modalState.rowId)?.introductor
     : null;
@@ -631,11 +662,35 @@ export function PostmortemManagement() {
         </div>
 
         {/* Filtros de tipo de corral */}
-        <CorralTypeFilters
-          selectedFilter={corralTypeFilter}
-          onFilterChange={setCorralTypeFilter}
-          counts={filterCounts}
-        />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+          <CorralTypeFilters
+            selectedFilter={corralTypeFilter}
+            onFilterChange={setCorralTypeFilter}
+            counts={filterCounts}
+          />
+          
+          {/* Botón para expandir/colapsar todos */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (expandedOrgans.size === groupedColumns.length) {
+                // Si todos están expandidos, colapsar todos
+                setExpandedOrgans(new Set());
+              } else {
+                // Si no todos están expandidos, expandir todos
+                setExpandedOrgans(
+                  new Set(groupedColumns.map((g) => g.product))
+                );
+              }
+            }}
+            className="text-xs"
+          >
+            {expandedOrgans.size === groupedColumns.length
+              ? "Colapsar Todos"
+              : "Expandir Todos"}
+          </Button>
+        </div>
 
         {/* Mostrar loader mientras se cargan los datos */}
         {isLoadingCertificates || isLoadingDiseases ? (
@@ -653,6 +708,8 @@ export function PostmortemManagement() {
                 <DynamicTableHeaders
                   groupedColumns={groupedColumns}
                   isLoading={isLoadingDiseases}
+                  expandedOrgans={expandedOrgans}
+                  onToggleOrgan={handleToggleOrgan}
                 />
               </TableHeader>
 
@@ -680,13 +737,21 @@ export function PostmortemManagement() {
 
                   return (
                     <TableRow key={row.id} className="hover:bg-gray-50/50">
-                      <TableCell className="sticky left-0 z-20 bg-white border-r-2 p-1 sm:p-2 w-[150px] sm:w-[200px]">
+                      <TableCell className="sticky left-0 z-20 bg-white border-r-2 p-1 w-[130px] sm:w-[145px] min-w-[130px] sm:min-w-[145px] max-w-[130px] sm:max-w-[145px]">
                         {row.introductor ? (
                           <div className="space-y-0.5 text-left">
-                            <div className="font-semibold text-[10px] sm:text-xs text-black leading-tight">
-                              {row.introductor.nombre}
+                            <div className="font-semibold text-[9px] sm:text-[10px] text-black leading-[1.1]">
+                              {(() => {
+                                const { line1, line2 } = splitName(row.introductor.nombre);
+                                return (
+                                  <>
+                                    <div>{line1}</div>
+                                    {line2 && <div>{line2}</div>}
+                                  </>
+                                );
+                              })()}
                             </div>
-                            <div className="text-[9px] sm:text-[10px] text-gray-600 space-y-0">
+                            <div className="text-[8px] sm:text-[9px] text-gray-600 space-y-0 leading-[1.1]">
                               <div>M: {row.introductor.marca}</div>
                               <div>C: {row.introductor.certificado}</div>
                               <div>A: {row.introductor.animales}</div>
@@ -769,10 +834,10 @@ export function PostmortemManagement() {
                           </div>
                         ) : (
                           <div className="space-y-0.5 text-left">
-                            <div className="text-[10px] text-gray-400 leading-tight">
+                            <div className="text-[9px] text-gray-400 leading-[1.1]">
                               Seleccionar...
                             </div>
-                            <div className="text-[10px] text-gray-400 space-y-0">
+                            <div className="text-[8px] sm:text-[9px] text-gray-400 space-y-0 leading-[1.1]">
                               <div>M: --</div>
                               <div>C: --</div>
                               <div>A: --</div>
@@ -858,41 +923,112 @@ export function PostmortemManagement() {
                       </TableCell>
 
                       {/* Columnas de enfermedades */}
-                      {dynamicColumnConfig.map((config, i) => {
-                        // Contar animales con esta enfermedad desde los datos de postmortem
-                        const count = row.introductor
-                          ? countAnimalsWithDisease(
-                              postmortemData?.data,
-                              row.introductor.certId,
-                              config.idSpeciesDisease!
-                            )
-                          : 0;
+                      {(() => {
+                        const cells: React.ReactElement[] = [];
+                        let currentIndex = 0;
 
-                        return (
-                          <TableCell
-                            key={`col-${i}`}
-                            className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
-                            onClick={() =>
-                              handleCellClick(row.id, i, "disease")
-                            }
-                          >
-                            {count > 0 ? (
-                              <div className="flex items-center justify-center">
-                                <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
-                                  {count}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-gray-400 text-xs">-</div>
-                            )}
-                          </TableCell>
-                        );
-                      })}
+                        groupedColumns.forEach((group) => {
+                          const isExpanded = expandedOrgans.has(group.product);
+
+                          if (!isExpanded) {
+                            // Mostrar solo el total del órgano cuando está colapsado
+                            const totalForOrgan = group.diseases.reduce(
+                              (sum, disease) => {
+                                const diseaseConfig = dynamicColumnConfig.find(
+                                  (c) => c.idSpeciesDisease === disease.id
+                                );
+                                if (!diseaseConfig) return sum;
+
+                                const count = row.introductor
+                                  ? countAnimalsWithDisease(
+                                      postmortemData?.data,
+                                      row.introductor.certId,
+                                      disease.id
+                                    )
+                                  : 0;
+                                return sum + count;
+                              },
+                              0
+                            );
+
+                            cells.push(
+                              <TableCell
+                                key={`organ-total-${group.product}`}
+                                className="p-1 text-center bg-gray-50 font-semibold cursor-pointer hover:bg-gray-100 w-[45px] min-w-[45px]"
+                                onClick={() => {
+                                  // Expandir el órgano al hacer click en el total
+                                  handleToggleOrgan(group.product);
+                                }}
+                                title="Click para expandir y ver detalles"
+                              >
+                                {totalForOrgan > 0 ? (
+                                  <div className="flex items-center justify-center">
+                                    <div className="h-6 w-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-semibold">
+                                      {totalForOrgan}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="text-gray-400 text-xs">-</div>
+                                )}
+                              </TableCell>
+                            );
+
+                            // Saltar las enfermedades de este órgano
+                            currentIndex += group.diseases.length;
+                          } else {
+                            // Mostrar todas las columnas de enfermedades cuando está expandido
+                            group.diseases.forEach((disease) => {
+                              const config = dynamicColumnConfig[currentIndex];
+                              if (!config) {
+                                currentIndex++;
+                                return;
+                              }
+                              
+                              const count = row.introductor
+                                ? countAnimalsWithDisease(
+                                    postmortemData?.data,
+                                    row.introductor.certId,
+                                    config.idSpeciesDisease!
+                                  )
+                                : 0;
+
+                              const cellIndex = currentIndex; // Capturar el índice actual
+
+                              cells.push(
+                                <TableCell
+                                  key={`col-${cellIndex}`}
+                                  className="p-1 text-center cursor-pointer hover:bg-gray-100 w-[45px] min-w-[45px]"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (row.introductor) {
+                                      handleCellClick(row.id, cellIndex, "disease");
+                                    }
+                                  }}
+                                >
+                                  {count > 0 ? (
+                                    <div className="flex items-center justify-center">
+                                      <div className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-semibold">
+                                        {count}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="text-gray-400 text-xs">-</div>
+                                  )}
+                                </TableCell>
+                              );
+
+                              currentIndex++;
+                            });
+                          }
+                        });
+
+                        return cells;
+                      })()}
 
                       {/* Columna TOTAL (suma de todas las enfermedades) */}
-                      <TableCell className="p-0.5 text-center bg-orange-50 font-bold">
+                      <TableCell className="p-1 text-center bg-orange-50 font-bold w-[45px] min-w-[45px]">
                         {(() => {
-                          if (!row.introductor) return "-";
+                          if (!row.introductor) return <span className="text-gray-400 text-xs">-</span>;
 
                           // Sumar todos los animales con enfermedades
                           const total = dynamicColumnConfig.reduce(
@@ -909,7 +1045,15 @@ export function PostmortemManagement() {
                             0
                           );
 
-                          return total > 0 ? total : "-";
+                          return total > 0 ? (
+                            <div className="flex items-center justify-center">
+                              <div className="h-6 w-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-semibold">
+                                {total}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          );
                         })()}
                       </TableCell>
 
@@ -936,7 +1080,7 @@ export function PostmortemManagement() {
                         return (
                           <TableCell
                             key={`prod-${i}`}
-                            className="p-0.5 text-center cursor-pointer hover:bg-gray-100"
+                            className="p-1 text-center cursor-pointer hover:bg-gray-100 w-[45px] min-w-[45px]"
                             onClick={() =>
                               handleCellClick(row.id, 0, columnType)
                             }
