@@ -78,6 +78,11 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           envs: ENV_FILE
           script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            node -v
+
             set -euo pipefail
             
             APP_DIR="${{ secrets.APP_DIR }}"
