@@ -49,7 +49,7 @@ jobs:
     name: Deploy to Server
     needs: build
     runs-on: ubuntu-latest
-    environment: DEVELOPMENT
+    environment: RIOBAMBA
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
