@@ -42,8 +42,12 @@ async function getAccessToken(): Promise<string | undefined> {
 
 const API_BASE = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL) || "http://localhost:3001";
 
+// En desarrollo, usar proxy para evitar CORS. En producción, usar la URL directa.
+const isDev = process.env.NODE_ENV === 'development';
+const apiUrl = isDev ? '/api/proxy' : (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000");
+
 export const http = ky.create({
-    prefixUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000",
+    prefixUrl: apiUrl,
     credentials: "include",
     retry: 0,
     timeout: 20000,

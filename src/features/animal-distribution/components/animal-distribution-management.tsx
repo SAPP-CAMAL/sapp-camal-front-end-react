@@ -1233,7 +1233,7 @@ export function AnimalDistributionManagement() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">PROVINCIA:</span>{" "}
-                    IMBABURA
+                    CHIMBORAZO
                   </p>
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
@@ -1241,7 +1241,7 @@ export function AnimalDistributionManagement() {
                   </p>
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">PARROQUIA:</span>{" "}
-                    SAN FRANCISCO
+                    LIZARZABURU
                   </p>
                 </div>
               </div>

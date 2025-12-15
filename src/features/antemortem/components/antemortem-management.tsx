@@ -22,7 +22,7 @@ import { AntemortemMobileCard } from "./antemortem-mobile-card";
 import { getActiveLinesDataService, getAntemortemDataService, updateArgollasService } from "../server/db/antemortem.service";
 import { LineItem, mapLineItemToLineaType, getLineIdByType } from "../domain/line.types";
 import { DatePicker } from "@/components/ui/date-picker";
-import { downloadStatusCorralsReport } from "../utils/download-antemortem-report";
+import { downloadStatusCorralsReport, downloadAntemortemAgrocalidadReport } from "../utils/download-antemortem-report";
 import { isToday } from "@/lib/date-utils";
 
 function SelectLinea({
@@ -495,13 +495,33 @@ export function AntemortemManagement() {
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent className="w-48">
                         <DropdownMenuItem
-                        // onClick={() => handleDownloadReport('EXCEL')}
+                          onClick={() => {
+                            const admissionDate = format(fecha, "yyyy-MM-dd");
+                            toast.promise(
+                              downloadAntemortemAgrocalidadReport(admissionDate, 'EXCEL'),
+                              {
+                                loading: 'Generando Excel...',
+                                success: 'Excel descargado correctamente',
+                                error: 'Error al descargar el Excel',
+                              }
+                            );
+                          }}
                         >
                           <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
                           Descargar Excel
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                        // onClick={() => handleDownloadReport('PDF')}
+                          onClick={() => {
+                            const admissionDate = format(fecha, "yyyy-MM-dd");
+                            toast.promise(
+                              downloadAntemortemAgrocalidadReport(admissionDate, 'PDF'),
+                              {
+                                loading: 'Generando PDF...',
+                                success: 'PDF descargado correctamente',
+                                error: 'Error al descargar el PDF',
+                              }
+                            );
+                          }}
                         >
                           <FileText className="h-4 w-4 mr-2 text-red-600" />
                           Descargar PDF

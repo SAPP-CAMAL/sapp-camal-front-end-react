@@ -415,3 +415,35 @@ export const getStatusCorralsReport = async (
 		throw error;
 	}
 };
+
+
+/**
+ * Obtiene el reporte de ANTEMORTEM AGROCALIDAD para una fecha específica
+ * @param startDate - Fecha de inicio en formato YYYY-MM-DD
+ * @param endDate - Fecha de fin en formato YYYY-MM-DD
+ * @param typeReport - Tipo de reporte: 'EXCEL' o 'PDF'
+ * @returns Promise con el blob y nombre del archivo
+ */
+export const getAntemortemAgrocalidadReport = async (
+  startDate: string,
+  endDate: string,
+  typeReport: 'EXCEL' | 'PDF'
+) => {
+  try {
+    const response = await http.get('v1/1.0.0/detail-cert-brand/report-antemortem-agrocalidad', {
+      searchParams: { startDate, endDate, typeReport },
+    });
+
+    const blob = await response.blob();
+    const contentType = response.headers.get('content-type') || '';
+    const contentDisposition = response.headers.get('content-disposition') || '';
+
+    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    const defaultFilename = `Reporte-antemortem-agrocalidad-${startDate}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
+    const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
+
+    return { blob, filename, contentType };
+  } catch (error) {
+    throw error;
+  }
+};
