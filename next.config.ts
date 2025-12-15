@@ -15,8 +15,6 @@ const nextConfig: NextConfig = {
   },
   productionBrowserSourceMaps: false,
   allowedDevOrigins: [
-    "Mauro_Muñoz",
-    "mauro_muñoz",
     "192.168.100.12",
     "localhost",
     "127.0.0.1",
