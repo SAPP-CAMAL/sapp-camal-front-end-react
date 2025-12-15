@@ -1,73 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import type { AnimalIncomeReport, DateRange } from "../domain/animal-income.types";
+import {
+  getManagerReportTotals,
+  processReportData,
+} from "../server/db/animal-income-report.service";
 
-// Mock data - Replace with actual API call
-const mockData: AnimalIncomeReport = {
-  startDate: "2023-02-03",
-  endDate: "2025-12-04",
-  data: [
-    {
-      species: "BOVINO",
-      quantity: 25744,
-      totalAmount: 32,
-      percentage: 49.3,
-    },
-    {
-      species: "PORCINO",
-      quantity: 25452,
-      totalAmount: 135.5,
-      percentage: 48.8,
-    },
-    {
-      species: "OVINO/CAPRINO",
-      quantity: 993,
-      totalAmount: 0,
-      percentage: 1.9,
-    },
-  ],
+const emptyReport: AnimalIncomeReport = {
+  startDate: "",
+  endDate: "",
+  data: [],
   total: {
-    quantity: 52189,
-    amount: 167.5,
+    quantity: 0,
+    amount: 0,
   },
-  historyData: Array.from({ length: 24 }, (_, i) => {
-    const date = new Date(2023, 1 + i, 1);
-    return {
-      date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
-      BOVINO: Math.floor(Math.random() * 500) + 500,
-      PORCINO: Math.floor(Math.random() * 500) + 500,
-      "OVINO/CAPRINO": Math.floor(Math.random() * 50) + 10,
-    };
-  }),
+  historyData: [],
 };
 
 export function useAnimalIncomeReport() {
   const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date("2023-02-03"),
-    to: new Date("2025-12-04"),
+    to: new Date(),
   });
-  const [reportData, setReportData] = useState<AnimalIncomeReport>(mockData);
-  const [isLoading, setIsLoading] = useState(false);
+  const [reportData, setReportData] = useState<AnimalIncomeReport>(emptyReport);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchReport = async (range: DateRange) => {
+    if (!range.from || !range.to) return;
+
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch(`/api/animal-income-report?from=${range.from}&to=${range.to}`);
-      // const data = await response.json();
-      // setReportData(data);
-      
-      // Simulating API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setReportData(mockData);
+      const startDate = format(range.from, "yyyy-MM-dd");
+      const endDate = format(range.to, "yyyy-MM-dd");
+
+      const response = await getManagerReportTotals(startDate, endDate);
+
+      if (response.code === 200) {
+        const processed = processReportData(response, startDate, endDate);
+
+        // Adaptar al formato esperado por el componente
+        setReportData({
+          startDate: processed.startDate,
+          endDate: processed.endDate,
+          data: processed.data.map((item) => ({
+            ...item,
+            totalAmount: 0, // Ya no usamos precios
+          })),
+          total: {
+            quantity: processed.total.quantity,
+            amount: 0, // Ya no usamos precios
+          },
+          historyData: processed.historyData,
+        });
+      }
+
       setDateRange(range);
     } catch (error) {
       console.error("Error fetching report:", error);
+      setReportData(emptyReport);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    fetchReport(dateRange);
+  }, []);
 
   return {
     dateRange,
