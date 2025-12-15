@@ -16,7 +16,7 @@ import {
 
 // Create a silent HTTP client for brand details that won't log errors
 const silentHttp = ky.create({
-  prefixUrl: "http://localhost:3001",
+  prefixUrl: "http://localhost:3000",
   credentials: "include",
   retry: 0,
   hooks: {

@@ -43,7 +43,7 @@ async function getAccessToken(): Promise<string | undefined> {
 const API_BASE = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL) || "http://localhost:3001";
 
 export const http = ky.create({
-    prefixUrl: API_BASE,
+    prefixUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000",
     credentials: "include",
     retry: 0,
     timeout: 20000,

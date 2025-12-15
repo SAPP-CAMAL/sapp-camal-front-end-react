@@ -58,6 +58,8 @@ import { capitalizeText } from "@/lib/utils";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+
 // Componente para mostrar observaciones
 function ObservationsPopover({ observations }: { observations: string[] }) {
   if (!observations || observations.length === 0) {
@@ -274,7 +276,7 @@ export function LockerRoomControlManagement() {
       const token = await window.cookieStore.get("accessToken");
 
       const response = await fetch(
-        `http://localhost:3001/v1/1.0.0/locker-room-control/by-date-register-report?dateRegister=${formattedDate}&idLine=${selectedLine}`,
+        `${API_BASE_URL}/v1/1.0.0/locker-room-control/by-date-register-report?dateRegister=${formattedDate}&idLine=${selectedLine}`,
         {
           method: "GET",
           headers: {
