@@ -61,7 +61,8 @@ async function requestWithFallback<T>(
         })
 
         try {
-            return await (client as any)[method](url, options).json<T>()
+            const response = await (client as any)[method](url, options)
+            return await response.json() as T
         } catch (error) {
             lastError = error
             // Si es un fallo de red y aún quedan bases por intentar, reintentar.

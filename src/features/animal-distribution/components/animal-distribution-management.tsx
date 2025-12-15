@@ -1246,7 +1246,6 @@ export function AnimalDistributionManagement() {
                 </div>
               </div>
 
-              {/* Botón Generar Certificado */}
               <div className="flex justify-center pt-4 pb-3">
                 <Button 
                   onClick={handleGeneratePDF}
