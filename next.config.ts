@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   productionBrowserSourceMaps: false,
+  allowedDevOrigins: [
+    "Mauro_Muñoz",
+    "mauro_muñoz",
+    "192.168.100.12",
+    "localhost",
+    "127.0.0.1",
+    "*.local",
+  ],
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },

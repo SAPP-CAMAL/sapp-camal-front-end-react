@@ -17,12 +17,12 @@ interface SimpleCarouselProps {
   slaughterhouseLogo?: string | null;
 }
 
-export function SimpleCarousel({ 
-  images, 
+export function SimpleCarousel({
+  images,
   autoplayInterval = 4000,
   userName,
   userRole,
-  slaughterhouseLogo
+  slaughterhouseLogo,
 }: SimpleCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -44,51 +44,52 @@ export function SimpleCarousel({
 
   return (
     <div className="relative w-full">
-      {/* Carousel Container */}
-      <div className="relative h-[600px] bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-gray-200">
+      {/* Carousel Container - altura responsive */}
+      <div className="relative h-[350px] sm:h-[450px] md:h-[500px] lg:h-[600px] bg-white rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-lg sm:shadow-2xl overflow-hidden border border-gray-200 sm:border-2">
         {/* Gradient Background */}
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/40" />
 
-        {/* Static Logos - Always Visible */}
-        <div className="absolute top-4 left-4 z-50 pointer-events-none rounded-lg px-2 py-1">
-          {/* Local SVG: <img> is the most reliable renderer */}
-          <img
-            src="/images/LOGO_VERDE_HORIZONTAL.svg"
-            alt="Logo SAPP"
-            width={150}
-            height={60}
-            className="drop-shadow-lg block w-[150px] h-auto"
-          />
-        </div>
-        {slaughterhouseLogo && (
-          <div className="absolute top-4 right-4 z-50 pointer-events-none rounded-lg px-2 py-1">
-            {isSvgSrc(slaughterhouseLogo) ? (
+        {/* Logos Container - responsive positioning */}
+        <div className="absolute top-2 sm:top-3 md:top-4 left-0 right-0 z-50 pointer-events-none px-2 sm:px-3 md:px-4">
+          <div className="flex items-start justify-between gap-2">
+            {/* Logo SAPP */}
+            <div className="rounded-lg px-1 sm:px-2 py-1 bg-white/80 backdrop-blur-sm">
               <img
-                src={`/api/image-proxy?url=${encodeURIComponent(slaughterhouseLogo)}`}
-                alt="Logo Matadero"
-                width={190}
-                height={150}
-                className="drop-shadow-lg block w-[190px] h-auto"
+                src="/images/LOGO_VERDE_HORIZONTAL.svg"
+                alt="Logo SAPP"
+                className="drop-shadow-lg block w-[80px] sm:w-[110px] md:w-[130px] lg:w-[150px] h-auto"
               />
-            ) : (
-              <Image
-                src={slaughterhouseLogo}
-                alt="Logo Matadero"
-                width={190}
-                height={150}
-                className="drop-shadow-lg"
-                style={{ width: 'auto', height: 'auto' }}
-                priority
-              />
+            </div>
+
+            {/* Logo Matadero */}
+            {slaughterhouseLogo && (
+              <div className="rounded-lg px-1 sm:px-2 py-1 bg-white/80 backdrop-blur-sm">
+                {isSvgSrc(slaughterhouseLogo) ? (
+                  <img
+                    src={`/api/image-proxy?url=${encodeURIComponent(slaughterhouseLogo)}`}
+                    alt="Logo Matadero"
+                    className="drop-shadow-lg block w-[80px] sm:w-[120px] md:w-[150px] lg:w-[190px] h-auto max-h-[40px] sm:max-h-[60px] md:max-h-[80px] lg:max-h-[100px] object-contain"
+                  />
+                ) : (
+                  <Image
+                    src={slaughterhouseLogo}
+                    alt="Logo Matadero"
+                    width={190}
+                    height={150}
+                    className="drop-shadow-lg w-[80px] sm:w-[120px] md:w-[150px] lg:w-[190px] h-auto max-h-[40px] sm:max-h-[60px] md:max-h-[80px] lg:max-h-[100px] object-contain"
+                    priority
+                  />
+                )}
+              </div>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Welcome Message - Top Center */}
-        <div className="absolute top-55 left-1/2 -translate-x-1/2 z-40 text-center w-full px-4">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent drop-shadow-lg inline-flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
+        {/* Welcome Message - responsive positioning */}
+        <div className="absolute top-16 sm:top-20 md:top-24 lg:top-32 left-1/2 -translate-x-1/2 z-40 text-center w-full px-3 sm:px-4">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent drop-shadow-lg inline-flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
             <span className="whitespace-nowrap">¡Bienvenido, {userName}!</span>
-            <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 md:h-9 md:w-9 text-yellow-500 animate-pulse flex-shrink-0" />
+            <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 lg:h-9 lg:w-9 text-yellow-500 animate-pulse flex-shrink-0" />
           </h1>
         </div>
 
@@ -112,46 +113,47 @@ export function SimpleCarousel({
           ))}
         </div>
 
-        {/* System Info and Role - Bottom Center */}
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-40 w-full max-w-3xl px-6">
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border-2 border-gray-200 p-5">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <p className="text-gray-800 text-lg font-semibold">
+        {/* System Info and Role - responsive bottom card */}
+        <div className="absolute bottom-12 sm:bottom-14 md:bottom-16 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-3rem)] max-w-3xl">
+          <div className="bg-white/95 backdrop-blur-md rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg sm:shadow-2xl border border-gray-200 sm:border-2 p-2.5 sm:p-3 md:p-4 lg:p-5">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3 md:gap-4">
+              <p className="text-gray-800 text-xs sm:text-sm md:text-base lg:text-lg font-semibold text-center sm:text-left">
                 Sistema de Automatización de Procesos Productivos
               </p>
-              <Badge className="text-base px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 shadow-lg">
+              <Badge className="text-xs sm:text-sm md:text-base px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 shadow-md sm:shadow-lg whitespace-nowrap">
                 {userRole}
               </Badge>
             </div>
           </div>
         </div>
 
-        {/* Previous Button */}
+        {/* Navigation Buttons - responsive size */}
         <button
           onClick={goToPrevious}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-50 h-14 w-14 rounded-full bg-white hover:bg-gray-100 border-2 border-gray-300 shadow-2xl transition-all duration-200 hover:scale-110 flex items-center justify-center"
+          className="absolute left-2 sm:left-3 md:left-4 top-1/2 -translate-y-1/2 z-50 h-9 w-9 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-full bg-white/90 hover:bg-white border border-gray-300 sm:border-2 shadow-lg sm:shadow-2xl transition-all duration-200 hover:scale-110 flex items-center justify-center"
           aria-label="Previous slide"
         >
-          <ChevronLeft className="h-7 w-7 text-gray-800" />
+          <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-gray-800" />
         </button>
 
-        {/* Next Button */}
         <button
           onClick={goToNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-50 h-14 w-14 rounded-full bg-white hover:bg-gray-100 border-2 border-gray-300 shadow-2xl transition-all duration-200 hover:scale-110 flex items-center justify-center"
+          className="absolute right-2 sm:right-3 md:right-4 top-1/2 -translate-y-1/2 z-50 h-9 w-9 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-full bg-white/90 hover:bg-white border border-gray-300 sm:border-2 shadow-lg sm:shadow-2xl transition-all duration-200 hover:scale-110 flex items-center justify-center"
           aria-label="Next slide"
         >
-          <ChevronRight className="h-7 w-7 text-gray-800" />
+          <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-gray-800" />
         </button>
 
-        {/* Indicators */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-50">
+        {/* Indicators - responsive */}
+        <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-50">
           {images.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
-              className={`h-2.5 rounded-full transition-all duration-300 ${
-                index === currentIndex ? "w-8 bg-teal-600" : "w-2.5 bg-gray-400 hover:bg-gray-600"
+              className={`h-2 sm:h-2.5 rounded-full transition-all duration-300 ${
+                index === currentIndex
+                  ? "w-5 sm:w-6 md:w-8 bg-teal-600"
+                  : "w-2 sm:w-2.5 bg-gray-400 hover:bg-gray-600"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />

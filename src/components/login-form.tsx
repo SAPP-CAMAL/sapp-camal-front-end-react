@@ -37,11 +37,33 @@ export function LoginForm({
 
       console.log("Login response received");
 
-      await Promise.all([
-        window.cookieStore.set("accessToken", resp.data.accessToken),
-        window.cookieStore.set("refreshToken", resp.data.refreshToken),
-        window.cookieStore.set("user", JSON.stringify(resp.data)),
-      ]);
+      const accessToken = resp.data.accessToken;
+      const refreshToken = resp.data.refreshToken;
+      const userJson = JSON.stringify(resp.data);
+
+      const cookieStore: any = (typeof window !== "undefined")
+        ? (window as any).cookieStore
+        : undefined;
+
+      if (cookieStore?.set) {
+        await Promise.all([
+          cookieStore.set("accessToken", accessToken),
+          cookieStore.set("refreshToken", refreshToken),
+          cookieStore.set("user", userJson),
+        ]);
+      } else {
+        // Fallback for browsers without Cookie Store API
+        try {
+          window.localStorage.setItem("accessToken", accessToken);
+          window.localStorage.setItem("refreshToken", refreshToken);
+          window.localStorage.setItem("user", userJson);
+        } catch {
+          // ignore
+        }
+        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; path=/`;
+        document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; path=/`;
+        document.cookie = `user=${encodeURIComponent(userJson)}; path=/`;
+      }
       console.log("Tokens stored, redirecting...");
       router.push("/dashboard");
     } catch (error: any) {
