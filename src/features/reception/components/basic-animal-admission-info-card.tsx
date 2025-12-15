@@ -1,112 +1,182 @@
-import { Check, Edit, FileText, Trash2, XIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AnimalAdmissionItem } from '../context/reception-provider';
-import { useStep2Animals } from '../hooks/use-step-2-animals';
-import { ConfirmationDialog } from '@/components/confirmation-dialog';
-import { corralTypesCode } from '@/features/corral/constants/corral-types-code';
-import { toCapitalize } from '@/lib/toCapitalize';
+import { Check, Edit, FileText, Trash2, XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimalAdmissionItem } from "../context/reception-provider";
+import { useStep2Animals } from "../hooks/use-step-2-animals";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { corralTypesCode } from "@/features/corral/constants/corral-types-code";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 interface Props {
-	animalAdmissionItem: AnimalAdmissionItem;
+  animalAdmissionItem: AnimalAdmissionItem;
 }
 
-export const BasicAnimalAdmissionInfoCard = ({ animalAdmissionItem }: Props) => {
-	const { selectedSpecie, handleRemoveAnimalAdmission, handleReconstructAnimalAdmissionData, handleDownloadTicketById } = useStep2Animals();
-	return (
-		<Card>
-			<CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-				<CardTitle className='text-sm font-medium'>Registro #{animalAdmissionItem.animalAdmission.id}</CardTitle>
-				<div className='flex gap-2'>
-					<Button
-						variant='outline'
-						size='sm'
-						onClick={() => handleReconstructAnimalAdmissionData(animalAdmissionItem)}
-						disabled={
-							animalAdmissionItem?.animalAdmission?.corralType?.description?.toLowerCase()?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase()) ||
-							animalAdmissionItem.isRetrieveFormData
-						}
-					>
-						<Edit className='h-4 w-4' />
-						{animalAdmissionItem.isRetrieveFormData ? 'Cargando...' : 'Editar'}
-					</Button>
-					<Button variant='outline' size='sm' className='bg-primary hover:bg-primary hover:text-white text-white' onClick={() => handleDownloadTicketById(animalAdmissionItem?.animalAdmission?.id!)}>
-						<FileText className='h-4 w-4' />
-						Ticket
-					</Button>
+export const BasicAnimalAdmissionInfoCard = ({
+  animalAdmissionItem,
+}: Props) => {
+  const {
+    selectedSpecie,
+    handleRemoveAnimalAdmission,
+    handleReconstructAnimalAdmissionData,
+    handleDownloadTicketById,
+  } = useStep2Animals();
 
-					<ConfirmationDialog
-						title='¿Estás seguro de que deseas eliminar este ingreso?'
-						description='Esta acción no se puede deshacer. Esto eliminará permanentemente el ingreso de animales.'
-						onConfirm={() => handleRemoveAnimalAdmission(animalAdmissionItem.randomId)}
-						triggerBtn={
-							<Button
-								variant='destructive'
-								size='sm'
-								disabled={
-									animalAdmissionItem?.animalAdmission?.corralType?.description
-										?.toLowerCase()
-										?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase()) || animalAdmissionItem.state === 'deleting'
-								}
-							>
-								<Trash2 className='h-4 w-4' />
-								{animalAdmissionItem.state === 'deleting' ? 'Eliminando...' : 'Eliminar'}
-							</Button>
-						}
-						cancelBtn={
-							<Button variant='outline' size='lg'>
-								<XIcon />
-								No
-							</Button>
-						}
-						confirmBtn={
-							<Button variant='ghost' className=' hover:bg-primary hover:text-white' size='lg'>
-								<Check />
-								Si
-							</Button>
-						}
-					/>
-				</div>
-			</CardHeader>
-			<CardContent>
-				<div className='space-y-2 text-sm'>
-					<div className='grid grid-cols-2 gap-4'>
-						<div>
-							<span className='font-medium'>Introductor:</span> {animalAdmissionItem?.animalAdmission?.brand?.introducer?.name}
-						</div>
-						<div>
-							<span className='font-medium'>Especie:</span> {toCapitalize(selectedSpecie?.name ?? '')}
-						</div>
-						<div>
-							<span className='font-medium'>Cantidades: </span> H: {animalAdmissionItem?.animalAdmission?.females || 0}, M:{' '}
-							{animalAdmissionItem?.animalAdmission?.males || 0}
-						</div>
-						<div>
-							<span className='font-medium'>Fecha Faenamiento: </span> {animalAdmissionItem?.animalAdmission?.date?.split('T')[0] || 'N/A'}
-						</div>
-						<div>
-							<span className='font-medium'>Tipo de Corral: </span> {animalAdmissionItem?.animalAdmission?.corralType?.description}
-						</div>
-						<div>
-							<span className='font-medium'>Corral: </span>
-							{animalAdmissionItem?.animalAdmission?.corral?.name || animalAdmissionItem.retrievedFromApi?.statusCorrals.corral.name || ''}
-						</div>
-						<div>
-							<span className='font-medium'>Observación:</span> {animalAdmissionItem?.animalAdmission?.observations || 'N/A'}
-						</div>
-						<div>
-							{animalAdmissionItem?.animalAdmission?.finishType?.name && (
-								<span className='font-medium'>
-									Tipo de acabado:
-									{toCapitalize(
-										animalAdmissionItem?.animalAdmission?.finishType?.name || animalAdmissionItem?.animalAdmission?.corralGroup?.name || ''
-									)}
-								</span>
-							)}
-						</div>
-					</div>
-				</div>
-			</CardContent>
-		</Card>
-	);
+  const isEmergency = animalAdmissionItem?.animalAdmission?.corralType?.description
+    ?.toLowerCase()
+    ?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase());
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 p-3 sm:p-4 pb-2">
+        <CardTitle className="text-sm font-medium">
+          Registro #{animalAdmissionItem.animalAdmission.id}
+        </CardTitle>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs sm:text-sm"
+            onClick={() =>
+              handleReconstructAnimalAdmissionData(animalAdmissionItem)
+            }
+            disabled={isEmergency || animalAdmissionItem.isRetrieveFormData}
+          >
+            <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="ml-1">
+              {animalAdmissionItem.isRetrieveFormData ? "..." : "Editar"}
+            </span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs sm:text-sm bg-primary hover:bg-primary hover:text-white text-white"
+            onClick={() =>
+              handleDownloadTicketById(animalAdmissionItem?.animalAdmission?.id!)
+            }
+          >
+            <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="ml-1">Ticket</span>
+          </Button>
+
+          <ConfirmationDialog
+            title="¿Estás seguro de que deseas eliminar este ingreso?"
+            description="Esta acción no se puede deshacer. Esto eliminará permanentemente el ingreso de animales."
+            onConfirm={() =>
+              handleRemoveAnimalAdmission(animalAdmissionItem.randomId)
+            }
+            triggerBtn={
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 text-xs sm:text-sm"
+                disabled={
+                  isEmergency || animalAdmissionItem.state === "deleting"
+                }
+              >
+                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="ml-1 hidden xs:inline">
+                  {animalAdmissionItem.state === "deleting" ? "..." : "Eliminar"}
+                </span>
+              </Button>
+            }
+            cancelBtn={
+              <Button variant="outline" size="lg">
+                <XIcon />
+                No
+              </Button>
+            }
+            confirmBtn={
+              <Button
+                variant="ghost"
+                className="hover:bg-primary hover:text-white"
+                size="lg"
+              >
+                <Check />
+                Si
+              </Button>
+            }
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
+        <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-4">
+            <div className="flex flex-col xs:flex-row xs:gap-1">
+              <span className="font-medium text-muted-foreground xs:text-foreground">
+                Introductor:
+              </span>
+              <span className="truncate">
+                {animalAdmissionItem?.animalAdmission?.brand?.introducer?.name}
+              </span>
+            </div>
+            <div className="flex flex-col xs:flex-row xs:gap-1">
+              <span className="font-medium text-muted-foreground xs:text-foreground">
+                Especie:
+              </span>
+              <span>{toCapitalize(selectedSpecie?.name ?? "")}</span>
+            </div>
+            <div className="flex flex-col xs:flex-row xs:gap-1">
+              <span className="font-medium text-muted-foreground xs:text-foreground">
+                Cantidades:
+              </span>
+              <span>
+                H: {animalAdmissionItem?.animalAdmission?.females || 0}, M:{" "}
+                {animalAdmissionItem?.animalAdmission?.males || 0}
+              </span>
+            </div>
+            <div className="flex flex-col xs:flex-row xs:gap-1">
+              <span className="font-medium text-muted-foreground xs:text-foreground">
+                Fecha Faen.:
+              </span>
+              <span>
+                {animalAdmissionItem?.animalAdmission?.date?.split("T")[0] ||
+                  "N/A"}
+              </span>
+            </div>
+            <div className="flex flex-col xs:flex-row xs:gap-1">
+              <span className="font-medium text-muted-foreground xs:text-foreground">
+                Tipo Corral:
+              </span>
+              <span className="truncate">
+                {animalAdmissionItem?.animalAdmission?.corralType?.description}
+              </span>
+            </div>
+            <div className="flex flex-col xs:flex-row xs:gap-1">
+              <span className="font-medium text-muted-foreground xs:text-foreground">
+                Corral:
+              </span>
+              <span>
+                {animalAdmissionItem?.animalAdmission?.corral?.name ||
+                  animalAdmissionItem.retrievedFromApi?.statusCorrals.corral
+                    .name ||
+                  ""}
+              </span>
+            </div>
+            <div className="flex flex-col xs:flex-row xs:gap-1 col-span-1 xs:col-span-2">
+              <span className="font-medium text-muted-foreground xs:text-foreground">
+                Observación:
+              </span>
+              <span className="truncate">
+                {animalAdmissionItem?.animalAdmission?.observations || "N/A"}
+              </span>
+            </div>
+            {animalAdmissionItem?.animalAdmission?.finishType?.name && (
+              <div className="flex flex-col xs:flex-row xs:gap-1">
+                <span className="font-medium text-muted-foreground xs:text-foreground">
+                  Tipo acabado:
+                </span>
+                <span>
+                  {toCapitalize(
+                    animalAdmissionItem?.animalAdmission?.finishType?.name ||
+                      animalAdmissionItem?.animalAdmission?.corralGroup?.name ||
+                      ""
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
