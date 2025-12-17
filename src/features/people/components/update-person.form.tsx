@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
 import { EditIcon, SaveIcon, BriefcaseIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,8 +27,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
-import { updatePersonService } from "../server/db/people.service";
+import { updatePersonService, personValidateDocument, validateDocumentTypeService } from "../server/db/people.service";
 import { NewPeopleFields } from "./person-form-fields";
+import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 import {
   getEmployeesByPersonIdService,
   updateEmployeeService,
@@ -45,6 +47,7 @@ import { toCapitalize } from "@/lib/toCapitalize";
 
 export function UpdatePerson({ person }: { person: any }) {
   const searchParams = useSearchParams();
+  const catalogueIdentityTypes = useCatalogue("TID");
 
   const queryClient = useQueryClient();
   const defaultValues = {
@@ -63,9 +66,41 @@ export function UpdatePerson({ person }: { person: any }) {
   const form = useForm<any>({ defaultValues });
   const personId = person.id;
   const open = form.watch("open");
+  const identification = form.watch("identification");
+  const identificationType = form.watch("identificationType");
   const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
   const [hasExistingEmployees, setHasExistingEmployees] = useState(false);
-  // const positions = useWatch({ name: "positions", control: form.control });
+
+  // Debounce para buscar datos de persona por cédula
+  const debounceData = useDebouncedCallback(async (identificationValue: string) => {
+    const identificationTypeCode = catalogueIdentityTypes?.data?.data.find(
+      (data) => data.catalogueId === Number(identificationType)
+    )?.code;
+
+    if (identificationTypeCode !== "CED") return;
+
+    try {
+      const validateResponse = await validateDocumentTypeService(identificationTypeCode, identificationValue);
+
+      if (!validateResponse.data.isValid) return;
+
+      const response = await personValidateDocument(identificationValue);
+      const personData = response.data;
+
+      if (personData.firstName) form.setValue("firstName", toCapitalize(personData.firstName, true), { shouldDirty: true });
+      if (personData.lastName) form.setValue("lastName", toCapitalize(personData.lastName, true), { shouldDirty: true });
+    } catch (error) {}
+  }, 500);
+
+  // Efecto para buscar datos cuando cambia la cédula
+  useEffect(() => {
+    if (!identification) return;
+    if (identification.length !== 10) return;
+    // Solo buscar si la cédula es diferente a la original
+    if (identification === person.identification) return;
+
+    debounceData(identification);
+  }, [identification, debounceData, person.identification]);
 
   useEffect(() => {
     if (open) {
