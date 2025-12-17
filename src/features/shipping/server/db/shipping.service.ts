@@ -11,13 +11,24 @@ import {
 	ShippersListResponse,
 } from '@/features/shipping/domain';
 
-export const getShippersByFilterService = (filters: ShipperFilter = {}) => {
-	return http
-		.post('v1/1.0.0/shipping/shipping-by-filter', {
-			next: { tags: [SHIPPING_LIST_TAG] },
-			json: filters,
-		})
-		.json<ShippersListResponse>();
+export const getShippersByFilterService = async (filters: ShipperFilter = {}): Promise<ShippersListResponse> => {
+	try {
+		return await http
+			.post('v1/1.0.0/shipping/shipping-by-filter', {
+				next: { tags: [SHIPPING_LIST_TAG] },
+				json: filters,
+			})
+			.json<ShippersListResponse>();
+	} catch (error: unknown) {
+		// Si la API devuelve 400 cuando no hay resultados, retornar lista vacía
+		if (error && typeof error === 'object' && 'response' in error) {
+			const httpError = error as { response: Response };
+			if (httpError.response?.status === 400) {
+				return { data: { items: [], meta: {} }, code: 200, message: 'No records found' } as ShippersListResponse;
+			}
+		}
+		throw error;
+	}
 };
 
 export const getShippersByIdService = (id: number | string) => {

@@ -104,27 +104,36 @@ function createKyClient(prefixUrl: string): KyInstance {
                             }
                         })()
 
-                        const debug: Record<string, unknown> = {
-                            method,
-                            url,
-                            status: response.status,
-                            statusText: response.statusText,
-                        }
-
+                        let bodyText = ""
                         try {
-                            debug["contentType"] = response.headers.get("content-type")
+                            bodyText = await response.clone().text()
                         } catch {
                             // ignore
                         }
 
-                        try {
-                            debug["body"] = await response.clone().text()
-                        } catch {
-                            // ignore
-                        }
+                        // No loguear errores 400 - generalmente son respuestas esperadas cuando no hay datos
+                        // Los servicios manejan estos errores y devuelven valores por defecto
+                        const isExpectedEmptyResponse = response.status === 400
+                        
+                        if (!isExpectedEmptyResponse) {
+                            const debug: Record<string, unknown> = {
+                                method,
+                                url,
+                                status: response.status,
+                                statusText: response.statusText,
+                            }
 
-                        // eslint-disable-next-line no-console
-                        console.error("[HTTP] Request failed", debug)
+                            try {
+                                debug["contentType"] = response.headers.get("content-type")
+                            } catch {
+                                // ignore
+                            }
+
+                            debug["body"] = bodyText
+
+                            // eslint-disable-next-line no-console
+                            console.error("[HTTP] Request failed", debug)
+                        }
                     }
 
                     if (response.status === 401) {

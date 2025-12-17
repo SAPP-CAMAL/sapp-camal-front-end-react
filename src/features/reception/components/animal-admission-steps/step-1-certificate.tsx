@@ -424,6 +424,16 @@ export const Step1Certificate = () => {
                             idDetailsRegisterVehicles:
                               shipper.idDetailsRegisterVehicles,
                           });
+                          // Actualizar la especie del transportista si se puede editar
+                          if (canEditDetailsRegisterVehicle && shipper.specie) {
+                            handleSetSelectedSpecie({
+                              id: shipper.specie.id,
+                              name: shipper.specie.name,
+                              description: shipper.specie.name,
+                              status: true,
+                              finishType: [],
+                            });
+                          }
                           setShipperSearch("");
                         }}
                       />

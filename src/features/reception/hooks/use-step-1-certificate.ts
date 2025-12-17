@@ -137,6 +137,13 @@ export const useStep1Certificate = () => {
 
 		const { id, ...baseCertificateData } = selectedCertificate;
 
+		// Determinar qué idDetailsRegisterVehicles usar:
+		// - Si se puede editar (canEditDetailsRegisterVehicle), usar el del transportista seleccionado
+		// - Si no se puede editar, mantener el del certificado original
+		const idDetailsRegisterVehiclesToUse = canEditDetailsRegisterVehicle
+			? (selectedShipper.idDetailsRegisterVehicles ?? selectedCertificate.idDetailsRegisterVehicles)
+			: selectedCertificate.idDetailsRegisterVehicles;
+
 		try {
 			const response = await updateCertificateService(id, {
 				code: baseCertificateData.code ?? '',
@@ -150,9 +157,7 @@ export const useStep1Certificate = () => {
 				shippingsId: selectedShipper.id,
 				idOrigin: selectedCertificate.idOrigin ?? 0,
 				status: true,
-				// NO sobrescribir idDetailsRegisterVehicles - mantener el del certificado original
-				// porque ese tiene la especie correcta del certificado, no del transportista
-				idDetailsRegisterVehicles: selectedCertificate.idDetailsRegisterVehicles,
+				idDetailsRegisterVehicles: idDetailsRegisterVehiclesToUse,
 			});
 
 			const updatedCertificate = response.data;

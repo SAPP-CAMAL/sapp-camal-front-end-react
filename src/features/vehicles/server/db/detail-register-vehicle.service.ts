@@ -38,8 +38,19 @@ export const setRegisterVehicleTimeOut = (idRegisterVehicle: number | string) =>
 	return http.patch('v1/1.0.0/detail-register-vehicle/register-time-out/' + idRegisterVehicle.toString());
 };
 
-export const getRegisterVehicleByDate = async (date: string) => {
-	return http.get('v1/1.0.0/detail-register-vehicle/by-register-date?recordDate=' + date).json<CommonHttpResponse<DetailRegisterVehicleByDate>>();
+export const getRegisterVehicleByDate = async (date: string): Promise<CommonHttpResponse<DetailRegisterVehicleByDate>> => {
+	try {
+		return await http.get('v1/1.0.0/detail-register-vehicle/by-register-date?recordDate=' + date).json<CommonHttpResponse<DetailRegisterVehicleByDate>>();
+	} catch (error: unknown) {
+		// Si la API devuelve 400 con "NOT FOUND RECORDS", retornar array vacío
+		if (error && typeof error === 'object' && 'response' in error) {
+			const httpError = error as { response: Response };
+			if (httpError.response?.status === 400) {
+				return { data: [] as DetailRegisterVehicleByDate[], code: 200, message: 'No records found' };
+			}
+		}
+		throw error;
+	}
 };
 
 export const getRegisterVehicleByDateReport = async (

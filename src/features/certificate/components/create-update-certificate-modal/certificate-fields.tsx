@@ -4,7 +4,7 @@ import { useAllOrigins } from '@/features/origin/hooks';
 import { DatePicker } from '@/components/ui/date-picker';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { parseISO } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 
 export const CertificateFields = () => {
 	const form = useFormContext();
@@ -50,18 +50,35 @@ export const CertificateFields = () => {
 				)}
 			/>
 
-			{/* issueDate */}
+			{/* issueDate - Fecha de Vigencia con hora */}
 			<FormField
 				control={form.control}
 				name='issueDate'
 				rules={{
-					required: { value: true, message: 'La fecha de emisión es requerida' },
+					required: { value: true, message: 'La fecha de vigencia es requerida' },
 				}}
 				render={({ field }) => (
 					<FormItem>
-						<FormLabel>Fecha de Emisión</FormLabel>
+						<FormLabel>Fecha de Vigencia</FormLabel>
 						<FormControl>
-							<DatePicker inputClassName='bg-secondary' selected={parseISO(field.value)} onChange={date => field.onChange(date)} />
+							<DatePicker
+								inputClassName='bg-secondary'
+								selected={field.value ? parseISO(field.value) : null}
+								onChange={date => {
+									if (date) {
+										// Formatear la fecha con hora en formato ISO
+										const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm:ss");
+										field.onChange(formattedDate);
+									} else {
+										field.onChange('');
+									}
+								}}
+								showTimeSelect
+								timeFormat='HH:mm'
+								timeIntervals={15}
+								dateFormat="d 'de' MMMM yyyy HH:mm"
+								placeholderText='Seleccione fecha y hora'
+							/>
 						</FormControl>
 						<FormMessage />
 					</FormItem>

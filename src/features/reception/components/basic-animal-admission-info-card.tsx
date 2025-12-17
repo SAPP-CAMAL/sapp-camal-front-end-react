@@ -100,23 +100,23 @@ export const BasicAnimalAdmissionInfoCard = ({
       </CardHeader>
       <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
         <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
-          <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-4">
-            <div className="flex flex-col xs:flex-row xs:gap-1">
-              <span className="font-medium text-muted-foreground xs:text-foreground">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4">
+            <div className="flex flex-col">
+              <span className="font-medium text-muted-foreground">
                 Introductor:
               </span>
               <span className="truncate">
                 {animalAdmissionItem?.animalAdmission?.brand?.introducer?.name}
               </span>
             </div>
-            <div className="flex flex-col xs:flex-row xs:gap-1">
-              <span className="font-medium text-muted-foreground xs:text-foreground">
+            <div className="flex flex-col">
+              <span className="font-medium text-muted-foreground">
                 Especie:
               </span>
               <span>{toCapitalize(selectedSpecie?.name ?? "")}</span>
             </div>
-            <div className="flex flex-col xs:flex-row xs:gap-1">
-              <span className="font-medium text-muted-foreground xs:text-foreground">
+            <div className="flex flex-col">
+              <span className="font-medium text-muted-foreground">
                 Cantidades:
               </span>
               <span>
@@ -124,8 +124,8 @@ export const BasicAnimalAdmissionInfoCard = ({
                 {animalAdmissionItem?.animalAdmission?.males || 0}
               </span>
             </div>
-            <div className="flex flex-col xs:flex-row xs:gap-1">
-              <span className="font-medium text-muted-foreground xs:text-foreground">
+            <div className="flex flex-col">
+              <span className="font-medium text-muted-foreground">
                 Fecha Faen.:
               </span>
               <span>
@@ -133,16 +133,16 @@ export const BasicAnimalAdmissionInfoCard = ({
                   "N/A"}
               </span>
             </div>
-            <div className="flex flex-col xs:flex-row xs:gap-1">
-              <span className="font-medium text-muted-foreground xs:text-foreground">
+            <div className="flex flex-col">
+              <span className="font-medium text-muted-foreground">
                 Tipo Corral:
               </span>
               <span className="truncate">
                 {animalAdmissionItem?.animalAdmission?.corralType?.description}
               </span>
             </div>
-            <div className="flex flex-col xs:flex-row xs:gap-1">
-              <span className="font-medium text-muted-foreground xs:text-foreground">
+            <div className="flex flex-col">
+              <span className="font-medium text-muted-foreground">
                 Corral:
               </span>
               <span>
@@ -152,8 +152,8 @@ export const BasicAnimalAdmissionInfoCard = ({
                   ""}
               </span>
             </div>
-            <div className="flex flex-col xs:flex-row xs:gap-1 col-span-1 xs:col-span-2">
-              <span className="font-medium text-muted-foreground xs:text-foreground">
+            <div className="flex flex-col col-span-2">
+              <span className="font-medium text-muted-foreground">
                 Observación:
               </span>
               <span className="truncate">
@@ -161,8 +161,8 @@ export const BasicAnimalAdmissionInfoCard = ({
               </span>
             </div>
             {animalAdmissionItem?.animalAdmission?.finishType?.name && (
-              <div className="flex flex-col xs:flex-row xs:gap-1">
-                <span className="font-medium text-muted-foreground xs:text-foreground">
+              <div className="flex flex-col">
+                <span className="font-medium text-muted-foreground">
                   Tipo acabado:
                 </span>
                 <span>
