@@ -46,7 +46,7 @@ import {
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+import { fetchWithFallback } from "@/lib/ky";
 
 // Componente para mostrar vestuario y lencería
 function VestuarioPopover({ items }: { items: string[] }) {
@@ -254,8 +254,8 @@ export function HygieneControlManagement() {
       const formattedDate = format(fecha, "yyyy-MM-dd");
       const token = await window.cookieStore.get("accessToken");
 
-      const response = await fetch(
-        `${API_BASE_URL}/v1/1.0.0/hygiene-control/by-date-register-report?dateRegister=${formattedDate}`,
+      const response = await fetchWithFallback(
+        `/v1/1.0.0/hygiene-control/by-date-register-report?dateRegister=${formattedDate}`,
         {
           method: "GET",
           headers: {
