@@ -88,7 +88,7 @@ const roundUpToTwoDecimals = (value: number): number => {
   return Math.ceil(value * 100) / 100;
 };
 
-// Función para calcular el peso a mostrar (convertido a lb y con gancho restado si aplica)
+// Función para calcular el peso a mostrar en la unidad configurada
 const calculateDisplayWeight = (
   savedWeightKg: number,
   isLbUnit: boolean,
@@ -97,12 +97,11 @@ const calculateDisplayWeight = (
 ): number => {
   if (savedWeightKg === 0) return 0;
   
-  // Convertir de kg a lb si la unidad es LB
-  const weightInLb = isLbUnit ? convertKgToLb(savedWeightKg) : savedWeightKg;
+  // El peso guardado siempre está en kg
+  // Convertir a lb solo si la unidad configurada es LB, de lo contrario mostrar en kg
+  const weightInUnit = isLbUnit ? convertKgToLb(savedWeightKg) : savedWeightKg;
   
-  // Si NO es EN PIE, el peso guardado ya es neto (sin gancho), así que solo convertir
-  // Si es EN PIE, no hay gancho que restar
-  return weightInLb;
+  return weightInUnit;
 };
 
 export function AnimalWeighingManagement() {
@@ -141,6 +140,12 @@ export function AnimalWeighingManagement() {
   const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
+
+  // Verificar si la fecha seleccionada es hoy
+  const isToday = useMemo(() => {
+    const today = getLocalDateString();
+    return slaughterDate === today;
+  }, [slaughterDate]);
 
   // Hook de balanza serial
   const {
@@ -771,29 +776,33 @@ export function AnimalWeighingManagement() {
       }
     }
 
-    const unitCode = unitMeasureData?.data?.code || 'LB';
-    const unitSymbol = 'lb'; // Siempre mostrar en lb en pantalla
+    const unitCode = unitMeasureData?.data?.code || 'KG';
+    const unitSymbol = unitMeasureData?.data?.symbol || 'kg';
     const isLbUnit = unitCode === 'LB';
     
-    // Peso en pantalla (siempre en lb)
-    const grossWeightDisplay = row.peso; // Peso bruto mostrado en pantalla
-    let netWeightDisplay = grossWeightDisplay;
+    // row.peso ya tiene el gancho restado desde la captura de la balanza
+    // Por lo tanto, row.peso es el peso NETO (sin gancho)
+    const netWeightDisplay = row.peso;
+    
+    // Calcular el peso bruto sumando el gancho al peso neto
+    let grossWeightDisplay = netWeightDisplay;
     let hookWeightDisplay = 0;
 
-    // Si NO es EN PIE, calcular peso neto restando el gancho
+    // Si NO es EN PIE, calcular peso bruto sumando el gancho
     if (weighingStageId !== 1 && selectedHook) {
       const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
-      // Los ganchos vienen en kg, convertir a lb para mostrar
+      // Los ganchos vienen en kg, convertir a la unidad configurada si es LB
       const hookWeightKg = selectedHookData ? parseFloat(selectedHookData.weight) : 0;
-      hookWeightDisplay = convertKgToLb(hookWeightKg);
-      netWeightDisplay = grossWeightDisplay - hookWeightDisplay;
+      hookWeightDisplay = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
+      grossWeightDisplay = netWeightDisplay + hookWeightDisplay;
     }
 
     try {
       // Obtener el ID de la unidad de medida desde la API
-      const unitMeasureId = unitMeasureData?.data?.id || 2; // Default a 2 si no hay datos
+      const unitMeasureId = unitMeasureData?.data?.id || 1; // Default a 1 (KG) si no hay datos
 
-      // Convertir pesos a kg si la unidad configurada es LB y redondear hacia arriba a 2 decimales
+      // Convertir pesos a kg si la unidad configurada es LB (la base siempre guarda en kg)
+      // Si la unidad es KG, el peso ya está en kg y no necesita conversión
       const grossWeightToSave = isLbUnit 
         ? roundUpToTwoDecimals(convertLbToKg(grossWeightDisplay)) 
         : roundUpToTwoDecimals(grossWeightDisplay);
@@ -885,11 +894,11 @@ export function AnimalWeighingManagement() {
   useEffect(() => {
     if (currentWeight && selectedRowId) {
 
-      const unitCode = unitMeasureData?.data?.code || 'LB';
+      const unitCode = unitMeasureData?.data?.code || 'KG';
       const isLbUnit = unitCode === 'LB';
-      const unitSymbol = 'lb'; // Siempre mostrar en lb
+      const unitSymbol = unitMeasureData?.data?.symbol || 'kg';
       
-      // La balanza envía en kg, convertir a lb para mostrar si la unidad configurada es LB
+      // La balanza envía en kg, convertir a lb solo si la unidad configurada es LB
       const weightFromScale = currentWeight.value;
       let weightToDisplay = isLbUnit ? convertKgToLb(weightFromScale) : weightFromScale;
 
@@ -898,8 +907,8 @@ export function AnimalWeighingManagement() {
         const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
         if (selectedHookData) {
           const hookWeightKg = parseFloat(selectedHookData.weight);
-          const hookWeightLb = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
-          weightToDisplay = weightToDisplay - hookWeightLb;
+          const hookWeightInUnit = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
+          weightToDisplay = weightToDisplay - hookWeightInUnit;
         }
       }
 
@@ -927,9 +936,9 @@ export function AnimalWeighingManagement() {
     }
   }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData, weighingStageId, selectedHook, hookTypesData]);
 
-  // Calcular pesos a mostrar (convertidos a lb)
+  // Calcular pesos a mostrar (en la unidad configurada)
   const rowsWithDisplayWeight = useMemo(() => {
-    const unitCode = unitMeasureData?.data?.code || 'LB';
+    const unitCode = unitMeasureData?.data?.code || 'KG';
     const isLbUnit = unitCode === 'LB';
     
     return rows.map(row => {
@@ -938,10 +947,10 @@ export function AnimalWeighingManagement() {
       let displayWeight = 0;
       
       if (row.peso > 0) {
-        // Peso capturado ya está en lb y con gancho restado si aplica
+        // Peso capturado ya está en la unidad configurada y con gancho restado si aplica
         displayWeight = row.peso;
       } else if (row.savedWeight > 0) {
-        // El peso guardado está en kg, convertir a lb para mostrar
+        // El peso guardado está en kg, convertir a lb solo si la unidad configurada es LB
         displayWeight = calculateDisplayWeight(
           row.savedWeight,
           isLbUnit,
@@ -1060,18 +1069,19 @@ export function AnimalWeighingManagement() {
                 <p className="text-xs sm:text-sm text-gray-600 mb-2">Peso Actual</p>
                 {currentWeight ? (
                   <div className="space-y-2">
-                    {/* Peso principal convertido a lb */}
+                    {/* Peso principal - mostrar en la unidad configurada */}
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <span className={`text-2xl sm:text-3xl md:text-4xl font-bold ${currentWeight.value < 0 ? 'text-red-900' : 'text-blue-900'}`}>
                         {(() => {
-                          const unitCode = unitMeasureData?.data?.code || 'LB';
+                          const unitCode = unitMeasureData?.data?.code || 'KG';
                           const isLbUnit = unitCode === 'LB';
+                          // La balanza envía en kg, convertir a lb solo si la unidad configurada es LB
                           const displayWeight = isLbUnit ? convertKgToLb(currentWeight.value) : currentWeight.value;
                           return displayWeight.toFixed(2);
                         })()}
                       </span>
                       <span className={`text-xl sm:text-2xl font-semibold ${currentWeight.value < 0 ? 'text-red-700' : 'text-blue-700'}`}>
-                        lb
+                        {unitMeasureData?.data?.symbol || 'kg'}
                       </span>
                       {currentWeight.stable && (
                         <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
@@ -1488,32 +1498,8 @@ export function AnimalWeighingManagement() {
                         </div>
                         <div className="text-sm">{animalRows[0].producto}</div>
                       </div>
-                      {animalRows[0].idAnimalWeighing && (
+                      {animalRows[0].idAnimalWeighing && isToday && (
                         <div className="flex items-center gap-1">
-                          {weighingStageId === 2 && animalRows[0].idDetailAnimalWeighing && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-black hover:bg-blue-50 h-8 w-8 p-0"
-                                    onClick={() => handleDownloadPdf(animalRows[0].idDetailAnimalWeighing!)}
-                                    disabled={downloadingPdfId === animalRows[0].idDetailAnimalWeighing}
-                                  >
-                                    {downloadingPdfId === animalRows[0].idDetailAnimalWeighing ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Ticket className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Descargar Ticket</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -1545,7 +1531,7 @@ export function AnimalWeighingManagement() {
                             <div className="flex items-center gap-1 mb-1">
                               <MapPin className="h-3 w-3 text-blue-600" />
                               <span className="font-bold text-blue-600 text-sm">{row.sectionCode}</span>
-                              <span className="text-xs text-muted-foreground ml-1">{row.sectionDescription}</span>
+                              <span className="text-xs text-white/90 ml-1">{row.sectionDescription}</span>
                             </div>
                             {row.hasPartialConfiscation && (
                               <div className="flex items-center gap-1 mt-1 text-yellow-600">
@@ -1569,26 +1555,30 @@ export function AnimalWeighingManagement() {
                               <div className="flex items-center justify-between">
                                 <div>
                                   <div className="text-sm font-medium">{toCapitalize(row.addressee.fullName, true)}</div>
-                                  <div className="text-xs text-muted-foreground">{row.addressee.identification}</div>
+                                  <div className="text-xs text-white/90">{row.addressee.identification}</div>
                                 </div>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-white hover:text-teal-700 h-7 px-2"
-                                  onClick={() => setAddresseeSelectionRowId(row.id)}
-                                >
-                                  <Edit className="h-3 w-3 mr-1" />
-                                  Cambiar
-                                </Button>
+                                {isToday && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-white hover:text-teal-700 h-7 px-2"
+                                    onClick={() => setAddresseeSelectionRowId(row.id)}
+                                  >
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Cambiar
+                                  </Button>
+                                )}
                               </div>
                             ) : (
-                              <Button
-                                size="sm"
-                                className="bg-teal-600 hover:bg-teal-700 w-full"
-                                onClick={() => setAddresseeSelectionRowId(row.id)}
-                              >
-                                Agregar Destinatario
-                              </Button>
+                              isToday && (
+                                <Button
+                                  size="sm"
+                                  className="bg-teal-600 hover:bg-teal-700 w-full"
+                                  onClick={() => setAddresseeSelectionRowId(row.id)}
+                                >
+                                  Agregar Destinatario
+                                </Button>
+                              )
                             )}
                           </div>
                         )}
@@ -1600,11 +1590,11 @@ export function AnimalWeighingManagement() {
                               <span>Peso</span>
                             </div>
                             <div className={`font-semibold ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                              {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} lb` : "-"}
+                              {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || 'kg'}` : "-"}
                             </div>
                           </div>
 
-                          <div className="flex gap-1">
+                          <div className="flex gap-1 items-center">
                             <Button
                               size="sm"
                               variant={selectedRowId === row.id ? "default" : "outline"}
@@ -1621,11 +1611,11 @@ export function AnimalWeighingManagement() {
                                   resetWeight();
                                 }
                               }}
-                              disabled={!isConnected}
+                              disabled={!isConnected || !isToday}
                             >
                               {selectedRowId === row.id ? "CAPTURADO" : "CAPTURAR"}
                             </Button>
-                            {selectedRowId === row.id && (
+                            {selectedRowId === row.id && isToday && (
                               <Button
                                 size="sm"
                                 className="bg-blue-600 text-[10px] whitespace-nowrap h-6 px-1.5"
@@ -1636,6 +1626,30 @@ export function AnimalWeighingManagement() {
                                   ? (row.savedWeight > 0 ? "ACTUALIZANDO..." : "GUARDANDO...")
                                   : (row.savedWeight > 0 ? "ACTUALIZAR" : "GUARDAR")}
                               </Button>
+                            )}
+                            {/* Botón de descarga de ticket para esta sección */}
+                            {weighingStageId === 2 && row.idDetailAnimalWeighing && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      className="ml-2 bg-teal-600 hover:bg-teal-700 text-white h-6 w-6 p-0"
+                                      onClick={() => handleDownloadPdf(row.idDetailAnimalWeighing!)}
+                                      disabled={downloadingPdfId === row.idDetailAnimalWeighing}
+                                    >
+                                      {downloadingPdfId === row.idDetailAnimalWeighing ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                                      ) : (
+                                        <Ticket className="h-3.5 w-3.5 text-white" />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Descargar Ticket {row.sectionCode || ''}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                           </div>
                         </div>
@@ -1777,7 +1791,7 @@ export function AnimalWeighingManagement() {
                                   <User className="h-3 w-3 text-teal-600" />
                                   <span className="text-xs font-medium leading-tight">{toCapitalize(row.addressee.fullName, true)}</span>
                                 </div>
-                                <span className="text-[10px] text-muted-foreground leading-tight">{row.addressee.identification}</span>
+                                <span className="text-[10px] text-white/90 leading-tight">{row.addressee.identification}</span>
                                 <div className="w-full border-t border-gray-200 my-0.5"></div>
                                 {row.carrier ? (
                                   <>
@@ -1791,7 +1805,7 @@ export function AnimalWeighingManagement() {
                                       </svg>
                                       <span className="text-xs font-medium leading-tight text-blue-600">{toCapitalize(row.carrier.fullName, true)}</span>
                                     </div>
-                                    <span className="text-[10px] text-muted-foreground leading-tight">{row.carrier.plate}</span>
+                                    <span className="text-[10px] text-white/90 leading-tight">{row.carrier.plate}</span>
                                   </>
                                 ) : (
                                   <div className="flex items-center gap-1">
@@ -1805,26 +1819,30 @@ export function AnimalWeighingManagement() {
                                     <span className="text-xs text-gray-400 leading-tight">Sin transportista</span>
                                   </div>
                                 )}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-teal-600 hover:text-teal-700 h-5 px-1.5 text-[10px]"
-                                  onClick={() => setAddresseeSelectionRowId(row.id)}
-                                >
-                                  <Edit className="h-2.5 w-2.5 mr-0.5" />
-                                  Cambiar
-                                </Button>
+                                {isToday && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-teal-600 hover:text-teal-700 h-5 px-1.5 text-[10px]"
+                                    onClick={() => setAddresseeSelectionRowId(row.id)}
+                                  >
+                                    <Edit className="h-2.5 w-2.5 mr-0.5" />
+                                    Cambiar
+                                  </Button>
+                                )}
                               </div>
                             ) : (
-                              <div className="flex justify-center">
-                                <Button
-                                  size="sm"
-                                  className="bg-teal-600 hover:bg-teal-700 h-6 text-xs px-2"
-                                  onClick={() => setAddresseeSelectionRowId(row.id)}
-                                >
-                                  Agregar
-                                </Button>
-                              </div>
+                              isToday && (
+                                <div className="flex justify-center">
+                                  <Button
+                                    size="sm"
+                                    className="bg-teal-600 hover:bg-teal-700 h-6 text-xs px-2"
+                                    onClick={() => setAddresseeSelectionRowId(row.id)}
+                                  >
+                                    Agregar
+                                  </Button>
+                                </div>
+                              )
                             )}
                           </TableCell>
                         )}
@@ -1834,7 +1852,7 @@ export function AnimalWeighingManagement() {
                             {row.sectionCode ? (
                               <div className="flex flex-col items-center gap-0">
                                 <span className="font-bold text-blue-600 text-xs leading-tight">{row.sectionCode}</span>
-                                <span className="text-[10px] text-muted-foreground leading-tight">{row.sectionDescription}</span>
+                                <span className="text-[10px] text-white/90 leading-tight">{row.sectionDescription}</span>
                                 {row.hasPartialConfiscation && (
                                   <div className="flex items-center gap-0.5 mt-0.5 text-yellow-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
@@ -1851,7 +1869,7 @@ export function AnimalWeighingManagement() {
                         )}
                     <TableCell className="text-center py-0.5 px-1">
                       <span className={`font-semibold text-xs ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} lb` : "-"}
+                        {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || 'kg'}` : "-"}
                       </span>
                     </TableCell>
                     <TableCell className="py-0.5 px-1">
@@ -1876,13 +1894,13 @@ export function AnimalWeighingManagement() {
                               resetWeight();
                             }
                           }}
-                          disabled={!isConnected}
+                          disabled={!isConnected || !isToday}
                         >
                           {selectedRowId === row.id
                             ? "CAPTURADO"
                             : "CAPTURAR"}
                         </Button>
-                        {selectedRowId === row.id && (
+                        {selectedRowId === row.id && isToday && (
                           <Button
                             size="sm"
                             className="bg-blue-600 text-[9px] whitespace-nowrap h-6 px-1.5 rounded-l-none border-l-0"
@@ -1894,36 +1912,36 @@ export function AnimalWeighingManagement() {
                               : (row.savedWeight > 0 ? "ACTUALIZAR" : "GUARDAR")}
                           </Button>
                         )}
+                        {/* Botón de descarga de ticket para esta sección */}
+                        {weighingStageId === 2 && row.idDetailAnimalWeighing && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  className="ml-2 bg-teal-600 hover:bg-teal-700 text-white h-6 w-6 p-0"
+                                  onClick={() => handleDownloadPdf(row.idDetailAnimalWeighing!)}
+                                  disabled={downloadingPdfId === row.idDetailAnimalWeighing}
+                                >
+                                  {downloadingPdfId === row.idDetailAnimalWeighing ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                                  ) : (
+                                    <Ticket className="h-3.5 w-3.5 text-white" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Descargar Ticket {row.sectionCode || ''}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </div>
                     </TableCell>
                     {hasDeleteButton && index === 0 && (
                       <TableCell className="py-0.5 px-0" rowSpan={rowSpan}>
-                        <div className="flex items-center justify-center gap-1">
-                          {weighingStageId === 2 && row.idAnimalWeighing && row.idDetailAnimalWeighing && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-black hover:bg-blue-50 h-6 w-6 p-0"
-                                    onClick={() => handleDownloadPdf(row.idDetailAnimalWeighing!)}
-                                    disabled={downloadingPdfId === row.idDetailAnimalWeighing}
-                                  >
-                                    {downloadingPdfId === row.idDetailAnimalWeighing ? (
-                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    ) : (
-                                      <Ticket className="h-3.5 w-3.5" />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Descargar Ticket</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          {row.idAnimalWeighing && (
+                        <div className="flex flex-col items-center justify-center gap-1">
+                          {row.idAnimalWeighing && isToday && (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
