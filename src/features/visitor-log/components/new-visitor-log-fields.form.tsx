@@ -32,6 +32,7 @@ import { getUserPersonByFilterService } from "@/features/security/server/db/secu
 import { SelectCompany } from "../visitor-log-management";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Checkbox } from "@/components/ui/checkbox";
 export type BrandCreating = {
   id: number;
   name: string;
@@ -300,6 +301,38 @@ export function VisitorLogFormFields() {
                     popperPlacement="bottom-start"
 
                   />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="hasVehicle"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>¿Tiene Vehículo?</FormLabel>
+              <FormControl>
+                <div className="flex items-center gap-4">
+                  <Checkbox
+                    checked={field.value === true}
+                    onCheckedChange={(checked) => field.onChange(checked ? true : null)}
+                    className="h-5 w-5 text-primary"
+                    id="hasVehicle-yes"
+                  />
+                  <label htmlFor="hasVehicle-yes" className="ml-2 cursor-pointer">
+                    Sí
+                  </label>
+                  <Checkbox
+                    checked={field.value === false}
+                    onCheckedChange={(checked) => field.onChange(checked ? false : null)}
+                    className="h-5 w-5 text-primary"
+                    id="hasVehicle-no"
+                  />
+                  <label htmlFor="hasVehicle-no" className="ml-2 cursor-pointer">
+                    No
+                  </label>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
