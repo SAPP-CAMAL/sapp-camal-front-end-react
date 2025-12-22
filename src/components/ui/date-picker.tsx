@@ -21,6 +21,7 @@ export const DatePicker = ({
 	showIcon = true,
 	icon,
 	placeholderText = 'Elija una fecha',
+	timeCaption = 'Hora',
 	inputClassName = '',
 	iconClassName = '',
 	...props
@@ -33,6 +34,7 @@ export const DatePicker = ({
 				showIcon={showIcon}
 				icon={icon ?? <Calendar className={cn('mt-[1px]', iconClassName )} />}
 				placeholderText={placeholderText}
+				timeCaption={timeCaption}
 				className={cn(defaultInputStyle, inputClassName)}
 				{...props}
 			/>

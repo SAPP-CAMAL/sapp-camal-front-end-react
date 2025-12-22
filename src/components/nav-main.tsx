@@ -2,6 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 import {
   Collapsible,
@@ -22,24 +23,61 @@ import Link from "next/link";
 import DynamicLucideIcon from "@/lib/lucide-icon-dynamic";
 import { AdministrationMenu } from "@/features/modules/domain/module.domain";
 
+// Función helper para normalizar URLs
+function normalizeMenuUrl(url: string | null): string {
+  if (!url) return "#";
+  let cleanUrl = url;
+  if (cleanUrl.startsWith("/dashboard/")) {
+    cleanUrl = cleanUrl.substring(10);
+  } else if (cleanUrl.startsWith("dashboard/")) {
+    cleanUrl = cleanUrl.substring(9);
+  } else if (cleanUrl.startsWith("/dashboard")) {
+    cleanUrl = cleanUrl.substring(10);
+  } else if (cleanUrl.startsWith("dashboard")) {
+    cleanUrl = cleanUrl.substring(9);
+  }
+  if (!cleanUrl.startsWith("/")) {
+    cleanUrl = "/" + cleanUrl;
+  }
+  return `/dashboard${cleanUrl}`;
+}
+
 export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
   const pathname = usePathname();
+  const [openMenus, setOpenMenus] = useState<Record<number, boolean>>({});
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Después de la hidratación, abrir los menús que tienen hijos activos
+  useEffect(() => {
+    setIsHydrated(true);
+    const newOpenMenus: Record<number, boolean> = {};
+    menus.forEach((menu) => {
+      const hasActiveChild = menu.children?.some((child) => {
+        const normalizedUrl = normalizeMenuUrl(child.url);
+        return pathname === normalizedUrl;
+      });
+      if (hasActiveChild) {
+        newOpenMenus[menu.id] = true;
+      }
+    });
+    setOpenMenus(newOpenMenus);
+  }, [pathname, menus]);
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Módulos</SidebarGroupLabel>
       <SidebarMenu>
         {menus.map((menu) => {
-          // Verificar si algún hijo está activo
-          const hasActiveChild = menu.children?.some(
-            (child) => child.url && pathname === child.url
-          );
+          const isOpen = isHydrated ? openMenus[menu.id] ?? false : false;
 
           return (
             <Collapsible
               key={menu.id}
               asChild
-              defaultOpen={hasActiveChild}
+              open={isOpen}
+              onOpenChange={(open) =>
+                setOpenMenus((prev) => ({ ...prev, [menu.id]: open }))
+              }
               className="group/collapsible"
             >
               <SidebarMenuItem>
@@ -57,7 +95,8 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                 <CollapsibleContent className="transition-all duration-200">
                   <SidebarMenuSub>
                     {menu.children?.map((subItem) => {
-                      const isActive = !!(subItem.url && pathname === subItem.url);
+                      const normalizedUrl = normalizeMenuUrl(subItem.url);
+                      const isActive = pathname === normalizedUrl;
                       
                       return (
                         <SidebarMenuSubItem key={subItem.id}>
@@ -66,7 +105,7 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                             isActive={isActive}
                             data-active={isActive}
                           >
-                            <Link href={subItem.url ?? "#"} className="no-underline">
+                            <Link href={normalizedUrl} className="no-underline">
                               {/* {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />} */}
                               <DynamicLucideIcon
                                 name={(subItem?.icon as any) ?? "badge-info"}

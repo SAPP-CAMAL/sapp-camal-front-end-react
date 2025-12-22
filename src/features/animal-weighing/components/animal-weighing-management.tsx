@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2, Ticket  } from "lucide-react";
+import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2, Ticket, Layers, PawPrint, Activity } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLines } from "@/features/postmortem/hooks/use-lines";
@@ -43,10 +43,9 @@ import {
   useUpdateAnimalWeighing,
   useDeleteAnimalWeighing,
   useWeighingStages,
-  useHookTypesBySpecie,
   useChannelTypes,
-  useChannelSectionsByType,
-  useUnitMeasure,
+  // useChannelSectionsByType,
+  // useUnitMeasure,
 } from "../hooks";
 import type { ProductType, AnimalWeighingRow, WeighingStage } from "../domain";
 import {
@@ -161,19 +160,26 @@ export function AnimalWeighingManagement() {
   const { data: lines, isLoading: isLoadingLines } = useLines();
   const { data: weighingStagesData, isLoading: isLoadingWeighingStages } =
     useWeighingStages();
-  const { data: hookTypesData, isLoading: isLoadingHookTypes } =
-    useHookTypesBySpecie(selectedSpecieId);
   const { data: channelTypesData, isLoading: isLoadingChannelTypes } =
     useChannelTypes();
-  const { data: channelSectionsData, isLoading: isLoadingChannelSections } =
-    useChannelSectionsByType(selectedChannelTypeId);
+  
+  // TODO: Comentado temporalmente - agregar nueva API
+  // const { data: channelSectionsData, isLoading: isLoadingChannelSections } =
+  //   useChannelSectionsByType(selectedChannelTypeId);
+  const channelSectionsData = undefined as { data: Array<{ id: number; sectionCode: string; description: string }> } | undefined;
+  const isLoadingChannelSections = false;
 
-  // Cargar secciones de todos los tipos de canal para tener la información completa
-  const { data: mediaCanalSections } = useChannelSectionsByType(1); // Media Canal
-  const { data: canalSections } = useChannelSectionsByType(2); // Canal
-  const { data: cuartaSections } = useChannelSectionsByType(3); // Cuarta
+  // TODO: Comentado temporalmente - agregar nueva API
+  // const { data: mediaCanalSections } = useChannelSectionsByType(1); // Media Canal
+  // const { data: canalSections } = useChannelSectionsByType(2); // Canal
+  // const { data: cuartaSections } = useChannelSectionsByType(3); // Cuarta
+  const mediaCanalSections = undefined as { data: Array<{ id: number; sectionCode: string; description: string }> } | undefined;
+  const canalSections = undefined as { data: Array<{ id: number; sectionCode: string; description: string }> } | undefined;
+  const cuartaSections = undefined as { data: Array<{ id: number; sectionCode: string; description: string }> } | undefined;
 
-  const { data: unitMeasureData } = useUnitMeasure();
+  // TODO: Comentado temporalmente - agregar nueva API
+  // const { data: unitMeasureData } = useUnitMeasure();
+  const unitMeasureData = undefined as { data: { id: number; code: string; symbol: string } | null } | undefined;
 
   // Seleccionar Bovinos por defecto
   useEffect(() => {
@@ -197,13 +203,13 @@ export function AnimalWeighingManagement() {
     }
   }, [weighingStagesData]);
 
-  // Seleccionar automáticamente el primer gancho cuando se carguen
-  useEffect(() => {
-    if (hookTypesData?.data && hookTypesData.data.length > 0 && weighingStageId !== 1) {
-      const firstHook = hookTypesData.data[0];
-      setSelectedHook(firstHook.id);
-    }
-  }, [hookTypesData, weighingStageId]);
+  // TODO: Gancho removido - agregar nueva API si es necesario
+  // useEffect(() => {
+  //   if (hookTypesData?.data && hookTypesData.data.length > 0 && weighingStageId !== 1) {
+  //     const firstHook = hookTypesData.data[0];
+  //     setSelectedHook(firstHook.id);
+  //   }
+  // }, [hookTypesData, weighingStageId]);
 
   // Seleccionar automáticamente el primer tipo de canal cuando se carguen
   useEffect(() => {
@@ -788,14 +794,13 @@ export function AnimalWeighingManagement() {
     let grossWeightDisplay = netWeightDisplay;
     let hookWeightDisplay = 0;
 
-    // Si NO es EN PIE, calcular peso bruto sumando el gancho
-    if (weighingStageId !== 1 && selectedHook) {
-      const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
-      // Los ganchos vienen en kg, convertir a la unidad configurada si es LB
-      const hookWeightKg = selectedHookData ? parseFloat(selectedHookData.weight) : 0;
-      hookWeightDisplay = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
-      grossWeightDisplay = netWeightDisplay + hookWeightDisplay;
-    }
+    // TODO: Gancho removido - agregar nueva API si es necesario
+    // if (weighingStageId !== 1 && selectedHook) {
+    //   const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
+    //   const hookWeightKg = selectedHookData ? parseFloat(selectedHookData.weight) : 0;
+    //   hookWeightDisplay = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
+    //   grossWeightDisplay = netWeightDisplay + hookWeightDisplay;
+    // }
 
     try {
       // Obtener el ID de la unidad de medida desde la API
@@ -902,15 +907,15 @@ export function AnimalWeighingManagement() {
       const weightFromScale = currentWeight.value;
       let weightToDisplay = isLbUnit ? convertKgToLb(weightFromScale) : weightFromScale;
 
-      // Si NO es EN PIE y hay gancho seleccionado, restar el peso del gancho
-      if (weighingStageId !== 1 && selectedHook) {
-        const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
-        if (selectedHookData) {
-          const hookWeightKg = parseFloat(selectedHookData.weight);
-          const hookWeightInUnit = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
-          weightToDisplay = weightToDisplay - hookWeightInUnit;
-        }
-      }
+      // TODO: Gancho removido - agregar nueva API si es necesario
+      // if (weighingStageId !== 1 && selectedHook) {
+      //   const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
+      //   if (selectedHookData) {
+      //     const hookWeightKg = parseFloat(selectedHookData.weight);
+      //     const hookWeightInUnit = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
+      //     weightToDisplay = weightToDisplay - hookWeightInUnit;
+      //   }
+      // }
 
       // Evitar capturas duplicadas del mismo peso
       const roundedWeight = Math.round(weightToDisplay * 100) / 100;
@@ -934,7 +939,7 @@ export function AnimalWeighingManagement() {
       
       toast.success(message);
     }
-  }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData, weighingStageId, selectedHook, hookTypesData]);
+  }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData, weighingStageId, selectedHook]);
 
   // Calcular pesos a mostrar (en la unidad configurada)
   const rowsWithDisplayWeight = useMemo(() => {
@@ -1128,7 +1133,8 @@ export function AnimalWeighingManagement() {
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4">
           {/* Fecha a la izquierda */}
           <div className="flex items-center gap-2 w-full lg:w-auto">
-            <Label className="whitespace-nowrap font-semibold">
+            <Label className="whitespace-nowrap font-semibold flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
               Fecha de Faenamiento:
             </Label>
             {/* <div className="relative flex-1 lg:flex-initial">
@@ -1160,7 +1166,8 @@ export function AnimalWeighingManagement() {
 
           {/* Etapa de Pesaje a la derecha */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
-            <Label className="whitespace-nowrap font-semibold">
+            <Label className="whitespace-nowrap font-semibold flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
               Etapa de Pesaje:
             </Label>
 
@@ -1233,7 +1240,10 @@ export function AnimalWeighingManagement() {
       {/* Especie - Siempre visible */}
       <Card className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-          <Label className="whitespace-nowrap font-semibold">Especie:</Label>
+          <Label className="whitespace-nowrap font-semibold flex items-center gap-2">
+            <PawPrint className="h-4 w-4 text-primary" />
+            Especie:
+          </Label>
 
           {/* Versión móvil - Select */}
           <div className="block lg:hidden w-full">
@@ -1294,66 +1304,30 @@ export function AnimalWeighingManagement() {
         </div>
       </Card>
 
-      {/* Ganchos - Solo mostrar cuando weighingStageId !== 1 (no es EN PIE) */}
-      {weighingStageId !== null && weighingStageId !== 1 && (
+      {/* TODO: Ganchos removido - agregar nueva API si es necesario */}
+      {/* {weighingStageId !== null && weighingStageId !== 1 && (
       <Card className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
           <Label className="whitespace-nowrap font-semibold">Ganchos:</Label>
-
-          {/* Versión móvil - Select */}
           <div className="block lg:hidden w-full">
-            {isLoadingHookTypes ? (
-              <span className="text-sm text-muted-foreground">Cargando...</span>
-            ) : (
-              <Select
-                value={selectedHook?.toString() || ""}
-                onValueChange={(value) => handleHookSelect(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione gancho" />
-                </SelectTrigger>
-                <SelectContent>
-                  {hookTypesData?.data.map((hook) => (
-                    <SelectItem key={hook.id} value={hook.id.toString()}>
-                      {hook.name} ({hook.weight} kg)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            ...
           </div>
-
-          {/* Versión desktop - Botones */}
           <div className="hidden lg:flex flex-wrap gap-2 w-full sm:w-auto">
-            {isLoadingHookTypes ? (
-              <span className="text-sm text-muted-foreground">
-                Cargando...
-              </span>
-            ) : (
-              hookTypesData?.data.map((hook) => (
-                <Button
-                  key={hook.id}
-                  variant={selectedHook === hook.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleHookSelect(hook.id)}
-                  className="flex-1 sm:flex-initial min-w-[80px]"
-                >
-                  {hook.name}{" "}
-                  <span className="text-xs ml-1">({hook.weight} kg)</span>
-                </Button>
-              ))
-            )}
+            ...
           </div>
         </div>
       </Card>
-      )}
+      )} */}
 
       {/* Tipo de Canal - Solo mostrar cuando weighingStageId !== 1 (no es EN PIE) */}
       {weighingStageId !== null && weighingStageId !== 1 && (
       <>
         <Card className="p-3 sm:p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-            <Label className="flex-shrink-0 font-semibold">Tipo de Canal:</Label>
+            <Label className="flex-shrink-0 font-semibold flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" />
+              Tipo de Canal:
+            </Label>
 
             {/* Versión móvil - Select */}
             <div className="block lg:hidden w-full">
