@@ -123,6 +123,53 @@ export function AnimalDistributionManagement() {
     orderNumber: "",
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  // Función para descargar el certificado sanitario en PDF
+  const handleDownloadCertificatePdf = async () => {
+    if (!selectedOrder?.id) {
+      toast.error("No se encontró el ID del pedido");
+      return;
+    }
+
+    setIsDownloadingPdf(true);
+    try {
+      const { fetchWithFallback } = await import("@/lib/ky");
+      const response = await fetchWithFallback(
+        `/v1/1.0.0/orders/sanitary-certificate-pdf?id=${selectedOrder.id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${document.cookie.split("accessToken=")[1]?.split(";")[0] || ""}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error al descargar el certificado: ${response.status}`);
+      }
+
+      // Obtener el blob del PDF
+      const blob = await response.blob();
+      
+      // Crear URL temporal y descargar
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `certificado-sanitario-${selectedOrder.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Certificado descargado exitosamente");
+    } catch (error) {
+      console.error("Error descargando certificado:", error);
+      toast.error("Error al descargar el certificado");
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const handleGeneratePDF = () => {
     if (!certificateRef.current) return;
@@ -1248,11 +1295,21 @@ export function AnimalDistributionManagement() {
 
               <div className="flex justify-center pt-4 pb-3">
                 <Button 
-                  onClick={handleGeneratePDF}
+                  onClick={handleDownloadCertificatePdf}
+                  disabled={isDownloadingPdf}
                   className="bg-teal-600 hover:bg-teal-700 px-6 sm:px-8 text-sm sm:text-base"
                 >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Generar Certificado
+                  {isDownloadingPdf ? (
+                    <>
+                      <CircleEllipsis className="h-4 w-4 mr-2 animate-spin" />
+                      Descargando...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Generar Certificado
+                    </>
+                  )}
                 </Button>
               </div>
 

@@ -15,7 +15,11 @@ import {
   CheckIcon,
   ChevronsUpDownIcon,
   CreditCardIcon,
+  Download,
+  FileSpreadsheet,
+  FileText,
   IdCardIcon,
+  Loader2,
   SearchIcon,
 } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
@@ -24,6 +28,7 @@ import { TableVisitorLog } from "./components/table-visitor-log";
 import {
   getAllVisitorCompanies,
   getVisitorLogByFilterService,
+  downloadVisitorLogReport,
 } from "./server/db/visitor-log.service";
 import { NewVisitorLogForm } from "./components/new-visitor-log.form";
 import { format, parseISO } from "date-fns";
@@ -47,10 +52,18 @@ import { RegisterExitTime } from "./components/register-exit-time";
 import { UpdateVisitorLogDialog } from "./components/update-visitor-log.form";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toCapitalize } from "@/lib/toCapitalize";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 
 export function VisitorLogManagement() {
   const visitorLogParams = useSearchParams();
+  const [isDownloading, setIsDownloading] = useState<"EXCEL" | "PDF" | null>(null);
   const [searchParams, setSearchParams] = useQueryStates(
     {
       page: parseAsInteger.withDefault(1),
@@ -92,6 +105,41 @@ export function VisitorLogManagement() {
     (text: string) => setSearchParams({ fullName: text, page: 1 }),
     500
   );
+
+  const handleDownloadReport = async (typeReport: "EXCEL" | "PDF") => {
+    setIsDownloading(typeReport);
+    try {
+      const body = {
+        page: searchParams.page,
+        limit: searchParams.limit,
+        registerDate: searchParams.registerDate,
+        ...(searchParams.identification.length > 0 && {
+          identification: searchParams.identification,
+        }),
+        ...(searchParams.fullName.length > 0 && {
+          fullName: searchParams.fullName,
+        }),
+        ...(!!searchParams.idCompany && {
+          idCompany: Number(searchParams.idCompany),
+        }),
+      };
+
+      const { blob, filename } = await downloadVisitorLogReport(typeReport, body);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(`Reporte ${typeReport} descargado correctamente`);
+    } catch {
+      toast.error("Error al descargar el reporte");
+    } finally {
+      setIsDownloading(null);
+    }
+  };
 
   return (
     <div>
@@ -205,7 +253,35 @@ export function VisitorLogManagement() {
           </div>
         </CardContent>
       </Card>
-      <div className="flex justify-end ml-auto mb-4">
+      <div className="flex justify-end ml-auto mb-4 gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" disabled={isDownloading !== null}>
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Descargar Reporte
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => handleDownloadReport("EXCEL")}
+              disabled={isDownloading !== null}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+              Descargar Excel
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleDownloadReport("PDF")}
+              disabled={isDownloading !== null}
+            >
+              <FileText className="h-4 w-4 mr-2 text-red-600" />
+              Descargar PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <NewVisitorLogForm />
       </div>
       <TableVisitorLog

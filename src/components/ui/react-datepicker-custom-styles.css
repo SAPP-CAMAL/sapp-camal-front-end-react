@@ -105,16 +105,54 @@
 /* Input full width */
 .react-datepicker-wrapper {
 	width: 100%;
+	display: flex !important;
+}
+
+.react-datepicker__input-container {
+	width: 100%;
+	display: flex !important;
+	align-items: center;
+}
+
+/* Fix icon alignment */
+.react-datepicker__calendar-icon {
+	position: absolute;
+	left: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	padding: 0 !important;
+}
+
+.react-datepicker__view-calendar-icon input {
+	padding: 6px 10px 5px 30px;
+	width: 100%;
+}
+
+/* Fix close button alignment */
+.react-datepicker__close-icon {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	padding: 0 !important;
+	height: auto;
+}
+
+.react-datepicker__close-icon::after {
+	background-color: var(--color-muted-foreground);
+	font-size: 14px;
+	padding: 2px;
+	height: 16px;
+	width: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 /* React datepicker popper triangle */
 .react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle {
 	fill: var(--color-background);
 	color: var(--color-background);
-}
-
-.react-datepicker__view-calendar-icon input {
-	padding: 6px 10px 5px 30px;
 }
 
 .react-datepicker__day--keyboard-selected {
@@ -145,4 +183,53 @@
 .react-datepicker__time-list-item.react-datepicker__time-list-item--selected {
 	background-color: var(--color-foreground) !important;
 	color: white;
+}
+
+
+/* Month Year Picker Styles */
+.react-datepicker__month-wrapper {
+	display: flex;
+	justify-content: space-around;
+}
+
+.react-datepicker__month-text {
+	padding: 8px 12px;
+	border-radius: var(--radius-md);
+	font-size: 14px;
+	color: var(--color-primary);
+	cursor: pointer;
+}
+
+.react-datepicker__month-text:hover {
+	background-color: var(--color-border);
+}
+
+.react-datepicker__month-text--selected,
+.react-datepicker__month-text--keyboard-selected {
+	background-color: var(--color-foreground) !important;
+	color: white !important;
+}
+
+.react-datepicker__month-container {
+	width: 100%;
+}
+
+.react-datepicker__monthPicker {
+	padding: 8px 0;
+}
+
+/* Fix navigation buttons for month picker */
+.react-datepicker--month-year-picker .react-datepicker__navigation--previous,
+.react-datepicker--month-year-picker .react-datepicker__navigation--next {
+	top: 12px;
+}
+
+.react-datepicker__year-read-view,
+.react-datepicker__month-read-view {
+	visibility: visible !important;
+}
+
+.react-datepicker__year-dropdown-container,
+.react-datepicker__month-dropdown-container {
+	display: inline-block;
 }
