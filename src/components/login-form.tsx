@@ -37,30 +37,74 @@ export function LoginForm({
 
       console.log("Login response received");
 
-      await Promise.all([
-        window.cookieStore.set("accessToken", resp.data.accessToken),
-        window.cookieStore.set("refreshToken", resp.data.refreshToken),
-        window.cookieStore.set("user", JSON.stringify(resp.data)),
-      ]);
+      const accessToken = resp.data.accessToken;
+      const refreshToken = resp.data.refreshToken;
+      const userJson = JSON.stringify(resp.data);
+
+      const cookieStore: any = (typeof window !== "undefined")
+        ? (window as any).cookieStore
+        : undefined;
+
+      if (cookieStore?.set) {
+        await Promise.all([
+          cookieStore.set("accessToken", accessToken),
+          cookieStore.set("refreshToken", refreshToken),
+          cookieStore.set("user", userJson),
+        ]);
+      } else {
+        // Fallback for browsers without Cookie Store API
+        try {
+          window.localStorage.setItem("accessToken", accessToken);
+          window.localStorage.setItem("refreshToken", refreshToken);
+          window.localStorage.setItem("user", userJson);
+        } catch {
+          // ignore
+        }
+        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; path=/`;
+        document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; path=/`;
+        document.cookie = `user=${encodeURIComponent(userJson)}; path=/`;
+      }
       console.log("Tokens stored, redirecting...");
       router.push("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
 
-      let errorMessage =
-        "Hubo un error al iniciar sesión. Por favor, intente nuevamente.";
+      let errorMessage = "Hubo un error al iniciar sesión. Por favor, intente nuevamente.";
+      let errorDescription = "";
+
       try {
-        if (error?.response) {
+        const statusCode = error?.response?.status;
+        
+        if (statusCode === 400 || statusCode === 401) {
+          errorMessage = "Credenciales incorrectas";
+          errorDescription = "El usuario o la contraseña ingresados no son válidos. Verifique sus datos e intente nuevamente.";
+        } else if (statusCode === 403) {
+          errorMessage = "Acceso denegado";
+          errorDescription = "Su cuenta no tiene permisos para acceder. Contacte al administrador.";
+        } else if (statusCode === 404) {
+          errorMessage = "Usuario no encontrado";
+          errorDescription = "No existe una cuenta con ese usuario o correo electrónico.";
+        } else if (statusCode === 429) {
+          errorMessage = "Demasiados intentos";
+          errorDescription = "Ha excedido el límite de intentos. Espere unos minutos antes de intentar nuevamente.";
+        } else if (statusCode >= 500) {
+          errorMessage = "Error del servidor";
+          errorDescription = "El servidor no está disponible en este momento. Intente más tarde.";
+        } else if (error?.response) {
           const errorData = await error.response.json();
           errorMessage = errorData?.message || errorMessage;
-        } else if (error?.message) {
-          errorMessage = error.message;
+        } else if (error?.message?.includes("fetch") || error?.message?.includes("network")) {
+          errorMessage = "Error de conexión";
+          errorDescription = "No se pudo conectar con el servidor. Verifique su conexión a internet.";
         }
       } catch (parseError) {
         console.error("Error parsing error response:", parseError);
       }
 
-      toast.error(errorMessage);
+      toast.error(errorMessage, {
+        description: errorDescription || undefined,
+        duration: 5000,
+      });
     }
   });
 

@@ -58,7 +58,7 @@ import { capitalizeText } from "@/lib/utils";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+import { fetchWithFallback } from "@/lib/ky";
 
 // Componente para mostrar observaciones
 function ObservationsPopover({ observations }: { observations: string[] }) {
@@ -275,8 +275,8 @@ export function LockerRoomControlManagement() {
       const formattedDate = format(fecha, "yyyy-MM-dd");
       const token = await window.cookieStore.get("accessToken");
 
-      const response = await fetch(
-        `${API_BASE_URL}/v1/1.0.0/locker-room-control/by-date-register-report?dateRegister=${formattedDate}&idLine=${selectedLine}`,
+      const response = await fetchWithFallback(
+        `/v1/1.0.0/locker-room-control/by-date-register-report?dateRegister=${formattedDate}&idLine=${selectedLine}`,
         {
           method: "GET",
           headers: {

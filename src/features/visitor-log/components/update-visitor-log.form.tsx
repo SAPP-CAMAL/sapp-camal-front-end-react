@@ -67,6 +67,7 @@ export function UpdateVisitorLogDialog({ visitor }: { visitor: any }) {
     exitTime: toLocalInputValue(visitor?.exitTime),
     observation: visitor?.observation ?? "",
     savedPerson: visitor?.person ?? null,
+    hasVehicle: visitor?.hasVehicle ?? false,
   };
 
   const form = useForm({ defaultValues });
@@ -94,6 +95,7 @@ export function UpdateVisitorLogDialog({ visitor }: { visitor: any }) {
           observation: data.observation,
         }),
         status: true,
+        hasVehicle: data.hasVehicle || false,
       });
 
       await queryClient.refetchQueries({

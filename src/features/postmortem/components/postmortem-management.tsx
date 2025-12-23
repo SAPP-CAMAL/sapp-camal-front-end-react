@@ -24,6 +24,10 @@ import {
   Settings,
   ChevronDown,
   BookText,
+  FileSpreadsheet,
+  FileText,
+  FileBarChart,
+  Calendar,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -39,6 +43,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
+} from "@/components/ui/dropdown-menu";
 import { AnimalSelectionModal } from "./animal-selection-modal";
 import { DatePicker } from "@/components/ui/date-picker";
 import { TotalConfiscationModal } from "./total-confiscation-modal";
@@ -71,6 +85,12 @@ import type {
 } from "../domain/certificates.types";
 import type { GetPostmortemByFiltersRequest } from "../domain/save-postmortem.types";
 import { useMemo, useEffect } from "react";
+import {
+  downloadPostmortemGeneralReport,
+  downloadDailyConfiscationReport,
+  downloadMonthlyConfiscationReport,
+} from "../server/db/postmortem-report.service";
+import { toast } from "sonner";
 
 export function PostmortemManagement() {
   const [rows, setRows] = useState<IntroductorRow[]>([
@@ -650,14 +670,124 @@ export function PostmortemManagement() {
               <Settings className="h-4 w-4 mr-1" />
               <span className="hidden lg:inline">Configuración</span>
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-teal-600 border-teal-600 bg-white hover:bg-teal-50 flex-1 sm:flex-none"
-            >
-              <Download className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Reportes</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-teal-600 border-teal-600 bg-white hover:bg-teal-50 flex-1 sm:flex-none"
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Reportes</span>
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (!selectedSpecieId) {
+                      toast.error("Selecciona una línea de producción");
+                      return;
+                    }
+                    toast.promise(
+                      downloadPostmortemGeneralReport({
+                        startDate: slaughterDate,
+                        endDate: slaughterDate,
+                        idSpecies: selectedSpecieId,
+                      }),
+                      {
+                        loading: "Generando reporte...",
+                        success: "Reporte descargado correctamente",
+                        error: "Error al descargar el reporte",
+                      }
+                    );
+                  }}
+                >
+                  <FileBarChart className="h-4 w-4 mr-2" />
+                  Reporte General
+                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Reporte Diario de Decomisos
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (!selectedSpecieId) {
+                            toast.error("Selecciona una línea de producción");
+                            return;
+                          }
+                          toast.promise(
+                            downloadDailyConfiscationReport({
+                              date: slaughterDate,
+                              idSpecies: selectedSpecieId,
+                              typeReport: "EXCEL",
+                            }),
+                            {
+                              loading: "Generando Excel...",
+                              success: "Excel descargado correctamente",
+                              error: "Error al descargar el Excel",
+                            }
+                          );
+                        }}
+                      >
+                        <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                        Descargar Excel
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (!selectedSpecieId) {
+                            toast.error("Selecciona una línea de producción");
+                            return;
+                          }
+                          toast.promise(
+                            downloadDailyConfiscationReport({
+                              date: slaughterDate,
+                              idSpecies: selectedSpecieId,
+                              typeReport: "PDF",
+                            }),
+                            {
+                              loading: "Generando PDF...",
+                              success: "PDF descargado correctamente",
+                              error: "Error al descargar el PDF",
+                            }
+                          );
+                        }}
+                      >
+                        <FileText className="h-4 w-4 mr-2 text-red-600" />
+                        Descargar PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (!selectedSpecieId) {
+                      toast.error("Selecciona una línea de producción");
+                      return;
+                    }
+                    // Extraer año y mes de la fecha seleccionada (YYYY-MM)
+                    const yearMonth = slaughterDate.substring(0, 7);
+                    toast.promise(
+                      downloadMonthlyConfiscationReport({
+                        date: yearMonth,
+                        idSpecies: selectedSpecieId,
+                      }),
+                      {
+                        loading: "Generando reporte mensual...",
+                        success: "Reporte mensual descargado correctamente",
+                        error: "Error al descargar el reporte mensual",
+                      }
+                    );
+                  }}
+                >
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  Reporte Mensual de Decomisos
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

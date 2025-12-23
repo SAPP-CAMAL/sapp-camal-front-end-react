@@ -29,7 +29,6 @@ export function ChartModern({ data }: ChartModernProps) {
     name: item.species,
     value: item.quantity,
     percentage: item.percentage,
-    amount: item.totalAmount,
   }));
 
   const onPieEnter = (_: unknown, index: number) => {
@@ -50,9 +49,6 @@ export function ChartModern({ data }: ChartModernProps) {
           </p>
           <p className="text-emerald-400">
             Porcentaje: <span className="font-bold">{payload[0].payload.percentage}%</span>
-          </p>
-          <p className="text-amber-400">
-            Total: <span className="font-bold">${payload[0].payload.amount}</span>
           </p>
         </div>
       );

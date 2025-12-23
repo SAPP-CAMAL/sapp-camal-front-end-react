@@ -10,12 +10,23 @@ export const saveConditionTransport = (request: ConditionTransportRequest) => {
 		.json<CreateOrUpdateHttpResponse<ConditionTransportResponse>>();
 };
 
-export const getConditionTransportByCertificateId = (certificateId: string) => {
-	return http
-		.get('v1/1.0.0/conditions-transport/by-certificate-id', {
-			searchParams: { certificateId },
-		})
-		.json<CreateOrUpdateHttpResponse<Partial<ConditionTransportResponse>>>();
+export const getConditionTransportByCertificateId = async (certificateId: string): Promise<CreateOrUpdateHttpResponse<Partial<ConditionTransportResponse>>> => {
+	try {
+		return await http
+			.get('v1/1.0.0/conditions-transport/by-certificate-id', {
+				searchParams: { certificateId },
+			})
+			.json<CreateOrUpdateHttpResponse<Partial<ConditionTransportResponse>>>();
+	} catch (error: unknown) {
+		// Si la API devuelve 400 con "NOT FOUND", retornar objeto vacío
+		if (error && typeof error === 'object' && 'response' in error) {
+			const httpError = error as { response: Response };
+			if (httpError.response?.status === 400) {
+				return { data: {}, code: 200, message: 'No records found' };
+			}
+		}
+		throw error;
+	}
 };
 
 export const updateConditionTransport = (conditionId: string, request: ConditionTransportRequest) => {

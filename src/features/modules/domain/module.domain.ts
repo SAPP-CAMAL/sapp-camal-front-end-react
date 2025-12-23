@@ -17,8 +17,8 @@ export type ResponseModuleWithMenus = (Module & {
 export type AdministrationMenu = {
     id: number;
     menuName: string;
-    url: null;
-    icon: null;
+    url: string | null;
+    icon: string | null;
     sequence: number;
     children: Child[];
 }
@@ -26,8 +26,8 @@ export type AdministrationMenu = {
 type Child = {
     id: number;
     menuName: string;
-    url: null;
-    icon: null;
+    url: string | null;
+    icon: string | null;
     sequence: number;
     permissions: string[];
 }

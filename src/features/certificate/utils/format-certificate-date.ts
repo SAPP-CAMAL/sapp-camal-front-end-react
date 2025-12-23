@@ -1,8 +1,18 @@
 import { parse, isValid } from 'date-fns';
 
-const POSSIBLE_INPUT_FORMATS = ['dd-MM-yyyy', 'yyyy-MM-dd', 'MM-dd-yyyy'];
-
-// const DESIRED_OUTPUT_FORMAT: string = 'dd-MM-yyyy'; // Example: 25-10-2025
+const POSSIBLE_INPUT_FORMATS = [
+	// Formatos con hora
+	'dd-MM-yyyy HH:mm:ss',
+	'dd-MM-yyyy HH:mm',
+	'yyyy-MM-dd HH:mm:ss',
+	'yyyy-MM-dd HH:mm',
+	"yyyy-MM-dd'T'HH:mm:ss",
+	"yyyy-MM-dd'T'HH:mm",
+	// Formatos solo fecha
+	'dd-MM-yyyy',
+	'yyyy-MM-dd',
+	'MM-dd-yyyy',
+];
 
 /**
  * Attempts to parse a date string using multiple formats and returns it in the desired output format.

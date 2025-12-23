@@ -61,6 +61,7 @@ export function NewVisitorLogForm() {
           observation: data.observation,
         }),
         status: true,
+        hasVehicle: data.hasVehicle || false,
       });
 
       await queryClient.refetchQueries({

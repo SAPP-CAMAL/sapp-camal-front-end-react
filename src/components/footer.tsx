@@ -1,16 +1,15 @@
 import Link from "next/link";
-import { Heart } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Copyright */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Copyright © {currentYear}</span>
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="flex flex-col items-center gap-3 sm:gap-4">
+          {/* Copyright - responsive */}
+          <div className="flex flex-wrap items-center justify-center gap-1 text-xs sm:text-sm text-muted-foreground text-center">
+            <span>© {currentYear}</span>
             <Link
               href="https://encuba.ec"
               target="_blank"
@@ -19,45 +18,46 @@ export function Footer() {
             >
               ENCUBA
             </Link>
-            <span>. Todos los derechos reservados.</span>
+            <span className="hidden xs:inline">.</span>
+            <span className="hidden sm:inline">Todos los derechos reservados.</span>
           </div>
 
-          {/* Divider - solo visible en desktop */}
-          <div className="hidden md:block h-4 w-px bg-border" />
-
-          {/* Additional info */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {/* <span>Desarrollado con</span>
-            <Heart className="h-4 w-4 text-red-500 fill-red-500 animate-pulse" /> */}
-            {/* <span>por</span> */}
-            <span className="font-semibold text-foreground">SAPP - Sistema de Automatización de Procesos Productivos</span>
+          {/* SAPP info - responsive */}
+          <div className="text-xs sm:text-sm text-muted-foreground text-center px-2">
+            <span className="font-semibold text-foreground block sm:inline">SAPP</span>
+            <span className="hidden sm:inline"> - </span>
+            <span className="block sm:inline text-[10px] sm:text-sm">
+              Sistema de Automatización de Procesos Productivos
+            </span>
           </div>
-        </div>
 
-        {/* Links adicionales - opcional */}
-        <div className="mt-4 pt-4 border-t flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-          <Link
-            href="/terminos"
-            className="hover:text-primary transition-colors"
-          >
-            Términos de uso
-          </Link>
-          <span>•</span>
-          <Link
-            href="/privacidad"
-            className="hover:text-primary transition-colors"
-          >
-            Política de privacidad
-          </Link>
-          <span>•</span>
-          <Link
-            href="/soporte"
-            className="hover:text-primary transition-colors"
-          >
-            Soporte técnico
-          </Link>
-          <span>•</span>
-          <span>Versión 1.0.0</span>
+          {/* Links - responsive grid para móvil */}
+          <div className="w-full pt-3 sm:pt-4 border-t">
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:gap-x-4 text-[10px] sm:text-xs text-muted-foreground">
+              <Link
+                href="/terminos"
+                className="hover:text-primary transition-colors"
+              >
+                Términos
+              </Link>
+              <span className="text-border">•</span>
+              <Link
+                href="/privacidad"
+                className="hover:text-primary transition-colors"
+              >
+                Privacidad
+              </Link>
+              <span className="text-border">•</span>
+              <Link
+                href="/soporte"
+                className="hover:text-primary transition-colors"
+              >
+                Soporte
+              </Link>
+              <span className="text-border hidden sm:inline">•</span>
+              <span className="hidden sm:inline">v1.0.0</span>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

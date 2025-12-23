@@ -52,3 +52,28 @@ export function createVisitorCompanyService(body: CreateCompanyBody) {
         .post("v1/1.0.0/visitor-company", { json: body })
         .json()
 }
+
+export interface VisitorLogReportBody {
+    page: number;
+    limit: number;
+    registerDate: string;
+    identification?: string;
+    fullName?: string;
+    idCompany?: number;
+}
+
+export async function downloadVisitorLogReport(
+    typeReport: "EXCEL" | "PDF",
+    body: VisitorLogReportBody
+): Promise<{ blob: Blob; filename: string }> {
+    const response = await http
+        .post(`v1/1.0.0/visitor-log/by-filters-report?typeReport=${typeReport}`, {
+            json: body,
+        })
+        .blob();
+
+    const extension = typeReport === "EXCEL" ? "xlsx" : "pdf";
+    const filename = `reporte-visitas-${body.registerDate}.${extension}`;
+
+    return { blob: response, filename };
+}

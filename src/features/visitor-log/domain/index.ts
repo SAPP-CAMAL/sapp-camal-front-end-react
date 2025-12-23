@@ -16,6 +16,7 @@ export interface CreateVisitorLogBody {
     exitTime?: string
     observation?: string,
     status: boolean
+    hasVehicle?: boolean
 }
 
 export type UpdateVisitorLogBody = Partial<CreateVisitorLogBody>;
