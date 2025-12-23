@@ -91,10 +91,10 @@ export const Step1Certificate = () => {
       />
 
       <AccordionContent>
-        <div className="space-y-4 px-4 pt-4">
+        <div className="space-y-3 sm:space-y-4 px-3 sm:px-4 pt-3 sm:pt-4">
           {/* Select certificate number */}
-          <div className="flex items-center justify-between">
-            <Label>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <Label className="text-sm">
               Seleccionar Nro de certificado
               <span className="text-red-500">*</span>
             </Label>
@@ -106,24 +106,24 @@ export const Step1Certificate = () => {
                   handleSetSelectedCertificate(qrData!)
                 }
                 triggerButton={
-                  <Button>
-                    <Plus />
-                    Crear Nuevo
+                  <Button size="sm" className="h-8 sm:h-9 text-xs sm:text-sm">
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden xs:inline ml-1">Crear Nuevo</span>
+                    <span className="xs:hidden ml-1">Nuevo</span>
                   </Button>
                 }
               />
 
               {/* Qr modal */}
               <QrCertificateModal
-                // extraSuccessInfoCard={<InfoCard />}
-                // onSetQrData={qrData => handleSetSelectedCertificate(qrData)}
                 renderSuccessButton={({ qrData, closeModal }) => (
                   <Button
-                    className=" hover:bg-primary hover:text-white"
+                    size="sm"
+                    className="hover:bg-primary hover:text-white h-8 sm:h-9 text-xs sm:text-sm"
                     onClick={() => handleSuccessButton(qrData, closeModal)}
                   >
-                    <CircleCheckBig />
-                    Finalizar
+                    <CircleCheckBig className="h-4 w-4" />
+                    <span className="ml-1">Finalizar</span>
                   </Button>
                 )}
               />
@@ -133,7 +133,7 @@ export const Step1Certificate = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              className="placeholder:text-muted-foreground pl-10"
+              className="placeholder:text-muted-foreground pl-10 h-9 sm:h-10 text-sm"
               placeholder="Buscar certificado por número..."
               value={certificateNumber.value}
               onChange={(e) =>
@@ -145,20 +145,22 @@ export const Step1Certificate = () => {
           {/* Results */}
           {certificateNumber.state === "loading" ||
           certificatesQuery.isFetching ? (
-            <Label className="opacity-50">Buscando certificados...</Label>
+            <Label className="opacity-50 text-xs sm:text-sm">
+              Buscando certificados...
+            </Label>
           ) : (
             <>
               {certificateNumber.value.length > 0 &&
                 certificates.length === 0 &&
                 !selectedCertificate && (
-                  <Label className="opacity-50">
+                  <Label className="opacity-50 text-xs sm:text-sm">
                     Certificados encontrados: 0
                   </Label>
                 )}
               {certificateNumber.value.length > 0 &&
                 certificates.length > 0 &&
                 !selectedCertificate && (
-                  <Label className="opacity-50">
+                  <Label className="opacity-50 text-xs sm:text-sm">
                     Certificados encontrados: {certificates.length}
                   </Label>
                 )}
@@ -182,15 +184,18 @@ export const Step1Certificate = () => {
                         handleSetSelectedCertificate(certificate!)
                       }
                       triggerButton={
-                        <Button variant="outline">
-                          <Edit />
-                          Editar
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs sm:text-sm"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="hidden sm:inline ml-1">Editar</span>
                         </Button>
                       }
                     />
                   )
                 }
-                // onRemove={!isFromQR ? handleRemoveSelectedCertificate : undefined}
                 onRemove={handleRemoveSelectedCertificate}
                 isSelected
               />
@@ -206,9 +211,13 @@ export const Step1Certificate = () => {
                       cert.plateVehicle && `• ${cert.plateVehicle}`
                     } • ${cert.placeOrigin}`}
                     editButton={
-                      <Button variant="outline">
-                        <Edit />
-                        Seleccionar
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs sm:text-sm"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span className="ml-1">Seleccionar</span>
                       </Button>
                     }
                     onSelect={() => handleSetSelectedCertificate(cert)}
@@ -226,32 +235,22 @@ export const Step1Certificate = () => {
               )}
           </div>
 
-          {/* Select  animal shipper */}
-          <div className="flex items-center justify-between">
+          {/* Select animal shipper */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Label>
-                Seleccionar Transportista de animales
+              <Label className="text-sm">
+                Seleccionar Transportista
                 <span className="text-red-500">*</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-4 h-4" />
-                  </TooltipTrigger>
-                  <TooltipContent side="right" align="center">
-                    Se muestran los transportistas registrados el día de hoy.
-                  </TooltipContent>
-                </Tooltip>
               </Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center">
+                  Se muestran los transportistas registrados el día de hoy.
+                </TooltipContent>
+              </Tooltip>
             </div>
-
-            {/* // ! Quitar posiblemente */}
-            {/* <ShipperModal
-              triggerButton={
-                <Button>
-                  <Plus />
-                  Crear Nuevo
-                </Button>
-              }
-            /> */}
           </div>
 
           {/* Selected shipper card */}
@@ -260,8 +259,20 @@ export const Step1Certificate = () => {
               title={selectedShipper.fullName}
               paragraph={`${selectedShipper.identification} • ${
                 selectedShipper.plate
-              } • ${toCapitalize(selectedShipper.vehicleType)}${selectedSpecie?.name ? ` • ${toCapitalize(selectedSpecie.name)}` : ''}${selectedShipper?.entryTime ? ` • Ingreso: ${selectedShipper.entryTime}` : ''}`}
-              onRemove={canEditDetailsRegisterVehicle ? handleRemoveSelectedShipper : undefined}
+              } • ${toCapitalize(selectedShipper.vehicleType)}${
+                selectedSpecie?.name
+                  ? ` • ${toCapitalize(selectedSpecie.name)}`
+                  : ""
+              }${
+                selectedShipper?.entryTime
+                  ? ` • Ingreso: ${selectedShipper.entryTime}`
+                  : ""
+              }`}
+              onRemove={
+                canEditDetailsRegisterVehicle
+                  ? handleRemoveSelectedShipper
+                  : undefined
+              }
               editButton={
                 selectedCertificate ? (
                   <ChangeShipperModal
@@ -291,17 +302,20 @@ export const Step1Certificate = () => {
                             shipping.vehicle.vehicleDetail.transportType.id.toString(),
                           transportType:
                             shipping.vehicle.vehicleDetail.transportType.name,
-                          entryTime: registerVehicle.timeStar || '',
+                          entryTime: registerVehicle.timeStar || "",
                           idDetailsRegisterVehicles: registerVehicle.id,
                         });
-
-                        // No establecer la especie del transportista, debe venir del certificado
                       }
                     }}
                     triggerButton={
-                      <Button variant="ghost">
-                        <Edit />
-                        Editar
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs sm:text-sm"
+                        title="Cambiar Transportista"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">Cambiar</span>
                       </Button>
                     }
                   />
@@ -312,9 +326,13 @@ export const Step1Certificate = () => {
                       handleSetSelectedShipper(shipper!)
                     }
                     triggerButton={
-                      <Button variant="ghost">
-                        <Edit />
-                        Editar
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs sm:text-sm"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">Editar</span>
                       </Button>
                     }
                   />
@@ -323,8 +341,8 @@ export const Step1Certificate = () => {
               isSelected
             />
           ) : !selectedCertificate ? (
-            <div className="text-center py-8 border rounded-lg bg-gray-50">
-              <Label className="opacity-50 ml-5">
+            <div className="text-center py-6 sm:py-8 border rounded-lg bg-gray-50">
+              <Label className="opacity-50 text-xs sm:text-sm">
                 Primero debe seleccionar un certificado
               </Label>
             </div>
@@ -335,7 +353,7 @@ export const Step1Certificate = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    className="placeholder:text-muted-foreground pl-10"
+                    className="placeholder:text-muted-foreground pl-10 h-9 sm:h-10 text-sm"
                     placeholder="Buscar por nombre, cédula o placa..."
                     value={shipperSearch}
                     onChange={(e) => setShipperSearch(e.target.value)}
@@ -345,15 +363,15 @@ export const Step1Certificate = () => {
 
               {/* List of today's shippers */}
               {isLoadingShippers ? (
-                <div className="text-center py-8">
-                  <Label className="opacity-50">
+                <div className="text-center py-6 sm:py-8">
+                  <Label className="opacity-50 text-xs sm:text-sm">
                     Cargando transportistas...
                   </Label>
                 </div>
               ) : filteredShippers.length > 0 ? (
                 <>
                   <div className="flex items-center justify-between">
-                    <Label className="opacity-50">
+                    <Label className="opacity-50 text-xs sm:text-sm">
                       {shipperSearch
                         ? `${filteredShippers.length} de ${shippers.length} transportistas`
                         : `Transportistas de hoy (${shippers.length})`}
@@ -365,19 +383,23 @@ export const Step1Certificate = () => {
                         onClick={() => setShipperSearch("")}
                         className="text-xs h-7"
                       >
-                        Limpiar búsqueda
+                        Limpiar
                       </Button>
                     )}
                   </div>
-                  <div className="grid gap-2 max-h-96 overflow-y-auto border rounded-lg p-2 bg-gray-50">
+                  <div className="grid gap-2 max-h-64 sm:max-h-96 overflow-y-auto border rounded-lg p-2 bg-gray-50">
                     {filteredShippers.map((shipper, index) => (
                       <BasicResultsCard
                         key={`${shipper.id}-${index}`}
                         title={shipper.person.fullName}
-                        paragraph={`${shipper.person.identification} • ${shipper.vehicle.plate} • ${toCapitalize(
+                        paragraph={`${shipper.person.identification} • ${
+                          shipper.vehicle.plate
+                        } • ${toCapitalize(
                           shipper.vehicle.vehicleDetail.vehicleType.name
                         )} • ${toCapitalize(shipper.specie.name)}${
-                          shipper.entryTime ? ` • Ingreso: ${shipper.entryTime}` : ""
+                          shipper.entryTime
+                            ? ` • Ingreso: ${shipper.entryTime}`
+                            : ""
                         }`}
                         onSelect={() => {
                           handleSetSelectedShipper({
@@ -399,20 +421,29 @@ export const Step1Certificate = () => {
                               shipper.vehicle.vehicleDetail.transportType.id.toString(),
                             transportType:
                               shipper.vehicle.vehicleDetail.transportType.name,
-                            entryTime: shipper.entryTime || '',
-                            idDetailsRegisterVehicles: shipper.idDetailsRegisterVehicles,
+                            entryTime: shipper.entryTime || "",
+                            idDetailsRegisterVehicles:
+                              shipper.idDetailsRegisterVehicles,
                           });
-                          setShipperSearch(""); // Limpiar búsqueda al seleccionar
-
-                          // No establecer la especie del transportista, debe venir del certificado
+                          // Actualizar la especie del transportista si se puede editar
+                          if (canEditDetailsRegisterVehicle && shipper.specie) {
+                            handleSetSelectedSpecie({
+                              id: shipper.specie.id,
+                              name: shipper.specie.name,
+                              description: shipper.specie.name,
+                              status: true,
+                              finishType: [],
+                            });
+                          }
+                          setShipperSearch("");
                         }}
                       />
                     ))}
                   </div>
                 </>
               ) : shippers.length > 0 ? (
-                <div className="text-center py-8 border rounded-lg bg-gray-50">
-                  <Label className="opacity-50">
+                <div className="text-center py-6 sm:py-8 border rounded-lg bg-gray-50">
+                  <Label className="opacity-50 text-xs sm:text-sm">
                     No se encontraron transportistas con "{shipperSearch}"
                   </Label>
                 </div>
@@ -427,15 +458,16 @@ export const Step1Certificate = () => {
 
           <div className="flex justify-end pt-2">
             <Button
-              className={cn("hover:bg-primary hover:text-white ", {
+              size="sm"
+              className={cn("h-9 sm:h-10 text-sm hover:bg-primary hover:text-white", {
                 "opacity-50 pointer-events-none":
                   !selectedCertificate || !selectedShipper,
               })}
               disabled={!selectedCertificate || !selectedShipper}
               onClick={handleSaveAndContinue}
             >
-              <Save />
-              Continuar
+              <Save className="h-4 w-4" />
+              <span className="ml-1">Continuar</span>
             </Button>
           </div>
         </div>
@@ -443,24 +475,3 @@ export const Step1Certificate = () => {
     </AccordionItem>
   );
 };
-
-const InfoCard = () => (
-  <div className="mt-2 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-    <div className="flex items-start">
-      <div className="flex-shrink-0">
-        <Info className="w-4 h-4 text-blue-700" />
-      </div>
-      <div className="ml-3">
-        <p className="text-sm text-blue-800 font-medium mb-1">
-          Lógica del botón "Seleccionar":
-        </p>
-        <ul className="text-xs text-blue-700 space-y-1">
-          <li>
-            • Selecciona el <strong>certificado escaneado</strong> y carga los
-            datos del transportista asociados a la placa.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-);

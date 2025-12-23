@@ -14,9 +14,12 @@ import {
   ResponseBrandDetails
 } from "@/features/corrals/domain";
 
+// Obtener la URL base de la API desde las variables de entorno
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 // Create a silent HTTP client for brand details that won't log errors
 const silentHttp = ky.create({
-  prefixUrl: "http://localhost:3001/sappriobamba",
+  prefixUrl: API_BASE_URL,
   credentials: "include",
   retry: 0,
   hooks: {
@@ -55,7 +58,7 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
   try {
     // Get the correct ID for the line type
     const targetId = getLineaIdFromType(lineaType);
-    
+
     // Try to get all lines first
     const response = await http.get("v1/1.0.0/line/all", {
       next: {
@@ -78,7 +81,7 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
 
     // PRIORITY 1: Find by exact ID match (most reliable)
     const lineById = activeLines.find((line: any) => line.id === targetId);
-    
+
     if (lineById) {
       return {
         code: 200,
@@ -90,7 +93,7 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
     // PRIORITY 2: If ID not found, try by specie ID
     const specieId = targetId; // In this system, line ID = specie ID
     const lineBySpecieId = activeLines.find((line: any) => line.idSpecie === specieId);
-    
+
     if (lineBySpecieId) {
       return {
         code: 200,
@@ -120,8 +123,8 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
       const name = (line.name || '').toLowerCase();
       const specieName = (line.specie?.name || '').toLowerCase();
       const specieDescription = (line.specie?.description || '').toLowerCase();
-      
-      return description.includes(searchTerm) || 
+
+      return description.includes(searchTerm) ||
              name.includes(searchTerm) ||
              specieName.includes(searchTerm) ||
              specieDescription.includes(searchTerm);

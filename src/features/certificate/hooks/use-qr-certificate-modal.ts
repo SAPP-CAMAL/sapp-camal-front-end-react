@@ -175,7 +175,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 			const request = {
 				code: qrModalState.qrData.code,
 				placeOrigin: qrModalState.qrData.placeOrigin || 'N/A',
-				issueDate: issueDate.toISOString().split('T')[0],
+				issueDate: issueDate.toISOString(),
 				quantity: qrModalState.qrData.quantity,
 				plateVehicle: qrModalState.qrData.plateVehicle,
 				authorizedTo: qrModalState.qrData.authorizedTo,

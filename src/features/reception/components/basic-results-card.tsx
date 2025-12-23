@@ -1,55 +1,71 @@
-import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
-	className?: string;
-	leftBlockClass?: string;
-	isSelected?: boolean;
-	title?: string;
-	paragraph?: string;
-	editButton?: React.ReactNode;
-	onSelect?: (e: React.MouseEvent) => void;
-	onRemove?: (e: React.MouseEvent) => void;
+  className?: string;
+  leftBlockClass?: string;
+  isSelected?: boolean;
+  title?: string;
+  paragraph?: string;
+  editButton?: React.ReactNode;
+  onSelect?: (e: React.MouseEvent) => void;
+  onRemove?: (e: React.MouseEvent) => void;
 }
 
-const defaultStyle = 'bg-gray-50 p-4 rounded-lg border';
-const selectedStyle = 'hover:bg-gray-100 cursor-pointer transition-colors';
+const defaultStyle = "bg-gray-50 p-3 sm:p-4 rounded-lg border";
+const selectedStyle = "hover:bg-gray-100 cursor-pointer transition-colors";
 
 export const BasicResultsCard = ({
-	className,
-	onSelect,
-	onRemove,
-	leftBlockClass = 'flex flex-col gap-1',
-	isSelected = false,
-	title = '',
-	paragraph = '',
-	editButton,
+  className,
+  onSelect,
+  onRemove,
+  leftBlockClass = "flex flex-col gap-0.5 sm:gap-1",
+  isSelected = false,
+  title = "",
+  paragraph = "",
+  editButton,
 }: Props) => {
-	return (
-		<div className={cn(defaultStyle, isSelected && selectedStyle, className)} onClick={onSelect}>
-			<div className='flex items-center justify-between'>
-				<div className={cn(leftBlockClass)}>
-					{isSelected ? <Badge >{title}</Badge> : <p className='font-medium'>{title}</p>}
-					<p className='text-sm text-gray-600'>{paragraph}</p>
-				</div>
+  return (
+    <div
+      className={cn(defaultStyle, isSelected && selectedStyle, className)}
+      onClick={onSelect}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+        <div className={cn(leftBlockClass, "min-w-0 flex-1")}>
+          {isSelected ? (
+            <Badge className="w-fit text-xs">{title}</Badge>
+          ) : (
+            <p className="font-medium text-sm sm:text-base truncate">{title}</p>
+          )}
+          <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">
+            {paragraph}
+          </p>
+        </div>
 
-				{isSelected ? (
-					<div className='flex gap-2'>
-						{editButton}
+        {isSelected ? (
+          <div className="flex gap-2 flex-shrink-0 self-end sm:self-center">
+            {editButton}
 
-						{onRemove && (
-							<Button variant='outline' className='text-red-600 hover:text-red-600 hover:border-red-300' onClick={onRemove}>
-								<X />
-								Quitar
-							</Button>
-						)}
-					</div>
-				) : (
-					editButton
-				)}
-			</div>
-		</div>
-	);
+            {onRemove && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-600 hover:border-red-300 h-8 sm:h-9"
+                onClick={onRemove}
+              >
+                <X className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Quitar</span>
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="flex-shrink-0 self-end sm:self-center">
+            {editButton}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };

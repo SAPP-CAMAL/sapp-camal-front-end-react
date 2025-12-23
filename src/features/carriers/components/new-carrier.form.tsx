@@ -365,7 +365,7 @@ export function NewCarrier({
       }}
     >
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="min-w-6xl max-h-[90vh] flex flex-col">
+      <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {isUpdate ? "Editar Transportista" : "Crear Nuevo Transportista"}
@@ -396,7 +396,7 @@ export function NewCarrier({
                     Buscar Persona
                   </Label>
 
-                  <div className="grid grid-cols-2 gap-x-4 w-full mt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-x-4 w-full mt-4">
                     <div className="flex flex-col w-full">
                       <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
@@ -528,7 +528,7 @@ export function NewCarrier({
                     <Label className="text-base font-medium">
                       Vehículo para transportar
                     </Label>
-                    <div className="flex items-center gap-x-6">
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-x-6">
                       {catalogueTransportsType.data?.data.map(
                         (transport, index) => (
                           <Label
@@ -558,7 +558,7 @@ export function NewCarrier({
               {selectedTransportIds.length > 0 && (
                 <div className="space-y-4 pt-2 border-t border-gray-100">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <Label className="text-base font-medium">
                         Buscar Vehículo Existente
                       </Label>
@@ -567,7 +567,7 @@ export function NewCarrier({
                         variant="outline"
                         size="sm"
                         onClick={() => setShowCreateVehicle(true)}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 w-full sm:w-auto"
                         disabled={showCreateVehicle}
                       >
                         <PlusIcon className="h-4 w-4" />
@@ -598,20 +598,18 @@ export function NewCarrier({
                             key={index}
                             className="bg-gray-50 p-3 rounded-md border border-gray-200"
                           >
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center gap-4">
-                                <p className="font-medium">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                                <p className="font-medium whitespace-nowrap">
                                   {vehicle.plate} -{" "}
                                   {vehicle.brand + "-" + vehicle.model}
                                 </p>
-                                <p className="text-sm text-foreground">
+                                <p className="text-sm text-foreground truncate">
                                   {vehicle.vehicleDetail?.vehicleType?.name} •{" "}
                                   {vehicle.color} • {vehicle.manufactureYear} •{" "}
                                   {vehicle.vehicleDetail?.transportType?.name}
                                 </p>
-                                <p>
-                                  <Badge variant="default">Activo</Badge>
-                                </p>
+                                <Badge variant="default" className="w-fit">Activo</Badge>
                               </div>
                               <Button
                                 type="button"
@@ -622,7 +620,7 @@ export function NewCarrier({
                                     prev.filter((_, i) => i !== index)
                                   )
                                 }
-                                className="text-xs text-muted-foreground hover:text-foreground"
+                                className="text-xs text-muted-foreground hover:text-foreground self-end sm:self-auto"
                               >
                                 <XIcon className="h-4 w-4" />
                               </Button>
@@ -760,7 +758,7 @@ export function NewCarrier({
           </Card>
         </div>
 
-        <div className="flex justify-end gap-x-2 pt-4 border-t border-gray-100 flex-shrink-0">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t border-gray-100 flex-shrink-0">
           <Button
             type="button"
             variant={"outline"}

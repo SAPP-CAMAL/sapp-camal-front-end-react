@@ -27,12 +27,23 @@ export const deleteCertBrand = (settingCertBrandId: string) => {
 	return http.delete(`v1/1.0.0/setting-cert-brand/${settingCertBrandId}`);
 };
 
-export const getCertBrandByCertificateId = (certificateId: string) => {
-	return http
-		.get('v1/1.0.0/setting-cert-brand/by-certificate-id', {
-			searchParams: { certificateId },
-		})
-		.json<CommonHttpResponse<SettingCertBrandByCertificateId>>();
+export const getCertBrandByCertificateId = async (certificateId: string): Promise<CommonHttpResponse<SettingCertBrandByCertificateId>> => {
+	try {
+		return await http
+			.get('v1/1.0.0/setting-cert-brand/by-certificate-id', {
+				searchParams: { certificateId },
+			})
+			.json<CommonHttpResponse<SettingCertBrandByCertificateId>>();
+	} catch (error: unknown) {
+		// Si la API devuelve 400 con "NOT FOUND", retornar array vacío
+		if (error && typeof error === 'object' && 'response' in error) {
+			const httpError = error as { response: Response };
+			if (httpError.response?.status === 400) {
+				return { data: [] as SettingCertBrandByCertificateId[], code: 200, message: 'No records found' };
+			}
+		}
+		throw error;
+	}
 };
 
 export const getCertBrandById = (id: number | string) => {
@@ -43,12 +54,23 @@ export const getCertBrandById = (id: number | string) => {
 		.json<CreateOrUpdateHttpResponse<SettingCertBrandByID>>();
 };
 
-export const getSimpleSettingCertBrandByCertificateId = (id: number | string) => {
-	return http
-		.get('v1/1.0.0/setting-cert-brand/registers/by-certificate-id', {
-			searchParams: { certificateId: id.toString() },
-		})
-		.json<CommonHttpResponse<SaveCertificateBrandResponse>>();
+export const getSimpleSettingCertBrandByCertificateId = async (id: number | string): Promise<CommonHttpResponse<SaveCertificateBrandResponse>> => {
+	try {
+		return await http
+			.get('v1/1.0.0/setting-cert-brand/registers/by-certificate-id', {
+				searchParams: { certificateId: id.toString() },
+			})
+			.json<CommonHttpResponse<SaveCertificateBrandResponse>>();
+	} catch (error: unknown) {
+		// Si la API devuelve 400 con "NOT FOUND", retornar array vacío
+		if (error && typeof error === 'object' && 'response' in error) {
+			const httpError = error as { response: Response };
+			if (httpError.response?.status === 400) {
+				return { data: [] as SaveCertificateBrandResponse[], code: 200, message: 'No records found' };
+			}
+		}
+		throw error;
+	}
 };
 
 export const validateSettingCertBrandCodesGeneration = (idSpecies: number | string, admissionDate: string) => {

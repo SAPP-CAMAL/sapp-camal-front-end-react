@@ -58,6 +58,8 @@ import { capitalizeText } from "@/lib/utils";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
 
+import { fetchWithFallback } from "@/lib/ky";
+
 // Componente para mostrar observaciones
 function ObservationsPopover({ observations }: { observations: string[] }) {
   if (!observations || observations.length === 0) {
@@ -273,8 +275,8 @@ export function LockerRoomControlManagement() {
       const formattedDate = format(fecha, "yyyy-MM-dd");
       const token = await window.cookieStore.get("accessToken");
 
-      const response = await fetch(
-        `http://localhost:3001/sappriobamba/v1/1.0.0/locker-room-control/by-date-register-report?dateRegister=${formattedDate}&idLine=${selectedLine}`,
+      const response = await fetchWithFallback(
+        `/v1/1.0.0/locker-room-control/by-date-register-report?dateRegister=${formattedDate}&idLine=${selectedLine}`,
         {
           method: "GET",
           headers: {
