@@ -44,8 +44,9 @@ import {
   useDeleteAnimalWeighing,
   useWeighingStages,
   useChannelTypes,
-  // useChannelSectionsByType,
-  // useUnitMeasure,
+  useChannelSectionsByType,
+  useUnitMeasure,
+  useHookTypesBySpecie,
 } from "../hooks";
 import type { ProductType, AnimalWeighingRow, WeighingStage } from "../domain";
 import {
@@ -163,23 +164,18 @@ export function AnimalWeighingManagement() {
   const { data: channelTypesData, isLoading: isLoadingChannelTypes } =
     useChannelTypes();
   
-  // TODO: Comentado temporalmente - agregar nueva API
-  // const { data: channelSectionsData, isLoading: isLoadingChannelSections } =
-  //   useChannelSectionsByType(selectedChannelTypeId);
-  const channelSectionsData = undefined as { data: Array<{ id: number; sectionCode: string; description: string }> } | undefined;
-  const isLoadingChannelSections = false;
+  const { data: channelSectionsData, isLoading: isLoadingChannelSections } =
+    useChannelSectionsByType(selectedChannelTypeId);
 
-  // TODO: Comentado temporalmente - agregar nueva API
-  // const { data: mediaCanalSections } = useChannelSectionsByType(1); // Media Canal
-  // const { data: canalSections } = useChannelSectionsByType(2); // Canal
-  // const { data: cuartaSections } = useChannelSectionsByType(3); // Cuarta
-  const mediaCanalSections = undefined as { data: Array<{ id: number; sectionCode: string; description: string }> } | undefined;
-  const canalSections = undefined as { data: Array<{ id: number; sectionCode: string; description: string }> } | undefined;
-  const cuartaSections = undefined as { data: Array<{ id: number; sectionCode: string; description: string }> } | undefined;
+  const { data: mediaCanalSections } = useChannelSectionsByType(1); // Media Canal
+  const { data: canalSections } = useChannelSectionsByType(2); // Canal
+  const { data: cuartaSections } = useChannelSectionsByType(3); // Cuarta
 
-  // TODO: Comentado temporalmente - agregar nueva API
-  // const { data: unitMeasureData } = useUnitMeasure();
-  const unitMeasureData = undefined as { data: { id: number; code: string; symbol: string } | null } | undefined;
+  const { data: unitMeasureData } = useUnitMeasure();
+
+  // Hook para obtener tipos de gancho por especie
+  const { data: hookTypesData, isLoading: isLoadingHookTypes } =
+    useHookTypesBySpecie(selectedSpecieId);
 
   // Seleccionar Bovinos por defecto
   useEffect(() => {
@@ -203,13 +199,13 @@ export function AnimalWeighingManagement() {
     }
   }, [weighingStagesData]);
 
-  // TODO: Gancho removido - agregar nueva API si es necesario
-  // useEffect(() => {
-  //   if (hookTypesData?.data && hookTypesData.data.length > 0 && weighingStageId !== 1) {
-  //     const firstHook = hookTypesData.data[0];
-  //     setSelectedHook(firstHook.id);
-  //   }
-  // }, [hookTypesData, weighingStageId]);
+  // Seleccionar automáticamente el primer gancho cuando se carguen
+  useEffect(() => {
+    if (hookTypesData?.data && hookTypesData.data.length > 0 && weighingStageId !== 1) {
+      const firstHook = hookTypesData.data[0];
+      setSelectedHook(firstHook.id);
+    }
+  }, [hookTypesData, weighingStageId]);
 
   // Seleccionar automáticamente el primer tipo de canal cuando se carguen
   useEffect(() => {
@@ -794,13 +790,12 @@ export function AnimalWeighingManagement() {
     let grossWeightDisplay = netWeightDisplay;
     let hookWeightDisplay = 0;
 
-    // TODO: Gancho removido - agregar nueva API si es necesario
-    // if (weighingStageId !== 1 && selectedHook) {
-    //   const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
-    //   const hookWeightKg = selectedHookData ? parseFloat(selectedHookData.weight) : 0;
-    //   hookWeightDisplay = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
-    //   grossWeightDisplay = netWeightDisplay + hookWeightDisplay;
-    // }
+    if (weighingStageId !== 1 && selectedHook) {
+      const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
+      const hookWeightKg = selectedHookData ? parseFloat(selectedHookData.weight) : 0;
+      hookWeightDisplay = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
+      grossWeightDisplay = netWeightDisplay + hookWeightDisplay;
+    }
 
     try {
       // Obtener el ID de la unidad de medida desde la API
@@ -907,15 +902,15 @@ export function AnimalWeighingManagement() {
       const weightFromScale = currentWeight.value;
       let weightToDisplay = isLbUnit ? convertKgToLb(weightFromScale) : weightFromScale;
 
-      // TODO: Gancho removido - agregar nueva API si es necesario
-      // if (weighingStageId !== 1 && selectedHook) {
-      //   const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
-      //   if (selectedHookData) {
-      //     const hookWeightKg = parseFloat(selectedHookData.weight);
-      //     const hookWeightInUnit = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
-      //     weightToDisplay = weightToDisplay - hookWeightInUnit;
-      //   }
-      // }
+      // Restar el peso del gancho si aplica (no es EN PIE y hay gancho seleccionado)
+      if (weighingStageId !== 1 && selectedHook) {
+        const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
+        if (selectedHookData) {
+          const hookWeightKg = parseFloat(selectedHookData.weight);
+          const hookWeightInUnit = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
+          weightToDisplay = weightToDisplay - hookWeightInUnit;
+        }
+      }
 
       // Evitar capturas duplicadas del mismo peso
       const roundedWeight = Math.round(weightToDisplay * 100) / 100;
@@ -939,7 +934,7 @@ export function AnimalWeighingManagement() {
       
       toast.success(message);
     }
-  }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData, weighingStageId, selectedHook]);
+  }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData, weighingStageId, selectedHook, hookTypesData]);
 
   // Calcular pesos a mostrar (en la unidad configurada)
   const rowsWithDisplayWeight = useMemo(() => {
@@ -1304,20 +1299,59 @@ export function AnimalWeighingManagement() {
         </div>
       </Card>
 
-      {/* TODO: Ganchos removido - agregar nueva API si es necesario */}
-      {/* {weighingStageId !== null && weighingStageId !== 1 && (
+      {/* Ganchos - Solo mostrar cuando weighingStageId !== 1 (no es EN PIE) */}
+      {weighingStageId !== null && weighingStageId !== 1 && (
       <Card className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
           <Label className="whitespace-nowrap font-semibold">Ganchos:</Label>
+
+          {/* Versión móvil - Select */}
           <div className="block lg:hidden w-full">
-            ...
+            {isLoadingHookTypes ? (
+              <span className="text-sm text-muted-foreground">Cargando...</span>
+            ) : (
+              <Select
+                value={selectedHook?.toString()}
+                onValueChange={(value) => handleHookSelect(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione gancho" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hookTypesData?.data.map((hook) => (
+                    <SelectItem key={hook.id} value={hook.id.toString()}>
+                      {hook.name} ({hook.weight} kg)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
+
+          {/* Versión desktop - Botones */}
           <div className="hidden lg:flex flex-wrap gap-2 w-full sm:w-auto">
-            ...
+            {isLoadingHookTypes ? (
+              <span className="text-sm text-muted-foreground">
+                Cargando...
+              </span>
+            ) : (
+              hookTypesData?.data.map((hook) => (
+                <Button
+                  key={hook.id}
+                  variant={selectedHook === hook.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleHookSelect(hook.id)}
+                  className="flex-1 sm:flex-initial min-w-[80px]"
+                >
+                  {hook.name}{" "}
+                  <span className="text-xs ml-1">({hook.weight} kg)</span>
+                </Button>
+              ))
+            )}
           </div>
         </div>
       </Card>
-      )} */}
+      )}
 
       {/* Tipo de Canal - Solo mostrar cuando weighingStageId !== 1 (no es EN PIE) */}
       {weighingStageId !== null && weighingStageId !== 1 && (
