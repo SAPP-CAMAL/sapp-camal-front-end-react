@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       # PASO 1: Crear .env para el Build (Vital para NEXT_PUBLIC_*)
       - name: Create .env file for Build
@@ -28,7 +27,7 @@ jobs:
           echo "${{ secrets.ENV_FILE_FRONTEND_BASE64 }}" | base64 -d > .env
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --include=optional
 
       - name: Build
         # Ya no necesitamos pasar variables 'env' aquí manuales,
