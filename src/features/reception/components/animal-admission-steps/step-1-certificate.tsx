@@ -308,19 +308,15 @@ export const Step1Certificate = () => {
                       }
                     }}
                     triggerButton={
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-xs sm:text-sm"
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="hidden sm:inline ml-1">Cambiar</span>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Cambiar Transportista</TooltipContent>
-                      </Tooltip>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs sm:text-sm"
+                        title="Cambiar Transportista"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">Cambiar</span>
+                      </Button>
                     }
                   />
                 ) : (
