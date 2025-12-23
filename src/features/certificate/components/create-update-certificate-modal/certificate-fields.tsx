@@ -1,5 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useAllOrigins } from '@/features/origin/hooks';
 import { DatePicker } from '@/components/ui/date-picker';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -108,6 +109,27 @@ export const CertificateFields = () => {
 							</SelectContent>
 						</Select>
 
+						<FormMessage />
+					</FormItem>
+				)}
+			/>
+
+			{/* commentary - Descripción */}
+			<FormField
+				control={form.control}
+				name='commentary'
+				render={({ field }) => (
+					<FormItem>
+						<FormLabel>Descripción</FormLabel>
+						<FormControl>
+							<Textarea
+								className='bg-secondary resize-none'
+								placeholder='Ingrese una descripción o comentario (opcional)'
+								rows={3}
+								{...field}
+								value={field.value || ''}
+							/>
+						</FormControl>
 						<FormMessage />
 					</FormItem>
 				)}

@@ -52,4 +52,6 @@ export interface Certificate {
 	idDetailsRegisterVehicles?: number;
 	/** The details register vehicle associated with the certificate. */
 	detailsRegisterVehicle?: DetailRegisterVehicle;
+	/** Commentary or description for the certificate. */
+	commentary?: string;
 }
