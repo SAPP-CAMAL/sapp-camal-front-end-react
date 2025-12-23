@@ -99,6 +99,7 @@ export const Step3Transport = () => {
 							control={form.control}
 							name='ownMedium'
 							rules={{ required: { value: true, message: 'La condición de arribo es requerida' } }}
+							defaultValue='si'
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel> ¿Se moviliza por propio medio?</FormLabel>
@@ -108,7 +109,7 @@ export const Step3Transport = () => {
 												<div key={option} className='flex items-center space-x-2'>
 													<Label>
 														<Checkbox
-															checked={field.value === option.toLowerCase()}
+															checked={(field.value || 'si') === option.toLowerCase()}
 															onCheckedChange={checked => {
 																if (checked) field.onChange(option.toLowerCase());
 															}}
