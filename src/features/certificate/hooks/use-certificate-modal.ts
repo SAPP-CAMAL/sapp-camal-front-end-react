@@ -11,6 +11,7 @@ const defaultValues: CertificateFormValues = {
 	code: '',
 	idOrigin: '',
 	quantity: 0,
+	commentary: '',
 	issueDate: (() => {
 		const today = new Date();
 		return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`;
@@ -86,6 +87,7 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 					authorizedTo: baseCertificateData.authorizedTo ?? '',
 					originAreaCode: baseCertificateData.originAreaCode ?? '',
 					destinationAreaCode: baseCertificateData.destinationAreaCode ?? '',
+					commentary: baseCertificateData.commentary ?? '',
 					status: true,
 				});
 

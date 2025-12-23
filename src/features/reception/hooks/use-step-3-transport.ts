@@ -1,5 +1,4 @@
 import { toast } from 'sonner';
-import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useReceptionContext } from './use-reception-context';
 import { useAllBedType } from '@/features/bed-type/hooks';
@@ -16,17 +15,21 @@ export type AnimalTransportForm = {
 	commentary?: string;
 };
 
-const defaultValues: AnimalTransportForm = {};
+const defaultValues: AnimalTransportForm = {
+	ownMedium: 'si',
+};
 
 export const useStep3Transport = () => {
 	const { isCompleted } = useStep2Animals();
 	const { step3Accordion, animalTransportData, selectedCertificate, handleSetAccordionState, handleResetState } = useReceptionContext();
 
-	const form = useForm<AnimalTransportForm>({ defaultValues });
+	const form = useForm<AnimalTransportForm>({ 
+		defaultValues,
+		values: animalTransportData ? { ...defaultValues, ...animalTransportData } : defaultValues,
+	});
 
-	useEffect(() => {
-		if (animalTransportData) form.reset(animalTransportData);
-	}, [animalTransportData]);
+	// El useEffect ya no es necesario porque usamos 'values' en useForm
+	// que se actualiza automáticamente cuando cambia animalTransportData
 
 	const bedTypeQuery = useAllBedType();
 	const arrivalConditionsQuery = useAllArrivalConditions();
