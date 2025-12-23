@@ -60,11 +60,14 @@ export function FiscalizationManagement() {
       }),
   });
 
+  const [searchInput, setSearchInput] = useState(searchParams.search);
+
   const debounceSearch = useDebouncedCallback((text: string) => {
     setSearchParams({ search: text, page: 1 });
   }, 500);
 
   const handleClearSearch = () => {
+    setSearchInput("");
     setSearchParams({ search: "", page: 1 });
   };
 
@@ -160,8 +163,11 @@ export function FiscalizationManagement() {
                     type="text"
                     placeholder="Buscar..."
                     className="pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
-                    defaultValue={searchParams.search}
-                    onChange={(e) => debounceSearch(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => {
+                      setSearchInput(e.target.value);
+                      debounceSearch(e.target.value);
+                    }}
                   />
                 </div>
                 <Button
@@ -187,7 +193,7 @@ export function FiscalizationManagement() {
               </label>
               <Button
                 variant="outline"
-                className="border-primary text-primary hover:text-primary hover:border-primary hover:bg-primary"
+                className="border-primary text-primary hover:text-primary hover:border-primary hover:bg-primary w-fit"
                 onClick={handleDownloadExcel}
                 disabled={isDownloading}
               >

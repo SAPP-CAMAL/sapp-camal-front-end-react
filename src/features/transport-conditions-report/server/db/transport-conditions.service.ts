@@ -11,7 +11,7 @@ export async function getTransportConditionsService(filters: TransportConditions
     if (filters.specieId) cleanFilters.specieId = filters.specieId;
 
     const response = await http
-      .post('v1/1.0.0/conditions-transport/by-filters', {
+      .post('v1/1.0.0/certificate/by-filters', {
         json: cleanFilters,
       })
       .json<any>();
@@ -22,8 +22,7 @@ export async function getTransportConditionsService(filters: TransportConditions
 
     return [];
   } catch (error: any) {
-    // Si el endpoint no existe (404) o hay error de servidor, retornar array vacío
-    console.warn('Endpoint de condiciones de transporte no disponible:', error?.message || error);
+    console.warn('Error al obtener certificados:', error?.message || error);
     return [];
   }
 }
@@ -41,7 +40,7 @@ export async function downloadTransportConditionsReport(
   typeReport: 'EXCEL' | 'PDF'
 ) {
   try {
-    const response = await http.post('v1/1.0.0/conditions-transport/report-by-filters', {
+    const response = await http.post('v1/1.0.0/certificate/report-by-filters', {
       searchParams: { typeReport },
       json: {
         startDate: filters.startDate,
