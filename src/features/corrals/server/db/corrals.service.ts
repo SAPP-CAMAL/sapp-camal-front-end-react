@@ -14,9 +14,12 @@ import {
   ResponseBrandDetails
 } from "@/features/corrals/domain";
 
+// Obtener la URL base de la API desde las variables de entorno
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 // Create a silent HTTP client for brand details that won't log errors
 const silentHttp = ky.create({
-  prefixUrl: "http://localhost:3000",
+  prefixUrl: API_BASE_URL,
   credentials: "include",
   retry: 0,
   hooks: {

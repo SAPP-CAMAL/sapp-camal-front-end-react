@@ -47,6 +47,7 @@ import {
   Calendar,
   CalendarDays,
   PawPrint,
+  User,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -143,6 +144,7 @@ export function TransportConditionsManagement() {
   const totals = useMemo(
     () => ({
       registros: apiData.length,
+      totalAnimales: apiData.reduce((acc, item) => acc + (item.quantity || 0), 0),
     }),
     [apiData]
   );
@@ -153,52 +155,77 @@ export function TransportConditionsManagement() {
       <CardContent className="p-3 sm:p-4 space-y-2 sm:space-y-3">
         <div className="flex justify-between items-start border-b pb-2 sm:pb-3">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-green-600" />
+            <Calendar className="h-4 w-4 text-primary" />
             <div className="font-semibold text-sm">
-              {item.entryDate ? format(parseISO(item.entryDate), "dd/MM/yyyy") : "N/A"}
+              {item.issueDate ? format(parseISO(item.issueDate), "dd/MM/yyyy") : "N/A"}
             </div>
           </div>
-          {item.ownMobilization ? (
-            <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
-              <Check className="h-3 w-3 mr-1" /> Mov. Propia
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="text-xs">
-              <X className="h-3 w-3 mr-1" /> Sin Mov. Propia
-            </Badge>
-          )}
+          <Badge variant="outline" className="text-xs">
+            {item.code || "N/A"}
+          </Badge>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-          <div className="flex items-center gap-2">
-            <Truck className="h-4 w-4 text-muted-foreground" />
-            <div className="flex-1 min-w-0">
-              <div className="text-xs text-muted-foreground">Transportista</div>
-              <div className="text-sm font-medium truncate">{item.carrierName || "N/A"}</div>
-            </div>
-          </div>
-
-          <div className="bg-muted/50 rounded-lg p-2 sm:p-3 space-y-1.5 sm:space-y-2 sm:col-span-2">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="text-xs text-muted-foreground block">Tipo de Cama</span>
-                <Badge variant="secondary" className="text-xs mt-0.5">{item.bedType || "N/A"}</Badge>
+          {item.shipping?.person && (
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-muted-foreground">Transportista</div>
+                <div className="text-sm font-medium truncate">{item.shipping.person.fullName}</div>
+                <div className="text-xs text-muted-foreground">CI: {item.shipping.person.identification}</div>
               </div>
-              <div>
-                <span className="text-xs text-muted-foreground block">Condiciones de Arribo</span>
-                <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 text-xs mt-0.5">
-                  {item.arrivalConditions || "N/A"}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {item.observations && (
-            <div className="sm:col-span-2">
-              <div className="text-xs text-muted-foreground">Observaciones</div>
-              <div className="text-sm text-muted-foreground/80">{item.observations}</div>
             </div>
           )}
+
+          {item.shipping?.vehicle && (
+            <div className="flex items-center gap-2">
+              <Truck className="h-4 w-4 text-muted-foreground" />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-muted-foreground">Placa</div>
+                <div className="text-sm font-medium">{item.shipping.vehicle.plate}</div>
+              </div>
+            </div>
+          )}
+
+          {item.conditionsTransport && item.conditionsTransport.length > 0 && (
+            <div className="sm:col-span-2">
+              <div className="text-xs text-muted-foreground mb-2">Condiciones de Transporte</div>
+              <div className="space-y-2">
+                {item.conditionsTransport.map((condition: any, idx: number) => (
+                  <div key={idx} className="bg-blue-50 p-2 rounded text-xs space-y-1">
+                    <div className="flex justify-between">
+                      <span><span className="font-medium">Cama:</span> {condition.bedType?.description || "N/A"}</span>
+                      <span>
+                        {condition.ownMedium ? (
+                          <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
+                            <Check className="h-3 w-3 mr-1" /> Medio Propio
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            <X className="h-3 w-3 mr-1" /> Sin Medio Propio
+                          </Badge>
+                        )}
+                      </span>
+                    </div>
+                    <div><span className="font-medium">Llegada:</span> {condition.conditionsArrival?.description || "N/A"}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-muted/50 rounded-lg p-2 sm:p-3 sm:col-span-2">
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <div>
+                <div className="text-xs text-muted-foreground">Cantidad</div>
+                <div className="text-lg font-bold text-emerald-600">{item.quantity || 0}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Origen</div>
+                <div className="text-sm font-medium">{item.origin?.description || item.placeOrigin || "N/A"}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -223,10 +250,9 @@ export function TransportConditionsManagement() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
-            {/* Fecha Inicio */}
             <div className="flex flex-col gap-1 min-w-0">
               <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                <CalendarDays className="h-3.5 w-3.5 text-green-600" />
+                <CalendarDays className="h-3.5 w-3.5 text-primary" />
                 Fecha Inicio
               </label>
               <DatePicker
@@ -241,10 +267,9 @@ export function TransportConditionsManagement() {
               />
             </div>
 
-            {/* Fecha Fin */}
             <div className="flex flex-col gap-1 min-w-0">
               <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                <CalendarDays className="h-3.5 w-3.5 text-green-600" />
+                <CalendarDays className="h-3.5 w-3.5 text-primary" />
                 Fecha Fin
               </label>
               <DatePicker
@@ -259,10 +284,9 @@ export function TransportConditionsManagement() {
               />
             </div>
 
-            {/* Especie */}
             <div className="flex flex-col gap-1 min-w-0 sm:col-span-2 lg:col-span-1">
               <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                <PawPrint className="h-3.5 w-3.5 text-green-600" />
+                <PawPrint className="h-3.5 w-3.5 text-primary" />
                 Especie
               </label>
               <Select
@@ -284,31 +308,21 @@ export function TransportConditionsManagement() {
               </Select>
             </div>
 
-            {/* Botones */}
             <div className="flex flex-col sm:flex-row lg:flex-col gap-2 sm:col-span-2 lg:col-span-1">
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    className="w-full"
-                    disabled={isLoading || apiData.length === 0}
-                  >
+                  <Button className="w-full" disabled={isLoading || apiData.length === 0}>
                     <FileUp className="h-4 w-4" />
                     <span className="ml-2">Reporte</span>
                     <ChevronDown className="h-3 w-3 ml-1" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem
-                    onClick={() => handleDownloadReport("EXCEL")}
-                    className="cursor-pointer"
-                  >
-                    <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                  <DropdownMenuItem onClick={() => handleDownloadReport("EXCEL")} className="cursor-pointer">
+                    <FileSpreadsheet className="h-4 w-4 mr-2 text-primary" />
                     <span>Descargar Excel</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleDownloadReport("PDF")}
-                    className="cursor-pointer"
-                  >
+                  <DropdownMenuItem onClick={() => handleDownloadReport("PDF")} className="cursor-pointer">
                     <FileText className="h-4 w-4 mr-2 text-red-600" />
                     <span>Descargar PDF</span>
                   </DropdownMenuItem>
@@ -323,15 +337,26 @@ export function TransportConditionsManagement() {
         </CardContent>
       </Card>
 
-      {/* Total */}
-      <Card>
-        <CardContent className="py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs sm:text-sm text-muted-foreground">Total de registros</span>
-            <span className="text-xl sm:text-2xl font-bold text-emerald-600">{totals.registros}</span>
-          </div>
-        </CardContent>
-      </Card>
+
+      {/* Totales */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <Card>
+          <CardContent className="py-3 sm:py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs sm:text-sm text-muted-foreground">Total de registros</span>
+              <span className="text-xl sm:text-2xl font-bold text-emerald-600">{totals.registros}</span>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-3 sm:py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs sm:text-sm text-muted-foreground">Total de animales</span>
+              <span className="text-xl sm:text-2xl font-bold text-blue-600">{totals.totalAnimales}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Tabla */}
       {isMobile ? (
@@ -351,12 +376,8 @@ export function TransportConditionsManagement() {
                     <Search className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <div className="text-center">
-                    <h3 className="font-medium text-muted-foreground mb-1">
-                      No se encontraron registros
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Intenta ajustar los filtros o cambiar las fechas de búsqueda
-                    </p>
+                    <h3 className="font-medium text-muted-foreground mb-1">No se encontraron registros</h3>
+                    <p className="text-sm text-muted-foreground">Intenta ajustar los filtros o cambiar las fechas de búsqueda</p>
                   </div>
                 </div>
               </CardContent>
@@ -376,44 +397,46 @@ export function TransportConditionsManagement() {
                 </div>
               </div>
             ) : (
-              <Table>
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center whitespace-nowrap">
-                      <span className="text-xs font-semibold">Fecha de Ingreso</span>
+                      <span className="text-xs font-semibold">Fecha Emisión</span>
+                    </TableHead>
+                    <TableHead className="text-center whitespace-nowrap">
+                      <span className="text-xs font-semibold">Código</span>
                     </TableHead>
                     <TableHead className="text-center whitespace-nowrap">
                       <span className="text-xs font-semibold">Transportista</span>
                     </TableHead>
                     <TableHead className="text-center whitespace-nowrap">
-                      <span className="text-xs font-semibold">Tipo de Cama</span>
+                      <span className="text-xs font-semibold">CI</span>
                     </TableHead>
                     <TableHead className="text-center whitespace-nowrap">
-                      <span className="text-xs font-semibold">Condiciones de Arribo</span>
+                      <span className="text-xs font-semibold">Placa</span>
                     </TableHead>
                     <TableHead className="text-center whitespace-nowrap">
-                      <span className="text-xs font-semibold">Movilización Propia</span>
+                      <span className="text-xs font-semibold">Cantidad</span>
                     </TableHead>
                     <TableHead className="text-center whitespace-nowrap">
-                      <span className="text-xs font-semibold">Observaciones</span>
+                      <span className="text-xs font-semibold">Origen</span>
+                    </TableHead>
+                    <TableHead className="text-center whitespace-nowrap">
+                      <span className="text-xs font-semibold">Condiciones de Transporte</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {apiData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12">
+                      <TableCell colSpan={8} className="text-center py-12">
                         <div className="flex flex-col items-center gap-3">
                           <div className="rounded-full bg-muted p-3">
                             <Search className="h-6 w-6 text-muted-foreground" />
                           </div>
                           <div className="text-center">
-                            <h3 className="font-medium text-muted-foreground mb-1">
-                              No se encontraron registros
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              Intenta ajustar los filtros o cambiar las fechas de búsqueda
-                            </p>
+                            <h3 className="font-medium text-muted-foreground mb-1">No se encontraron registros</h3>
+                            <p className="text-sm text-muted-foreground">Intenta ajustar los filtros o cambiar las fechas de búsqueda</p>
                           </div>
                         </div>
                       </TableCell>
@@ -422,37 +445,32 @@ export function TransportConditionsManagement() {
                     apiData.map((item) => (
                       <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="text-center text-sm">
-                          {item.entryDate
-                            ? format(parseISO(item.entryDate), "dd/MM/yyyy")
-                            : "N/A"}
+                          {item.issueDate ? format(parseISO(item.issueDate), "dd/MM/yyyy") : "N/A"}
                         </TableCell>
-                        <TableCell className="text-center text-sm font-medium">
-                          {item.carrierName || "N/A"}
-                        </TableCell>
-                        <TableCell className="text-center text-sm">
-                          <Badge variant="secondary">{item.bedType || "N/A"}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-sm">
-                          <Badge
-                            variant="outline"
-                            className="bg-blue-50 text-blue-800 border-blue-200"
-                          >
-                            {item.arrivalConditions || "N/A"}
+                        <TableCell className="text-center text-sm font-medium">{item.code || "N/A"}</TableCell>
+                        <TableCell className="text-center text-sm">{item.shipping?.person?.fullName || "N/A"}</TableCell>
+                        <TableCell className="text-center text-sm">{item.shipping?.person?.identification || "N/A"}</TableCell>
+                        <TableCell className="text-center text-sm font-medium">{item.shipping?.vehicle?.plate || item.plateVehicle || "N/A"}</TableCell>
+                        <TableCell className="text-center font-semibold text-emerald-600">{item.quantity || 0}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-0 font-normal text-xs">
+                            {item.origin?.description || item.placeOrigin || "N/A"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-center">
-                          {item.ownMobilization ? (
-                            <div className="flex items-center justify-center">
-                              <Check className="h-5 w-5 text-green-600" />
+                        <TableCell className="text-left text-xs">
+                          {item.conditionsTransport && item.conditionsTransport.length > 0 ? (
+                            <div className="space-y-1">
+                              {item.conditionsTransport.map((condition: any, idx: number) => (
+                                <div key={idx} className="bg-blue-50 p-2 rounded">
+                                  <div><span className="font-medium">Cama:</span> {condition.bedType?.description || "N/A"}</div>
+                                  <div><span className="font-medium">Llegada:</span> {condition.conditionsArrival?.description || "N/A"}</div>
+                                  <div><span className="font-medium">Medio Propio:</span> {condition.ownMedium ? "Sí" : "No"}</div>
+                                </div>
+                              ))}
                             </div>
                           ) : (
-                            <div className="flex items-center justify-center">
-                              <X className="h-5 w-5 text-red-500" />
-                            </div>
+                            <span className="text-muted-foreground">Sin condiciones</span>
                           )}
-                        </TableCell>
-                        <TableCell className="text-center text-sm max-w-xs truncate">
-                          {item.observations || "-"}
                         </TableCell>
                       </TableRow>
                     ))
