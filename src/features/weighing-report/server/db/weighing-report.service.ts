@@ -60,6 +60,7 @@ function transformApiResponse(
         // Agregar el animal al grupo de la marca
         brandGroup.animals.push({
             id: item.id,
+            code: item.animalWeighing.detailsSpeciesCertificate.code,
             grossWeight: parseFloat(item.grossWeight),
             netWeight: parseFloat(item.netWeight),
             productiveStage: productiveStage.name,

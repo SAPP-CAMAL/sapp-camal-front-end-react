@@ -76,6 +76,16 @@ const currentDate = `${today.getFullYear()}-${String(
   today.getMonth() + 1
 ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`; // YYYY-MM-DD
 
+// Helper para verificar si una fecha es hoy
+const isToday = (date: Date): boolean => {
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+};
+
 export function CorralsManagement() {
   // Always initialize with bovinos to avoid hydration mismatch
   const [selectedTab, setSelectedTab] = useState<LineaType>("bovinos");
@@ -302,6 +312,12 @@ export function CorralsManagement() {
     brand: BrandDetail,
     sourceCorralId: string
   ) => {
+    // Validar que la fecha seleccionada sea hoy
+    if (!isToday(selectedDate)) {
+      toast.error("No se pueden transferir animales de fechas anteriores. Solo se permite transferir animales del día de hoy.");
+      return;
+    }
+
     // Pre-load certificate data to optimize partial transfers
     try {
       const fullDataResponse = await getCertBrandById(brand.id);
@@ -1922,11 +1938,13 @@ export function CorralsManagement() {
     corralId,
     brandIndex,
     isBlocked = false,
+    isBlockedByDate = false,
   }: {
     brand: BrandDetail;
     corralId: string;
     brandIndex: number;
     isBlocked?: boolean;
+    isBlockedByDate?: boolean;
   }) => {
     const totalAnimals = brand.males + brand.females;
     const malePercentage =
@@ -1941,6 +1959,10 @@ export function CorralsManagement() {
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (isBlockedByDate) {
+            toast.error("No se pueden transferir animales de fechas anteriores. Solo se permite transferir animales del día de hoy.");
+            return;
+          }
           if (isBlocked) {
             return;
           }
@@ -1949,9 +1971,9 @@ export function CorralsManagement() {
           }
         }}
         className={`group relative flex flex-col h-full overflow-hidden rounded-xl border-2 transform transition-all duration-200 shadow-md hover:shadow-lg border-gray-200 bg-white hover:border-blue-200 active:border-blue-400 active:shadow-xl ${
-          isBlocked ? "cursor-not-allowed" : "cursor-pointer"
+          isBlocked || isBlockedByDate ? "cursor-not-allowed" : "cursor-pointer"
         }`}
-        aria-disabled={isBlocked}
+        aria-disabled={isBlocked || isBlockedByDate}
       >
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-5">
@@ -2208,36 +2230,34 @@ export function CorralsManagement() {
                               }`}
                             >
                               <CardHeader className="pb-3 pt-2 px-4">
-                                <div className="flex justify-between items-start">
-                                  <h3 className="font-semibold">
-                                    {corral.name}
-                                  </h3>
-                                  <div className="flex items-center gap-2">
-                                    {isClosed ? (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <span className="text-[11px] uppercase tracking-wide text-gray-500 inline-flex items-center gap-1 cursor-help">
-                                              <Lock className="h-3 w-3" />{" "}
-                                              CERRADO
-                                            </span>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <span>Corral cerrado</span>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    ) : null}
-                                    <div
-                                      className={`w-2 h-2 rounded-full ${getOccupationColor(
-                                        corral.ocupacion
-                                      )}`}
-                                    />
-                                  </div>
+                                {/* Badge CERRADO y punto verde arriba a la derecha */}
+                                <div className="flex justify-end items-center gap-2 mb-1 min-h-[18px]">
+                                  {isClosed && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span className="text-[11px] uppercase tracking-wide text-gray-500 inline-flex items-center gap-1 cursor-help">
+                                            <Lock className="h-3 w-3" /> CERRADO
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <span>Corral cerrado</span>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                  <div
+                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${getOccupationColor(
+                                      corral.ocupacion
+                                    )}`}
+                                  />
                                 </div>
+                                <h3 className="font-semibold">
+                                  {corral.name}
+                                </h3>
                                 <div className="text-sm text-muted-foreground mt-1">
-                                  Límite {corral.limite} · Total {corral.total}{" "}
-                                  · Disponibles {corral.disponibles}
+                                  <span>Límite {corral.limite} · Total {corral.total}</span>
+                                  <span className="block">Disponibles {corral.disponibles}</span>
                                 </div>
                                 <div className="mt-1 h-[2px] bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
                               </CardHeader>
@@ -2273,6 +2293,7 @@ export function CorralsManagement() {
                                               corralId={corral.id}
                                               brandIndex={brandIndex}
                                               isBlocked={isClosed}
+                                              isBlockedByDate={!isToday(selectedDate)}
                                             />
                                           ))}
                                         </div>
@@ -2373,36 +2394,34 @@ export function CorralsManagement() {
                               }`}
                             >
                               <CardHeader className="pb-3 pt-2 px-4">
-                                <div className="flex justify-between items-start">
-                                  <h3 className="font-semibold">
-                                    {corral.name}
-                                  </h3>
-                                  <div className="flex items-center gap-2">
-                                    {isClosed ? (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <span className="text-[11px] uppercase tracking-wide text-gray-500 inline-flex items-center gap-1 cursor-help">
-                                              <Lock className="h-3 w-3" />{" "}
-                                              CERRADO
-                                            </span>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <span>Corral cerrado</span>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    ) : null}
-                                    <div
-                                      className={`w-2 h-2 rounded-full ${getOccupationColor(
-                                        corral.ocupacion
-                                      )}`}
-                                    />
-                                  </div>
+                                {/* Badge CERRADO y punto verde arriba a la derecha */}
+                                <div className="flex justify-end items-center gap-2 mb-1 min-h-[18px]">
+                                  {isClosed && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span className="text-[11px] uppercase tracking-wide text-gray-500 inline-flex items-center gap-1 cursor-help">
+                                            <Lock className="h-3 w-3" /> CERRADO
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <span>Corral cerrado</span>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                  <div
+                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${getOccupationColor(
+                                      corral.ocupacion
+                                    )}`}
+                                  />
                                 </div>
+                                <h3 className="font-semibold">
+                                  {corral.name}
+                                </h3>
                                 <div className="text-sm text-muted-foreground mt-1">
-                                  Límite {corral.limite} · Total {corral.total}{" "}
-                                  · Disponibles {corral.disponibles}
+                                  <span>Límite {corral.limite} · Total {corral.total}</span>
+                                  <span className="block">Disponibles {corral.disponibles}</span>
                                 </div>
                                 {/* subtle divider like screenshot */}
                                 <div className="mt-1 h-[2px] bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
@@ -2443,6 +2462,7 @@ export function CorralsManagement() {
                                               corralId={corral.id}
                                               brandIndex={brandIndex}
                                               isBlocked={isClosed}
+                                              isBlockedByDate={!isToday(selectedDate)}
                                             />
                                           ))}
                                         </div>

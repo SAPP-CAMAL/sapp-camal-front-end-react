@@ -707,7 +707,7 @@ export function SignosClinicosModal({
         <DialogContent className="max-w-md">
           <DialogTitle className="sr-only">Cargando datos</DialogTitle>
           <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-600 mb-4" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
             <p className="text-sm text-muted-foreground">
               {isLoadingAnimales ? "Cargando animales..." : 
                isLoadingSignos ? "Cargando signos clínicos..." : 
@@ -727,7 +727,7 @@ export function SignosClinicosModal({
           <DialogTitle>
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-base font-semibold">Signos Clínicos</span>
+                <span className="text-base font-semibold">SIGNOS CLÍNICOS</span>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-xs sm:text-sm">
                     {marcaLabel}
@@ -735,7 +735,7 @@ export function SignosClinicosModal({
                   <Badge variant="outline" className="bg-blue-500 text-white border-blue-500 text-xs sm:text-sm">
                     {animales.length} {animales.length === 1 ? 'animal' : 'animales'}
                   </Badge>
-                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs sm:text-sm">
+                  <Badge variant="outline" className="bg-primary text-primary-700 border-primary-200 text-xs sm:text-sm">
                     {totalCount} {totalCount === 1 ? 'signo' : 'signos'}
                   </Badge>
                 </div>
@@ -754,7 +754,7 @@ export function SignosClinicosModal({
               value={currentId}
               onChange={(e) => handleAnimalChange(e.target.value)}
               disabled={isLoadingAnimalData}
-              className="w-full p-3 border-2 rounded-lg text-base font-bold bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full p-3 border-2 rounded-lg text-base font-bold bg-white focus:border-primary focus:ring-2 focus:ring-emerald-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 color: animales.find(a => a.code === currentId)?.idAnimalSex === 1 ? '#E3AAAA' : '#2563eb'
               }}
@@ -780,7 +780,7 @@ export function SignosClinicosModal({
 
           {/* Desktop animal list */}
           <div className="hidden md:block w-56 lg:w-64 border-r overflow-y-auto p-3">
-            <div className="text-neutral-950 mb-2 font-semibold">Animales de la marca</div>
+            <div className="text-neutral-950 mb-2 font-semibold">ANIMALES DE LA MARCA</div>
             <div className="text-xs text-muted-foreground mb-3">
               Total: {animales.length} animales
             </div>
@@ -849,7 +849,7 @@ export function SignosClinicosModal({
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             {isLoadingAnimalData ? (
               <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-emerald-600 mb-4" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                 <p className="text-sm text-muted-foreground">Cargando datos del animal...</p>
               </div>
             ) : (
@@ -882,7 +882,7 @@ export function SignosClinicosModal({
                     <div className="px-4 py-3 text-sm font-medium flex items-center gap-3 bg-muted/30">
                       <Checkbox
                         id={`sign-header-${sign.id}`}
-                        className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 h-5 w-5"
+                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary h-5 w-5"
                         checked={allChecked}
                         onCheckedChange={(checked) => toggleAllBodyParts(sign.id, sign.bodyParts, checked as boolean)}
                       />
@@ -904,7 +904,7 @@ export function SignosClinicosModal({
                           <div key={bp.id} className="flex items-center space-x-2 p-2 rounded hover:bg-muted/30 transition-colors">
                             <Checkbox 
                               id={`${sign.id}-${bp.id}`} 
-                              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 h-5 w-5"
+                              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary h-5 w-5"
                               checked={isChecked}
                               onCheckedChange={() => toggleBodyPart(sign.id, bp.id)} 
                             />
@@ -923,7 +923,7 @@ export function SignosClinicosModal({
               {simpleSigns.length > 0 && (
                 <div className="rounded-md border">
                   <div className="px-4 py-3 text-sm font-medium bg-muted/30 border-b flex items-center justify-between">
-                    <span>Signos Generales</span>
+                    <span>SIGNOS GENERALES</span>
                     <Badge variant="secondary" className="text-xs">
                       {Array.from(current.simpleSigns.values()).filter(v => v).length}/{simpleSigns.length}
                     </Badge>
@@ -968,7 +968,7 @@ export function SignosClinicosModal({
                     }}
                   >
                     <Skull className="h-5 w-5 text-red-600" />
-                    Animales Muertos
+                    ANIMALES MUERTOS
                   </Label>
                 </div>
                 
@@ -1029,7 +1029,7 @@ export function SignosClinicosModal({
             {/* Dictamen Section */}
             <div className={`rounded-md border ${current.isDeadAnimal ? 'opacity-50 pointer-events-none' : ''}`}>
               <div className="p-3 bg-muted/30 border-b flex items-center justify-between">
-                <h3 className="font-semibold text-base">Dictamen *</h3>
+                <h3 className="font-semibold text-base">DICTAMEN*</h3>
                 {current.isDeadAnimal && (
                   <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300 text-xs flex items-center gap-1">
                     <Lock className="h-3 w-3" />
@@ -1141,7 +1141,7 @@ export function SignosClinicosModal({
               <Button
                 onClick={handleSave}
                 disabled={isSaving || isLoadingAnimalData || (currentAnimalHasSavedData && !hasUnsavedChanges)}
-                className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto h-11 sm:h-10 font-semibold"
+                className="bg-primary hover:bg-primary w-full sm:w-auto h-11 sm:h-10 font-semibold"
               >
                 {isSaving ? (
                   <>

@@ -245,7 +245,7 @@ export function ObservacionesModal({
                               <Badge
                                 key={idx}
                                 variant="secondary"
-                                className=" text-emerald-600 border border-primary text-xs px-2 py-1"
+                                className=" text-primary border border-primary text-xs px-2 py-1"
                               >
                                 {opinion}
                               </Badge>

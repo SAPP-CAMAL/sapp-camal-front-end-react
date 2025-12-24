@@ -47,7 +47,7 @@ export function ChartModern({ data }: ChartModernProps) {
           <p className="text-sky-400">
             Cantidad: <span className="font-bold">{payload[0].value.toLocaleString()}</span>
           </p>
-          <p className="text-emerald-400">
+          <p className="text-primary">
             Porcentaje: <span className="font-bold">{payload[0].payload.percentage}%</span>
           </p>
         </div>
