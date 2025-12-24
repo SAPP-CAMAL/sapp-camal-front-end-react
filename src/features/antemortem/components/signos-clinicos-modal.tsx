@@ -727,7 +727,7 @@ export function SignosClinicosModal({
           <DialogTitle>
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-base font-semibold">SIGNOS CLÍNICOS</span>
+                <span className="text-base font-semibold pb-1.5 leading-relaxed">SIGNOS CLÍNICOS</span>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-xs sm:text-sm">
                     {marcaLabel}

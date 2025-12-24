@@ -28,6 +28,8 @@ import {
 import { logoutAction } from "@/features/security/server/actions/security.actions";
 import { useRouter } from "next/navigation";
 import { LoginResponse } from "@/features/security/domain";
+import { fixUtf8 } from "@/lib/utils";
+
 
 export function NavUser({ user }: { user: LoginResponse }) {
   const { isMobile } = useSidebar();
@@ -52,10 +54,10 @@ export function NavUser({ user }: { user: LoginResponse }) {
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
-                  {user.user.fullName}
+                <span className="truncate font-medium py-0.5 leading-normal">
+                  {fixUtf8(user.user.fullName)}
                 </span>
-                <span className="truncate text-xs">{user.user.email}</span>
+                <span className="truncate text-xs">{fixUtf8(user.user.email)}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -78,10 +80,10 @@ export function NavUser({ user }: { user: LoginResponse }) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {user.user.fullName}
+                  <span className="truncate font-medium py-0.5 leading-normal">
+                    {fixUtf8(user.user.fullName)}
                   </span>
-                  <span className="truncate text-xs">{user.user.email}</span>
+                  <span className="truncate text-xs">{fixUtf8(user.user.email)}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -115,7 +117,7 @@ export function NavUser({ user }: { user: LoginResponse }) {
               }}
             >
               <LogOut />
-              Cerrar Sessón
+              Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -3,7 +3,8 @@
 import * as React from "react";
 import { ChevronsUpDown, Check } from "lucide-react";
 import Image from 'next/image'
-import { cn } from "@/lib/utils";
+import { cn, fixUtf8 } from "@/lib/utils";
+
 
 import {
   DropdownMenu,
@@ -190,7 +191,7 @@ function RoleItem({ role, isActive, onSelect }: { role: any; isActive: boolean; 
         {isPending ? (
           <span className="font-mono text-sm">Cambiando de rol...</span>
         ) : (
-          <span className={cn(isActive && "font-semibold")}>{role.name}</span>
+          <span className={cn(isActive && "font-semibold")}>{fixUtf8(role.name)}</span>
         )}
       </div>
     </DropdownMenuItem>

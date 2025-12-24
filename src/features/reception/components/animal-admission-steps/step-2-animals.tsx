@@ -215,7 +215,7 @@ export const Step2Animals = () => {
             )}
             {(!canCreateAdmissions) && (
               <TooltipContent side="top" align="end">
-                Ya se generaron los códigos para la especie seleccionada, no se pueden realizar mas animales.
+                Ya se generaron los códigos para la especie seleccionada, no se pueden realizar más animales.
               </TooltipContent>
             )}
           </Tooltip>
@@ -320,7 +320,7 @@ export const Step2Animals = () => {
             )}
           </Tooltip>
           {/* <ConfirmationDialog
-						title={`¿Esta seguro que desea finalizar el ingreso de animales?`}
+						title={`¿Está seguro que desea finalizar el ingreso de animales?`}
 						description={`Esta acción completará el ingreso de los animales y se reiniciará el formulario para un nuevo ingreso.`}
 						onConfirm={() => handleResetPage()}
 						triggerBtn={

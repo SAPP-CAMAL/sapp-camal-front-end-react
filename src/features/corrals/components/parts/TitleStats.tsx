@@ -125,7 +125,7 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
       <div className="lg:hidden bg-gray-100 px-4 py-4 rounded-lg space-y-4">
         {/* Title and corrales count */}
         <div className="text-center flex justify-center items-center">
-          <h1 className="text-lg sm:text-xl font-bold mb-0 pb-0">{title}</h1>
+          <h1 className="text-lg sm:text-xl font-bold mb-0 pb-2 leading-relaxed">{title}</h1>
           <span className="text-gray-600 text-sm sm:text-base mt-10">{totals.corrales} corrales</span>
         </div>
 
@@ -240,7 +240,7 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
           {/* Top row: Title and corrales count */}
           <div className="flex items-center gap-4 min-w-0 flex-1">
-            <h1 className="text-2xl font-bold truncate mb-0 pb-0">{title}</h1>
+            <h1 className="text-2xl font-bold truncate mb-0 pb-2 leading-relaxed">{title}</h1>
             <span className="text-gray-600 whitespace-nowrap">{totals.corrales} corrales</span>
           </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import {
   BarChart,
   Bar,
@@ -19,23 +19,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Printer, Image as ImageIcon, FileText, FileSpreadsheet, Maximize2 } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { Menu, Printer, FileSpreadsheet, Maximize2 } from "lucide-react";
 import * as XLSX from "xlsx";
 
-interface ChartHistoryProps {
+import { AnimalIncomeData } from "../domain/animal-income.types";
+
+export interface ChartHistoryProps {
   data: any[];
   startDate: string;
   endDate: string;
-  tableData?: any[];
+  tableData?: AnimalIncomeData[];
 }
 
-export function ChartHistory({ data, startDate, endDate, tableData = [] }: ChartHistoryProps) {
+export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, endDate, tableData = [] }) => {
   const [viewMode, setViewMode] = useState<"MENSUAL" | "ANUAL">("MENSUAL");
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [visibleBars, setVisibleBars] = useState<Record<string, boolean>>({
+    BOVINO: true,
+    PORCINO: true,
+    "OVINO/CAPRINO": true,
+  });
   const chartRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Toggle visibility of a bar
+  const handleLegendClick = (dataKey: string) => {
+    setVisibleBars((prev) => ({
+      ...prev,
+      [dataKey]: !prev[dataKey],
+    }));
+  };
 
   // Process data for ANUAL view if needed
   const chartData = viewMode === "ANUAL" 
@@ -124,64 +137,6 @@ export function ChartHistory({ data, startDate, endDate, tableData = [] }: Chart
       printWindow.print();
       printWindow.close();
     }, 250);
-  };
-
-  const handleDownloadPNG = async () => {
-    if (!chartRef.current) return;
-    
-    try {
-      const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        ignoreElements: (element) => {
-          return element.classList.contains('no-export');
-        },
-      });
-      
-      const link = document.createElement("a");
-      link.download = `reporte-ingreso-animales-${startDate}-${endDate}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    } catch (error) {
-      console.error("Error al generar PNG:", error);
-      alert("Error al generar la imagen. Por favor, intente nuevamente.");
-    }
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!chartRef.current) return;
-    
-    try {
-      const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        ignoreElements: (element) => {
-          return element.classList.contains('no-export');
-        },
-      });
-      
-      const imgData = canvas.toDataURL("image/png");
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      const pdf = new jsPDF({
-        orientation: imgHeight > imgWidth ? "portrait" : "landscape",
-        unit: "mm",
-        format: "a4",
-      });
-      
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save(`reporte-ingreso-animales-${startDate}-${endDate}.pdf`);
-    } catch (error) {
-      console.error("Error al generar PDF:", error);
-      alert("Error al generar el PDF. Por favor, intente nuevamente.");
-    }
   };
 
   const handleDownloadXLS = () => {
@@ -292,14 +247,6 @@ export function ChartHistory({ data, startDate, endDate, tableData = [] }: Chart
                   <Printer className="mr-2 h-4 w-4" />
                   <span>Imprimir</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDownloadPNG} className="cursor-pointer text-sm">
-                  <ImageIcon className="mr-2 h-4 w-4" />
-                  <span>Descargar en Imagen PNG</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDownloadPDF} className="cursor-pointer text-sm">
-                  <FileText className="mr-2 h-4 w-4" />
-                  <span>Descargar en PDF</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleDownloadXLS} className="cursor-pointer text-sm">
                   <FileSpreadsheet className="mr-2 h-4 w-4" />
                   <span>Descargar en XLS</span>
@@ -364,11 +311,41 @@ export function ChartHistory({ data, startDate, endDate, tableData = [] }: Chart
                 verticalAlign="bottom" 
                 height={36}
                 iconType="circle"
-                wrapperStyle={{ fontSize: "11px" }}
+                wrapperStyle={{ fontSize: "11px", cursor: "pointer" }}
+                onClick={(e) => handleLegendClick(e.dataKey as string)}
+                formatter={(value, entry) => (
+                  <span style={{ 
+                    color: visibleBars[value as string] ? "#1e293b" : "#94a3b8",
+                    textDecoration: visibleBars[value as string] ? "none" : "line-through"
+                  }}>
+                    {value}
+                  </span>
+                )}
               />
-              <Bar dataKey="BOVINO" fill="#0f766e" name="BOVINO" radius={[2, 2, 0, 0]} barSize={6} />
-              <Bar dataKey="PORCINO" fill="#14b8a6" name="PORCINO" radius={[2, 2, 0, 0]} barSize={6} />
-              <Bar dataKey="OVINO/CAPRINO" fill="#f59e0b" name="OVINO/CAPRINO" radius={[2, 2, 0, 0]} barSize={6} />
+              <Bar 
+                dataKey="BOVINO" 
+                fill="#0f766e" 
+                name="BOVINO" 
+                radius={[2, 2, 0, 0]} 
+                barSize={6}
+                hide={!visibleBars.BOVINO}
+              />
+              <Bar 
+                dataKey="PORCINO" 
+                fill="#14b8a6" 
+                name="PORCINO" 
+                radius={[2, 2, 0, 0]} 
+                barSize={6}
+                hide={!visibleBars.PORCINO}
+              />
+              <Bar 
+                dataKey="OVINO/CAPRINO" 
+                fill="#f59e0b" 
+                name="OVINO/CAPRINO" 
+                radius={[2, 2, 0, 0]} 
+                barSize={6}
+                hide={!visibleBars["OVINO/CAPRINO"]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
