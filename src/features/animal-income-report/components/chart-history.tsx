@@ -238,7 +238,7 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, end
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600 no-export self-end sm:self-auto order-1 sm:order-3">
+                <Button variant="ghost" size="icon" className="hover:text-slate-900 no-export">
                   <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
               </DropdownMenuTrigger>
