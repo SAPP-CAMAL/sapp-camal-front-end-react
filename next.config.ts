@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 import path from "path";
 
+const apiUrl: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 const nextConfig: NextConfig = {
   /* config options here */
   outputFileTracingRoot: path.join(__dirname, "./"),
@@ -11,7 +13,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/proxy/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+        destination: `${apiUrl}/:path*`,
       },
     ];
   },
