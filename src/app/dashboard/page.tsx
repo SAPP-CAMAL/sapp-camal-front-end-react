@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { DashboardClient } from "@/app/dashboard/dashboard-client";
 import { getEnvironmentVariableByName } from "@/features/dashboard/server/db/environment-variables.service";
+import { fixUtf8 } from "@/lib/utils";
 
 /**
  * Helper para parsear el token de forma segura
@@ -65,8 +66,8 @@ export default async function Page() {
   return (
     <DashboardClient
       images={finalImages}
-      userName={userData?.user.fullName}
-      userRole={userData?.activeRole.name}
+      userName={fixUtf8(userData?.user.fullName)}
+      userRole={fixUtf8(userData?.activeRole.name)}
       slaughterhouseLogo={slaughterhouseLogo}
     />
   );

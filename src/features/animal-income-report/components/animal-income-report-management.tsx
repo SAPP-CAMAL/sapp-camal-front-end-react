@@ -54,10 +54,10 @@ export function AnimalIncomeReportManagement() {
       <div className="mb-6 md:mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 leading-relaxed pb-3 mb-2">
               Reporte de Ingresos de Animales
             </h1>
-            <p className="text-slate-500 text-sm sm:text-base lg:text-lg">
+            <p className="text-slate-500 text-sm sm:text-base lg:text-lg leading-relaxed pb-2">
               Análisis estadístico de ingresos por especie
             </p>
           </div>

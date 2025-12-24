@@ -617,7 +617,7 @@ export const CreateUpdateAnimalAdmissionForm = ({ animalAdmissionData, className
 						{/* Save or cancel buttons */}
 						<div className='flex gap-2'>
 							<ConfirmationDialog
-								title={`¿Esta seguro que desea ${animalAdmissionData.id ? 'actualizar' : 'crear'} este registro?`}
+								title={`¿Está seguro que desea ${animalAdmissionData.id ? 'actualizar' : 'crear'} este registro?`}
 								description={`Esta acción registrará el ingreso de los animales en el sistema, pero ${
 									isEmergencyCorral
 										? 'no se podrá editar ni eliminar el registro porque es de tipo emergencia.'

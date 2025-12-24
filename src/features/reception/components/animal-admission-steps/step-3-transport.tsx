@@ -146,7 +146,7 @@ export const Step3Transport = () => {
 
 						<div className='flex items-center justify-end'>
 							<ConfirmationDialog
-								title={`¿Esta seguro que desea finalizar el ingreso de animales?`}
+								title={`¿Está seguro que desea finalizar el ingreso de animales?`}
 								description={`Esta acción completará el ingreso de los animales y se reiniciará el formulario para un nuevo ingreso.`}
 								onConfirm={form.handleSubmit(handleSaveTransport)}
 								triggerBtn={

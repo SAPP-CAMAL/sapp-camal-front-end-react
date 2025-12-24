@@ -22,6 +22,8 @@ import {
 import Link from "next/link";
 import DynamicLucideIcon from "@/lib/lucide-icon-dynamic";
 import { AdministrationMenu } from "@/features/modules/domain/module.domain";
+import { fixUtf8 } from "@/lib/utils";
+
 
 // Función helper para normalizar URLs
 function normalizeMenuUrl(url: string | null): string {
@@ -82,13 +84,14 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={menu.menuName}>
+                  <SidebarMenuButton tooltip={fixUtf8(menu.menuName)}>
+
                     {menu.icon && (
                       <DynamicLucideIcon
                         name={(menu?.icon as any) ?? "badge-info"}
                       />
                     )}
-                    <span className="font-semibold">{menu.menuName}</span>
+                    <span className="font-semibold">{fixUtf8(menu.menuName)}</span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -112,8 +115,8 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                                 className="mr h-4 w-4"
                               />
 
-                              <span className="font-semibold text-xs">
-                                {subItem.menuName}
+                              <span className="font-semibold text-xs leading-normal py-0.5">
+                                {fixUtf8(subItem.menuName)}
                               </span>
                             </Link>
                           </SidebarMenuSubButton>
