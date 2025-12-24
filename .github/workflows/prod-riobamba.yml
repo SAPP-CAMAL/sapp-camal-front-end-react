@@ -20,19 +20,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       # PASO 1: Crear .env para el Build (Vital para NEXT_PUBLIC_*)
       - name: Create .env file for Build
         run: |
           echo "${{ secrets.ENV_FILE_FRONTEND_BASE64 }}" | base64 -d > .env
 
-      # Fix para bug de npm con dependencias opcionales nativas (lightningcss, @tailwindcss/oxide)
-      # https://github.com/npm/cli/issues/4828
-      - name: Remove package-lock.json for clean install
-        run: rm -f package-lock.json
-
       - name: Install dependencies
-        run: npm install --include=optional
+        run: npm ci
 
       - name: Build
         # Ya no necesitamos pasar variables 'env' aquí manuales,
