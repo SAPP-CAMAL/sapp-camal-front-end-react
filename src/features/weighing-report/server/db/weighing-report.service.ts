@@ -29,6 +29,9 @@ function transformApiResponse(
         const productiveStage =
             item.animalWeighing.detailsSpeciesCertificate.detailCertificateBrands
                 .productiveStage;
+        const slaughterDate =
+            item.animalWeighing.detailsSpeciesCertificate.detailCertificateBrands
+                .detailsCertificateBrand.slaughterDate;
 
         // Crear el registro del introductor si no existe
         if (!groupedByIntroducer.has(introducerId)) {
@@ -37,6 +40,7 @@ function transformApiResponse(
                 introducer: {
                     id: introducerId,
                     fullName: introducer.user.person.fullName,
+                    slaughterDate: slaughterDate,
                 },
                 brands: [],
             });

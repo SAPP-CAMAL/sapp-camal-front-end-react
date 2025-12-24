@@ -466,8 +466,13 @@ export function WeighingReportManagement() {
                                 className="align-middle bg-gray-50/50 border-r"
                                 rowSpan={totalAnimalsForIntroducer}
                               >
-                                <div className="font-semibold text-gray-900 uppercase pl-2">
-                                  {row.introducer.fullName}
+                                <div className="flex flex-col gap-1 pl-2">
+                                  <span className="font-semibold text-gray-900 uppercase">
+                                    {row.introducer.fullName}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    Faena: {new Date(row.introducer.slaughterDate).toLocaleDateString("es-EC")}
+                                  </span>
                                 </div>
                               </TableCell>
                             )}

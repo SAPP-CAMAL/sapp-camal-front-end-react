@@ -24,57 +24,51 @@ import {
 } from "@/components/ui/command";
 import { CircleCheckBig, User, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import {
-  UserPerson,
-  ResponseUserPersonSearchService,
-} from "@/features/security/domain";
-import { getUserPersonByFilterService } from "@/features/security/server/db/security.queries";
 import { SelectCompany } from "../visitor-log-management";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
-export type BrandCreating = {
-  id: number;
-  name: string;
-  species: string[];
-};
+import { getPeopleByFilterService } from "@/features/people/server/db/people.service";
+import { Person } from "@/features/people/domain";
+import { useDebouncedCallback } from "use-debounce";
+
 export function VisitorLogFormFields() {
   const form = useFormContext();
   const selectedPerson = form.watch("savedPerson");
-  // const [selectedPerson, setSelectedPerson] = useState<UserPerson | null>(null);
   const [activeField, setActiveField] = useState<
     "name" | "identification" | null
   >(null);
   const [name, setName] = useState("");
   const [identification, setIdentification] = useState("");
-  // const [savedPerson, setSavedPerson] = useState<UserPerson | null>(null);
 
-  const peopleData = useQuery<ResponseUserPersonSearchService>({
-    queryKey: ["people", name, identification],
+  const debouncedName = useDebouncedCallback((value: string) => {
+    setName(value);
+  }, 500);
+
+  const debouncedIdentification = useDebouncedCallback((value: string) => {
+    setIdentification(value);
+  }, 500);
+
+  const peopleData = useQuery({
+    queryKey: ["people-search-visitor", name, identification, activeField],
     queryFn: () =>
-      getUserPersonByFilterService({
-        ...(name.length > 2 && { fullName: name }),
-        identification: identification,
+      getPeopleByFilterService({
+        page: 1,
+        limit: 10,
+        status: true,
+        fullName: activeField === "name" && name.length > 2 ? name : "",
+        identificacion: activeField === "identification" && identification.length > 2 ? identification : "",
       }),
-    enabled: !!name || !!identification,
+    enabled: (activeField === "name" && name.length > 2) || (activeField === "identification" && identification.length > 2),
   });
 
-  // const isFormComplete = useMemo(() => {
-  //   const description = form?.watch("description");
-  //   return !!description?.trim() && !!selectedSpecies?.length;
-  // }, [form?.watch("description"), selectedSpecies]);
-
-  const handleSelectPerson = (person: UserPerson) => {
-    // setSelectedPerson(person);
-    // setSavedPerson(person);
+  const handleSelectPerson = (person: Person) => {
     setActiveField(null);
-    form.setValue("personId", person?.personId?.toString());
+    form.setValue("personId", person?.id?.toString());
     form.setValue("savedPerson", person);
   };
 
   const handleRemovePerson = () => {
-    // setSelectedPerson(null);
-
     form.setValue("savedPerson", null);
     form.setValue("name", "");
     form.setValue("identification", "");
@@ -121,7 +115,7 @@ export function VisitorLogFormFields() {
                             {...field}
                             onChange={(e) => {
                               field.onChange(e);
-                              setName(e.target.value);
+                              debouncedName(e.target.value);
                               setActiveField("name");
                               form.setValue("identification", "");
                               setIdentification("");
@@ -136,9 +130,10 @@ export function VisitorLogFormFields() {
                   {name.length > 2 && activeField === "name" && (
                     <div className="w-full">
                       <PersonSearch
-                        data={peopleData?.data?.data ?? []}
+                        data={peopleData?.data?.data?.items ?? []}
                         activeField={activeField}
                         onSelectPerson={handleSelectPerson}
+                        isLoading={peopleData.isLoading}
                       />
                     </div>
                   )}
@@ -158,7 +153,7 @@ export function VisitorLogFormFields() {
                             {...field}
                             onChange={(e) => {
                               field.onChange(e);
-                              setIdentification(e.target.value);
+                              debouncedIdentification(e.target.value);
                               setActiveField("identification");
                               form.setValue("name", "");
                               setName("");
@@ -174,9 +169,10 @@ export function VisitorLogFormFields() {
                     activeField === "identification" && (
                       <div className="w-full">
                         <PersonSearch
-                          data={peopleData?.data?.data ?? []}
+                          data={peopleData?.data?.data?.items ?? []}
                           activeField={activeField}
                           onSelectPerson={handleSelectPerson}
+                          isLoading={peopleData.isLoading}
                         />
                       </div>
                     )}
@@ -357,15 +353,17 @@ export function VisitorLogFormFields() {
 }
 
 interface PersonSearchProps {
-  data: UserPerson[];
+  data: Person[];
   activeField: "name" | "identification" | null;
-  onSelectPerson: (person: UserPerson) => void;
+  onSelectPerson: (person: Person) => void;
+  isLoading?: boolean;
 }
 
 export function PersonSearch({
   data,
   activeField,
   onSelectPerson,
+  isLoading,
 }: PersonSearchProps) {
   if (!activeField) return null;
 
@@ -380,10 +378,13 @@ export function PersonSearch({
               : "Resultados por identificación"
           }
         >
-          {data.length === 0 && (
+          {isLoading && (
+            <CommandItem disabled>Buscando...</CommandItem>
+          )}
+          {!isLoading && data.length === 0 && (
             <CommandItem disabled>No se encontraron resultados</CommandItem>
           )}
-          {data.map((person, idx) => (
+          {!isLoading && data.map((person, idx) => (
             <CommandItem
               key={idx}
               value={person.fullName}
@@ -392,7 +393,7 @@ export function PersonSearch({
             >
               <div className="flex flex-col">
                 <span className="font-medium">{person.fullName}</span>
-                <span className="text-xs text-gray-500">{person.email}</span>
+                <span className="text-xs text-gray-500">{person.identification}</span>
               </div>
             </CommandItem>
           ))}
@@ -403,7 +404,7 @@ export function PersonSearch({
 }
 
 interface SelectedPersonCardProps {
-  person: UserPerson;
+  person: Person;
   onRemove: () => void;
   showEmail?: boolean;
 }
@@ -439,16 +440,16 @@ export function SelectedPersonCard({
           </button>
         </div>
       </div>
-      {showEmail && (
+      {showEmail && person.mobileNumber && (
         <>
           <Separator />
           <div>
             <label className="font-semibold text-sm">
-              Correo Electrónico *
+              Teléfono
             </label>
             <div className="rounded-xl px-3 py-2 bg-muted border mt-2">
               <p className="text-sm text-muted-foreground truncate">
-                {person.email}
+                {person.mobileNumber}
               </p>
             </div>
           </div>
@@ -459,7 +460,7 @@ export function SelectedPersonCard({
 }
 
 interface SuccessViewProps {
-  person: UserPerson | null;
+  person: Person | null;
 }
 
 export function SuccessView({ person }: SuccessViewProps) {
@@ -485,12 +486,12 @@ export function SuccessView({ person }: SuccessViewProps) {
 
       <div className="bg-green-50 border border-green-300 rounded-lg p-4 flex items-center gap-4">
         <div className="w-12 h-12 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-sm font-medium">
-          {getInitials(person.fullName)}
+          {getInitials(person.fullName ?? "")}
         </div>
         <div className="flex-1">
           <h4 className="font-semibold text-green-800">{person.fullName}</h4>
           <div className="text-sm text-green-600 space-y-1">
-            <p>{person.email || "anamaria.gonzalez@empresa.com"}</p>
+            <p>{person.mobileNumber || person.identification}</p>
           </div>
         </div>
       </div>

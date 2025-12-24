@@ -82,6 +82,7 @@ export interface WeighingReportBrandGroup {
 export interface WeighingReportIntroducer {
     id: number;
     fullName: string;
+    slaughterDate: string;
 }
 
 // Fila del reporte (agrupado por introductor -> marca)
