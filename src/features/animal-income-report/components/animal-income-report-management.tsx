@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { format } from "date-fns";
-import { TrendingUp, PieChart as PieChartIcon, CalendarIcon, Table2 } from "lucide-react";
+import { TrendingUp, PieChart as PieChartIcon, CalendarIcon, Table2, Menu, Printer, FileSpreadsheet, Maximize2 } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +19,7 @@ import { ChartModern } from "./chart-modern";
 import { Chart3D } from "./chart-3d";
 import { ChartHistory } from "./chart-history";
 import { SpeciesDetailModal } from "./species-detail-modal";
+import * as XLSX from "xlsx";
 
 // Mapeo de nombres de especies a idSpecie
 const SPECIES_ID_MAP: Record<string, number> = {
@@ -27,6 +34,8 @@ export function AnimalIncomeReportManagement() {
   const [startDate, setStartDate] = useState<Date>(dateRange.from || new Date("2023-02-03"));
   const [endDate, setEndDate] = useState<Date>(dateRange.to || new Date());
   const [show3D, setShow3D] = useState(false);
+  const chartRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   // Estado para el modal de detalle
   const [modalOpen, setModalOpen] = useState(false);
@@ -46,6 +55,106 @@ export function AnimalIncomeReportManagement() {
 
   const handleDateChange = (from: Date, to: Date) => {
     fetchReport({ from, to });
+  };
+
+  const handlePrint = () => {
+    const printContent = printRef.current;
+    if (!printContent) return;
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Reporte de Ingresos de Animales</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; color: #334155; }
+            h1 { text-align: center; color: #0f172a; margin-bottom: 8px; font-size: 20px; text-transform: uppercase; }
+            h2 { text-align: center; color: #64748b; font-size: 14px; font-weight: normal; margin-bottom: 32px; }
+            .chart-img { display: block; margin: 0 auto; max-width: 100%; height: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 12px; }
+            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+            th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+            .text-right { text-align: right; }
+            .font-bold { font-weight: bold; }
+            @media print { .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <h1>EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO DEL CANTÓN RIOBAMBA</h1>
+          <h2>Reporte de Ingresos por Especie (${format(startDate, "dd/MM/yyyy")} - ${format(endDate, "dd/MM/yyyy")})</h2>
+          
+          <div style="text-align: center; margin-bottom: 30px;">
+             <p style="font-size: 14px; color: #334155;"><strong>Distribución de Ingresos</strong></p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Especie</th>
+                <th class="text-right">Cantidad</th>
+                <th class="text-right">Porcentaje</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${reportData.data.map(item => `
+                <tr>
+                  <td>${item.species}</td>
+                  <td class="text-right">${formatNumber(item.quantity)}</td>
+                  <td class="text-right">${item.percentage.toFixed(1)}%</td>
+                </tr>
+              `).join('')}
+              <tr class="font-bold" style="background-color: #f8fafc;">
+                <td>Total</td>
+                <td class="text-right">${formatNumber(reportData.total.quantity)}</td>
+                <td class="text-right">100%</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top: 50px; text-align: center; font-size: 10px; color: #94a3b8;">
+            Documento generado el ${format(new Date(), "dd/MM/yyyy HH:mm:ss")}
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
+  const handleDownloadXLS = () => {
+    const dataToExport = reportData.data.map(item => ({
+      Especie: item.species,
+      Cantidad: item.quantity,
+      Porcentaje: `${item.percentage.toFixed(1)}%`
+    }));
+    
+    // Añadir fila de total
+    dataToExport.push({
+      Especie: 'TOTAL',
+      Cantidad: reportData.total.quantity,
+      Porcentaje: '100%'
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Distribucion");
+    XLSX.writeFile(workbook, `reporte-distribucion-especie-${format(startDate, "yyyyMMdd")}.xlsx`);
+  };
+
+  const handleFullScreen = () => {
+    if (!chartRef.current) return;
+    if (!document.fullscreenElement) {
+      chartRef.current.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
   };
 
   return (
@@ -149,7 +258,7 @@ export function AnimalIncomeReportManagement() {
         </TabsList>
 
         <TabsContent value="grafico" className="space-y-4 md:space-y-6">
-          <Card className="bg-white border-slate-200 shadow-sm">
+          <Card ref={chartRef} className="bg-white border-slate-200 shadow-sm overflow-hidden">
             <CardHeader className="space-y-3">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <div className="flex-1">
@@ -189,6 +298,29 @@ export function AnimalIncomeReportManagement() {
                   >
                     3D Interactivo
                   </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600">
+                        <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem onClick={handlePrint} className="cursor-pointer text-sm">
+                        <Printer className="mr-2 h-4 w-4" />
+                        <span>Imprimir Reporte</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleDownloadXLS} className="cursor-pointer text-sm">
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                        <span>Descargar en XLS</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleFullScreen} className="cursor-pointer text-sm">
+                        <Maximize2 className="mr-2 h-4 w-4" />
+                        <span>Ver Pantalla Completa</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </CardHeader>
