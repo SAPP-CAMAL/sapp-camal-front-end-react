@@ -427,11 +427,12 @@ export const getStatusCorralsReport = async (
 export const getAntemortemAgrocalidadReport = async (
   startDate: string,
   endDate: string,
+  idLine: number,
   typeReport: 'EXCEL' | 'PDF'
 ) => {
   try {
     const response = await http.get('v1/1.0.0/detail-cert-brand/report-antemortem-agrocalidad', {
-      searchParams: { startDate, endDate, typeReport },
+      searchParams: { startDate, endDate, typeReport, idLine },
     });
 
     const blob = await response.blob();

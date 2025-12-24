@@ -498,7 +498,7 @@ export function AntemortemManagement() {
                           onClick={() => {
                             const admissionDate = format(fecha, "yyyy-MM-dd");
                             toast.promise(
-                              downloadAntemortemAgrocalidadReport(admissionDate, 'EXCEL'),
+                              downloadAntemortemAgrocalidadReport(admissionDate, getLineIdByType(linea), 'EXCEL'),
                               {
                                 loading: 'Generando Excel...',
                                 success: 'Excel descargado correctamente',
@@ -514,7 +514,7 @@ export function AntemortemManagement() {
                           onClick={() => {
                             const admissionDate = format(fecha, "yyyy-MM-dd");
                             toast.promise(
-                              downloadAntemortemAgrocalidadReport(admissionDate, 'PDF'),
+                              downloadAntemortemAgrocalidadReport(admissionDate, getLineIdByType(linea), 'PDF'),
                               {
                                 loading: 'Generando PDF...',
                                 success: 'PDF descargado correctamente',
