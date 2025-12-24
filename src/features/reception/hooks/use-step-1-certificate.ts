@@ -181,7 +181,7 @@ export const useStep1Certificate = () => {
 			animalAdmissionMapped.forEach(handleAddAnimalAdmission);
 
 			toast.success('Paso 1 completado correctamente');
-		} catch (error) {}
+		} catch (error) { }
 
 		// 2. Retrieve animal transport data for step 3
 		try {
@@ -190,7 +190,7 @@ export const useStep1Certificate = () => {
 				id: conditionTransport.id,
 				arrivalConditionId: conditionTransport.idConditionsArrival,
 				bedTypeId: conditionTransport.idBedType,
-				ownMedium: conditionTransport.ownMedium ? 'si' : 'no',
+				ownMedium: conditionTransport.ownMedium !== false ? 'si' : 'no',
 			});
 		} catch (error) {
 		} finally {
@@ -203,10 +203,10 @@ export const useStep1Certificate = () => {
 		try {
 			if (selectedSpecie || !selectedCertificate.idDetailsRegisterVehicles) return;
 
-			const registerVehicle = (await getDetailRegisterVehicleById(selectedCertificate.idDetailsRegisterVehicles )).data;
+			const registerVehicle = (await getDetailRegisterVehicleById(selectedCertificate.idDetailsRegisterVehicles)).data;
 
 			if (registerVehicle.specie) handleSetSelectedSpecie(registerVehicle.specie);
-		} catch (error) {}
+		} catch (error) { }
 	};
 
 	const handleSetSelectedCertificate = async (certificate: Certificate, isFromQR?: boolean) => {
@@ -224,7 +224,7 @@ export const useStep1Certificate = () => {
 		// PRIMERO: Limpiar la especie anterior y obtener la especie del certificado
 		// Obtenemos la especie desde setting-cert-brand que tiene la especie correcta del certificado
 		handleRemoveSelectedSpecie(); // Limpiar especie anterior
-		
+
 		try {
 			// Obtener la especie desde la API de setting-cert-brand
 			const settingCertBrandResponse = await getCertBrandByCertificateId(certificate.id.toString());
@@ -296,8 +296,7 @@ export const useStep1Certificate = () => {
 
 	if (selectedCertificate?.quantity && selectedCertificate?.placeOrigin)
 		successMsg.push(
-			`Certificado: ${selectedCertificate?.quantity} ${selectedCertificate?.quantity! > 1 ? 'animales' : 'animal'} ${
-				selectedCertificate?.plateVehicle && `• ${selectedCertificate?.plateVehicle}`
+			`Certificado: ${selectedCertificate?.quantity} ${selectedCertificate?.quantity! > 1 ? 'animales' : 'animal'} ${selectedCertificate?.plateVehicle && `• ${selectedCertificate?.plateVehicle}`
 			} • ${selectedCertificate?.placeOrigin}`
 		);
 

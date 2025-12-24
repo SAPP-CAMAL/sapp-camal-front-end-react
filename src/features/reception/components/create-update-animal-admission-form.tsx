@@ -641,7 +641,7 @@ export const CreateUpdateAnimalAdmissionForm = ({ animalAdmissionData, className
 									</Button>
 								}
 								confirmBtn={
-									<Button variant='ghost' className='bg-emerald-600 hover:bg-emerald-600 hover:text-white text-white' size='lg'>
+									<Button variant='ghost' className='bg-primary hover:bg-primary hover:text-white text-white' size='lg'>
 										<Check />
 										Si
 									</Button>

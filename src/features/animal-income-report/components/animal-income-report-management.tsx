@@ -141,7 +141,7 @@ export function AnimalIncomeReportManagement() {
           </TabsTrigger>
           <TabsTrigger 
             value="tabla" 
-            className="px-4 sm:px-6 py-2 text-sm data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            className="px-4 sm:px-6 py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
           >
           <Table2 className="h-4 w-4 mr-1 sm:mr-2"/>
             <span className="text-xs sm:text-sm">Tabla</span>
@@ -262,7 +262,7 @@ export function AnimalIncomeReportManagement() {
                             <span className="whitespace-nowrap">{item.percentage.toFixed(1)}%</span>
                             <div className="w-12 sm:w-16 h-2 bg-slate-200 rounded-full overflow-hidden hidden md:block">
                               <div
-                                className="h-full bg-gradient-to-r from-sky-500 to-emerald-500 rounded-full transition-all duration-500"
+                                className="h-full bg-gradient-to-r from-sky-500 to-primary rounded-full transition-all duration-500"
                                 style={{ width: `${item.percentage}%` }}
                               />
                             </div>

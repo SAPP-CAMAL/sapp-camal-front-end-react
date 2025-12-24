@@ -487,14 +487,19 @@ export function WeighingReportManagement() {
                               </TableCell>
                             )}
 
-                            {/* ETAPA PRODUCTIVA - Cada animal - CENTRADO */}
+                            {/* ETAPA PRODUCTIVA + CÓDIGO - Cada animal */}
                             <TableCell className="align-middle text-center border-r">
-                              <Badge
-                                variant="secondary"
-                                className="bg-amber-50 text-amber-700 border-amber-200"
-                              >
-                                {animal.productiveStage}
-                              </Badge>
+                              <div className="flex flex-col items-center gap-1">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-amber-50 text-amber-700 border-amber-200"
+                                >
+                                  {animal.productiveStage}
+                                </Badge>
+                                <span className="text-xs text-gray-500">
+                                  Cód: {animal.code}
+                                </span>
+                              </div>
                             </TableCell>
 
                             {/* PESO NETO - Cada animal */}
