@@ -58,9 +58,6 @@ export function AnimalIncomeReportManagement() {
   };
 
   const handlePrint = () => {
-    const printContent = printRef.current;
-    if (!printContent) return;
-
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
@@ -99,7 +96,7 @@ export function AnimalIncomeReportManagement() {
               </tr>
             </thead>
             <tbody>
-              ${reportData.data.map(item => `
+              ${(reportData?.data || []).map(item => `
                 <tr>
                   <td>${item.species}</td>
                   <td class="text-right">${formatNumber(item.quantity)}</td>
@@ -108,7 +105,7 @@ export function AnimalIncomeReportManagement() {
               `).join('')}
               <tr class="font-bold" style="background-color: #f8fafc;">
                 <td>Total</td>
-                <td class="text-right">${formatNumber(reportData.total.quantity)}</td>
+                <td class="text-right">${formatNumber(reportData?.total?.quantity || 0)}</td>
                 <td class="text-right">100%</td>
               </tr>
             </tbody>
@@ -158,7 +155,8 @@ export function AnimalIncomeReportManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-3 sm:p-4 md:p-6">
+    <div className="min-h-screen bg-slate-50/50 p-3 sm:p-4 md:p-6 text-slate-900">
+      <div ref={printRef} style={{ display: 'none' }} aria-hidden="true" />
       {/* Header Section */}
       <div className="mb-6 md:mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -309,7 +307,7 @@ export function AnimalIncomeReportManagement() {
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuItem onClick={handlePrint} className="cursor-pointer text-sm">
                         <Printer className="mr-2 h-4 w-4" />
-                        <span>Imprimir Reporte</span>
+                        <span>Imprimir</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleDownloadXLS} className="cursor-pointer text-sm">
                         <FileSpreadsheet className="mr-2 h-4 w-4" />
@@ -317,7 +315,7 @@ export function AnimalIncomeReportManagement() {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleFullScreen} className="cursor-pointer text-sm">
                         <Maximize2 className="mr-2 h-4 w-4" />
-                        <span>Ver Pantalla Completa</span>
+                        <span>Ver en pantalla completa</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
