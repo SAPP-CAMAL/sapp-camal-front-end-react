@@ -110,12 +110,16 @@ jobs:
             
             # Iniciar o Recargar PM2
             echo "Reiniciando aplicación..."
-            if pm2 list | grep -q "sapp"; then
-                # update-env es crucial para que PM2 relea el archivo .env nuevo
-                pm2 reload sapp --update-env
-            else
-                pm2 start ecosystem.config.js
+            
+            # Verificar si PM2 está inicializado
+            if ! command -v pm2 &> /dev/null; then
+              npm install -g pm2
+              pm2 install pm2-logrotate
             fi
             
+            # Usar startOrRestart para manejar tanto primer deploy como actualizaciones
+            pm2 startOrRestart ecosystem.config.js --update-env
+            
             pm2 save
+            pm2 status
             echo "🚀 Despliegue completado."
