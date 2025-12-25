@@ -256,13 +256,13 @@ aside[class*="sidebar"] {
 button[data-sidebar="trigger"],
 button[class*="sidebar-trigger"] {
   pointer-events: auto !important;
-  z-index: 50;
+  z-index: 70 !important;
 }
 
 /* Scroll del sidebar */
 [data-sidebar="sidebar"] {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
+  overflow-y: auto;
+  overflow-x: visible;
 }
 
 /* Items del menú con transiciones suaves */
@@ -1748,7 +1748,22 @@ main {
   animation: scroll-marquee-vertical 25s linear infinite;
 }
 
-@keyframes scroll-marquee-vertical { 0%, 40% { transform: translateY(0%); } 50%, 90% { transform: translateY(-50%); } 100% { transform: translateY(-50%); } }
+@keyframes scroll-marquee-vertical {
+
+  0%,
+  40% {
+    transform: translateY(0%);
+  }
+
+  50%,
+  90% {
+    transform: translateY(-50%);
+  }
+
+  100% {
+    transform: translateY(-50%);
+  }
+}
 
 /* Animacion super lenta y constante para marquesina */
 .marquee-content-slow {
@@ -1758,6 +1773,11 @@ main {
 }
 
 @keyframes scroll-marquee-slow {
-  0% { transform: translateY(0%); }
-  100% { transform: translateY(-50%); }
+  0% {
+    transform: translateY(0%);
+  }
+
+  100% {
+    transform: translateY(-50%);
+  }
 }
