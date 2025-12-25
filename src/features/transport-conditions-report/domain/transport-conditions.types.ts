@@ -1,7 +1,13 @@
 export interface TransportConditionsFilters {
+  page: number;
+  limit: number;
   startDate: string;
   endDate: string;
-  specieId?: number | null;
+  idSpecie?: number | null;
+  code?: string;
+  identification?: string;
+  plate?: string;
+  fullName?: string;
 }
 
 export interface TransportConditionItem {
@@ -12,4 +18,12 @@ export interface TransportConditionItem {
   arrivalConditions: string;
   ownMobilization: boolean;
   observations: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }

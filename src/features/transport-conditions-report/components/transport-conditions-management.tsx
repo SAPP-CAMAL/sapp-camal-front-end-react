@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -48,6 +49,13 @@ import {
   CalendarDays,
   PawPrint,
   User,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Hash,
+  IdCard,
+  UserCircle,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -62,15 +70,23 @@ import { Badge } from "@/components/ui/badge";
 
 export function TransportConditionsManagement() {
   const initialFilters: TransportConditionsFilters = {
+    page: 1,
+    limit: 10,
     startDate: getCurrentDate(),
     endDate: getCurrentDate(),
-    specieId: null,
+    idSpecie: null,
+    code: "",
+    identification: "",
+    plate: "",
+    fullName: "",
   };
 
   const [filters, setFilters] = useState<TransportConditionsFilters>(initialFilters);
   const [apiData, setApiData] = useState<any[]>([]);
   const [species, setSpecies] = useState<Specie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
   const isMobile = useIsMobile();
 
   // Cargar especies
@@ -93,12 +109,16 @@ export function TransportConditionsManagement() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const data = await getTransportConditionsService(filters);
-        setApiData(data);
+        const response = await getTransportConditionsService(filters);
+        setApiData(response.data);
+        setTotalPages(response.totalPages);
+        setTotalRecords(response.total);
       } catch (error) {
         console.error("Error cargando datos:", error);
         toast.error("Error al cargar los datos");
         setApiData([]);
+        setTotalPages(0);
+        setTotalRecords(0);
       } finally {
         setIsLoading(false);
       }
@@ -118,6 +138,14 @@ export function TransportConditionsManagement() {
 
   const clearFilters = useCallback(() => {
     setFilters(initialFilters);
+  }, []);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setFilters((prev) => ({ ...prev, page: newPage }));
+  }, []);
+
+  const handleLimitChange = useCallback((newLimit: number) => {
+    setFilters((prev) => ({ ...prev, limit: newLimit, page: 1 }));
   }, []);
 
   const handleDownloadReport = async (type: "EXCEL" | "PDF") => {
@@ -143,10 +171,12 @@ export function TransportConditionsManagement() {
 
   const totals = useMemo(
     () => ({
-      registros: apiData.length,
-      totalAnimales: apiData.reduce((acc, item) => acc + (item.quantity || 0), 0),
+      registros: totalRecords,
+      totalAnimales: Array.isArray(apiData) 
+        ? apiData.reduce((acc, item) => acc + (item.quantity || 0), 0)
+        : 0,
     }),
-    [apiData]
+    [apiData, totalRecords]
   );
 
   // Vista móvil/tablet
@@ -249,7 +279,7 @@ export function TransportConditionsManagement() {
           <CardDescription>Filtra los registros según tus necesidades</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 items-end">
             <div className="flex flex-col gap-1 min-w-0">
               <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                 <CalendarDays className="h-3.5 w-3.5 text-primary" />
@@ -284,19 +314,19 @@ export function TransportConditionsManagement() {
               />
             </div>
 
-            <div className="flex flex-col gap-1 min-w-0 sm:col-span-2 lg:col-span-1">
+            <div className="flex flex-col gap-1 min-w-0">
               <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                 <PawPrint className="h-3.5 w-3.5 text-primary" />
                 Especie
               </label>
               <Select
-                value={filters.specieId?.toString() || ""}
+                value={filters.idSpecie?.toString() || ""}
                 onValueChange={(value) =>
-                  handleFilterChange("specieId", value ? parseInt(value) : null)
+                  handleFilterChange("idSpecie", value ? parseInt(value) : null)
                 }
               >
                 <SelectTrigger className="bg-secondary w-full">
-                  <SelectValue placeholder="Selecciona una especie" />
+                  <SelectValue placeholder="Seleccione una especie" />
                 </SelectTrigger>
                 <SelectContent>
                   {species.map((specie) => (
@@ -308,10 +338,62 @@ export function TransportConditionsManagement() {
               </Select>
             </div>
 
+            <div className="flex flex-col gap-1 min-w-0">
+              <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                <Hash className="h-3.5 w-3.5 text-primary" />
+                Código
+              </label>
+              <Input
+                placeholder="Buscar por código..."
+                value={filters.code || ""}
+                onChange={(e) => handleFilterChange("code", e.target.value)}
+                className="bg-secondary"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1 min-w-0">
+              <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                <IdCard className="h-3.5 w-3.5 text-primary" />
+                Identificación
+              </label>
+              <Input
+                placeholder="CI del transportista..."
+                value={filters.identification || ""}
+                onChange={(e) => handleFilterChange("identification", e.target.value)}
+                className="bg-secondary"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1 min-w-0">
+              <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                <Truck className="h-3.5 w-3.5 text-primary" />
+                Placa
+              </label>
+              <Input
+                placeholder="Placa del vehículo..."
+                value={filters.plate || ""}
+                onChange={(e) => handleFilterChange("plate", e.target.value)}
+                className="bg-secondary"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1 min-w-0">
+              <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                <UserCircle className="h-3.5 w-3.5 text-primary" />
+                Nombre Completo
+              </label>
+              <Input
+                placeholder="Nombre del transportista..."
+                value={filters.fullName || ""}
+                onChange={(e) => handleFilterChange("fullName", e.target.value)}
+                className="bg-secondary"
+              />
+            </div>
+
             <div className="flex flex-col sm:flex-row lg:flex-col gap-2 sm:col-span-2 lg:col-span-1">
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button className="w-full" disabled={isLoading || apiData.length === 0}>
+                  <Button className="w-full" disabled={isLoading || !Array.isArray(apiData) || apiData.length === 0}>
                     <FileUp className="h-4 w-4" />
                     <span className="ml-2">Reporte</span>
                     <ChevronDown className="h-3 w-3 ml-1" />
@@ -339,24 +421,14 @@ export function TransportConditionsManagement() {
 
 
       {/* Totales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <Card>
-          <CardContent className="py-3 sm:py-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs sm:text-sm text-muted-foreground">Total de registros</span>
-              <span className="text-xl sm:text-2xl font-bold text-emerald-600">{totals.registros}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="py-3 sm:py-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs sm:text-sm text-muted-foreground">Total de animales</span>
-              <span className="text-xl sm:text-2xl font-bold text-blue-600">{totals.totalAnimales}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardContent className="py-3 sm:py-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs sm:text-sm text-muted-foreground">Total de animales</span>
+            <span className="text-xl sm:text-2xl font-bold text-blue-600">{totals.totalAnimales}</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabla */}
       {isMobile ? (
@@ -368,7 +440,7 @@ export function TransportConditionsManagement() {
                 <p className="text-sm text-muted-foreground">Cargando datos...</p>
               </div>
             </div>
-          ) : apiData.length === 0 ? (
+          ) : !Array.isArray(apiData) || apiData.length === 0 ? (
             <Card>
               <CardContent className="py-12">
                 <div className="flex flex-col items-center gap-3">
@@ -383,7 +455,7 @@ export function TransportConditionsManagement() {
               </CardContent>
             </Card>
           ) : (
-            apiData.map((item) => <MobileCard key={item.id} item={item} />)
+            (Array.isArray(apiData) ? apiData : []).map((item) => <MobileCard key={item.id} item={item} />)
           )}
         </div>
       ) : (
@@ -427,7 +499,7 @@ export function TransportConditionsManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {apiData.length === 0 ? (
+                  {!Array.isArray(apiData) || apiData.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-12">
                         <div className="flex flex-col items-center gap-3">
@@ -442,7 +514,7 @@ export function TransportConditionsManagement() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    apiData.map((item) => (
+                    (Array.isArray(apiData) ? apiData : []).map((item) => (
                       <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="text-center text-sm">
                           {item.issueDate ? format(parseISO(item.issueDate), "dd/MM/yyyy") : "N/A"}
@@ -480,6 +552,80 @@ export function TransportConditionsManagement() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Paginación */}
+      {!isLoading && Array.isArray(apiData) && apiData.length > 0 && (
+        <Card>
+          <CardContent className="py-3 sm:py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Mostrar</span>
+                <Select
+                  value={filters.limit.toString()}
+                  onValueChange={(value) => handleLimitChange(parseInt(value))}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">registros por página</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Página {filters.page} de {totalPages || 1} ({totalRecords} total)
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(1)}
+                  disabled={filters.page === 1}
+                  className="h-8 w-8"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(filters.page - 1)}
+                  disabled={filters.page === 1}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(filters.page + 1)}
+                  disabled={filters.page >= totalPages}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={filters.page >= totalPages}
+                  className="h-8 w-8"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
