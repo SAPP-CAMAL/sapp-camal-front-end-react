@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { fixUtf8 } from "@/lib/utils";
+
 
 function isSvgSrc(src: string) {
   return src.toLowerCase().split("?")[0].endsWith(".svg");
@@ -87,8 +89,8 @@ export function SimpleCarousel({
 
         {/* Welcome Message - responsive positioning */}
         <div className="absolute top-16 sm:top-20 md:top-24 lg:top-32 left-1/2 -translate-x-1/2 z-40 text-center w-full px-3 sm:px-4">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent drop-shadow-lg inline-flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-            <span className="whitespace-nowrap">¡Bienvenido, {userName}!</span>
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent drop-shadow-lg flex items-center justify-center gap-1 sm:gap-2 flex-wrap pb-3 leading-relaxed">
+            <span className="whitespace-nowrap">¡Bienvenido, {fixUtf8(userName)}!</span>
             <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 lg:h-9 lg:w-9 text-yellow-500 animate-pulse flex-shrink-0" />
           </h1>
         </div>
@@ -121,7 +123,7 @@ export function SimpleCarousel({
                 Sistema de Automatización de Procesos Productivos
               </p>
               <Badge className="text-xs sm:text-sm md:text-base px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 shadow-md sm:shadow-lg whitespace-nowrap">
-                {userRole}
+                {fixUtf8(userRole)}
               </Badge>
             </div>
           </div>

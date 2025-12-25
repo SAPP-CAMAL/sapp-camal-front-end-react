@@ -20,6 +20,7 @@ export interface WeighingReportApiItem {
         id: number;
         detailsSpeciesCertificate: {
             id: number;
+            code: string; // Código del animal
             detailCertificateBrands: {
                 id: number;
                 productiveStage: {
@@ -63,6 +64,7 @@ export interface GetWeighingReportApiResponse {
 // Datos del animal individual
 export interface WeighingReportAnimal {
     id: number;
+    code: string; // Código del animal
     grossWeight: number;
     netWeight: number;
     productiveStage: string;
@@ -80,6 +82,7 @@ export interface WeighingReportBrandGroup {
 export interface WeighingReportIntroducer {
     id: number;
     fullName: string;
+    slaughterDate: string;
 }
 
 // Fila del reporte (agrupado por introductor -> marca)

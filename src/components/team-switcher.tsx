@@ -3,7 +3,8 @@
 import * as React from "react";
 import { ChevronsUpDown, Check } from "lucide-react";
 import Image from 'next/image'
-import { cn } from "@/lib/utils";
+import { cn, fixUtf8 } from "@/lib/utils";
+
 
 import {
   DropdownMenu,
@@ -26,68 +27,102 @@ import {
 import { revalidatePathAction } from "@/features/security/server/actions/revalidate.action";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ENV } from "@/config/env.config";
 
 export function RoleSwitcher() {
   const { isMobile } = useSidebar();
   const [open, setOpen] = React.useState(false);
   const [activeRoleId, setActiveRoleId] = React.useState<number | null>(null);
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  // Evitar problemas de hidratación
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const query = useQuery({
     queryKey: ["user-roles"],
     queryFn: () => getUserRolesService(),
     retry: 1,
-    enabled: typeof window !== 'undefined', // Solo ejecutar en el cliente
+    enabled: isMounted, // Solo ejecutar cuando esté montado en el cliente
   });
 
   // Cargar el rol activo desde localStorage o usar el rol del usuario
   React.useEffect(() => {
-    if (query.data?.data && query.data.data.length > 0 && activeRoleId === null) {
-      // Intentar obtener el rol guardado en localStorage
-      const savedRoleId = localStorage.getItem('activeRoleId');
-      
-      if (savedRoleId) {
-        const roleId = parseInt(savedRoleId);
-        // Verificar que el rol guardado existe en la lista de roles del usuario
-        const roleExists = query.data.data.some((role: any) => role.id === roleId);
-        if (roleExists) {
-          setActiveRoleId(roleId);
-          return;
-        }
+    if (!isMounted || !query.data?.data || query.data.data.length === 0 || activeRoleId !== null) {
+      return;
+    }
+
+    // Intentar obtener el rol guardado en localStorage
+    const savedRoleId = localStorage.getItem('activeRoleId');
+    
+    if (savedRoleId) {
+      const roleId = parseInt(savedRoleId);
+      // Verificar que el rol guardado existe en la lista de roles del usuario
+      const roleExists = query.data.data.some((role: any) => role.id === roleId);
+      if (roleExists) {
+        setActiveRoleId(roleId);
+        return;
       }
+    }
+    
+    // Si no hay rol guardado o no existe, intentar obtener del usuario en cookies usando document.cookie
+    try {
+      const cookies = document.cookie.split(';');
+      const userCookie = cookies.find(cookie => cookie.trim().startsWith('user='));
       
-      // Si no hay rol guardado o no existe, intentar obtener del usuario en cookies usando document.cookie
-      try {
-        const cookies = document.cookie.split(';');
-        const userCookie = cookies.find(cookie => cookie.trim().startsWith('user='));
+      if (userCookie) {
+        const userValue = userCookie.split('=')[1];
+        const userData = JSON.parse(decodeURIComponent(userValue));
         
-        if (userCookie) {
-          const userValue = userCookie.split('=')[1];
-          const userData = JSON.parse(decodeURIComponent(userValue));
-          
-          if (userData.role?.id) {
-            const roleExists = query.data.data.some((role: any) => role.id === userData.role.id);
-            if (roleExists) {
-              setActiveRoleId(userData.role.id);
-              localStorage.setItem('activeRoleId', userData.role.id.toString());
-              return;
-            }
+        if (userData.role?.id) {
+          const roleExists = query.data.data.some((role: any) => role.id === userData.role.id);
+          if (roleExists) {
+            setActiveRoleId(userData.role.id);
+            localStorage.setItem('activeRoleId', userData.role.id.toString());
+            return;
           }
         }
-      } catch (error) {
-        console.error('Error al leer cookies:', error);
       }
-      
-      // Si todo falla, usar el primer rol
-      setActiveRoleId(query.data.data[0].id);
-      localStorage.setItem('activeRoleId', query.data.data[0].id.toString());
+    } catch (error) {
+      console.error('Error al leer cookies:', error);
     }
-  }, [query.data, activeRoleId]);
+    
+    // Si todo falla, usar el primer rol
+    setActiveRoleId(query.data.data[0].id);
+    localStorage.setItem('activeRoleId', query.data.data[0].id.toString());
+  }, [query.data, activeRoleId, isMounted]);
+
+  // No renderizar hasta que esté montado en el cliente
+  if (!isMounted) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" disabled>
+            <div className="bg-primary text-primary-foreground flex items-center justify-center rounded-lg overflow-hidden w-10 h-10">
+              <Image
+                src="/images/sapp-b-vertical.svg"
+                alt="Logo Camal"
+                className="h-full w-auto object-contain"
+                width={100}
+                height={100}
+              />
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+              <span className="truncate font-medium">CAMAL MUNICIPAL</span>
+              <span className="truncate text-xs">{ENV.CAMAL_NAME}</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
 
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
@@ -104,16 +139,17 @@ export function RoleSwitcher() {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-medium">CAMAL MUNICIPAL</span>
-                <span className="truncate text-xs">RIOBAMBA</span>
+                <span className="truncate text-xs">{ENV.CAMAL_NAME}</span>
               </div>
               <ChevronsUpDown className="ml-auto group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg !z-[5]"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
+            onInteractOutside={() => setOpen(false)}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               Roles de Usuario
@@ -190,7 +226,7 @@ function RoleItem({ role, isActive, onSelect }: { role: any; isActive: boolean; 
         {isPending ? (
           <span className="font-mono text-sm">Cambiando de rol...</span>
         ) : (
-          <span className={cn(isActive && "font-semibold")}>{role.name}</span>
+          <span className={cn(isActive && "font-semibold")}>{fixUtf8(role.name)}</span>
         )}
       </div>
     </DropdownMenuItem>

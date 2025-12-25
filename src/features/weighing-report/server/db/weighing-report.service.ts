@@ -29,6 +29,9 @@ function transformApiResponse(
         const productiveStage =
             item.animalWeighing.detailsSpeciesCertificate.detailCertificateBrands
                 .productiveStage;
+        const slaughterDate =
+            item.animalWeighing.detailsSpeciesCertificate.detailCertificateBrands
+                .detailsCertificateBrand.slaughterDate;
 
         // Crear el registro del introductor si no existe
         if (!groupedByIntroducer.has(introducerId)) {
@@ -37,6 +40,7 @@ function transformApiResponse(
                 introducer: {
                     id: introducerId,
                     fullName: introducer.user.person.fullName,
+                    slaughterDate: slaughterDate,
                 },
                 brands: [],
             });
@@ -60,6 +64,7 @@ function transformApiResponse(
         // Agregar el animal al grupo de la marca
         brandGroup.animals.push({
             id: item.id,
+            code: item.animalWeighing.detailsSpeciesCertificate.code,
             grossWeight: parseFloat(item.grossWeight),
             netWeight: parseFloat(item.netWeight),
             productiveStage: productiveStage.name,

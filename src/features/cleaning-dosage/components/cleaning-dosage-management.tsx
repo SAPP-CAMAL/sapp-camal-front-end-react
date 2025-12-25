@@ -127,7 +127,7 @@ export function CleaningDosageManagement() {
         <div className="mx-auto max-w-screen-xl px-3 md:px-4 py-3 md:py-4">
           <div className="text-center">
             <h1 className="text-2xl font-normal">
-              REGISTRO DOSIFICACIÓN PARA LIMPIEZA Y SANITIZACION
+              REGISTRO DOSIFICACIÓN PARA LIMPIEZA Y SANITIZACIÓN
             </h1>
             <p className="text-sm text-muted-foreground">
               Registros generados para:{" "}

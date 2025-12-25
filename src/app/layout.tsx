@@ -6,6 +6,8 @@ import { Providers } from "@/features/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
+import { ENV } from "@/config/env.config";
+
 const geistSans = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -18,7 +20,7 @@ const geistMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "SAPP",
-  description: "CAMAL MUNICIPAL DE RIOBAMBA",
+  description: `CAMAL MUNICIPAL DE ${ENV.CAMAL_NAME}`,
   icons: {
     icon: [
       { url: "/images/ico.ico", type: "image/ico" },

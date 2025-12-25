@@ -13,9 +13,6 @@ import {
   Building,
   Target,
   ArrowRight,
-  Users,
-  User,
-  UserCheck,
   Info,
   AlertCircle,
   MapPin,
@@ -95,14 +92,14 @@ export function ConfirmationModal({
           {/* Transfer summary - Enhanced */}
           <div className="relative overflow-hidden rounded-xl border-2 border-sidebar-primary-200 bg-muted/40">
             <div className="absolute top-2 right-2">
-              <div className="p-1  rounded-full">
+              {/* <div className="p-1  rounded-full">
                 <Info className="h-3 w-3 text-muted-700" />
-              </div>
+              </div> */}
             </div>
             
             <div className="p-4">
               <h4 className="flex items-center gap-2 font-semibold text-gray-700 mb-3">
-                <AlertCircle className="h-4 w-4" />
+                {/* <AlertCircle className="h-4 w-4" /> */}
                 Resumen de transferencia
               </h4>
               

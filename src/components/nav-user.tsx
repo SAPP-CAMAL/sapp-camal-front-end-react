@@ -28,6 +28,8 @@ import {
 import { logoutAction } from "@/features/security/server/actions/security.actions";
 import { useRouter } from "next/navigation";
 import { LoginResponse } from "@/features/security/domain";
+import { fixUtf8 } from "@/lib/utils";
+
 
 export function NavUser({ user }: { user: LoginResponse }) {
   const { isMobile } = useSidebar();
@@ -43,19 +45,15 @@ export function NavUser({ user }: { user: LoginResponse }) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage
-                  src={user.user.userName}
-                  alt={user.user.fullName}
-                />
                 <AvatarFallback className="rounded-lg uppercase">
                   {user.user.userName.substring(0, 1)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
-                  {user.user.fullName}
+                <span className="truncate font-medium py-0.5 leading-normal">
+                  {fixUtf8(user.user.fullName)}
                 </span>
-                <span className="truncate text-xs">{user.user.email}</span>
+                <span className="truncate text-xs">{fixUtf8(user.user.email)}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -69,19 +67,15 @@ export function NavUser({ user }: { user: LoginResponse }) {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage
-                    src={user.user.userName}
-                    alt={user.user.fullName}
-                  />
                   <AvatarFallback className="rounded-lg uppercase">
                     {user.user.userName.substring(0, 1)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {user.user.fullName}
+                  <span className="truncate font-medium py-0.5 leading-normal">
+                    {fixUtf8(user.user.fullName)}
                   </span>
-                  <span className="truncate text-xs">{user.user.email}</span>
+                  <span className="truncate text-xs">{fixUtf8(user.user.email)}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -115,7 +109,7 @@ export function NavUser({ user }: { user: LoginResponse }) {
               }}
             >
               <LogOut />
-              Cerrar Sessón
+              Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

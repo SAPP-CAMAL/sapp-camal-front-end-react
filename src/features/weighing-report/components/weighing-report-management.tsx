@@ -466,8 +466,13 @@ export function WeighingReportManagement() {
                                 className="align-middle bg-gray-50/50 border-r"
                                 rowSpan={totalAnimalsForIntroducer}
                               >
-                                <div className="font-semibold text-gray-900 uppercase pl-2">
-                                  {row.introducer.fullName}
+                                <div className="flex flex-col gap-1 pl-2">
+                                  <span className="font-semibold text-gray-900 uppercase">
+                                    {row.introducer.fullName}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    Faena: {new Date(row.introducer.slaughterDate).toLocaleDateString("es-EC")}
+                                  </span>
                                 </div>
                               </TableCell>
                             )}
@@ -487,14 +492,19 @@ export function WeighingReportManagement() {
                               </TableCell>
                             )}
 
-                            {/* ETAPA PRODUCTIVA - Cada animal - CENTRADO */}
+                            {/* ETAPA PRODUCTIVA + CÓDIGO - Cada animal */}
                             <TableCell className="align-middle text-center border-r">
-                              <Badge
-                                variant="secondary"
-                                className="bg-amber-50 text-amber-700 border-amber-200"
-                              >
-                                {animal.productiveStage}
-                              </Badge>
+                              <div className="flex flex-col items-center gap-1">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-amber-50 text-amber-700 border-amber-200"
+                                >
+                                  {animal.productiveStage}
+                                </Badge>
+                                <span className="text-xs text-gray-500">
+                                  Cód: {animal.code}
+                                </span>
+                              </div>
                             </TableCell>
 
                             {/* PESO NETO - Cada animal */}

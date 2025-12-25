@@ -16,12 +16,8 @@ import {
   Building,
   Target,
   ArrowRight,
-  Users,
-  User,
-  UserCheck,
   Info,
   CheckCircle,
-  AlertCircle,
   AlertTriangle,
   MapPin,
   Loader2,
@@ -196,9 +192,9 @@ export function TransferModal({
           <div className="flex flex-col gap-6">
             <div className="relative overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-50">
               <div className="absolute top-3 right-3">
-                <div className="p-1.5 bg-blue-100 rounded-full">
+                {/* <div className="p-1.5 bg-blue-100 rounded-full">
                   <Info className="h-4 w-4 text-blue-600" />
-                </div>
+                </div> */}
               </div>
 
               <div className="p-4 md:p-6">
@@ -279,7 +275,7 @@ export function TransferModal({
             <div className="space-y-4">
               <div className="relative overflow-hidden rounded-xl border border-dashed border-gray-300 bg-gradient-to-r from-gray-50 to-gray-100 p-4 md:p-6">
                 <div className="absolute top-3 right-3">
-                  <AlertCircle className="h-4 w-4 text-gray-500" />
+                  {/* <AlertCircle className="h-4 w-4 text-gray-500" /> */}
                 </div>
                 <div className="space-y-4">
                   <div>
@@ -534,7 +530,7 @@ export function TransferModal({
 
             {getTotalSelected() === 0 && (
               <div className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
+                {/* <AlertCircle className="h-5 w-5 text-yellow-600" /> */}
                 <p className="text-sm text-yellow-800">Selecciona al menos un animal para transferir</p>
               </div>
             )}

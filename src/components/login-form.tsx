@@ -12,6 +12,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import { loginAction } from "@/features/security/server/actions/security.actions";
+import { ENV } from "@/config/env.config";
 
 export function LoginForm({
   className,
@@ -147,7 +148,7 @@ export function LoginForm({
               CAMAL MUNICIPAL
             </h1>
             <p className="text-xs text-primary text-center font-bold">
-              DE RIOBAMBA
+              DE {ENV.CAMAL_NAME}
             </p>
           </div>
 
