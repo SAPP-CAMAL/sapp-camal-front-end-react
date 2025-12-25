@@ -85,7 +85,6 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton tooltip={fixUtf8(menu.menuName)}>
-
                     {menu.icon && (
                       <DynamicLucideIcon
                         name={(menu?.icon as any) ?? "badge-info"}
@@ -95,7 +94,7 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="transition-all duration-200">
+                <CollapsibleContent>
                   <SidebarMenuSub>
                     {menu.children?.map((subItem) => {
                       const normalizedUrl = normalizeMenuUrl(subItem.url);
@@ -108,7 +107,7 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                             isActive={isActive}
                             data-active={isActive}
                           >
-                            <Link href={normalizedUrl} className="no-underline">
+                            <Link href={normalizedUrl} className="no-underline" prefetch={false}>
                               {/* {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />} */}
                               <DynamicLucideIcon
                                 name={(subItem?.icon as any) ?? "badge-info"}

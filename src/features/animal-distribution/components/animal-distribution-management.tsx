@@ -77,6 +77,7 @@ import { getActiveLinesDataService } from "@/features/antemortem/server/db/antem
 import type { LineItem } from "@/features/antemortem/domain/line.types";
 import { getPaginatedOrders } from "../server/db/animal-distribution.service";
 import { ProductsModal } from "@/features/order-entry/components/products-modal";
+import { ENV, getFullCompanyName } from "@/config/env.config";
 
 export function AnimalDistributionManagement() {
   const [startDate, setStartDate] = useState<Date>(new Date());
@@ -1137,7 +1138,7 @@ export function AnimalDistributionManagement() {
                     NOMBRE DEL CENTRO DE FAENAMIENTO :
                   </p>
                   <p className="text-sm font-semibold">
-                    EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO DEL CANTÓN RIOBAMBA
+                    {getFullCompanyName()}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -1228,17 +1229,17 @@ export function AnimalDistributionManagement() {
                       <span className="font-bold text-gray-600">
                         PROVINCIA:
                       </span>{" "}
-                      IMBABURA
+                      {ENV.LOCATION.PROVINCE}
                     </p>
                     <p className="text-sm">
                       <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
-                      RIOBAMBA
+                      {ENV.CAMAL_NAME}
                     </p>
                     <p className="text-sm">
                       <span className="font-bold text-gray-600">
                         PARROQUIA:
                       </span>{" "}
-                      RIOBAMBA
+                      {ENV.CAMAL_NAME}
                     </p>
                   </div>
                 </div>
@@ -1280,11 +1281,11 @@ export function AnimalDistributionManagement() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">PROVINCIA:</span>{" "}
-                    CHIMBORAZO
+                    {ENV.LOCATION.PROVINCE}
                   </p>
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
-                    RIOBAMBA
+                    {ENV.CAMAL_NAME}
                   </p>
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">PARROQUIA:</span>{" "}
