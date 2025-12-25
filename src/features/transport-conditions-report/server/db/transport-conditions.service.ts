@@ -1,29 +1,60 @@
 import { http } from '@/lib/ky';
-import { TransportConditionsFilters } from '../../domain';
+import { TransportConditionsFilters, PaginatedResponse } from '../../domain';
 
-export async function getTransportConditionsService(filters: TransportConditionsFilters): Promise<any[]> {
+export async function getTransportConditionsService(
+  filters: TransportConditionsFilters
+): Promise<PaginatedResponse<any>> {
   try {
-    const cleanFilters: any = {
+    const payload: any = {
+      page: filters.page,
+      limit: filters.limit,
       startDate: filters.startDate,
       endDate: filters.endDate,
     };
 
-    if (filters.specieId) cleanFilters.specieId = filters.specieId;
+    // Solo agregar filtros opcionales si tienen valor
+    if (filters.idSpecie) payload.idSpecie = filters.idSpecie;
+    if (filters.code && filters.code.trim()) payload.code = filters.code.trim();
+    if (filters.identification && filters.identification.trim()) payload.identification = filters.identification.trim();
+    if (filters.plate && filters.plate.trim()) payload.plate = filters.plate.trim();
+    if (filters.fullName && filters.fullName.trim()) payload.fullName = filters.fullName.trim();
 
     const response = await http
-      .post('v1/1.0.0/certificate/by-filters', {
-        json: cleanFilters,
+      .post('v1/1.0.0/certificate/by-filters-paginated', {
+        json: payload,
       })
       .json<any>();
 
     if (response.code === 200 || response.code === 201) {
-      return response.data || [];
+      const responseData = response.data || {};
+      const items = responseData.items || [];
+      const meta = responseData.meta || {};
+
+      return {
+        data: items,
+        total: meta.totalItems || 0,
+        page: meta.currentPage || filters.page,
+        limit: meta.itemsPerPage || filters.limit,
+        totalPages: meta.totalPages || 0,
+      };
     }
 
-    return [];
+    return {
+      data: [],
+      total: 0,
+      page: filters.page,
+      limit: filters.limit,
+      totalPages: 0,
+    };
   } catch (error: any) {
     console.warn('Error al obtener certificados:', error?.message || error);
-    return [];
+    return {
+      data: [],
+      total: 0,
+      page: filters.page,
+      limit: filters.limit,
+      totalPages: 0,
+    };
   }
 }
 
@@ -40,13 +71,27 @@ export async function downloadTransportConditionsReport(
   typeReport: 'EXCEL' | 'PDF'
 ) {
   try {
-    const response = await http.post('v1/1.0.0/certificate/report-by-filters', {
+    const payload: any = {
+      page: filters.page,
+      limit: filters.limit,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      code: "",
+      identification: "",
+      plate: "",
+      fullName: "",
+    };
+
+    // Solo agregar filtros opcionales si tienen valor
+    if (filters.idSpecie) payload.idSpecie = filters.idSpecie;
+    if (filters.code && filters.code.trim()) payload.code = filters.code.trim();
+    if (filters.identification && filters.identification.trim()) payload.identification = filters.identification.trim();
+    if (filters.plate && filters.plate.trim()) payload.plate = filters.plate.trim();
+    if (filters.fullName && filters.fullName.trim()) payload.fullName = filters.fullName.trim();
+
+    const response = await http.post('v1/1.0.0/certificate/report-by-filters-paginated', {
       searchParams: { typeReport },
-      json: {
-        startDate: filters.startDate,
-        endDate: filters.endDate,
-        ...(filters.specieId && { specieId: filters.specieId }),
-      },
+      json: payload,
     });
 
     const blob = await response.blob();

@@ -3,7 +3,7 @@ require('dotenv').config({ path: '.env' });
 
 module.exports = {
     apps: [{
-        name: "sapp-frontend",
+        name: "sapp",
         script: "./node_modules/next/dist/bin/next",
         args: "start",
         cwd: "./",
@@ -17,5 +17,10 @@ module.exports = {
         max_memory_restart: "1G",
         watch: false,
         autorestart: true,
-    }]
+    }],
+    deploy: {
+        production: {
+            "post-deploy": "npm install && npm run build && pm2 startOrRestart ecosystem.config.js --env production"
+        }
+    }
 };
