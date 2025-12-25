@@ -1,14 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import React from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { Footer } from "@/components/footer";
-import {
-  SidebarProvider,
-  SidebarInset,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
 import { getAdministrationMenusService } from "@/features/modules/server/db/modules.queries";
+import { DashboardLayoutClient } from "./dashboard-layout-client";
 
 export default async function DashboardLayout({
   children,
@@ -27,46 +21,15 @@ export default async function DashboardLayout({
   try {
     menus = await getAdministrationMenusService();
   } catch {
-    // console.error("Error fetching menus:", error);
     // Proporcionar un valor por defecto si falla
     menus = { data: [] };
   }
 
+  const userData = JSON.parse(user.value);
+
   return (
-    <SidebarProvider>
-      <AppSidebar menus={menus.data} user={JSON.parse(user.value)} />
-      <SidebarInset>
-        <div className="min-h-screen flex flex-col">
-          <header className="flex h-14 md:h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b sticky top-0 bg-background z-10">
-            <div className="flex items-center gap-2 px-3 md:px-4">
-              <SidebarTrigger className="-ml-1" />
-              {/* <Separator
-                orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4"
-              /> */}
-              {/* <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="#">
-                      Building Your Application
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb> */}
-            </div>
-          </header>
-          <main className="flex-1 p-3 md:p-4 pt-0 pb-16">
-            {children}
-          </main>
-          <div className="pb-8">
-            <Footer />
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <DashboardLayoutClient menus={menus.data} user={userData}>
+      {children}
+    </DashboardLayoutClient>
   );
 }
