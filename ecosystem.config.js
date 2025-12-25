@@ -3,7 +3,7 @@ require('dotenv').config({ path: '.env' });
 
 module.exports = {
     apps: [{
-        name: "sapp-frontend",
+        name: "sapp",
         script: "./node_modules/next/dist/bin/next",
         args: "start",
         cwd: "./",
