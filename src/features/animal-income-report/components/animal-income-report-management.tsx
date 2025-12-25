@@ -20,6 +20,7 @@ import { Chart3D } from "./chart-3d";
 import { ChartHistory } from "./chart-history";
 import { SpeciesDetailModal } from "./species-detail-modal";
 import * as XLSX from "xlsx";
+import { getFullCompanyName } from "@/config/env.config";
 
 // Mapeo de nombres de especies a idSpecie
 const SPECIES_ID_MAP: Record<string, number> = {
@@ -80,7 +81,7 @@ export function AnimalIncomeReportManagement() {
           </style>
         </head>
         <body>
-          <h1>EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO DEL CANTÓN RIOBAMBA</h1>
+          <h1>${getFullCompanyName()}</h1>
           <h2>Reporte de Ingresos por Especie (${format(startDate, "dd/MM/yyyy")} - ${format(endDate, "dd/MM/yyyy")})</h2>
           
           <div style="text-align: center; margin-bottom: 30px;">

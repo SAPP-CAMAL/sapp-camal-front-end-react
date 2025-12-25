@@ -23,6 +23,7 @@ import { Menu, Printer, FileSpreadsheet, Maximize2 } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { AnimalIncomeData } from "../domain/animal-income.types";
+import { getFullCompanyName } from "@/config/env.config";
 
 export interface ChartHistoryProps {
   data: any[];
@@ -172,7 +173,7 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, end
   return (
     <>
       <div ref={printRef} style={{ display: 'none' }}>
-        <h1>EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO DEL CANTÓN RIOBAMBA</h1>
+        <h1>${getFullCompanyName()}</h1>
         <h2>Gráfico estadístico de las fechas comprendidas entre {startDate} y {endDate} ({viewMode})</h2>
         
         <div className="chart-container">
@@ -260,7 +261,7 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, end
           </div>
           <div className="text-center order-3">
             <CardTitle className="text-slate-800 text-sm sm:text-base lg:text-lg font-medium uppercase">
-              EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO DEL CANTÓN RIOBAMBA
+              {getFullCompanyName()}
             </CardTitle>
             <CardDescription className="text-slate-500 mt-1 text-xs sm:text-sm">
               Gráfico estadístico de las fechas comprendidas entre {startDate} y {endDate} ({viewMode})

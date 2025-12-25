@@ -10,7 +10,10 @@ interface IconProps extends LucideProps {
 }
 
 const DynamicLucideIcon: React.FC<IconProps> = ({ name, ...props }) => {
-  const LucideIcon = dynamic(dynamicIconImports[name], {
+  // Validar que el nombre del icono exista en los imports disponibles
+  const iconName = (name && dynamicIconImports[name]) ? name : "badge-info";
+  
+  const LucideIcon = dynamic(dynamicIconImports[iconName], {
     ssr: false, // Set to true if you are using SSR and want server-side rendering of icons
   });
 

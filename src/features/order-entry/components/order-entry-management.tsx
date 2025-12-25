@@ -1024,26 +1024,24 @@ export function OrderEntryManagement() {
               </div>
 
               <div className="flex gap-2 items-center flex-1 max-w-md">
-                <div className="relative flex-1">
-                  <span className="text-sm text-gray-600 mr-2">Buscar:</span>
-                  <Input
-                    placeholder=""
-                    value={searchTerm}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    className="inline-flex"
-                  />
-                </div>
+                <span className="text-sm text-gray-600 whitespace-nowrap">Buscar:</span>
+                <Input
+                  placeholder=""
+                  value={searchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="flex-1"
+                />
                 <Button
                   variant="outline"
                   size="icon"
-                  className="text-teal-600 border-teal-600 hover:bg-teal-50"
+                  className="text-teal-600 border-teal-600 hover:bg-teal-50 shrink-0"
                 >
                   <Search className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="text-red-600 border-red-600 hover:bg-red-50"
+                  className="text-red-600 border-red-600 hover:bg-red-50 shrink-0"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
