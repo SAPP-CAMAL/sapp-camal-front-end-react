@@ -37,7 +37,7 @@ jobs:
 
       # Comprimimos .next, public y config files necesarios
       - name: Compress Build
-        run: tar -czf build.tar.gz .next public next.config.js package.json package-lock.json ecosystem.config.js
+        run: tar -czf build.tar.gz .next public next.config.ts package.json package-lock.json ecosystem.config.js
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -49,7 +49,7 @@ jobs:
     name: Deploy to Server
     needs: build
     runs-on: ubuntu-latest
-    environment: DEVELOPMENT
+    environment: RIOBAMBA
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -78,6 +78,11 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           envs: ENV_FILE
           script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            node -v
+
             set -euo pipefail
             
             APP_DIR="${{ secrets.APP_DIR }}"
