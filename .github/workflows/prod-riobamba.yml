@@ -39,6 +39,9 @@ jobs:
       - name: Compress Build
         run: |
           tar -czf build.tar.gz \
+            --exclude='node_modules/.cache' \
+            --exclude='.next/cache' \
+            --exclude='node_modules/.bin' \
             .next \
             public \
             src \
@@ -47,10 +50,7 @@ jobs:
             package.json \
             package-lock.json \
             ecosystem.config.js \
-            tsconfig.json \
-            .eslintignore \
-            --exclude=node_modules/.cache \
-            --exclude=.next/cache
+            tsconfig.json
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
