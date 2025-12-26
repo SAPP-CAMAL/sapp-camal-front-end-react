@@ -1221,7 +1221,7 @@ export function AnimalWeighingManagement() {
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="max-w-xs">{stage.description}</p>
+                        <p className="max-w-xs text-black">{stage.description}</p>
                       </TooltipContent>
                     </Tooltip>
                   ))
@@ -1260,7 +1260,7 @@ export function AnimalWeighingManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   {lines?.map((line) => (
-                    <SelectItem key={line.id} value={line.id.toString()}>
+                    <SelectItem key={line.id} value={line.id.toString()} className="text-black">
                       {line.description}
                     </SelectItem>
                   ))}
@@ -1860,7 +1860,7 @@ export function AnimalWeighingManagement() {
                             {row.sectionCode ? (
                               <div className="flex flex-col items-center gap-0">
                                 <span className="font-bold text-blue-600 text-xs leading-tight">{row.sectionCode}</span>
-                                <span className="text-[10px] text-white/90 leading-tight">{row.sectionDescription}</span>
+                                <span className="text-[10px] text-black leading-tight">{row.sectionDescription}</span>
                                 {row.hasPartialConfiscation && (
                                   <div className="flex items-center gap-0.5 mt-0.5 text-yellow-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
