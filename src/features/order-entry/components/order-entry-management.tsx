@@ -1416,28 +1416,16 @@ export function OrderEntryManagement() {
                       No hay {productType === "producto" ? "productos" : "subproductos"} configurados para esta especie
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       {allConfiguredProducts.map((configProduct) => {
-                        // 1. Buscar si hay stock disponible de este producto
                         const stockProduct = currentAnimalProducts.find(
                           (p) => p.speciesProduct.id === configProduct.id
                         );
-                        
-                        // 2. Buscar si este producto está en la orden existente (para obtener su ID)
                         const orderProduct = existingOrderData?.orderDetails?.find(
                           (d) => d.animalProduct?.speciesProduct?.productCode === configProduct.productCode
                         );
-                        
-                        // 3. Verificar si este producto está en la orden (por productCode)
                         const isInOrder = orderId && assignedProductCodes.has(configProduct.productCode);
-                        
-                        // Lógica de disponibilidad:
-                        // - Si hay stock → Disponible (sin importar si está en la orden)
-                        // - Si NO hay stock pero está en la orden → Disponible (ya lo guardaste en este pedido)
-                        // - Si NO hay stock y NO está en la orden → Bloqueado
                         const isAvailable = !!stockProduct || isInOrder;
-                        
-                        // El ID del producto: usar el del stock si existe, sino el de la orden
                         const productStockId = stockProduct?.id || orderProduct?.animalProduct?.id;
                         
                         return (
@@ -1455,11 +1443,11 @@ export function OrderEntryManagement() {
                             />
                             <label
                               htmlFor={`prod-${configProduct.id}`}
-                              className={`text-sm font-medium leading-none ${
+                              className={`text-sm font-medium leading-none flex-1 text-center ${
                                 isAvailable ? "cursor-pointer" : "cursor-not-allowed text-gray-500"
                               }`}
                             >
-                              {configProduct.productName} - {configProduct.productCode}
+                              {configProduct.productName}
                             </label>
                           </div>
                         );

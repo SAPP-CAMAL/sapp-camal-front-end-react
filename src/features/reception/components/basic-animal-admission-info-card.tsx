@@ -126,7 +126,7 @@ export const BasicAnimalAdmissionInfoCard = ({
             </div>
             <div className="flex flex-col">
               <span className="font-medium text-muted-foreground">
-                Fecha Faen.:
+                Fecha Faenamiento:
               </span>
               <span>
                 {animalAdmissionItem?.animalAdmission?.date?.split("T")[0] ||

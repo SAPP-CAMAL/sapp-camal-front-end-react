@@ -1830,7 +1830,8 @@ export function CorralsManagement() {
     if (currentLineData && !isLoadingLine && currentLineData.specie) {
       // Ensure we're using the correct specie name from the API
       const specieName = currentLineData.specie.name?.toUpperCase() || "";
-      const lineName = currentLineData.name?.toUpperCase() || "";
+      // Replace LINEA with LÍNEA to always show the accent
+      const lineName = (currentLineData.name?.toUpperCase() || "").replace(/LINEA/g, "LÍNEA");
 
       // Validate that the specie name matches the selected line type
       const expectedSpecie =
