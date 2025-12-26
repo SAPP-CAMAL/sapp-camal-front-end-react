@@ -35,9 +35,22 @@ jobs:
         # Next las leerá del archivo .env que acabamos de crear.
         run: npm run build
 
-      # Comprimimos .next, public y config files necesarios
+      # Comprimimos TODOS los archivos necesarios para producción
       - name: Compress Build
-        run: tar -czf build.tar.gz .next public next.config.ts package.json package-lock.json ecosystem.config.js
+        run: |
+          tar -czf build.tar.gz \
+            .next \
+            public \
+            src \
+            node_modules \
+            next.config.ts \
+            package.json \
+            package-lock.json \
+            ecosystem.config.js \
+            tsconfig.json \
+            .eslintignore \
+            --exclude=node_modules/.cache \
+            --exclude=.next/cache
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -94,28 +107,51 @@ jobs:
             
             # Descomprimir la nueva versión
             if [ -f "build.tar.gz" ]; then
-              # Limpiamos carpeta anterior de build
-              rm -rf .next
+              echo "📦 Extrayendo build..."
+              # Limpiamos carpetas anteriores de forma segura
+              rm -rf .next node_modules public src
             
-              # Descomprimimos
+              # Descomprimimos TODO de una vez
               tar -xzf build.tar.gz
               rm build.tar.gz
+              
+              echo "✅ Build extraído correctamente"
+              ls -lah | head -20
             else
               echo "❌ Error: No se encontró el archivo build.tar.gz"
               exit 1
             fi
             
-            # Instalar dependencias de producción (mucho más rápido)
-            npm ci --omit=dev
+            # Solo actualizar dependencias opcionales si algo falta
+            if [ ! -d "node_modules" ]; then
+              echo "⚠️  Falta node_modules, instalando dependencias..."
+              npm ci --omit=dev
+            fi
             
             # Iniciar o Recargar PM2
-            echo "Reiniciando aplicación..."
+            echo "🔄 Reiniciando aplicación..."
+            
+            # Verificar si PM2 está instalado globalmente
+            if ! command -v pm2 &> /dev/null; then
+              echo "📥 Instalando PM2 globalmente..."
+              npm install -g pm2
+              pm2 install pm2-logrotate
+            fi
+            
+            # Usar startOrRestart para manejar tanto primer deploy como actualizaciones
+            pm2 startOrRestart ecosystem.config.js --update-env
+            
+            # Verificar que el proceso esté corriendo
+            sleep 2
+            pm2 status
+            
             if pm2 list | grep -q "sapp"; then
-                # update-env es crucial para que PM2 relea el archivo .env nuevo
-                pm2 reload sapp --update-env
+              echo "✅ Aplicación iniciada correctamente"
             else
-                pm2 start ecosystem.config.js
+              echo "❌ Error: La aplicación no se inició"
+              pm2 logs sapp --lines 20
+              exit 1
             fi
             
             pm2 save
-            echo "🚀 Despliegue completado."
+            echo "🚀 Despliegue completado exitosamente."
