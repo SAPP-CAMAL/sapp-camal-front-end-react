@@ -35,22 +35,9 @@ jobs:
         # Next las leerá del archivo .env que acabamos de crear.
         run: npm run build
 
-      # Comprimimos TODOS los archivos necesarios para producción
+      # Comprimimos .next, public y config files necesarios
       - name: Compress Build
-        run: |
-          tar -czf build.tar.gz \
-            --exclude='node_modules/.cache' \
-            --exclude='.next/cache' \
-            --exclude='node_modules/.bin' \
-            .next \
-            public \
-            src \
-            node_modules \
-            next.config.ts \
-            package.json \
-            package-lock.json \
-            ecosystem.config.js \
-            tsconfig.json
+        run: tar -czf build.tar.gz .next public next.config.ts package.json package-lock.json ecosystem.config.js
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -107,56 +94,25 @@ jobs:
             
             # Descomprimir la nueva versión
             if [ -f "build.tar.gz" ]; then
-              echo "📦 Extrayendo build..."
-              # Limpiamos carpetas anteriores de forma segura
-              rm -rf .next node_modules public src
+              # Limpiamos carpeta anterior de build
+              rm -rf .next
             
-              # Descomprimimos TODO de una vez
+              # Descomprimimos
               tar -xzf build.tar.gz
               rm build.tar.gz
-              
-              echo "✅ Build extraído correctamente"
-              ls -lah | head -20
             else
               echo "❌ Error: No se encontró el archivo build.tar.gz"
               exit 1
             fi
             
-            # Solo actualizar dependencias opcionales si algo falta
-            if [ ! -d "node_modules" ]; then
-              echo "⚠️  Falta node_modules, instalando dependencias..."
-              npm ci --omit=dev
-            fi
-            
-            # 🔍 VERIFICAR ARCHIVOS ESTÁTICOS
-            echo ""
-            echo "=== Verificando archivos estáticos ==="
-            if [ -d ".next/static" ]; then
-              echo "✅ Carpeta .next/static existe"
-              ls -lah .next/static/ | head -10
-              echo ""
-              echo "📂 Contenido de .next/static:"
-              find .next/static -type f | wc -l
-              echo "archivos encontrados"
-            else
-              echo "❌ ERROR: Carpeta .next/static NO existe"
-              ls -lah .next/ || echo ".next tampoco existe!"
-              exit 1
-            fi
-            
-            # Asegurar permisos correctos
-            echo ""
-            echo "🔐 Ajustando permisos..."
-            chmod -R 755 .next/static
-            chmod -R 755 public
-            ls -lah .next/ | grep static
+            # Instalar dependencias de producción (mucho más rápido)
+            npm ci --omit=dev
             
             # Iniciar o Recargar PM2
-            echo "🔄 Reiniciando aplicación..."
+            echo "Reiniciando aplicación..."
             
-            # Verificar si PM2 está instalado globalmente
+            # Verificar si PM2 está inicializado
             if ! command -v pm2 &> /dev/null; then
-              echo "📥 Instalando PM2 globalmente..."
               npm install -g pm2
               pm2 install pm2-logrotate
             fi
@@ -164,17 +120,6 @@ jobs:
             # Usar startOrRestart para manejar tanto primer deploy como actualizaciones
             pm2 startOrRestart ecosystem.config.js --update-env
             
-            # Verificar que el proceso esté corriendo
-            sleep 2
-            pm2 status
-            
-            if pm2 list | grep -q "sapp"; then
-              echo "✅ Aplicación iniciada correctamente"
-            else
-              echo "❌ Error: La aplicación no se inició"
-              pm2 logs sapp --lines 20
-              exit 1
-            fi
-            
             pm2 save
-            echo "🚀 Despliegue completado exitosamente."
+            pm2 status
+            echo "🚀 Despliegue completado."
