@@ -73,16 +73,19 @@ jobs:
           echo "=== Información del ENV_FILE ==="
           echo "Longitud: ${#ENV_FILE}"
           echo ""
-          echo "Primeros 500 caracteres:"
-          echo "${ENV_FILE:0:500}"
-          echo ""
+          echo "$ENV_FILE" > /tmp/env_content.txt
+          echo "=== Contenido completo guardado en /tmp/env_content.txt ==="
+
           echo "Intentando decodificar desde base64..."
-          if echo "$ENV_FILE" | base64 -d 2>/dev/null | head -5; then
-            echo ""
-            echo "✅ Es válido base64"
+          echo "$ENV_FILE" | base64 -d 2>/dev/null > /tmp/decoded_env.txt
+          if [ $? -eq 0 ]; then
+            echo "Es base64 válido"
+            echo "=== Contenido decodificado: ==="
+            cat /tmp/decoded_env.txt
           else
-            echo "❌ NO es base64 válido - Mostrando contenido directo:"
-            echo "$ENV_FILE" | head -5
+            echo "NO es base64 válido"
+            echo "=== Contenido directo: ==="
+            cat /tmp/env_content.txt
           fi
 
       - name: Deploy via SSH
