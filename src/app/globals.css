@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* DIAGNÓSTICO: Si ves bordes rojos en las imágenes de producción, el archivo CSS SÍ se está cargando */
+img {
+  border: 5px solid red !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

@@ -6,9 +6,13 @@ function isTokenExpired(token: string): boolean {
     const parts = token.split('.');
     if (parts.length !== 3) return true;
 
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const now = Math.floor(Date.now() / 1000);
+    // Decodificar Base64URL de forma segura
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = atob(base64);
+    const payload = JSON.parse(jsonPayload);
 
+    const now = Math.floor(Date.now() / 1000);
     return payload.exp ? payload.exp < now : false;
   } catch (e) {
     return true; // Si hay error al decodificar, lo tratamos como expirado/inválido
@@ -17,6 +21,18 @@ function isTokenExpired(token: string): boolean {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // EXCLUSIÓN CRÍTICA: Omitir archivos estáticos y recursos internos
+  // Esto evita que el middleware intente procesar peticiones de CSS, JS, imágenes o favicons
+  if (
+    pathname.includes('.') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/images')
+  ) {
+    return NextResponse.next();
+  }
+
   const tokenCookie = req.cookies.get("accessToken");
   const token = tokenCookie?.value;
 
@@ -54,5 +70,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/auth/:path*"],
+  // El matcher excluye rutas técnicas para que el middleware sea más eficiente
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images).*)"],
 };
