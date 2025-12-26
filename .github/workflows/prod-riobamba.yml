@@ -66,6 +66,25 @@ jobs:
           source: "build.tar.gz"
           target: "${{ secrets.APP_DIR }}"
 
+      - name: 🔍 DEBUG ENV_FILE
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        run: |
+          echo "=== Información del ENV_FILE ==="
+          echo "Longitud: ${#ENV_FILE}"
+          echo ""
+          echo "Primeros 500 caracteres:"
+          echo "${ENV_FILE:0:500}"
+          echo ""
+          echo "Intentando decodificar desde base64..."
+          if echo "$ENV_FILE" | base64 -d 2>/dev/null | head -5; then
+            echo ""
+            echo "✅ Es válido base64"
+          else
+            echo "❌ NO es base64 válido - Mostrando contenido directo:"
+            echo "$ENV_FILE" | head -5
+          fi
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -92,7 +111,12 @@ jobs:
             # PASO 2: Crear .env en el Servidor (Vital para PM2 y PORT)
             echo "$ENV_FILE" | base64 -d > .env
             
-            # Descomprimir la nueva versión
+            # 🔍 DEBUG: Verificar variables cargadas
+            echo "=== Variables de Entorno ==="
+            grep NEXT_PUBLIC_API_URL .env || echo "❌ NEXT_PUBLIC_API_URL no encontrada"
+            grep PORT .env || echo "❌ PORT no encontrada"
+            
+            # Descomprimir la nueva versiónz
             if [ -f "build.tar.gz" ]; then
               # Limpiamos carpeta anterior de build
               rm -rf .next
