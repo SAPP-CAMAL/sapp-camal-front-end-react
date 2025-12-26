@@ -128,6 +128,29 @@ jobs:
               npm ci --omit=dev
             fi
             
+            # 🔍 VERIFICAR ARCHIVOS ESTÁTICOS
+            echo ""
+            echo "=== Verificando archivos estáticos ==="
+            if [ -d ".next/static" ]; then
+              echo "✅ Carpeta .next/static existe"
+              ls -lah .next/static/ | head -10
+              echo ""
+              echo "📂 Contenido de .next/static:"
+              find .next/static -type f | wc -l
+              echo "archivos encontrados"
+            else
+              echo "❌ ERROR: Carpeta .next/static NO existe"
+              ls -lah .next/ || echo ".next tampoco existe!"
+              exit 1
+            fi
+            
+            # Asegurar permisos correctos
+            echo ""
+            echo "🔐 Ajustando permisos..."
+            chmod -R 755 .next/static
+            chmod -R 755 public
+            ls -lah .next/ | grep static
+            
             # Iniciar o Recargar PM2
             echo "🔄 Reiniciando aplicación..."
             
