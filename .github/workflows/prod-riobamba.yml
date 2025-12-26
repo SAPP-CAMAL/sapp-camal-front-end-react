@@ -26,6 +26,8 @@ jobs:
       - name: Create .env file for Build
         run: |
           echo "${{ secrets.ENV_FILE }}" | base64 -d > .env
+          echo "=== Verificando .env creado ==="
+          cat .env
 
       - name: Install dependencies
         run: npm ci
@@ -37,7 +39,9 @@ jobs:
 
       # Comprimimos .next, public y config files necesarios
       - name: Compress Build
-        run: tar -czf build.tar.gz .next public next.config.ts package.json package-lock.json ecosystem.config.js
+        run: |
+          # ¡INCLUIR .env en el tarball!
+          tar -czf build.tar.gz .env .next public next.config.ts package.json package-lock.json ecosystem.config.js
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
