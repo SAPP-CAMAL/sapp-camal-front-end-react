@@ -50,20 +50,20 @@ export function LoginForm({
         await Promise.all([
           cookieStore.set("accessToken", accessToken),
           cookieStore.set("refreshToken", refreshToken),
-          cookieStore.set("user", userJson),
         ]);
       } else {
         // Fallback for browsers without Cookie Store API
-        try {
-          window.localStorage.setItem("accessToken", accessToken);
-          window.localStorage.setItem("refreshToken", refreshToken);
-          window.localStorage.setItem("user", userJson);
-        } catch {
-          // ignore
-        }
-        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; path=/`;
-        document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; path=/`;
-        document.cookie = `user=${encodeURIComponent(userJson)}; path=/`;
+        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; path=/; samesite=lax`;
+        document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; path=/; samesite=lax`;
+      }
+
+      // Always save to localStorage for easy client-side access without bloat
+      try {
+        window.localStorage.setItem("accessToken", accessToken);
+        window.localStorage.setItem("refreshToken", refreshToken);
+        window.localStorage.setItem("user", userJson);
+      } catch (e) {
+        console.warn("Could not save to localStorage", e);
       }
       console.log("Tokens stored, redirecting...");
       router.push("/dashboard");

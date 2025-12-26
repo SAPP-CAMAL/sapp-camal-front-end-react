@@ -5,10 +5,9 @@ export async function middleware(req: NextRequest) {
 
   // 1. Ignorar COMPLETAMENTE archivos estáticos y rutas internas de Next.js
   if (
-    pathname.includes('.') ||
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/images')
+    pathname.includes('.') ||
+    pathname.startsWith('/api')
   ) {
     return NextResponse.next();
   }
@@ -30,7 +29,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+
+  // Limpiar cookies pesadas si existen para evitar 400 Bad Request en el servidor
+  if (req.cookies.has("user")) {
+    response.cookies.delete("user");
+  }
+
+  return response;
 }
 
 export const config = {
