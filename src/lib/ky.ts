@@ -63,7 +63,7 @@ function getClientApiBases(): string[] {
     const configured = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
     if (configured) bases.push(configured)
     
-    const localFallback = "http://localhost:3000"
+    const localFallback = isDev ? "http://localhost:3000" : configured;
     if (!bases.includes(localFallback)) bases.push(localFallback)
     
     return bases
