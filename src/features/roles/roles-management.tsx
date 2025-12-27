@@ -52,14 +52,6 @@ export function RolesManagement() {
           </div>
         </div>
         <div className="flex gap-x-2">
-          {/* <Button variant={"outline"}>
-            <FileTextIcon />
-            Exportar
-          </Button>
-          <Button variant={"outline"}>
-            <SquarePenIcon />
-            Exportar
-          </Button> */}
           <NewRol />
         </div>
       </section>

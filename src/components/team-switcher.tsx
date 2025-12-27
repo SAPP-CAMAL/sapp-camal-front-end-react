@@ -27,13 +27,14 @@ import {
 import { revalidatePathAction } from "@/features/security/server/actions/revalidate.action";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { ENV } from "@/config/env.config";
+import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 
 export function RoleSwitcher() {
   const { isMobile } = useSidebar();
   const [open, setOpen] = React.useState(false);
   const [activeRoleId, setActiveRoleId] = React.useState<number | null>(null);
   const [isMounted, setIsMounted] = React.useState(false);
+  const { location } = useSlaughterhouseInfo(); // Usar location.canton en el menú
 
   // Evitar problemas de hidratación
   React.useEffect(() => {
@@ -110,7 +111,7 @@ export function RoleSwitcher() {
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
               <span className="truncate font-medium">CAMAL MUNICIPAL</span>
-              <span className="truncate text-xs">{ENV.CAMAL_NAME}</span>
+              <span className="truncate text-xs">{location.canton}</span>
             </div>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -139,19 +140,19 @@ export function RoleSwitcher() {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-medium">CAMAL MUNICIPAL</span>
-                <span className="truncate text-xs">{ENV.CAMAL_NAME}</span>
+                <span className="truncate text-xs">{location.canton}</span>
               </div>
               <ChevronsUpDown className="ml-auto group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg !z-[5]"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg bg-popover shadow-xl border-sidebar-border"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
             onInteractOutside={() => setOpen(false)}
           >
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
+            <DropdownMenuLabel className="p-3 text-sm font-bold uppercase tracking-wider text-primary border-b bg-sidebar-accent/50 rounded-t-lg">
               Roles de Usuario
             </DropdownMenuLabel>
             {query.isLoading ? (

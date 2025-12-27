@@ -20,7 +20,7 @@ import { Chart3D } from "./chart-3d";
 import { ChartHistory } from "./chart-history";
 import { SpeciesDetailModal } from "./species-detail-modal";
 import * as XLSX from "xlsx";
-import { getFullCompanyName } from "@/config/env.config";
+import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 
 // Mapeo de nombres de especies a idSpecie
 const SPECIES_ID_MAP: Record<string, number> = {
@@ -31,6 +31,7 @@ const SPECIES_ID_MAP: Record<string, number> = {
 
 export function AnimalIncomeReportManagement() {
   const { dateRange, reportData, isLoading, fetchReport } = useAnimalIncomeReport();
+  const { getFullCompanyName } = useSlaughterhouseInfo();
   const [chartType, setChartType] = useState<"2d" | "3d">("2d");
   const [startDate, setStartDate] = useState<Date>(dateRange.from || new Date("2023-02-03"));
   const [endDate, setEndDate] = useState<Date>(dateRange.to || new Date());

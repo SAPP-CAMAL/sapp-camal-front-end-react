@@ -23,7 +23,7 @@ import { Menu, Printer, FileSpreadsheet, Maximize2 } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { AnimalIncomeData } from "../domain/animal-income.types";
-import { getFullCompanyName } from "@/config/env.config";
+import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 
 export interface ChartHistoryProps {
   data: any[];
@@ -33,6 +33,7 @@ export interface ChartHistoryProps {
 }
 
 export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, endDate, tableData = [] }) => {
+  const { getFullCompanyName } = useSlaughterhouseInfo();
   const [viewMode, setViewMode] = useState<"MENSUAL" | "ANUAL">("MENSUAL");
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [visibleBars, setVisibleBars] = useState<Record<string, boolean>>({

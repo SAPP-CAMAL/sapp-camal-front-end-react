@@ -12,13 +12,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import { loginAction } from "@/features/security/server/actions/security.actions";
-import { ENV } from "@/config/env.config";
+import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const { location } = useSlaughterhouseInfo(); // Usar location.canton
   const form = useForm({
     defaultValues: {
       showPassword: false,
@@ -148,7 +149,7 @@ export function LoginForm({
               CAMAL MUNICIPAL
             </h1>
             <p className="text-xs text-primary text-center font-bold">
-              DE {ENV.CAMAL_NAME}
+              DE {location.canton}
             </p>
           </div>
 
