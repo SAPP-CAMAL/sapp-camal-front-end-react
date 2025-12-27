@@ -6,7 +6,7 @@ import { Providers } from "@/features/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-import { ENV } from "@/config/env.config";
+import { DynamicMetadata } from "@/components/dynamic-metadata";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -20,7 +20,7 @@ const geistMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "SAPP",
-  description: `CAMAL MUNICIPAL DE ${ENV.CAMAL_NAME}`,
+  description: "Sistema de Administración de Faenamiento - SAPP",
   icons: {
     icon: [
       { url: "/images/ico.ico", type: "image/ico" },
@@ -55,6 +55,7 @@ export default function RootLayout({
             <body
               className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
+              <DynamicMetadata />
               {children}
               <Toaster />
             </body>

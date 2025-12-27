@@ -25,6 +25,13 @@ import {
   Search,
   UserIcon,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
@@ -162,10 +169,30 @@ export function UsersTable<TData, TValue>({
         </TableBody>
       </Table>
       <div className="h-10 flex items-end justify-between mt-4">
-        <p className="text-sm text-gray-600">
-          Mostrando {start > 0 && `${start} a`} {end} de {meta?.totalItems ?? 0}{" "}
-          usuarios
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="text-sm text-gray-600">
+            Mostrando {start > 0 && `${start} a`} {end} de {meta?.totalItems ?? 0}{" "}
+            usuarios
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Mostrar:</span>
+            <Select
+              value={(meta?.itemsPerPage ?? 10).toString()}
+              onValueChange={(value) => meta?.setSearchParams({ limit: Number(value), page: 1 })}
+            >
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <div className="flex items-center gap-x-2">
           <Button
             disabled={meta?.disabledPreviousPage}

@@ -77,9 +77,10 @@ import { getActiveLinesDataService } from "@/features/antemortem/server/db/antem
 import type { LineItem } from "@/features/antemortem/domain/line.types";
 import { getPaginatedOrders } from "../server/db/animal-distribution.service";
 import { ProductsModal } from "@/features/order-entry/components/products-modal";
-import { ENV, getFullCompanyName } from "@/config/env.config";
+import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 
 export function AnimalDistributionManagement() {
+  const { camalName, location, getFullCompanyName } = useSlaughterhouseInfo(); // camalName = nombre completo del camal para certificados
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [selectedSpecie, setSelectedSpecie] = useState<string>("Bovino");
@@ -1229,17 +1230,17 @@ export function AnimalDistributionManagement() {
                       <span className="font-bold text-gray-600">
                         PROVINCIA:
                       </span>{" "}
-                      {ENV.LOCATION.PROVINCE}
+                      {location.province}
                     </p>
                     <p className="text-sm">
                       <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
-                      {ENV.CAMAL_NAME}
+                      {camalName}
                     </p>
                     <p className="text-sm">
                       <span className="font-bold text-gray-600">
                         PARROQUIA:
                       </span>{" "}
-                      {ENV.CAMAL_NAME}
+                      {camalName}
                     </p>
                   </div>
                 </div>
@@ -1281,11 +1282,11 @@ export function AnimalDistributionManagement() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">PROVINCIA:</span>{" "}
-                    {ENV.LOCATION.PROVINCE}
+                    {location.province}
                   </p>
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
-                    {ENV.CAMAL_NAME}
+                    {camalName}
                   </p>
                   <p className="text-sm">
                     <span className="font-bold text-gray-600">PARROQUIA:</span>{" "}

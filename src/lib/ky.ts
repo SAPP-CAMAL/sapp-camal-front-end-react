@@ -111,11 +111,11 @@ function createKyClient(prefixUrl: string): KyInstance {
                             // ignore
                         }
 
-                        // No loguear errores 400 - generalmente son respuestas esperadas cuando no hay datos
-                        // Los servicios manejan estos errores y devuelven valores por defecto
+                        // No loguear errores esperados
                         const isExpectedEmptyResponse = response.status === 400
+                        const isSlaughterhouseInfoNotFound = url.includes("environment-variables/find-camal-info") && response.status === 404
                         
-                        if (!isExpectedEmptyResponse) {
+                        if (!isExpectedEmptyResponse && !isSlaughterhouseInfoNotFound) {
                             const debug: Record<string, unknown> = {
                                 method,
                                 url,
