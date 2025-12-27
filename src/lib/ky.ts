@@ -1,5 +1,4 @@
 
-require('dotenv').config();
 import ky, { type KyInstance } from 'ky'
 
 function normalizeApiBase(raw: string | undefined) {
@@ -52,13 +51,16 @@ function isNetworkFailure(error: unknown): boolean {
 }
 
 function getClientApiBases(): string[] {
-    // NEXT_PUBLIC_* variables se reemplazan en build time con su valor literal
-    // Next.js reemplaza process.env.NEXT_PUBLIC_API_URL con el valor en build time
-    console.warn("test .env ",process.env);
-    const configured = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
+    // Leer la URL desde la variable global que Next.js inyecta en layout.tsx
+    // Esta variable se coloca en build time con el valor de NEXT_PUBLIC_API_URL
+    const apiUrl = typeof window !== 'undefined' 
+        ? (window as any).__NEXT_PUBLIC_API_URL__ 
+        : undefined
+    
+    const configured = normalizeApiBase(apiUrl)
     
     if (!configured) {
-        console.warn("[API] NEXT_PUBLIC_API_URL no está configurado. Usando localhost como fallback.");
+        console.warn("[API] API_URL no está configurada. Usando localhost como fallback.");
         return ["http://localhost:3000"]
     }
     
