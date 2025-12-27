@@ -2,30 +2,44 @@ import { NextResponse, NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const tokenCookie = req.cookies.get("accessToken");
-  const token = tokenCookie?.value;
 
-  // Si intenta acceder al dashboard sin token, redirigir al login
-  if (pathname.startsWith("/dashboard")) {
-    if (!token) {
-      return NextResponse.redirect(new URL("/auth/login", req.url));
-    }
+  // 1. Ignorar COMPLETAMENTE archivos estáticos y rutas internas de Next.js
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.includes('.') ||
+    pathname.startsWith('/api')
+  ) {
+    return NextResponse.next();
   }
 
-  // Si está en la raíz y tiene token, redirigir al dashboard
-  if (pathname === "/") {
-    if (token) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
+  const token = req.cookies.get("accessToken")?.value;
+
+  // 2. Proteger el dashboard: si no hay token, al login
+  if (pathname.startsWith("/dashboard") && !token) {
+    return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
-  // Si está en login y tiene token, redirigir al dashboard
-  if (pathname === "/auth/login" && token) {
+  // 3. Si hay token y va al login o raíz, al dashboard
+  if ((pathname === "/" || pathname.startsWith("/auth/login")) && token) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  return NextResponse.next();
+  // 4. Si es la raíz y no hay token, al login
+  if (pathname === "/" && !token) {
+    return NextResponse.redirect(new URL("/auth/login", req.url));
+  }
+
+  const response = NextResponse.next();
+
+  // Limpiar cookies pesadas si existen para evitar 400 Bad Request en el servidor
+  if (req.cookies.has("user")) {
+    response.cookies.delete("user");
+  }
+
+  return response;
 }
+
 export const config = {
-    matcher: ["/", '/dashboard/:path*'],
-}
+  // Solo aplicar a rutas de páginas reales
+  matcher: ["/", "/dashboard/:path*", "/auth/:path*"],
+};
