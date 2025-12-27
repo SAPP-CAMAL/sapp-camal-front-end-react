@@ -104,8 +104,30 @@ export function NavUser({ user }: { user: LoginResponse }) {
             <DropdownMenuSeparator /> */}
             <DropdownMenuItem
               onClick={async () => {
-                await logoutAction();
-                navigate.push("/auth/login");
+                try {
+                  // Llamar al logout en el servidor (borra cookies del servidor)
+                  await logoutAction();
+                  
+                  // Limpiar también en el cliente
+                  if (typeof window !== "undefined") {
+                    // Borrar localStorage
+                    window.localStorage.removeItem("accessToken");
+                    window.localStorage.removeItem("refreshToken");
+                    window.localStorage.removeItem("user");
+                    
+                    // Borrar cookies del navegador
+                    document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                    document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                    document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                  }
+                  
+                  // Redirigir al login
+                  navigate.push("/auth/login");
+                } catch (error) {
+                  console.error("Logout error:", error);
+                  // Redirigir al login incluso si falla
+                  navigate.push("/auth/login");
+                }
               }}
             >
               <LogOut />

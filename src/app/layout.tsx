@@ -52,6 +52,14 @@ export default function RootLayout({
       <NuqsAdapter>
         <HttpProvider>
           <html lang="en">
+            <head>
+              {/* Inyectar la URL de la API en una variable global antes de que se cargue la app */}
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: `window.__NEXT_PUBLIC_API_URL__ = "${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}";`,
+                }}
+              />
+            </head>
             <body
               className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >

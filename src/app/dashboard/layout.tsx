@@ -12,15 +12,18 @@ export default async function DashboardLayout({
   const cookiesStore = await cookies();
 
   const user = cookiesStore.get("user");
+  const accessToken = cookiesStore.get("accessToken");
 
-  if (!user) {
+  // Si no hay usuario o token, redirigir al login
+  if (!user || !accessToken?.value) {
     redirect("/auth/login");
   }
 
   let menus;
   try {
     menus = await getAdministrationMenusService();
-  } catch {
+  } catch (error) {
+    console.error("Error loading menus:", error);
     // Proporcionar un valor por defecto si falla
     menus = { data: [] };
   }

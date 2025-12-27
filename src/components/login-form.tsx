@@ -43,31 +43,64 @@ export function LoginForm({
       const refreshToken = resp.data.refreshToken;
       const userJson = JSON.stringify(resp.data);
 
+      // --- CAMBIO 1: Configuración de cookies más permisiva para evitar bloqueos ---
+      // Usamos "Lax" en lugar de "Strict" para asegurar que la cookie viaje en la redirección inmediata.
+      const isProduction = typeof window !== "undefined" && !window.location.hostname.includes("localhost");
+      const sameSite = "Lax"; 
+      const path = "path=/";
+      const secure = isProduction ? "; Secure" : "";
+      
+      // Cookie Store API
       const cookieStore: any = (typeof window !== "undefined")
         ? (window as any).cookieStore
         : undefined;
 
       if (cookieStore?.set) {
-        await Promise.all([
-          cookieStore.set("accessToken", accessToken),
-          cookieStore.set("refreshToken", refreshToken),
-          cookieStore.set("user", userJson),
-        ]);
-      } else {
-        // Fallback for browsers without Cookie Store API
         try {
-          window.localStorage.setItem("accessToken", accessToken);
-          window.localStorage.setItem("refreshToken", refreshToken);
-          window.localStorage.setItem("user", userJson);
+          await cookieStore.set("accessToken", accessToken, {
+            path: "/",
+            secure: isProduction,
+            sameSite: sameSite,
+          });
+          await cookieStore.set("refreshToken", refreshToken, {
+            path: "/",
+            secure: isProduction,
+            sameSite: sameSite,
+          });
+          await cookieStore.set("user", userJson, {
+            path: "/",
+            secure: isProduction,
+            sameSite: sameSite,
+          });
         } catch {
-          // ignore
+          // Fallback manual si falla la API
+          document.cookie = `accessToken=${encodeURIComponent(accessToken)}; ${path}; SameSite=${sameSite}${secure}`;
+          document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; ${path}; SameSite=${sameSite}${secure}`;
+          document.cookie = `user=${encodeURIComponent(userJson)}; ${path}; SameSite=${sameSite}${secure}`;
         }
-        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; path=/`;
-        document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; path=/`;
-        document.cookie = `user=${encodeURIComponent(userJson)}; path=/`;
+      } else {
+        // Fallback estándar
+        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; ${path}; SameSite=${sameSite}${secure}`;
+        document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; ${path}; SameSite=${sameSite}${secure}`;
+        document.cookie = `user=${encodeURIComponent(userJson)}; ${path}; SameSite=${sameSite}${secure}`;
       }
+
+      // LocalStorage backup
+      try {
+        window.localStorage.setItem("accessToken", accessToken);
+        window.localStorage.setItem("refreshToken", refreshToken);
+        window.localStorage.setItem("user", userJson);
+      } catch { /* ignore */ }
+
       console.log("Tokens stored, redirecting...");
-      router.push("/dashboard");
+      
+      toast.success("Bienvenido");
+
+      // Redirigir al dashboard después de guardar cookies
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 500);
+
     } catch (error: any) {
       console.error("Login error:", error);
 
