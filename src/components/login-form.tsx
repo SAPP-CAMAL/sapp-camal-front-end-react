@@ -46,24 +46,51 @@ export function LoginForm({
         ? (window as any).cookieStore
         : undefined;
 
-      if (cookieStore?.set) {
-        await Promise.all([
-          cookieStore.set("accessToken", accessToken),
-          cookieStore.set("refreshToken", refreshToken),
-        ]);
-      } else {
-        // Fallback for browsers without Cookie Store API
-        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; path=/; samesite=lax`;
-        document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; path=/; samesite=lax`;
-      }
+      // En producción (no localhost) → cookies seguras 
+      // En desarrollo (localhost) → cookies sin Secure flag
+      const isProduction = typeof window !== "undefined" && !window.location.hostname.includes("localhost");
+      const sameSite = "Strict";
+      const path = "path=/";
+      const secure = isProduction ? "; Secure" : "";
+      const httpOnly = ""; // No se puede establecer desde JavaScript (solo desde servidor)
 
-      // Always save to localStorage for easy client-side access without bloat
-      try {
-        window.localStorage.setItem("accessToken", accessToken);
-        window.localStorage.setItem("refreshToken", refreshToken);
-        window.localStorage.setItem("user", userJson);
-      } catch (e) {
-        console.warn("Could not save to localStorage", e);
+      if (cookieStore?.set) {
+        // Cookie Store API (moderno, recomendado)
+        try {
+          await cookieStore.set("accessToken", accessToken, {
+            path: "/",
+            secure: isProduction,
+            sameSite: sameSite,
+          });
+          await cookieStore.set("refreshToken", refreshToken, {
+            path: "/",
+            secure: isProduction,
+            sameSite: sameSite,
+          });
+          await cookieStore.set("user", userJson, {
+            path: "/",
+            secure: isProduction,
+            sameSite: sameSite,
+          });
+        } catch {
+          // Fallback a document.cookie si Cookie Store API falla
+          document.cookie = `accessToken=${encodeURIComponent(accessToken)}; ${path}; SameSite=${sameSite}${secure}`;
+          document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; ${path}; SameSite=${sameSite}${secure}`;
+          document.cookie = `user=${encodeURIComponent(userJson)}; ${path}; SameSite=${sameSite}${secure}`;
+        }
+      } else {
+        // Fallback para navegadores sin Cookie Store API
+        try {
+          window.localStorage.setItem("accessToken", accessToken);
+          window.localStorage.setItem("refreshToken", refreshToken);
+          window.localStorage.setItem("user", userJson);
+        } catch {
+          // ignore
+        }
+        // document.cookie con flags de seguridad
+        document.cookie = `accessToken=${encodeURIComponent(accessToken)}; ${path}; SameSite=${sameSite}${secure}`;
+        document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; ${path}; SameSite=${sameSite}${secure}`;
+        document.cookie = `user=${encodeURIComponent(userJson)}; ${path}; SameSite=${sameSite}${secure}`;
       }
       console.log("Tokens stored, redirecting...");
       router.push("/dashboard");
