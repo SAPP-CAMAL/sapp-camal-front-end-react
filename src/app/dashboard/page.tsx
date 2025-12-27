@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { DashboardClient } from "@/app/dashboard/dashboard-client";
 import { getEnvironmentVariableByName } from "@/features/dashboard/server/db/environment-variables.service";
 import { fixUtf8 } from "@/lib/utils";
@@ -18,6 +19,13 @@ function safeParseToken<T>(token: string): T | string {
 
 export default async function Page() {
   const cookiesStore = await cookies();
+  const accessToken = cookiesStore.get("accessToken");
+  
+  // Si no hay token válido, redirigir al login
+  if (!accessToken?.value) {
+    redirect("/auth/login");
+  }
+  
   const user = cookiesStore.get("user");
   const userData = user ? JSON.parse(user.value) : null;
 

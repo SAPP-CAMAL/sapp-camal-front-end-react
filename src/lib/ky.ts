@@ -51,26 +51,23 @@ function isNetworkFailure(error: unknown): boolean {
 }
 
 function getClientApiBases(): string[] {
-    const isDev = process.env.NODE_ENV === 'development';
+    // Leer la URL desde la variable global que Next.js inyecta en layout.tsx
+    // Esta variable se coloca en build time con el valor de NEXT_PUBLIC_API_URL
+    const apiUrl = typeof window !== 'undefined' 
+        ? (window as any).__NEXT_PUBLIC_API_URL__ 
+        : undefined
     
-    // En desarrollo, usar proxy para evitar CORS
-    if (isDev) {
-        return ['/api/proxy']
+    const configured = normalizeApiBase(apiUrl)
+    
+    if (!configured) {
+        console.warn("[API] API_URL no está configurada. Usando localhost como fallback.");
+        return ["http://localhost:3000"]
     }
     
-    // En producción, usar la URL configurada con fallback a localhost
-    const bases: string[] = []
-    const configured = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
-    if (configured) bases.push(configured)
-    
-    const localFallback = "http://localhost:3000"
-    if (!bases.includes(localFallback)) bases.push(localFallback)
-    
-    return bases
+    return [configured]
 }
 
 const API_BASES = getClientApiBases();
-const isDev = process.env.NODE_ENV === 'development';
 
 function createKyClient(prefixUrl: string): KyInstance {
     return ky.create({

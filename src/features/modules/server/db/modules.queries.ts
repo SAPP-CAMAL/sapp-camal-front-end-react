@@ -34,7 +34,17 @@ export async function getModulesWithMenusService(): Promise<ResponseModuleWithMe
 export async function getAdministrationMenusService() {
     try {
         return await ssrGetJson<ResponseMenuService>("v1/1.0.0/administration/menu")
-    } catch (error) {
+    } catch (error: any) {
+        // Si es 401 (no autorizado), devolver estructura vacía sin error
+        if (error?.response?.status === 401) {
+            console.warn("Unauthorized access to menus (token expired or missing)");
+            return { 
+                code: 401, 
+                message: "Unauthorized", 
+                data: [] 
+            } as ResponseMenuService;
+        }
+        
         console.error("Error fetching administration menus:", error);
         // Retornar estructura vacía en caso de error
         return { 
