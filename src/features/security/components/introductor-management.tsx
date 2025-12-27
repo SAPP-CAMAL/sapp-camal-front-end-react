@@ -4,6 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { parseAsArrayOf, parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import { ShieldIcon, SearchIcon, IdCardIcon, TagIcon, Beef, Activity, XIcon } from 'lucide-react';
+import { ReportDownloadButtons } from '@/components/report-download-buttons';
+import { fetchWithFallback } from '@/lib/ky';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 import { TableIntroducers } from './table-introducers';
 import { getAllSpecie, getIntroducersService } from '../server/db/security.queries';
 import { Avatar, AvatarImage, AvatarFallback } from '@radix-ui/react-avatar';
@@ -121,15 +125,82 @@ export function IntroductorManagement() {
 		fetchData();
 	}, []);
 
+	const [isLoadingExcel, setIsLoadingExcel] = useState(false);
+	const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+
+	async function handleDownloadReport(type: 'EXCEL' | 'PDF') {
+		if (type === 'EXCEL') setIsLoadingExcel(true);
+		if (type === 'PDF') setIsLoadingPdf(true);
+		try {
+			// Construir body con filtros actuales
+			const body: any = {
+				page: searchParams.page,
+				limit: searchParams.limit,
+			};
+			if (searchParams.fullName && searchParams.fullName.length > 0) body.fullName = searchParams.fullName;
+			if (searchParams.identification && searchParams.identification.length > 0) body.identification = searchParams.identification;
+			if (searchParams.brandName && searchParams.brandName.length > 0) body.brandName = searchParams.brandName;
+			if (searchParams.species && searchParams.species.length > 0 && !searchParams.species.includes('*')) body.species = searchParams.species;
+			if (searchParams.status === 'true') body.status = true;
+			if (searchParams.status === 'false') body.status = false;
+
+			const endpoint = `/v1/1.0.0/introducers/search-report?reportType=${type}`;
+			// Obtener token manualmente
+			let token = '';
+			if (typeof document !== 'undefined') {
+				const match = document.cookie.match(/accessToken=([^;]+)/);
+				if (match) token = match[1];
+			}
+			const response = await fetchWithFallback(endpoint, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
+				},
+				body: JSON.stringify(body),
+			});
+			if (!response.ok) throw new Error('No se pudo descargar el reporte');
+			const blob = await response.blob();
+			const fileType = type === 'EXCEL' ? 'xlsx' : 'pdf';
+			const fileName = `introductores_${Date.now()}.${fileType}`;
+			const urlBlob = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = urlBlob;
+			a.download = fileName;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			window.URL.revokeObjectURL(urlBlob);
+			toast.success('Reporte descargado exitosamente');
+		} catch (e) {
+			toast.error('No se pudo descargar el reporte.');
+		} finally {
+			if (type === 'EXCEL') setIsLoadingExcel(false);
+			if (type === 'PDF') setIsLoadingPdf(false);
+		}
+	}
+
+	const handleDownloadExcel = () => handleDownloadReport('EXCEL');
+	const handleDownloadPdf = () => handleDownloadReport('PDF');
+
 	return (
 		<div>
-			<div className='py-0 px-2 mb-4'>
-				<h2>Lista de Introductores</h2>
-				{/* <h1 className='font-semibold text-xl px-3'>Gestión de Introductores</h1> */}
-				<p className='text-gray-600 text-sm mt-1 px-3'>
-					Administra usuarios con rol de Introductor y gestiona sus marcas
-				</p>
-			</div>
+			<section className="mb-4 flex justify-between">
+				<div className='py-0 px-2'>
+					<h2>Lista de Introductores</h2>
+					{/* <h1 className='font-semibold text-xl px-3'>Gestión de Introductores</h1> */}
+					<p className='text-gray-600 text-sm mt-1 px-3'>
+						Administra usuarios con rol de Introductor y gestiona sus marcas
+					</p>
+				</div>
+				<ReportDownloadButtons 
+					onDownloadExcel={handleDownloadExcel}
+					onDownloadPdf={handleDownloadPdf}
+					isLoadingExcel={isLoadingExcel}
+					isLoadingPdf={isLoadingPdf}
+					spinnerIcon={Loader2}
+				/>
+			</section>
 
 			<Card className='mb-4'>
 				<CardHeader>

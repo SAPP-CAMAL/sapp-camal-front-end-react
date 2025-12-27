@@ -34,11 +34,14 @@ export const mapLockerRoomControlResponse = (
 ): MappedLockerRoomControl[] => {
   return data.map(item => {
     const groupedEquipment = item.detailsLocker.reduce((acc, detail) => {
-      const type = detail.equipment.equipmentType.description;
+      // Normalizar la clave a mayúsculas y quitar espacios extra
+      const type = detail.equipment.equipmentType.description.toUpperCase().trim();
       if (!acc[type]) acc[type] = [];
       acc[type].push(detail.equipment.description);
       return acc;
     }, {} as Record<string, string[]>);
+
+    console.log('🔍 Claves de equipamiento agrupado:', Object.keys(groupedEquipment));
 
     return {
       id:item.id,

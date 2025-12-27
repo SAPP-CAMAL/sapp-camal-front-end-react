@@ -485,21 +485,27 @@ export function LockerRoomControlManagement() {
                     {row.responsibleFullName}
                   </TableCell>
                   <TableCell className="text-center border">
-                    <ObservationsPopover observations={row.observations} />
+                    <div className="flex items-center justify-center">
+                      <ObservationsPopover observations={row.observations} />
+                    </div>
                   </TableCell>
                   <TableCell className="text-center border">
-                    <VestuarioPopover
-                      items={
-                        row.detailsLockerGrouped?.["VESTUARIO Y LENCERIA"] ?? []
+                    <div className="flex items-center justify-center">
+                      <VestuarioPopover
+                        items={
+                        row.detailsLockerGrouped?.["VESTUARIO Y LENCERÍA"] ?? []
                       }
                     />
+                    </div>
                   </TableCell>
                   <TableCell className="text-center border">
-                    <EquipoProteccionPopover
+                    <div className="flex items-center justify-center">
+                      <EquipoProteccionPopover
                       items={
-                        row.detailsLockerGrouped?.["EQUIPO DE PROTECCIÓN"] ?? []
+                        row.detailsLockerGrouped?.["EQUIPO DE PROTECCIÓN Y VESTUARIO"] ?? []
                       }
                     />
+                    </div>
                   </TableCell>
                   <TableCell className="text-center border">
                     <div className="flex items-center justify-center gap-2">

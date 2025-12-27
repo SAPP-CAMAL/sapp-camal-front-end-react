@@ -467,7 +467,7 @@ export function ProductsModal({
                     No hay {productType === "producto" ? "productos" : "subproductos"} configurados
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     {allConfiguredProducts.map((configProduct) => {
                       // Buscar el producto en stock del animal actual
                       const stockProduct = currentAnimalProducts.find(
@@ -517,9 +517,13 @@ export function ProductsModal({
                               isAvailable ? "cursor-pointer" : "cursor-not-allowed text-gray-500"
                             }`}
                           >
-                            <div className="flex flex-col gap-1">
-                              <span>{configProduct.productName}</span>
-                              <span className="text-xs text-gray-500">{configProduct.productCode}</span>
+                            <div className="flex flex-col gap-1 flex-1 text-center">
+                              <span>
+                                {productType === "subproducto" && configProduct.productName.includes(' - ')
+                                  ? configProduct.productName.split(' - ')[0]
+                                  : configProduct.productName
+                                }
+                              </span>
                             </div>
                           </label>
                           {isInOrder && (

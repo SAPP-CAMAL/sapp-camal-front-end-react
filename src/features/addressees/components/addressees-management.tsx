@@ -8,6 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AddresseesTable } from "./table-addressees";
+import { ReportDownloadButtons } from "@/components/report-download-buttons";
+import { fetchWithFallback } from "@/lib/ky";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { EditIcon, MapPin, PlusIcon, SearchIcon } from "lucide-react";
@@ -78,6 +82,67 @@ export function AddresseesManagement({}) {
     500
   );
 
+
+
+  const [isLoadingExcel, setIsLoadingExcel] = useState(false);
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+
+  async function handleDownloadReport(type: 'EXCEL' | 'PDF') {
+    if (type === 'EXCEL') setIsLoadingExcel(true);
+    if (type === 'PDF') setIsLoadingPdf(true);
+    const url = `/v1/1.0.0/addressees/report?reportType=${type}`;
+    // Solo enviar body si hay filtros activos
+    const filters: any = {};
+    if (searchParams.fullName && searchParams.fullName.length > 0) filters.fullName = searchParams.fullName;
+    if (searchParams.identification && searchParams.identification.length > 0) filters.identification = searchParams.identification;
+    if (searchParams.providenceId && searchParams.providenceId !== 0) filters.provinceId = searchParams.providenceId;
+    if (searchParams.page) filters.page = searchParams.page;
+    if (searchParams.limit) filters.limit = searchParams.limit;
+
+    try {
+      // Obtener token manualmente (como en locker-room-control)
+      let token = undefined;
+      if (window.cookieStore && window.cookieStore.get) {
+        const cookie = await window.cookieStore.get("accessToken");
+        token = cookie?.value;
+      } else if (typeof document !== "undefined") {
+        // fallback para navegadores sin cookieStore
+        const match = document.cookie.match(/(?:^|; )accessToken=([^;]*)/);
+        token = match ? decodeURIComponent(match[1]) : undefined;
+      }
+
+      const response = await fetchWithFallback(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: Object.keys(filters).length > 0 ? JSON.stringify(filters) : undefined,
+      });
+      if (!response.ok) throw new Error('Error al generar el reporte');
+      const blob = await response.blob();
+      const fileType = type === 'EXCEL' ? 'xlsx' : 'pdf';
+      const fileName = `destinatarios_${Date.now()}.${fileType}`;
+      const urlBlob = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = urlBlob;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(urlBlob);
+      toast.success('Reporte descargado exitosamente');
+    } catch (e) {
+      toast.error('No se pudo descargar el reporte.');
+    } finally {
+      if (type === 'EXCEL') setIsLoadingExcel(false);
+      if (type === 'PDF') setIsLoadingPdf(false);
+    }
+  }
+
+  const handleDownloadExcel = () => handleDownloadReport('EXCEL');
+  const handleDownloadPdf = () => handleDownloadReport('PDF');
+
   return (
     <div>
       <section className="mb-4 flex justify-between">
@@ -87,6 +152,12 @@ export function AddresseesManagement({}) {
             Gestión de destinatarios registrados en el sistema
           </p>
         </div>
+        <ReportDownloadButtons 
+          onDownloadExcel={handleDownloadExcel}
+          onDownloadPdf={handleDownloadPdf}
+          isLoadingExcel={isLoadingExcel}
+          isLoadingPdf={isLoadingPdf}
+        />
       </section>
       <Card className="mb-4">
         <CardHeader>

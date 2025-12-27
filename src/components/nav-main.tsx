@@ -69,7 +69,7 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
     <SidebarGroup>
       <SidebarGroupLabel>Módulos</SidebarGroupLabel>
       <SidebarMenu>
-        {menus.map((menu) => {
+        {menus.map((menu, index) => {
           const isOpen = isHydrated ? openMenus[menu.id] ?? false : false;
 
           return (
@@ -82,39 +82,58 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
               }
               className="group/collapsible"
             >
-              <SidebarMenuItem>
+              <SidebarMenuItem 
+                className="animate-in fade-in slide-in-from-left-3"
+                style={{ 
+                  animationDelay: `${index * 50}ms`,
+                  animationDuration: '400ms',
+                  animationFillMode: 'backwards'
+                }}
+              >
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={fixUtf8(menu.menuName)}>
+                  <SidebarMenuButton 
+                    tooltip={fixUtf8(menu.menuName)}
+                    className="transition-all duration-300 hover:scale-[1.02] hover:shadow-sm active:scale-[0.98]"
+                  >
                     {menu.icon && (
                       <DynamicLucideIcon
                         name={(menu?.icon as any) ?? "badge-info"}
+                        className="transition-all duration-300 group-hover:scale-110"
                       />
                     )}
-                    <span className="font-semibold">{fixUtf8(menu.menuName)}</span>
-                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    <span className="font-semibold transition-all duration-200">{fixUtf8(menu.menuName)}</span>
+                    <ChevronRight className="ml-auto transition-all duration-300 group-data-[state=open]/collapsible:rotate-90 group-hover:translate-x-0.5" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
-                <CollapsibleContent>
+                <CollapsibleContent className="animate-in slide-in-from-top-2 duration-300">
                   <SidebarMenuSub>
-                    {menu.children?.map((subItem) => {
+                    {menu.children?.map((subItem, subIndex) => {
                       const normalizedUrl = normalizeMenuUrl(subItem.url);
                       const isActive = pathname === normalizedUrl;
                       
                       return (
-                        <SidebarMenuSubItem key={subItem.id}>
+                        <SidebarMenuSubItem 
+                          key={subItem.id}
+                          className="animate-in fade-in slide-in-from-left-2"
+                          style={{ 
+                            animationDelay: `${subIndex * 40}ms`,
+                            animationDuration: '300ms',
+                            animationFillMode: 'backwards'
+                          }}
+                        >
                           <SidebarMenuSubButton 
                             asChild 
                             isActive={isActive}
                             data-active={isActive}
+                            className="transition-all duration-200 hover:translate-x-1 hover:scale-[1.01] active:scale-[0.98]"
                           >
-                            <Link href={normalizedUrl} className="no-underline" prefetch={false}>
-                              {/* {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />} */}
+                            <Link href={normalizedUrl} className="no-underline group/subitem" prefetch={false}>
                               <DynamicLucideIcon
                                 name={(subItem?.icon as any) ?? "badge-info"}
-                                className="mr h-4 w-4"
+                                className="mr h-4 w-4 transition-all duration-300 group-hover/subitem:scale-110 group-hover/subitem:rotate-3"
                               />
 
-                              <span className="font-semibold text-xs leading-normal py-0.5">
+                              <span className="font-semibold text-xs leading-normal py-0.5 transition-all duration-200">
                                 {fixUtf8(subItem.menuName)}
                               </span>
                             </Link>

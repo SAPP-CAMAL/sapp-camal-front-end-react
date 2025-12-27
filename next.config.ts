@@ -25,8 +25,9 @@ const nextConfig: NextConfig = {
     "*.local",
   ],
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'nuqs'],
   },
+  transpilePackages: ['nuqs'],
   images: {
     remotePatterns: [
       {

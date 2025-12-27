@@ -8,6 +8,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { VehicleTable } from "./table-vehicles";
+import { ReportDownloadButtons } from "@/components/report-download-buttons";
+import { fetchWithFallback } from "@/lib/ky";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { Edit, PlusIcon, SearchIcon, Truck } from "lucide-react";
@@ -76,6 +81,62 @@ export function VehiclesManagement({}) {
     500
   );
 
+  const [isLoadingExcel, setIsLoadingExcel] = useState(false);
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+
+  async function handleDownloadReport(type: 'EXCEL' | 'PDF') {
+    if (type === 'EXCEL') setIsLoadingExcel(true);
+    if (type === 'PDF') setIsLoadingPdf(true);
+    try {
+      // Construir body con filtros actuales
+      const body: any = {
+        page: searchParams.page,
+        limit: searchParams.limit,
+      };
+      if (searchParams.plate && searchParams.plate.length > 0) body.plate = searchParams.plate;
+      if (searchParams.brand && searchParams.brand.length > 0) body.brand = searchParams.brand;
+      if (searchParams.transportTypeId && searchParams.transportTypeId !== 0) body.transportTypeId = searchParams.transportTypeId;
+      if (searchParams.vehicleTypeId && searchParams.vehicleTypeId !== 0) body.vehicleTypeId = searchParams.vehicleTypeId;
+
+      const endpoint = `/v1/1.0.0/vehicle/report-by-filter?reportType=${type}`;
+      // Obtener token manualmente
+      let token = '';
+      if (typeof document !== 'undefined') {
+        const match = document.cookie.match(/accessToken=([^;]+)/);
+        if (match) token = match[1];
+      }
+      const response = await fetchWithFallback(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error('No se pudo descargar el reporte');
+      const blob = await response.blob();
+      const fileType = type === 'EXCEL' ? 'xlsx' : 'pdf';
+      const fileName = `vehiculos_${Date.now()}.${fileType}`;
+      const urlBlob = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = urlBlob;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(urlBlob);
+      toast.success('Reporte descargado exitosamente');
+    } catch (e) {
+      toast.error('No se pudo descargar el reporte.');
+    } finally {
+      if (type === 'EXCEL') setIsLoadingExcel(false);
+      if (type === 'PDF') setIsLoadingPdf(false);
+    }
+  }
+
+  const handleDownloadExcel = () => handleDownloadReport('EXCEL');
+  const handleDownloadPdf = () => handleDownloadReport('PDF');
+
   return (
     <div>
       <section className="mb-4 flex justify-between">
@@ -85,6 +146,13 @@ export function VehiclesManagement({}) {
             Gestión de vehículos registrados en el sistema
           </p>
         </div>
+        <ReportDownloadButtons 
+          onDownloadExcel={handleDownloadExcel}
+          onDownloadPdf={handleDownloadPdf}
+          isLoadingExcel={isLoadingExcel}
+          isLoadingPdf={isLoadingPdf}
+          spinnerIcon={Loader2}
+        />
       </section>
       <Card className="mb-4">
         <CardHeader>
