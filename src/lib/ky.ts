@@ -1,4 +1,5 @@
 
+require('dotenv').config();
 import ky, { type KyInstance } from 'ky'
 
 function normalizeApiBase(raw: string | undefined) {
