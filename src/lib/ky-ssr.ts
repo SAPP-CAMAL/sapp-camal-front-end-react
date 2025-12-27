@@ -10,16 +10,14 @@ function normalizeApiBase(raw: string | undefined) {
 
 function getSsrApiBases() {
     const configured = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
-    const bases: string[] = []
-
-    if (configured) bases.push(configured)
-
-    // Fallback automático: si la API está configurada con IP y falla,
-    // intentar contra localhost (útil en desarrollo).
-    const localFallback = normalizeApiBase(process.env.API_URL_LOCAL_FALLBACK) || "http://localhost:3000"
-    if (localFallback && !bases.includes(localFallback)) bases.push(localFallback)
-
-    return bases
+    
+    if (!configured) {
+        console.warn("[SSR API] NEXT_PUBLIC_API_URL no está configurado. Usando localhost como fallback.");
+        return ["http://localhost:3000"]
+    }
+    
+    // En servidor, usar SOLO la URL configurada
+    return [configured]
 }
 
 function isNetworkFailure(error: unknown): boolean {
