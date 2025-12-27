@@ -58,13 +58,16 @@ function getClientApiBases(): string[] {
         return ['/api/proxy']
     }
     
-    // En producción, usar la URL configurada con fallback a localhost
+    // En producción, usar SOLO la URL configurada (dominio verdadero)
     const bases: string[] = []
     const configured = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
-    if (configured) bases.push(configured)
     
-    const localFallback = isDev ? "http://localhost:3000" : configured;
-    if (!bases.includes(localFallback)) bases.push(localFallback)
+    if (!configured) {
+        console.warn("[API] NEXT_PUBLIC_API_URL no está configurado. Usando localhost como fallback.");
+        bases.push("http://localhost:3000")
+    } else {
+        bases.push(configured)
+    }
     
     return bases
 }
