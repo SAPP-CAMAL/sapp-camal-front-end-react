@@ -42,20 +42,19 @@ export function LoginForm({
       const refreshToken = resp.data.refreshToken;
       const userJson = JSON.stringify(resp.data);
 
+      // --- CAMBIO 1: Configuración de cookies más permisiva para evitar bloqueos ---
+      // Usamos "Lax" en lugar de "Strict" para asegurar que la cookie viaje en la redirección inmediata.
+      const isProduction = typeof window !== "undefined" && !window.location.hostname.includes("localhost");
+      const sameSite = "Lax"; 
+      const path = "path=/";
+      const secure = isProduction ? "; Secure" : "";
+      
+      // Cookie Store API
       const cookieStore: any = (typeof window !== "undefined")
         ? (window as any).cookieStore
         : undefined;
 
-      // En producción (no localhost) → cookies seguras 
-      // En desarrollo (localhost) → cookies sin Secure flag
-      const isProduction = typeof window !== "undefined" && !window.location.hostname.includes("localhost");
-      const sameSite = "Strict";
-      const path = "path=/";
-      const secure = isProduction ? "; Secure" : "";
-      const httpOnly = ""; // No se puede establecer desde JavaScript (solo desde servidor)
-
       if (cookieStore?.set) {
-        // Cookie Store API (moderno, recomendado)
         try {
           await cookieStore.set("accessToken", accessToken, {
             path: "/",
@@ -73,27 +72,39 @@ export function LoginForm({
             sameSite: sameSite,
           });
         } catch {
-          // Fallback a document.cookie si Cookie Store API falla
+          // Fallback manual si falla la API
           document.cookie = `accessToken=${encodeURIComponent(accessToken)}; ${path}; SameSite=${sameSite}${secure}`;
           document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; ${path}; SameSite=${sameSite}${secure}`;
           document.cookie = `user=${encodeURIComponent(userJson)}; ${path}; SameSite=${sameSite}${secure}`;
         }
       } else {
-        // Fallback para navegadores sin Cookie Store API
-        try {
-          window.localStorage.setItem("accessToken", accessToken);
-          window.localStorage.setItem("refreshToken", refreshToken);
-          window.localStorage.setItem("user", userJson);
-        } catch {
-          // ignore
-        }
-        // document.cookie con flags de seguridad
+        // Fallback estándar
         document.cookie = `accessToken=${encodeURIComponent(accessToken)}; ${path}; SameSite=${sameSite}${secure}`;
         document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; ${path}; SameSite=${sameSite}${secure}`;
         document.cookie = `user=${encodeURIComponent(userJson)}; ${path}; SameSite=${sameSite}${secure}`;
       }
+
+      // LocalStorage backup
+      try {
+        window.localStorage.setItem("accessToken", accessToken);
+        window.localStorage.setItem("refreshToken", refreshToken);
+        window.localStorage.setItem("user", userJson);
+      } catch { /* ignore */ }
+
       console.log("Tokens stored, redirecting...");
-      router.push("/dashboard");
+      
+      toast.success("Bienvenido");
+
+      // --- CAMBIO 2: Refrescar el contexto de Next.js ---
+      // Obliga al cliente a reconocer que el estado de las cookies ha cambiado.
+      router.refresh();
+
+      // --- CAMBIO 3: Pequeño retraso para evitar la "Condición de Carrera" ---
+      // Asegura que la cookie esté escrita antes de navegar.
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 500);
+
     } catch (error: any) {
       console.error("Login error:", error);
 
