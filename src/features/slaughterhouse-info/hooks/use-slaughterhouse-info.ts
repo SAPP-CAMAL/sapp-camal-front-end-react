@@ -7,7 +7,7 @@ import type { SlaughterhouseInfo } from "../types/slaughterhouse.types";
 /**
  * Hook para obtener la información del camal desde el backend.
  * La información se cachea y se mantiene actualizada automáticamente.
- * 
+ *
  * Valores por defecto mientras se carga o en caso de error:
  * - CAMAL MUNICIPAL RIOBAMBA para el nombre del camal
  * - CHIMBORAZO para la provincia
@@ -32,12 +32,12 @@ export function useSlaughterhouseInfo() {
 
   // Valores por defecto en caso de que no haya datos o esté cargando
   const defaultInfo: SlaughterhouseInfo = {
-    camalName: "CAMAL MUNICIPAL RIOBAMBA",
+    camalName: "CAMAL MUNICIPAL...",
     companyName: "EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO",
     location: {
-      province: "CHIMBORAZO",
-      canton: "RIOBAMBA",
-      parish: "MALDONADO",
+      province: "...",
+      canton: "...",
+      parish: "...",
     },
     gadUrl: "www.gadmriobamba.gob.ec",
   };
@@ -47,7 +47,7 @@ export function useSlaughterhouseInfo() {
   /**
    * Helper para obtener el nombre completo de la empresa con ubicación
    */
-  const getFullCompanyName = () => 
+  const getFullCompanyName = () =>
     `${info.companyName} DEL CANTÓN ${info.location.canton}`;
 
   return {
