@@ -68,7 +68,8 @@ export function SimpleCarousel({
               <div className="rounded-lg px-1 sm:px-2 py-1 bg-white/80 backdrop-blur-sm">
                 {isSvgSrc(slaughterhouseLogo) ? (
                   <img
-                    src={`/api/image-proxy?url=${encodeURIComponent(slaughterhouseLogo)}`}
+                    // src={`/api/image-proxy?url=${encodeURIComponent(slaughterhouseLogo)}`}
+                    src={slaughterhouseLogo}
                     alt="Logo Matadero"
                     className="drop-shadow-lg block w-[80px] sm:w-[120px] md:w-[150px] lg:w-[190px] h-auto max-h-[40px] sm:max-h-[60px] md:max-h-[80px] lg:max-h-[100px] object-contain"
                   />
