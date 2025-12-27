@@ -46,7 +46,7 @@ export function LoginForm({
         ? (window as any).cookieStore
         : undefined;
 
-      // En producción (no localhost) → cookies seguras
+      // En producción (no localhost) → cookies seguras 
       // En desarrollo (localhost) → cookies sin Secure flag
       const isProduction = typeof window !== "undefined" && !window.location.hostname.includes("localhost");
       const sameSite = "Strict";
