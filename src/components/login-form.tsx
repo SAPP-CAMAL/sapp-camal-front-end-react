@@ -95,12 +95,7 @@ export function LoginForm({
       
       toast.success("Bienvenido");
 
-      // --- CAMBIO 2: Refrescar el contexto de Next.js ---
-      // Obliga al cliente a reconocer que el estado de las cookies ha cambiado.
-      router.refresh();
-
-      // --- CAMBIO 3: Pequeño retraso para evitar la "Condición de Carrera" ---
-      // Asegura que la cookie esté escrita antes de navegar.
+      // Redirigir al dashboard después de guardar cookies
       setTimeout(() => {
         router.push("/dashboard");
       }, 500);
