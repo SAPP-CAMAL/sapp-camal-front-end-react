@@ -53,21 +53,22 @@ function isNetworkFailure(error: unknown): boolean {
 function getClientApiBases(): string[] {
     // Leer la URL desde la variable global que Next.js inyecta en layout.tsx
     // Esta variable se coloca en build time con el valor de NEXT_PUBLIC_API_URL
-    const apiUrl = typeof window !== 'undefined' 
-        ? (window as any).__NEXT_PUBLIC_API_URL__ 
+    const apiUrl = typeof window !== 'undefined'
+        ? (window as any).__NEXT_PUBLIC_API_URL__
         : undefined
-    
+
     const configured = normalizeApiBase(apiUrl)
-    
+
     if (!configured) {
         console.warn("[API] API_URL no está configurada. Usando localhost como fallback.");
         return ["http://localhost:3000"]
     }
-    
+
     return [configured]
 }
 
-const API_BASES = getClientApiBases();
+// IMPORTANTE: No evaluamos API_BASES al cargar el módulo porque la variable global
+// puede no estar disponible aún. En su lugar, se obtiene dinámicamente en cada petición.
 
 function createKyClient(prefixUrl: string): KyInstance {
     return ky.create({
@@ -111,7 +112,7 @@ function createKyClient(prefixUrl: string): KyInstance {
                         // No loguear errores esperados
                         const isExpectedEmptyResponse = response.status === 400
                         const isSlaughterhouseInfoNotFound = url.includes("environment-variables/find-camal-info") && response.status === 404
-                        
+
                         if (!isExpectedEmptyResponse && !isSlaughterhouseInfoNotFound) {
                             const debug: Record<string, unknown> = {
                                 method,
@@ -149,10 +150,11 @@ async function requestWithFallback<T>(
     url: string,
     options?: any,
 ): Promise<T> {
+    const apiBases = getClientApiBases()
     let lastError: unknown
-    
-    for (let i = 0; i < API_BASES.length; i++) {
-        const base = API_BASES[i]
+
+    for (let i = 0; i < apiBases.length; i++) {
+        const base = apiBases[i]
         const client = createKyClient(base)
 
         try {
@@ -161,7 +163,7 @@ async function requestWithFallback<T>(
         } catch (error) {
             lastError = error
             // Si es un fallo de red y aún quedan bases por intentar, reintentar con el siguiente
-            if (isNetworkFailure(error) && i < API_BASES.length - 1) {
+            if (isNetworkFailure(error) && i < apiBases.length - 1) {
                 console.warn(`[HTTP] Fallo de conexión con ${base}, intentando fallback...`)
                 continue
             }
@@ -181,13 +183,27 @@ export const httpWithFallback = {
     delete: <T = unknown>(url: string, options?: any) => requestWithFallback<T>("delete", url, options),
 }
 
-// Cliente ky tradicional (usa la primera URL disponible)
-export const http = createKyClient(API_BASES[0])
+// Función helper para crear el cliente HTTP dinámicamente
+function getHttpClient(): KyInstance {
+    const bases = getClientApiBases()
+    return createKyClient(bases[0])
+}
+
+// Cliente ky tradicional - NOTA: Este cliente se crea dinámicamente para evitar
+// problemas de race condition con la variable global
+export const http = {
+    get: (url: string, options?: any) => getHttpClient().get(url, options),
+    post: (url: string, options?: any) => getHttpClient().post(url, options),
+    put: (url: string, options?: any) => getHttpClient().put(url, options),
+    patch: (url: string, options?: any) => getHttpClient().patch(url, options),
+    delete: (url: string, options?: any) => getHttpClient().delete(url, options),
+}
 
 
 // Función para obtener las URLs base de la API (útil para fetch directo con fallback)
 export function getApiBases(): string[] {
-    return API_BASES.map(base => {
+    const bases = getClientApiBases()
+    return bases.map((base: string) => {
         // Si es el proxy de desarrollo, devolver la URL real para fetch directo
         if (base === '/api/proxy') {
             return normalizeApiBase(process.env.NEXT_PUBLIC_API_URL) || "http://localhost:3000"
