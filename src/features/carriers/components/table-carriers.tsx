@@ -61,14 +61,13 @@ export function CarriersTable<TData, TValue>({
     (meta?.itemCount ?? 0);
 
   return (
-    <div className="overflow-hidden rounded-lg border p-4">
+    <div className="overflow-hidden rounded-lg border p-4 bg-white">
       <div className="py-4 px-2 flex flex-col">
         <Label className="font-semibold text-lg lg:text-base">
           Lista de Transportistas por Vehículo
         </Label>
       </div>
 
-      {/* Vista de Tabla para Pantallas Grandes */}
       <div className="hidden lg:block">
         <Table>
           <TableHeader>

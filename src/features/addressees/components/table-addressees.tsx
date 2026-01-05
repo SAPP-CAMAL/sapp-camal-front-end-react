@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -25,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MetaPagination } from "@/features/people/domain";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface DataTableProps<TData, TValue> {
@@ -64,12 +64,13 @@ export function AddresseesTable<TData, TValue>({
     (meta?.itemCount ?? 0);
 
   return (
-    <div className="overflow-hidden rounded-lg border p-4">
+    <div className="overflow-hidden rounded-lg border p-4 bg-white">
       <div className="py-4 px-2 flex flex-col">
-        <Label className="font-semibold text-lg lg:text-base">Lista de Destinatarios</Label>
+        <Label className="font-semibold text-lg lg:text-base">
+          Lista de Destinatarios
+        </Label>
       </div>
 
-      {/* Vista de Tabla para Pantallas Grandes */}
       <div className="hidden lg:block">
         <Table>
           <TableHeader>

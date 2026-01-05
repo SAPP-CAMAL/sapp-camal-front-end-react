@@ -79,12 +79,11 @@ export function TableIntroducers<TData, TValue>({
   const startLocal = isLoading || !data?.length ? 0 : start;
 
   return (
-    <div className="overflow-hidden rounded-lg border p-4">
+    <div className="overflow-hidden rounded-lg border p-4 bg-white">
       <div className="py-4 px-2 flex flex-col">
         <Label className="font-semibold text-lg lg:text-base">Lista de Introductores</Label>
       </div>
 
-      {/* Vista de Tabla para Pantallas Grandes */}
       <div className="hidden lg:block">
         <Table>
           <TableHeader>

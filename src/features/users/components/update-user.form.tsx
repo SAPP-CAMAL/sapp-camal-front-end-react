@@ -142,7 +142,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
           Editar Usuario
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col min-w-[45vw]">
+      <DialogContent className="w-[95vw] md:max-w-2xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Actualizar Usuario</DialogTitle>
           <DialogDescription>
@@ -156,7 +156,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
             className="flex flex-col flex-1 overflow-hidden"
           >
             <div className="overflow-y-auto flex-1 px-1 -mx-1">
-              <div className="space-y-4 grid grid-cols-2 gap-4 pb-4">
+              <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 mt-4">
                 <NewUserFields isUpdate />
               </div>
             </div>

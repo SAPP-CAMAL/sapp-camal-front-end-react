@@ -65,7 +65,7 @@ export function TableStaffList<TData, TValue>({
   meta,
   isLoading,
 }: DataTableProps<TData, TValue>) {
-  const searhParams = useSearchParams();
+  const searchParams = useSearchParams();
   const table = useReactTable({
     data: data,
     columns: columns,
@@ -129,7 +129,7 @@ export function TableStaffList<TData, TValue>({
               type="text"
               placeholder="Buscar por nombres"
               className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
-              defaultValue={searhParams.get("fullName") ?? ""}
+              defaultValue={searchParams.get("fullName") ?? ""}
               onChange={(e) => debounceFullName(e.target.value)}
             />
           </div>
@@ -139,7 +139,7 @@ export function TableStaffList<TData, TValue>({
               type="text"
               placeholder="Buscar por identificación"
               className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
-              defaultValue={searhParams.get("identification") ?? ""}
+              defaultValue={searchParams.get("identification") ?? ""}
               onChange={(e) => debounceIdentification(e.target.value)}
             />
           </div>
