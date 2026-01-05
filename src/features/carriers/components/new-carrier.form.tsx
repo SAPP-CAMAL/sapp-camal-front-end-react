@@ -360,12 +360,12 @@ export function NewCarrier({
         setfilterFullName("");
         setfilterIdentification("");
         setPersonData([]);
-        onOpenChange?.(newOpen);
+      onOpenChange?.(newOpen);
         form.setValue("open", newOpen);
       }}
     >
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] flex flex-col">
+      <DialogContent className="w-[95vw] md:max-w-4xl max-h-[95vh] overflow-y-auto">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {isUpdate ? "Editar Transportista" : "Crear Nuevo Transportista"}

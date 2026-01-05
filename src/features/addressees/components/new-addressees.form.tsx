@@ -290,7 +290,7 @@ export default function NewAddresseesForm({
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className="min-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] md:max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isUpdate ? "Editar Destinatario" : "Nuevo Destinatario"}
@@ -320,7 +320,7 @@ export default function NewAddresseesForm({
               Buscar Persona
             </Label>
 
-            <div className="grid grid-cols-2 gap-x-4 w-full mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mt-4">
               <div className="flex flex-col w-full">
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />

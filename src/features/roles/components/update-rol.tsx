@@ -18,7 +18,6 @@ import {
 import { Form } from "@/components/ui/form";
 import { NewRoleFields } from "./role-form-fields";
 import { updateRoleService } from "../server/db/roles.service";
-import { getModulesWithMenusService } from "@/features/modules/server/db/modules.queries";
 import { NewRoleForm } from "./new-role";
 import {
   Tooltip,
@@ -34,17 +33,10 @@ export function UpdateRol({ role }: { role: any }) {
 
   useEffect(() => {
     if (open) {
-      form.setValue("name", role.name);
-      form.setValue("description", role.description);
-
-      (async () => {
-        const modules = await getModulesWithMenusService();
-        form.reset({
-          name: role.name,
-          description: role.description,
-          modules,
-        });
-      })();
+      form.reset({
+        name: role.name,
+        description: role.description,
+      });
     }
   }, [open, form, role]);
 

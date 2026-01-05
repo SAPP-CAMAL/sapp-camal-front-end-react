@@ -213,7 +213,7 @@ export default function EditShiftModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] md:max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <span className="p-2 bg-gray-100 rounded-lg">

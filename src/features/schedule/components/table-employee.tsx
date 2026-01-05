@@ -96,13 +96,12 @@ export function EmployeeTable<TData, TValue>({
     (meta?.itemCount ?? 0);
 
   return (
-    <div className="w-full p-4 lg:p-6">
+    <div className="w-full p-4 lg:p-6 bg-white border rounded-lg overflow-hidden">
       <div className="py-4 px-2 flex flex-col">
         <Label className="font-semibold text-lg lg:text-base">Lista de Empleados</Label>
       </div>
 
-      {/* Vista de Tabla para Pantallas Grandes */}
-      <div className="hidden lg:block overflow-hidden rounded-md border">
+      <div className="hidden lg:block">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
