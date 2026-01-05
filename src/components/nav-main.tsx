@@ -18,6 +18,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import DynamicLucideIcon from "@/lib/lucide-icon-dynamic";
@@ -46,6 +47,7 @@ function normalizeMenuUrl(url: string | null): string {
 
 export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
   const [openMenus, setOpenMenus] = useState<Record<number, boolean>>({});
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -64,6 +66,11 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
     });
     setOpenMenus(newOpenMenus);
   }, [pathname, menus]);
+
+  // Función para manejar el clic en los items del menú
+  const handleItemClick = () => {
+    setOpenMobile(false);
+  };
 
   return (
     <SidebarGroup>
@@ -127,7 +134,12 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                             data-active={isActive}
                             className="transition-all duration-200 hover:translate-x-1 hover:scale-[1.01] active:scale-[0.98]"
                           >
-                            <Link href={normalizedUrl} className="no-underline group/subitem" prefetch={false}>
+                            <Link 
+                              href={normalizedUrl} 
+                              className="no-underline group/subitem" 
+                              prefetch={false}
+                              onClick={handleItemClick}
+                            >
                               <DynamicLucideIcon
                                 name={(subItem?.icon as any) ?? "badge-info"}
                                 className="mr h-4 w-4 transition-all duration-300 group-hover/subitem:scale-110 group-hover/subitem:rotate-3"
