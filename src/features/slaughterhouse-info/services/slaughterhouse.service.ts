@@ -31,9 +31,6 @@ export async function getSlaughterhouseInfo(): Promise<SlaughterhouseInfo> {
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}/v1/1.0.0/environment-variables/find-camal-info`;
 
-  // Log temporal para depuración - ELIMINAR después de verificar
-  console.log('[SlaughterhouseInfo] URL detectada:', url, '| Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
-
   const response = await fetch(url, {
     method: 'GET',
     headers: {
