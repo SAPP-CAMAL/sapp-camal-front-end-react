@@ -51,12 +51,31 @@ function isNetworkFailure(error: unknown): boolean {
 }
 
 function getClientApiBases(): string[] {
-    // Leer la URL desde la variable global que Next.js inyecta en layout.tsx
-    // Esta variable se coloca en build time con el valor de NEXT_PUBLIC_API_URL
-    const apiUrl = typeof window !== 'undefined'
+    // IMPORTANTE: Next.js reemplaza process.env.NEXT_PUBLIC_* en tiempo de build
+    // tanto para el servidor como para el cliente. Esto es más confiable que
+    // usar variables globales en window.
+
+    // Prioridad 1: Usar la variable de entorno en tiempo de build (más confiable)
+    // Next.js inlinea este valor durante el build, así que estará disponible inmediatamente
+    const buildTimeUrl = process.env.NEXT_PUBLIC_API_URL
+
+    // Prioridad 2: Fallback a la variable global (por si acaso)
+    const windowUrl = typeof window !== 'undefined'
         ? (window as any).__NEXT_PUBLIC_API_URL__
         : undefined
 
+    // Prioridad 3: En producción, detectar automáticamente la URL basándose en el hostname
+    // Si estamos en un dominio de producción (no localhost), usar https://sapp-riobamba.com
+    let autoDetectedUrl: string | undefined = undefined
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname
+        // Si NO estamos en localhost, usar la URL de producción
+        if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
+            autoDetectedUrl = 'https://sapp-riobamba.com'
+        }
+    }
+
+    const apiUrl = buildTimeUrl || windowUrl || autoDetectedUrl
     const configured = normalizeApiBase(apiUrl)
 
     if (!configured) {
