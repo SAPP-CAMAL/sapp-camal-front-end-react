@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSearchParams } from "next/navigation";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -49,6 +50,7 @@ export function VehicleTable<TData, TValue>({
   meta,
   isLoading,
 }: DataTableProps<TData, TValue>) {
+  const searchParams = useSearchParams();
   const table = useReactTable({
     data: data,
     columns: columns,
@@ -64,12 +66,11 @@ export function VehicleTable<TData, TValue>({
     (meta?.itemCount ?? 0);
 
   return (
-    <div className="overflow-hidden rounded-lg border p-4">
-      <div className="py-4 px-2 flex flex-col">
+    <div className="overflow-hidden rounded-lg border p-4 bg-white">
+      <div className="py-4 px-2 flex flex-col uppercase">
         <Label className="font-semibold text-lg lg:text-base">Lista de Vehículos</Label>
       </div>
 
-      {/* Vista de Tabla para Pantallas Grandes */}
       <div className="hidden lg:block">
         <Table>
           <TableHeader>

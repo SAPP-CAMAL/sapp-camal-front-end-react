@@ -106,7 +106,6 @@ export function UsersTable<TData, TValue>({
         <Label className="font-semibold text-lg lg:text-base">Lista de Usuarios</Label>
       </div>
 
-      {/* Vista de Tabla para Pantallas Grandes */}
       <div className="hidden lg:block">
         <Table>
           <TableHeader>

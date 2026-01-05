@@ -66,7 +66,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
 					<>
 						<label className='font-semibold text-sm'>Buscar Persona</label>
 
-						<div className='grid grid-cols-2 gap-4 w-full'>
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
 							<div className='space-y-2 relative'>
 								<FormField
 									control={form.control}

@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Search,
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectTrigger,
@@ -62,7 +63,7 @@ export function PeopleTable<TData, TValue>({
   meta,
   isLoading,
 }: DataTableProps<TData, TValue>) {
-  const searhParams = useSearchParams();
+  const searchParams = useSearchParams();
   const table = useReactTable({
     data: data,
     columns: columns,
@@ -98,8 +99,11 @@ export function PeopleTable<TData, TValue>({
   );
 
   return (
-    <div className="overflow-hidden rounded-lg border p-4">
-      {/* Vista de Tabla para Pantallas Grandes */}
+    <div className="overflow-hidden rounded-lg border p-4 bg-white">
+      <div className="py-4 px-2 flex flex-col">
+        <Label className="font-semibold text-lg lg:text-base">Lista de Personas</Label>
+      </div>
+
       <div className="hidden lg:block">
         <Table>
           <TableHeader>
