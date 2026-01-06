@@ -15,7 +15,7 @@ interface Props {
 }
 
 const defaultStyle = "bg-gray-50 p-3 sm:p-4 rounded-lg border";
-const selectedStyle = "hover:bg-gray-100 cursor-pointer transition-colors";
+const hoverStyle = "hover:bg-gray-100 transition-colors";
 
 export const BasicResultsCard = ({
   className,
@@ -29,7 +29,12 @@ export const BasicResultsCard = ({
 }: Props) => {
   return (
     <div
-      className={cn(defaultStyle, isSelected && selectedStyle, className)}
+      style={onSelect ? { cursor: 'pointer' } : undefined}
+      className={cn(
+        defaultStyle,
+        onSelect && hoverStyle,
+        className
+      )}
       onClick={onSelect}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">

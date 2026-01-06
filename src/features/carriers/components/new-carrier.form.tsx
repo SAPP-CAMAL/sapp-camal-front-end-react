@@ -316,7 +316,7 @@ export function NewCarrier({
   };
 
   useEffect(() => {
-    if (query?.data?.data?.items) {
+    if (query?.data?.data?.items !== undefined) {
       setPersonData(query.data.data.items);
     } else if (
       (debouncedFullName.trim() === "" &&
@@ -337,7 +337,7 @@ export function NewCarrier({
       return;
     }
 
-    if (query?.data?.data?.items) {
+    if (query?.data?.data?.items !== undefined) {
       setPersonData(query.data.data.items);
     }
   }, [query?.data?.data?.items, debouncedFullName, debouncedIdentification]);
@@ -408,6 +408,7 @@ export function NewCarrier({
                           onChange={(e) => {
                             const value = e.target.value;
                             setfilterFullName(value);
+                            setPersonData([]);
                             updateDebouncedFullName(value);
                           }}
                         />
@@ -425,6 +426,7 @@ export function NewCarrier({
                           onChange={(e) => {
                             const value = e.target.value;
                             setfilterIdentification(value);
+                            setPersonData([]);
                             updateDebouncedIdentification(value);
                           }}
                         />
@@ -434,21 +436,37 @@ export function NewCarrier({
                 </>
               )}
 
-              {!isUpdate &&
-                !selectedPerson &&
-                personData &&
-                personData?.length > 0 && (
-                  <div className="grid gap-x-4 w-full mt-4">
-                    <Card>
-                      <ScrollArea className="max-h-64">
-                        <CardContent className="flex flex-col gap-2">
-                          {personData?.map((person: Person) => {
-                            return (
-                              <div
-                                key={person.id}
-                                onClick={() => setSelectedPerson(person)}
-                                className="cursor-pointer rounded-xl px-3 py-2 transition-colors flex justify-between items-center hover:bg-muted"
-                              >
+              {/* Mostrar mensajes o resultados solo si hay búsqueda activa */}
+              {!isUpdate && !selectedPerson && (filterFullName.trim().length >= 2 || filterIdentification.trim().length >= 3) && (
+                <>
+                  {/* Mostrar "Buscando..." mientras se espera el debounce o se carga */}
+                  {(filterFullName !== debouncedFullName || filterIdentification !== debouncedIdentification || query.isFetching) && (!personData || personData?.length === 0) && (
+                    <div className="mt-4 p-4 border border-gray-200 rounded-md text-center text-sm text-gray-500 bg-muted/20">
+                      Buscando...
+                    </div>
+                  )}
+
+                  {/* Mostrar "No se encontraron" solo cuando terminó la búsqueda */}
+                  {filterFullName === debouncedFullName && filterIdentification === debouncedIdentification && !query.isFetching && (!personData || personData?.length === 0) && (
+                    <div className="mt-4 p-4 border border-gray-200 rounded-md text-center text-sm text-gray-500 bg-muted/20">
+                      No se encontraron resultados para la búsqueda.
+                    </div>
+                  )}
+
+                  {/* Lista de personas */}
+                  {personData && personData?.length > 0 && (
+                    <div className="grid gap-x-4 w-full mt-4">
+                      <Card>
+                        <ScrollArea className="max-h-64">
+                          <CardContent className="flex flex-col gap-2">
+                            {personData?.map((person: Person) => {
+                              return (
+                                <div
+                                  key={person.id}
+                                  onClick={() => setSelectedPerson(person)}
+                                  style={{ cursor: 'pointer' }}
+                                  className="rounded-xl px-3 py-2 transition-colors flex justify-between items-center hover:bg-muted"
+                                >
                                 <div>
                                   <p className="font-semibold">
                                     {person.fullName}
@@ -466,6 +484,8 @@ export function NewCarrier({
                     </Card>
                   </div>
                 )}
+              </>
+              )}
 
               {selectedPerson && (
                 <div className="w-full mt-4">
