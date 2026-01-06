@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Search,
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectTrigger,
@@ -62,7 +63,7 @@ export function PeopleTable<TData, TValue>({
   meta,
   isLoading,
 }: DataTableProps<TData, TValue>) {
-  const searhParams = useSearchParams();
+  const searchParams = useSearchParams();
   const table = useReactTable({
     data: data,
     columns: columns,
@@ -98,79 +99,121 @@ export function PeopleTable<TData, TValue>({
   );
 
   return (
-    <div className="overflow-hidden rounded-lg border p-4">
-      {/* <div className="py-4 px-2">
-        <h2>Lista de Personas</h2>
-      </div> */}
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="h-96 text-center animate-pulse font-semibold"
-              >
-                Cargando...
-              </TableCell>
-            </TableRow>
-          ) : table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+    <div className="overflow-hidden rounded-lg border p-4 bg-white">
+      <div className="py-4 px-2 flex flex-col">
+        <Label className="font-semibold text-lg lg:text-base">Lista de Personas</Label>
+      </div>
+
+      <div className="hidden lg:block">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-96 text-center">
-                <Card className="max-w-full border-0 shadow-none bg-transparent">
-                  <CardContent className="py-20">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="rounded-full bg-muted p-3">
-                        <Search className="h-6 w-6 text-muted-foreground" />
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-96 text-center animate-pulse font-semibold"
+                >
+                  Cargando...
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-96 text-center">
+                  <Card className="max-w-full border-0 shadow-none bg-transparent">
+                    <CardContent className="py-20">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="rounded-full bg-muted p-3">
+                          <Search className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <div className="text-center">
+                          <h3 className="font-medium text-muted-foreground mb-1">
+                            No se encontraron registros
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Intenta ajustar los filtros
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <h3 className="font-medium text-muted-foreground mb-1">
-                          No se encontraron registros
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Intenta ajustar los filtros
-                        </p>
+                    </CardContent>
+                  </Card>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Vista de Tarjetas para Pantallas Pequeñas */}
+      <div className="lg:hidden space-y-4">
+        {isLoading ? (
+          <div className="h-96 flex items-center justify-center animate-pulse font-semibold">
+            Cargando...
+          </div>
+        ) : table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => (
+            <Card key={row.id} className="overflow-hidden">
+              <CardContent className="p-4 space-y-3">
+                {row.getVisibleCells().map((cell) => {
+                  // Omitir columnas que no queremos mostrar en el cuerpo de la tarjeta si es necesario, 
+                  // o formatearlas de manera diferente. Por ahora las mostramos todas con su etiqueta.
+                  const header = cell.column.columnDef.header?.toString() || "";
+                  const content = flexRender(cell.column.columnDef.cell, cell.getContext());
+                  
+                  return (
+                    <div key={cell.id} className="flex flex-col gap-1 border-b last:border-0 pb-2 last:pb-0">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        {header}
+                      </span>
+                      <div className="text-sm">
+                        {content}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      <div className="h-10 flex items-end justify-between mt-4">
-        <div className="flex items-center gap-4">
+                  );
+                })}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="py-20 text-center text-muted-foreground">
+            No se encontraron registros
+          </div>
+        )}
+      </div>
+
+      {/* Paginación - Responsiva */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mt-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <p className="text-sm text-gray-600">
             Mostrando {start > 0 && `${start} a`} {end} de {meta?.totalItems ?? 0} personas
           </p>
@@ -193,54 +236,54 @@ export function PeopleTable<TData, TValue>({
             </Select>
           </div>
         </div>
-        <div className="flex items-center gap-x-2">
+
+        <div className="flex items-center justify-center sm:justify-end gap-x-2">
           <Button
+            size="sm"
             disabled={meta?.disabledPreviousPage}
             onClick={() => meta?.onPreviousPage?.()}
             variant={"outline"}
+            className="flex items-center gap-1"
           >
-            <ChevronLeft />
-            Anterior
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Anterior</span>
           </Button>
-          {meta && meta.totalPages && meta.totalPages > 1 && (
-            <>
-              {Array.from({ length: Math.min(meta.totalPages, 10) }, (_, i) => {
-                const pageNumber = i + 1;
-                const isCurrentPage = pageNumber === (meta.currentPage || 1);
+          
+          <div className="flex items-center gap-1">
+            {meta && meta.totalPages && meta.totalPages > 1 && (
+              <div className="hidden sm:flex items-center gap-1">
+                {Array.from({ length: Math.min(meta.totalPages, 5) }, (_, i) => {
+                  const pageNumber = i + 1;
+                  const isCurrentPage = pageNumber === (meta.currentPage || 1);
+                  return (
+                    <Button
+                      key={i}
+                      size="sm"
+                      variant={"outline"}
+                      className={isCurrentPage ? "bg-primary text-primary-foreground" : "h-8 w-8 p-0"}
+                      onClick={() => meta.onChangePage?.(pageNumber)}
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                })}
+                {meta.totalPages > 5 && <span className="text-muted-foreground">...</span>}
+              </div>
+            )}
+            <span className="sm:hidden text-sm font-medium">
+              Pág. {meta?.currentPage} de {meta?.totalPages}
+            </span>
+          </div>
 
-                // Show first page, last page, current page, and pages around current
-                const showPage =
-                  pageNumber === 1 ||
-                  pageNumber === meta.totalPages ||
-                  Math.abs(pageNumber - (meta.currentPage || 1)) <= 2;
-
-                if (!showPage) return null;
-
-                return (
-                  <Button
-                    key={i}
-                    variant={"outline"}
-                    className={
-                      isCurrentPage ? "bg-primary text-primary-foreground" : ""
-                    }
-                    onClick={() => meta.onChangePage?.(pageNumber)}
-                  >
-                    {pageNumber}
-                  </Button>
-                );
-              })}
-              {meta.totalPages > 10 && (
-                <span className="px-2">... {meta.totalPages}</span>
-              )}
-            </>
-          )}
           <Button
+            size="sm"
             variant={"outline"}
             disabled={meta?.disabledNextPage}
             onClick={() => meta?.onNextPage?.()}
+            className="flex items-center gap-1"
           >
-            Siguiente
-            <ChevronRight />
+            <span className="hidden sm:inline">Siguiente</span>
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>

@@ -241,7 +241,7 @@ export default function NewVehicleForm({
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       )}
 
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] md:max-w-4xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">
             {isUpdate ? "Editar Vehículo" : "Registrar Nuevo Vehículo"}

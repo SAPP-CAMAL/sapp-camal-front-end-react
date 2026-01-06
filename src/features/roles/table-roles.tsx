@@ -35,6 +35,7 @@ import { useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import { MetaPagination } from "../people/domain";
 import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -66,7 +67,7 @@ export function TableRoles<TData, TValue>({
   meta,
   isLoading,
 }: DataTableProps<TData, TValue>) {
-  const searhParams = useSearchParams();
+  const searchParams = useSearchParams();
   const table = useReactTable({
     data: data,
     columns: columns,
@@ -87,155 +88,163 @@ export function TableRoles<TData, TValue>({
   );
 
   return (
-    <div className="overflow-hidden rounded-lg border p-4">
-      <div className="py-4 px-2 flex justify-between">
-        <div>
-          <h2>Lista de Roles ({meta?.totalItems})</h2>
-          <p className="text-sm text-gray-500">
-            Gestiona los roles del sistema y sus permisos asignados
-          </p>
-        </div>
-        <div className="flex items-center gap-x-2">
-          <FilterIcon size={32} />
-          <div className="relative h-8 w-full flex items-center ">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="Buscar por nombre"
-              className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
-              defaultValue={searhParams.get("name") ?? ""}
-              onChange={(e) => debounceName(e.target.value)}
-            />
+    <div className="bg-white border rounded-lg overflow-hidden">
+      <div className="p-4 bg-gray-50/50 border-b">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <Label className="text-xl font-bold text-gray-900 block">Lista de Roles ({meta?.totalItems})</Label>
+            <p className="text-sm text-gray-500">Gestiona los roles del sistema y sus permisos asignados</p>
           </div>
-          <Select
-            onValueChange={(value) => {
-              if (value === "*") {
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative h-10 w-full sm:w-64">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Buscar por nombre..."
+                className="pl-9 h-10 w-full bg-white transition-all focus:ring-2 focus:ring-primary/20"
+                defaultValue={searchParams.get("name") ?? ""}
+                onChange={(e) => debounceName(e.target.value)}
+              />
+            </div>
+            <Select
+              onValueChange={(value) => {
+                if (value === "*") {
+                  meta?.setSearchParams({ status: null, page: 1 });
+                  return;
+                }
                 meta?.setSearchParams({
-                  status: null,
+                  status: value === "true" ? "true" : "false",
                   page: 1,
                 });
-                return;
-              }
-              meta?.setSearchParams({
-                status: value === "true" ? "true" : "false",
-                page: 1,
-              });
-            }}
-            defaultValue={"*"}
-          >
-            <SelectTrigger className="w-52">
-              <SelectValue placeholder="" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={"*"}>Todos los estados</SelectItem>
-              <SelectItem value={"true"}>Activo</SelectItem>
-              <SelectItem value={"false"}>Inactivo</SelectItem>
-            </SelectContent>
-          </Select>
+              }}
+              defaultValue={"*"}
+            >
+              <SelectTrigger className="w-full sm:w-48 h-10 bg-white">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={"*"}>Todos los estados</SelectItem>
+                <SelectItem value={"true"}>Activo</SelectItem>
+                <SelectItem value={"false"}>Inactivo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+
+      <div className="hidden lg:block">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} className="bg-gray-50 font-semibold text-gray-700">
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="h-96 text-center animate-pulse font-semibold"
-              >
-                Cargando...
-              </TableCell>
-            </TableRow>
-          ) : table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
                 ))}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-96 text-center">
-                <Card className="max-w-full border-0 shadow-none bg-transparent">
-                  <CardContent className="py-20">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="rounded-full bg-muted p-3">
-                        <Search className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                      <div className="text-center">
-                        <h3 className="font-medium text-muted-foreground mb-1">
-                          No se encontraron registros
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Intenta ajustar los filtros.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      <div className="h-10 flex items-end justify-between mt-4">
-        <p className="text-sm text-gray-600">
-          Mostrando {start > 0 && `${start} a`} a {end} de {meta?.totalItems} personas
-        </p>
-        <div className="flex items-center gap-x-2">
-          <Button
-            disabled={meta?.disabledPreviousPage}
-            onClick={() => meta?.onPreviousPage?.()}
-            variant={"outline"}
-          >
-            <ChevronLeft />
-            Anterior
-          </Button>
-          {Array.from({ length: meta?.totalPages ?? 1 }, (_, i) => (
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-48 text-center animate-pulse">
+                  Cargando datos...
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="hover:bg-gray-50/50 transition-colors">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-48 text-center">
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    <Search className="h-8 w-8 opacity-20" />
+                    <p>No se encontraron registros</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="lg:hidden p-4">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse h-32" />
+            ))}
+          </div>
+        ) : table.getRowModel().rows?.length ? (
+          <div className="grid grid-cols-1 gap-4">
+            {table.getRowModel().rows.map((row) => (
+              <Card key={row.id} className="overflow-hidden border-gray-200">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    {row.getVisibleCells().map((cell) => {
+                      const header = cell.column.columnDef.header as string;
+                      const hasLabel = typeof header === "string" && !header.includes("Acciones");
+
+                      return (
+                        <div key={cell.id} className="flex flex-col gap-1">
+                          {hasLabel && <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{header}</span>}
+                          <div className="text-sm">{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="py-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed">
+            <Search className="h-8 w-8 mx-auto mb-2 opacity-20" />
+            <p>No hay datos disponibles</p>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 bg-gray-50/50 border-t">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-gray-500 order-2 sm:order-1">
+            Mostrando <span className="font-medium text-gray-900">{start}</span> a{" "}
+            <span className="font-medium text-gray-900">{end}</span> de <span className="font-medium text-gray-900">{meta?.totalItems}</span> registros
+          </p>
+          <div className="flex items-center gap-2 order-1 sm:order-2">
             <Button
-              key={i}
-              variant={"outline"}
-              className={
-                i === (meta?.currentPage ?? 1) - 1
-                  ? "bg-primary text-primary-foreground"
-                  : ""
-              }
-              onClick={() => meta?.onChangePage?.(i + 1)}
+              size="sm"
+              variant="outline"
+              className="h-8 px-3"
+              disabled={meta?.disabledPreviousPage}
+              onClick={() => meta?.onPreviousPage?.()}
             >
-              {i + 1}
+              <ChevronLeft className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Anterior</span>
             </Button>
-          ))}
-          <Button
-            variant={"outline"}
-            disabled={meta?.disabledNextPage}
-            onClick={() => meta?.onNextPage?.()}
-          >
-            Siguiente
-            <ChevronRight />
-          </Button>
+
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-medium px-2 py-1 bg-white border rounded">
+                {meta?.currentPage} / {meta?.totalPages}
+              </span>
+            </div>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-3"
+              disabled={meta?.disabledNextPage}
+              onClick={() => meta?.onNextPage?.()}
+            >
+              <span className="hidden sm:inline">Siguiente</span>
+              <ChevronRight className="h-4 w-4 sm:ml-1" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

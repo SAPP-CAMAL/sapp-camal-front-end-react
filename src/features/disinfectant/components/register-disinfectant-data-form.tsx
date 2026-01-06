@@ -147,7 +147,7 @@ export function RegisterDisinfectantDataForm() {
                   handleSearchFields("identification", text),
               }}
               plate={{
-                value: selectedCertificatePlate || form.watch("plate"),
+                value: form.watch("plate"),
                 onChange: (text: string) => handleSearchFields("plate", text),
               }}
             />

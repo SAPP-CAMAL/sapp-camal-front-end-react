@@ -179,7 +179,7 @@ export default function NewAddresseesForm({
   });
 
   useEffect(() => {
-    if (query?.data?.data?.items) {
+    if (query?.data?.data?.items !== undefined) {
       setPersonData(query.data.data.items);
     }
   }, [query?.data?.data?.items]);
@@ -194,7 +194,7 @@ export default function NewAddresseesForm({
       return;
     }
 
-    if (query?.data?.data?.items) {
+    if (query?.data?.data?.items !== undefined) {
       setPersonData(query.data.data.items);
     }
   }, [query?.data?.data?.items, debouncedFullName, debouncedIdentification]);
@@ -290,7 +290,7 @@ export default function NewAddresseesForm({
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className="min-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] md:max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isUpdate ? "Editar Destinatario" : "Nuevo Destinatario"}
@@ -320,7 +320,7 @@ export default function NewAddresseesForm({
               Buscar Persona
             </Label>
 
-            <div className="grid grid-cols-2 gap-x-4 w-full mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mt-4">
               <div className="flex flex-col w-full">
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
@@ -331,6 +331,7 @@ export default function NewAddresseesForm({
                     value={filterFullName}
                     onChange={(e) => {
                       setFilterFullName(e.target.value);
+                      setPersonData([]);
                       updateDebouncedFullName(e.target.value);
                     }}
                     disabled={isUpdate}
@@ -348,6 +349,7 @@ export default function NewAddresseesForm({
                     value={filterIdentification}
                     onChange={(e) => {
                       setFilterIdentification(e.target.value);
+                      setPersonData([]);
                       updateDebouncedIdentification(e.target.value);
                     }}
                     disabled={isUpdate}
@@ -356,27 +358,48 @@ export default function NewAddresseesForm({
               </div>
             </div>
 
-            {!selectedPerson && personData && personData?.length > 0 && (
-              <div className="w-full mt-4 h-64 overflow-y-auto border border-gray-300 rounded-md p-4">
-                <div className="flex flex-col gap-2">
-                  {personData?.map((person: Person) => {
-                    return (
-                      <div
-                        key={person.id}
-                        onClick={() => setSelectedPerson(person)}
-                        className="cursor-pointer rounded-xl px-3 py-2 transition-colors flex justify-between items-center hover:bg-muted"
-                      >
-                        <div>
-                          <p className="font-semibold">{person.fullName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {person.identification} • {person.mobileNumber}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            {/* Mostrar mensajes o resultados solo si hay búsqueda activa */}
+            {!selectedPerson && (filterFullName.trim().length >= 2 || filterIdentification.trim().length >= 3) && (
+              <>
+                {/* Mostrar "Buscando..." mientras se espera el debounce o se carga */}
+                {(filterFullName !== debouncedFullName || filterIdentification !== debouncedIdentification || query.isFetching) && (!personData || personData?.length === 0) && (
+                  <div className="mt-4 p-4 border border-gray-200 rounded-md text-center text-sm text-gray-500 bg-muted/20">
+                    Buscando...
+                  </div>
+                )}
+
+                {/* Mostrar "No se encontraron" solo cuando terminó la búsqueda */}
+                {filterFullName === debouncedFullName && filterIdentification === debouncedIdentification && !query.isFetching && (!personData || personData?.length === 0) && (
+                  <div className="mt-4 p-4 border border-gray-200 rounded-md text-center text-sm text-gray-500 bg-muted/20">
+                    No se encontraron resultados para la búsqueda.
+                  </div>
+                )}
+
+                {/* Lista de personas */}
+                {personData && personData?.length > 0 && (
+                  <div className="w-full mt-4 h-64 overflow-y-auto border border-gray-300 rounded-md p-4">
+                    <div className="flex flex-col gap-2">
+                      {personData?.map((person: Person) => {
+                        return (
+                          <div
+                            key={person.id}
+                            onClick={() => setSelectedPerson(person)}
+                            style={{ cursor: 'pointer' }}
+                            className="rounded-xl px-3 py-2 transition-colors flex justify-between items-center hover:bg-muted"
+                          >
+                            <div>
+                              <p className="font-semibold">{person.fullName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {person.identification} • {person.mobileNumber}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {selectedPerson && (

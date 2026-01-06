@@ -317,7 +317,7 @@ export function UpdatePerson({ person }: { person: any }) {
         </TooltipContent>
       </Tooltip>
 
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
+      <DialogContent className="w-[95vw] md:max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Persona</DialogTitle>
           <DialogDescription>
@@ -326,7 +326,7 @@ export function UpdatePerson({ person }: { person: any }) {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form className="gap-y-4 grid grid-cols-2 gap-2">
+          <form className="gap-4 grid grid-cols-1 md:grid-cols-2 mt-4">
             <NewPeopleFields
               isUpdate
               onDeleteEmployee={deleteEmployeeService}

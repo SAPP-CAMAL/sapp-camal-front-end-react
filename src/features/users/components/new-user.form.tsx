@@ -70,7 +70,7 @@ export function NewUser() {
           Nuevo Usuario
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[95vh] overflow-hidden flex flex-col max-w-3xl">
+      <DialogContent className="w-[95vw] md:max-w-3xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Nuevo Usuario</DialogTitle>
           <DialogDescription>
@@ -84,7 +84,7 @@ export function NewUser() {
             className="flex flex-col flex-1 overflow-hidden"
           >
             <div className="overflow-y-auto flex-1 px-1 -mx-1">
-              <div className="space-y-4 grid grid-cols-2 gap-4 pb-4">
+              <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 mt-4">
                 <NewUserFields />
               </div>
             </div>
