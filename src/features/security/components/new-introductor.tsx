@@ -51,10 +51,10 @@ export function NewIntroductor({
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
       <DialogTrigger asChild>
-        <Button>
+        {/* <Button>
           <PlusIcon />
           Nuevo Introductor
-        </Button>
+        </Button> */}
       </DialogTrigger>
       <DialogContent className="w-[95vw] md:max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
