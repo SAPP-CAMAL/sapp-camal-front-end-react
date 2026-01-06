@@ -316,12 +316,13 @@ export function NewCarrier({
   };
 
   useEffect(() => {
-    if (query?.data?.data?.items !== undefined) {
-      setPersonData(query.data.data.items);
+    const items = query?.data?.data?.items;
+    if (items !== undefined && items.length > 0) {
+      setPersonData(items);
     } else if (
       (debouncedFullName.trim() === "" &&
         debouncedIdentification.trim() === "") ||
-      query.data?.data?.items?.length === 0
+      items?.length === 0
     ) {
       setPersonData([]);
     }
