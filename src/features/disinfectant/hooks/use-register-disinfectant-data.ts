@@ -119,7 +119,7 @@ export const useRegisterDisinfectantData = () => {
 	}, 500);
 
 	const handleSearchFields = (field: 'fullName' | 'identification' | 'plate', text: string) => {
-		if (field === 'plate' && selectedCertificatePlate) return;
+		// if (field === 'plate' && selectedCertificatePlate === text) handleRemoveSelectedCertificate();
 		form.setValue(field, text);
 		debounceSearchFields(field, text);
 	};
