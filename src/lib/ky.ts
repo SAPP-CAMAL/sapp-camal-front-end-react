@@ -51,39 +51,34 @@ function isNetworkFailure(error: unknown): boolean {
 }
 
 function getClientApiBases(): string[] {
-    // IMPORTANTE: Next.js reemplaza process.env.NEXT_PUBLIC_* en tiempo de build
-    // tanto para el servidor como para el cliente. Esto es más confiable que
-    // usar variables globales en window.
-
-    // Prioridad 1: Usar la variable de entorno en tiempo de build (más confiable)
-    // Next.js inlinea este valor durante el build, así que estará disponible inmediatamente
-    const buildTimeUrl = process.env.NEXT_PUBLIC_API_URL
-
-    // Prioridad 2: Fallback a la variable global (por si acaso)
-    const windowUrl = typeof window !== 'undefined'
-        ? (window as any).__NEXT_PUBLIC_API_URL__
-        : undefined
-
-    // Prioridad 3: En producción, detectar automáticamente la URL basándose en el hostname
-    // Si estamos en un dominio de producción (no localhost), usar https://sapp-riobamba.com
-    let autoDetectedUrl: string | undefined = undefined
+    // EN EL CLIENTE: Detectar automáticamente basándose en el hostname
+    // Esta es la forma más confiable porque no depende de variables de entorno
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname
-        // Si NO estamos en localhost, usar la URL de producción
-        if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
-            autoDetectedUrl = 'https://sapp-riobamba.com'
+
+        // Si estamos en localhost, usar localhost para desarrollo
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            // En desarrollo, intentar usar la variable de entorno o localhost
+            const devUrl = process.env.NEXT_PUBLIC_API_URL
+            if (devUrl) {
+                return [normalizeApiBase(devUrl)]
+            }
+            return ["http://localhost:3000"]
         }
+
+        // EN PRODUCCIÓN: SIEMPRE usar la URL de producción
+        // No importa qué diga la variable de entorno
+        return ["https://sapp-riobamba.com"]
     }
 
-    const apiUrl = buildTimeUrl || windowUrl || autoDetectedUrl
-    const configured = normalizeApiBase(apiUrl)
-
-    if (!configured) {
-        console.warn("[API] API_URL no está configurada. Usando localhost como fallback.");
-        return ["http://localhost:3000"]
+    // EN EL SERVIDOR (SSR): Usar variable de entorno o fallback a producción
+    const serverUrl = process.env.NEXT_PUBLIC_API_URL
+    if (serverUrl) {
+        return [normalizeApiBase(serverUrl)]
     }
 
-    return [configured]
+    // Fallback para SSR: usar producción
+    return ["https://sapp-riobamba.com"]
 }
 
 // IMPORTANTE: No evaluamos API_BASES al cargar el módulo porque la variable global

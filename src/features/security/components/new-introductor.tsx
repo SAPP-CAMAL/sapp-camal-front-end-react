@@ -12,8 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { getModulesWithMenusService } from "@/features/modules/server/db/modules.queries";
-import { ResponseModuleWithMenus } from "@/features/modules/domain/module.domain";
 import { useEffect, useState } from "react";
 import { IntroductorFormFields } from "./introductor-form-fields";
 import { Specie } from "../domain";
@@ -22,13 +20,11 @@ export type NewIntroductorForm = {
   name: string;
   description: string;
   identification: string;
-  modules: ResponseModuleWithMenus;
 };
 
 const defaultValues: NewIntroductorForm = {
   name: "",
   description: "",
-  modules: [],
   identification: "",
 };
 
@@ -48,13 +44,7 @@ export function NewIntroductor({
 
   useEffect(() => {
     if (open) {
-      (async () => {
-        const modules = await getModulesWithMenusService();
-        form.reset({
-          ...defaultValues,
-          modules,
-        });
-      })();
+      form.reset(defaultValues);
     }
   }, [open, form]);
 
@@ -66,7 +56,7 @@ export function NewIntroductor({
           Nuevo Introductor
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] md:max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Crear Nuevo Introductor</DialogTitle>
           <DialogDescription>

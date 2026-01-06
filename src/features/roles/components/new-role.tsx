@@ -16,20 +16,16 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { NewRoleFields } from "./role-form-fields";
 import { createRoleService } from "../server/db/roles.service";
-import { getModulesWithMenusService } from "@/features/modules/server/db/modules.queries";
-import { ResponseModuleWithMenus } from "@/features/modules/domain/module.domain";
 import { useEffect, useState } from "react";
 
 export type NewRoleForm = {
   name: string;
   description: string;
-  modules?: ResponseModuleWithMenus;
 };
 
 const defaultValues: NewRoleForm = {
   name: "",
   description: "",
-  modules: [],
 };
 
 export function NewRol() {
@@ -40,13 +36,7 @@ export function NewRol() {
 
   useEffect(() => {
     if (open) {
-      (async () => {
-        const modules = await getModulesWithMenusService();
-        form.reset({
-          ...defaultValues,
-          modules,
-        });
-      })();
+      form.reset(defaultValues);
     }
   }, [open, form]);
 

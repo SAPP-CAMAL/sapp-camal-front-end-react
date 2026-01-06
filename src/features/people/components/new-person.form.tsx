@@ -144,7 +144,7 @@ export function NewPerson({
           Nueva Persona
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
+      <DialogContent className="w-[95vw] md:max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nueva Persona</DialogTitle>
           <DialogDescription>
@@ -155,7 +155,7 @@ export function NewPerson({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-2 grid grid-cols-2 gap-2"
+            className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"
           >
             <NewPeopleFields
               isUpdateVisitorLog={isUpdateVisitorLog}
