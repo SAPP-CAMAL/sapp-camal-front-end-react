@@ -341,7 +341,7 @@ export const Step1Certificate = () => {
               isSelected
             />
           ) : !selectedCertificate ? (
-            <div className="text-center py-6 sm:py-8 border rounded-lg bg-gray-50">
+            <div className="text-center py-6 sm:py-8 px-4 sm:px-6 border rounded-lg bg-gray-50">
               <Label className="opacity-50 text-xs sm:text-sm">
                 Primero debe seleccionar un certificado
               </Label>

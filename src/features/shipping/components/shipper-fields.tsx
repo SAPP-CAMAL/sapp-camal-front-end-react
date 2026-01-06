@@ -1,9 +1,11 @@
+import { Ring2 } from 'ldrs/react';
 import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { useCatalogue } from '@/features/catalogues/hooks/use-catalogue';
 import { validateDocumentTypeService } from '@/features/people/server/db/people.service';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import 'ldrs/react/Ring2.css';
 
 export const ShipperFields = () => {
 	const form = useFormContext();
@@ -11,6 +13,8 @@ export const ShipperFields = () => {
 	const catalogueVehicleTypes = useCatalogue('TVH');
 	const catalogueIdentityTypes = useCatalogue('TID');
 	const catalogueTransportTypes = useCatalogue('TTR');
+
+	const isRetrievingPersonData = form.watch('isRetrievingPersonData') as boolean;
 
 	return (
 		<>
@@ -72,7 +76,7 @@ export const ShipperFields = () => {
 
 							try {
 								const response = await validateDocumentTypeService(currentValue.code, value);
-								return !!response?.data?.isValid
+								return !!response?.data?.isValid;
 							} catch (error: any) {
 								const { message } = await error.response.json();
 								return message;
@@ -98,7 +102,9 @@ export const ShipperFields = () => {
 				rules={{ required: { value: true, message: 'El nombre es requerido' } }}
 				render={({ field }) => (
 					<FormItem>
-						<FormLabel>Nombre</FormLabel>
+						<FormLabel>
+							Nombre {isRetrievingPersonData && <Ring2 size='15' stroke='3' strokeLength='0.25' bgOpacity='0.1' speed='0.8' color='black' />}
+						</FormLabel>
 						<FormControl>
 							<Input className='bg-secondary' placeholder='Ingrese el nombre' {...field} />
 						</FormControl>
@@ -114,7 +120,9 @@ export const ShipperFields = () => {
 				rules={{ required: { value: true, message: 'El apellido es requerido' } }}
 				render={({ field }) => (
 					<FormItem>
-						<FormLabel>Apellido</FormLabel>
+						<FormLabel>
+							Apellido {isRetrievingPersonData && <Ring2 size='15' stroke='3' strokeLength='0.25' bgOpacity='0.1' speed='0.8' color='black' />}
+						</FormLabel>
 						<FormControl>
 							<Input className='bg-secondary' placeholder='Ingrese el apellido' {...field} />
 						</FormControl>

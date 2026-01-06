@@ -38,21 +38,7 @@ export function Footer() {
                 href="/terminos"
                 className="hover:text-primary transition-colors"
               >
-                Términos
-              </Link>
-              <span className="text-border">•</span>
-              <Link
-                href="/privacidad"
-                className="hover:text-primary transition-colors"
-              >
-                Privacidad
-              </Link>
-              <span className="text-border">•</span>
-              <Link
-                href="/soporte"
-                className="hover:text-primary transition-colors"
-              >
-                Soporte
+                Términos y Condiciones
               </Link>
               <span className="text-border hidden sm:inline">•</span>
               <span className="hidden sm:inline">v1.0.0</span>
