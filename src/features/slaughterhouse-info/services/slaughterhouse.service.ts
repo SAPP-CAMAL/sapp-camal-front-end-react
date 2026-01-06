@@ -7,7 +7,7 @@ function getApiBaseUrl(): string {
   // En el servidor (SSR), no hay window
   if (typeof window === 'undefined') {
     // Usar variable de entorno o fallback a producción
-    return process.env.NEXT_PUBLIC_API_URL || 'https://sapp-riobamba.com';
+    return process.env.NEXT_PUBLIC_API_URL || 'https://sapp-emfi.com';
   }
 
   // En el cliente, detectar según el hostname
@@ -20,7 +20,7 @@ function getApiBaseUrl(): string {
   }
 
   // En producción, SIEMPRE usar la URL de producción
-  return 'https://sapp-riobamba.com';
+  return 'https://sapp-emfi.com';
 }
 
 /**

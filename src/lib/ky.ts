@@ -101,8 +101,7 @@ function getClientApiBases(): string[] {
         }
 
         // EN PRODUCCIÓN: SIEMPRE usar la URL de producción
-        // No importa qué diga la variable de entorno
-        return ["https://sapp-riobamba.com"]
+        return ["https://sapp-emfi.com"]
     }
 
     // EN EL SERVIDOR (SSR): Usar variable de entorno o fallback a producción
@@ -112,7 +111,7 @@ function getClientApiBases(): string[] {
     }
 
     // Fallback para SSR: usar producción
-    return ["https://sapp-riobamba.com"]
+    return ["https://sapp-emfi.com"]
 }
 
 // IMPORTANTE: No evaluamos API_BASES al cargar el módulo porque la variable global

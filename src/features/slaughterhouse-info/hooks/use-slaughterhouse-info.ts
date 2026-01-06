@@ -39,7 +39,7 @@ export function useSlaughterhouseInfo() {
       canton: "...",
       parish: "...",
     },
-    gadUrl: "www.gadmriobamba.gob.ec",
+    gadUrl: "...",
   };
 
   const info = query.data ?? defaultInfo;
