@@ -13,6 +13,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { loginAction } from "@/features/security/server/actions/security.actions";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
+import { useEffect } from "react";
 
 export function LoginForm({
   className,
@@ -25,19 +26,40 @@ export function LoginForm({
       showPassword: false,
       identifier: "",
       password: "",
+      remember: false,
     },
   });
 
+  // Cargar identificador recordado al montar el componente
+  useEffect(() => {
+    const savedIdentifier = localStorage.getItem("rememberedIdentifier");
+    if (savedIdentifier) {
+      form.reset({
+        ...form.getValues(),
+        identifier: savedIdentifier,
+        remember: true,
+      });
+    }
+  }, [form]);
+
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      console.log("Attempting login with:", data.identifier);
+      const identifier = data.identifier?.trim();
+      console.log("Attempting login with:", identifier);
 
       const resp = await loginAction({
-        identifier: data.identifier,
+        identifier,
         password: data.password,
       });
 
       console.log("Login response received");
+
+      // Manejar la persistencia del identificador si "Recuérdame" está marcado
+      if (data.remember) {
+        localStorage.setItem("rememberedIdentifier", identifier);
+      } else {
+        localStorage.removeItem("rememberedIdentifier");
+      }
 
       const accessToken = resp.data.accessToken;
       const refreshToken = resp.data.refreshToken;
@@ -289,7 +311,14 @@ export function LoginForm({
             <div className="flex items-center justify-between pt-2">
               {/* Remember me checkbox */}
               <div className="flex items-center space-x-2">
-                <Checkbox id="remember" className="border-slate-300 h-4 w-4" />
+                <Checkbox
+                  id="remember"
+                  className="border-slate-300 h-4 w-4"
+                  checked={form.watch("remember")}
+                  onCheckedChange={(checked) =>
+                    form.setValue("remember", checked as boolean)
+                  }
+                />
                 <Label
                   htmlFor="remember"
                   className="text-xs font-normal text-slate-600 cursor-pointer"
