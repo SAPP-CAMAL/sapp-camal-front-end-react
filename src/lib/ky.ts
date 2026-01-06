@@ -40,6 +40,40 @@ async function getAccessToken(): Promise<string | undefined> {
     return undefined
 }
 
+/**
+ * Borra todos los datos de autenticación del cliente (cookies y localStorage)
+ */
+function clearAuthData() {
+    if (typeof window === "undefined") return
+
+    try {
+        // Borrar localStorage
+        window.localStorage.removeItem("accessToken")
+        window.localStorage.removeItem("refreshToken")
+        window.localStorage.removeItem("user")
+
+        // Borrar cookies (intento con múltiples paths por seguridad)
+        const cookiesToClear = ["accessToken", "refreshToken", "user"]
+        const paths = ["/", "/dashboard"]
+
+        cookiesToClear.forEach(name => {
+            paths.forEach(path => {
+                document.cookie = `${name}=; path=${path}; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax`
+            })
+        })
+
+        // Borrar usando la Cookie Store API si está disponible
+        const cookieStore = (window as any).cookieStore
+        if (cookieStore?.delete) {
+            cookiesToClear.forEach(name => {
+                cookieStore.delete({ name, path: '/' })
+            })
+        }
+    } catch (error) {
+        console.error("[Auth] Error clearing auth data:", error)
+    }
+}
+
 function isNetworkFailure(error: unknown): boolean {
     if (error instanceof TypeError) return true
     const message = (error as any)?.message
@@ -149,6 +183,9 @@ function createKyClient(prefixUrl: string): KyInstance {
                     }
 
                     if (response.status === 401) {
+                        // Limpiar datos de sesión antes de redirigir para evitar bucles infinitos
+                        console.warn("[HTTP] 401 Unauthorized detected. Clearing session...")
+                        clearAuthData()
                         window.location.href = "/auth/login"
                     }
                     return response

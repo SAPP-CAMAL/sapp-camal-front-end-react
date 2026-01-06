@@ -7,8 +7,8 @@ import { ResponseLoginService, ResponseLogoutService, ResponseRefreshTokenServic
 export async function loginAction(body: { identifier: string; password: string }) {
     return await ssrPostJson<ResponseLoginService>("v1/1.0.0/security/login", {
         json: {
-            identifier: body.identifier,
-            password: body.password,
+            identifier: body.identifier?.trim(),
+            password: body.password?.trim(),
         },
     })
 }
@@ -21,13 +21,13 @@ export async function logoutAction() {
         // Continuar incluso si falla el logout en el servidor
         console.warn("Server logout failed, but clearing local cookies anyway");
     }
-    
+
     // Borrar las cookies locales
     const cookieStore = await cookies();
     cookieStore.delete("accessToken");
     cookieStore.delete("refreshToken");
     cookieStore.delete("user");
-    
+
     return {
         code: 200,
         message: "Logout successful",
