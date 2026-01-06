@@ -137,7 +137,7 @@ export default function NewLockerRoomControlForm({
   });
 
   useEffect(() => {
-    if (query?.data?.data?.items) {
+    if (query?.data?.data?.items !== undefined) {
       setPersonData(query.data.data.items);
     }
   }, [query?.data?.data?.items]);
@@ -152,7 +152,7 @@ export default function NewLockerRoomControlForm({
       return;
     }
 
-    if (query?.data?.data?.items) {
+    if (query?.data?.data?.items !== undefined) {
       setPersonData(query.data.data.items);
     }
   }, [query?.data?.data?.items, debouncedFullName, debouncedIdentification]);
@@ -321,6 +321,7 @@ export default function NewLockerRoomControlForm({
                       value={filterFullName}
                       onChange={(e) => {
                         setFilterFullName(e.target.value);
+                        setPersonData([]);
                         updateDebouncedFullName(e.target.value);
                       }}
                       disabled={isUpdate}
@@ -337,6 +338,7 @@ export default function NewLockerRoomControlForm({
                       value={filterIdentification}
                       onChange={(e) => {
                         setFilterIdentification(e.target.value);
+                        setPersonData([]);
                         updateDebouncedIdentification(e.target.value);
                       }}
                       disabled={isUpdate}
@@ -345,47 +347,60 @@ export default function NewLockerRoomControlForm({
                 </div>
               </>
             )}
-            {!selectedPerson &&
-              personData?.length === 0 &&
-              (debouncedFullName || debouncedIdentification) && (
-                <div className="mt-4 p-4 border border-gray-200 rounded-md text-center text-sm text-gray-500 bg-muted/20">
-                  No se encontraron resultados para la búsqueda.
-                </div>
-              )}
 
-            {/* Lista de empleados */}
-            {!selectedPerson && personData?.length > 0 && (
-              <div className="w-full mt-4 max-h-[300px] overflow-y-auto border border-gray-200 rounded-md p-3 bg-white shadow-sm">
-                <div
-                  className={`grid gap-2 ${
-                    personData.length === 1
-                      ? "grid-cols-1"
-                      : personData.length === 2
-                      ? "sm:grid-cols-2"
-                      : "sm:grid-cols-2 md:grid-cols-3"
-                  }`}
-                >
-                  {personData.map((person: Person) => (
+            {/* Mostrar mensajes o resultados solo si hay búsqueda activa */}
+            {!selectedPerson && (filterFullName.trim().length >= 2 || filterIdentification.trim().length >= 3) && (
+              <>
+                {/* Mostrar "Buscando..." mientras se espera el debounce o se carga */}
+                {(filterFullName !== debouncedFullName || filterIdentification !== debouncedIdentification || query.isFetching) && personData?.length === 0 && (
+                  <div className="mt-4 p-4 border border-gray-200 rounded-md text-center text-sm text-gray-500 bg-muted/20">
+                    Buscando...
+                  </div>
+                )}
+
+                {/* Mostrar "No se encontraron" solo cuando terminó la búsqueda */}
+                {filterFullName === debouncedFullName && filterIdentification === debouncedIdentification && !query.isFetching && personData?.length === 0 && (
+                  <div className="mt-4 p-4 border border-gray-200 rounded-md text-center text-sm text-gray-500 bg-muted/20">
+                    No se encontraron resultados para la búsqueda.
+                  </div>
+                )}
+
+                {/* Lista de empleados */}
+                {personData?.length > 0 && (
+                  <div className="w-full mt-4 max-h-[300px] overflow-y-auto border border-gray-200 rounded-md p-3 bg-white shadow-sm">
                     <div
-                      key={person.id}
-                      onClick={() => setSelectedPerson(person)}
-                      className="cursor-pointer p-3 rounded-lg border hover:bg-muted transition-colors flex items-center justify-between"
+                      className={`grid gap-2 ${
+                        personData.length === 1
+                          ? "grid-cols-1"
+                          : personData.length === 2
+                          ? "sm:grid-cols-2"
+                          : "sm:grid-cols-2 md:grid-cols-3"
+                      }`}
                     >
-                      <div>
-                        <p className="font-medium">{person.fullName}</p>
-                        {person.identification && (
-                          <p className="text-xs text-gray-500">
-                            {person.identification}
-                          </p>
-                        )}
-                      </div>
-                      <Button size="sm" variant="secondary">
-                        Seleccionar
-                      </Button>
+                      {personData.map((person: Person) => (
+                        <div
+                          key={person.id}
+                          onClick={() => setSelectedPerson(person)}
+                          style={{ cursor: 'pointer' }}
+                          className="p-3 rounded-lg border hover:bg-muted transition-colors flex items-center justify-between"
+                        >
+                          <div>
+                            <p className="font-medium">{person.fullName}</p>
+                            {person.identification && (
+                              <p className="text-xs text-gray-500">
+                                {person.identification}
+                              </p>
+                            )}
+                          </div>
+                          <Button size="sm" variant="secondary">
+                            Seleccionar
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Persona seleccionada */}
