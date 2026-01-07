@@ -79,14 +79,14 @@ export function UpdateIntroductor({ introductor, onRefresh, introducerRolId }: u
 				</TooltipContent>
 			</Tooltip>
 
-			<DialogContent className='min-w-5xl max-h-[90vh] overflow-y-auto'>
+			<DialogContent className='w-[95vw] md:max-w-4xl max-h-[95vh] overflow-y-auto'>
 				<DialogHeader>
 					<DialogTitle>Editar Introductor</DialogTitle>
 					<DialogDescription>Actualiza la información del introductor seleccionado.</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={onSubmit} className='grid grid-cols-2 gap-4'>
+					<form onSubmit={onSubmit} className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>
 						<FormField
 							control={form.control}
 							name='name'

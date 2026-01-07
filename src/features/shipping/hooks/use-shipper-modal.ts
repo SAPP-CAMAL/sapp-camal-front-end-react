@@ -10,10 +10,11 @@ import { useCatalogue } from '@/features/catalogues/hooks/use-catalogue';
 import { personValidateDocument, validateDocumentTypeService } from '@/features/people/server/db/people.service';
 import { toCapitalize } from '@/lib/toCapitalize';
 
-type NewShipperFormValues = ShipperFormValues & { open: boolean };
+type NewShipperFormValues = ShipperFormValues & { open: boolean; isRetrievingPersonData: boolean };
 
 const defaultValues = {
 	open: false,
+	isRetrievingPersonData: false,
 	firstName: '',
 	lastName: '',
 	identificationTypeId: '',
@@ -61,6 +62,7 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 
 		if (identificationTypeCode !== 'CED') return;
 
+		form.setValue('isRetrievingPersonData', true);
 		try {
 			const validateResponse = await validateDocumentTypeService(identificationTypeCode, identificationValue);
 
@@ -72,7 +74,10 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 
 			if (personData.firstName) form.setValue('firstName', toCapitalize(personData.firstName, true));
 			if (personData.lastName) form.setValue('lastName', toCapitalize(personData.lastName, true));
-		} catch (error) {}
+		} catch (error) {
+		} finally {
+			form.setValue('isRetrievingPersonData', false);
+		}
 	}, 500);
 
 	useEffect(() => {
