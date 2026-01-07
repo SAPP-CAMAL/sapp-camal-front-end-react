@@ -68,10 +68,10 @@ export function LoginForm({
       // --- CAMBIO 1: Configuración de cookies más permisiva para evitar bloqueos ---
       // Usamos "Lax" en lugar de "Strict" para asegurar que la cookie viaje en la redirección inmediata.
       const isProduction = typeof window !== "undefined" && !window.location.hostname.includes("localhost");
-      const sameSite = "Lax"; 
+      const sameSite = "Lax";
       const path = "path=/";
       const secure = isProduction ? "; Secure" : "";
-      
+
       // Cookie Store API
       const cookieStore: any = (typeof window !== "undefined")
         ? (window as any).cookieStore
@@ -115,7 +115,7 @@ export function LoginForm({
       } catch { /* ignore */ }
 
       console.log("Tokens stored, redirecting...");
-      
+
       toast.success("Bienvenido");
 
       // Redirigir al dashboard después de guardar cookies
@@ -131,7 +131,7 @@ export function LoginForm({
 
       try {
         const statusCode = error?.response?.status;
-        
+
         if (statusCode === 400 || statusCode === 401) {
           errorMessage = "Credenciales incorrectas";
           errorDescription = "El usuario o la contraseña ingresados no son válidos. Verifique sus datos e intente nuevamente.";
@@ -201,10 +201,11 @@ export function LoginForm({
               />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-center mb-1 text-black-important">
-              CAMAL MUNICIPAL
+              EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO
             </h1>
             <p className="text-xs text-primary text-center font-bold">
-              DE {location.canton}
+              {/* DE {location.canton} */}
+              DEL CANTÓN {location.canton}
             </p>
           </div>
 
