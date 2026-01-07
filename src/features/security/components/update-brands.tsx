@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Introducer, Specie } from "../domain";
+import { Brand, Introducer, Specie } from "../domain";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -13,11 +13,29 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Loader2,
   Plus,
   Save,
+  Search,
   Tag,
   ToggleLeftIcon,
   ToggleRightIcon,
+  UserPlus,
+  Users,
+  ArrowRight,
+  ArrowLeftRight,
+  Settings2,
+  Info,
   X,
 } from "lucide-react";
 import { Form } from "@/components/ui/form";
@@ -32,7 +50,9 @@ import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/ui/input";
 import {
   createBrandService,
+  getIntroducersService,
   updateBrandService,
+  reassignBrandService,
 } from "../server/db/security.queries";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -66,6 +86,16 @@ export function UpdateBrands({
 }: NewIntroductorProps) {
   const form = useForm<UpdateBrandsForm>();
   const [open, setOpen] = useState(false);
+  const [activeView, setActiveView] = useState<'status' | 'assign'>('status');
+  
+  // States for Assign View (Reassignment)
+  const [selectedBrandToReassign, setSelectedBrandToReassign] = useState<Brand | null>(null);
+  const [targetIntroducerSearch, setTargetIntroducerSearch] = useState('');
+  const [foundTargetIntroducers, setFoundTargetIntroducers] = useState<Introducer[]>([]);
+  const [isSearchingTarget, setIsSearchingTarget] = useState(false);
+  const [isConfirmingTransfer, setIsConfirmingTransfer] = useState(false);
+  const [targetIntroToAssign, setTargetIntroToAssign] = useState<Introducer | null>(null);
+  
   const [isActive, setIsActive] = useState<Record<number, boolean>>({});
   const [selectedSpecies, setSelectedSpecies] = useState<
     Record<number, Specie[]>
@@ -177,19 +207,13 @@ export function UpdateBrands({
     setIsSubmitting(true);
 
     try {
-      // Crear un Set con los IDs seleccionados para búsqueda rápida
-      const selectedIds = new Set(brandSpecies.map((s) => s.id));
-      
-      // Mapear todas las especies: las seleccionadas con status true, las demás con false
-      const speciesWithStatus = species.map((specie) => ({
-        id: specie.id,
-        status: selectedIds.has(specie.id),
-      }));
-
       const payload = {
-        description: brandName.trim(),
         name: brandName.trim(),
-        species: speciesWithStatus,
+        description: brandName.trim(),
+        species: species.map((s) => ({
+          id: s.id,
+          status: (selectedSpecies[brandId] || []).some((selected) => selected.id === s.id)
+        })),
       };
 
       console.log("Payload enviado:", payload);
@@ -251,6 +275,14 @@ export function UpdateBrands({
     }
   };
 
+  const handleResetAssignView = () => {
+    setSelectedBrandToReassign(null);
+    setTargetIntroducerSearch('');
+    setFoundTargetIntroducers([]);
+    setTargetIntroToAssign(null);
+    setIsConfirmingTransfer(false);
+  };
+
   useEffect(() => {
     if (introductor?.brands?.length) {
       const initialStatus = introductor.brands.reduce((acc, brand) => {
@@ -261,13 +293,60 @@ export function UpdateBrands({
     }
   }, [introductor]);
 
+  const handleSearchTargetIntroducers = async (text: string) => {
+    setTargetIntroducerSearch(text);
+    if (text.length < 3) {
+      setFoundTargetIntroducers([]);
+      return;
+    }
+    
+    setIsSearchingTarget(true);
+    try {
+      const response = await getIntroducersService({
+        fullName: text,
+        page: 1,
+        limit: 10,
+        status: true
+      });
+      // Filter out current introducer
+      const filtered = (response.data.items || []).filter(i => i.id !== introductor.id);
+      setFoundTargetIntroducers(filtered);
+    } catch (error) {
+      console.error("Error searching target introducers:", error);
+    } finally {
+      setIsSearchingTarget(false);
+    }
+  };
+
+  const handleReassignBrand = async () => {
+    if (!selectedBrandToReassign || !targetIntroToAssign) return;
+
+    setIsSubmitting(true);
+    try {
+      await reassignBrandService(selectedBrandToReassign.id, targetIntroToAssign.id);
+
+      toast.success(`Marca "${selectedBrandToReassign.name}" reasignada a ${targetIntroToAssign.fullName}`);
+      setIsConfirmingTransfer(false);
+      setTargetIntroToAssign(null);
+      handleResetAssignView();
+      onRefresh();
+    } catch (error) {
+      toast.error("Error al reasignar la marca");
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Dialog
       open={open}
-      onOpenChange={(isOpen) => {
+      onOpenChange={(isOpen: boolean) => {
         setOpen(isOpen);
         if (!isOpen) {
           setBrandNames({});
+          setActiveView('status');
+          handleResetAssignView();
           onRefresh();
         }
       }}
@@ -300,8 +379,94 @@ export function UpdateBrands({
             introductor.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form className="space-y-8">
+
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          padding: '4px',
+          backgroundColor: 'white',
+          borderRadius: '9999px',
+          marginBottom: '24px',
+          border: '1px solid #e5e7eb',
+          width: '100%',
+          maxWidth: '280px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          height: '44px',
+          overflow: 'hidden',
+          userSelect: 'none',
+          isolation: 'isolate',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+        }}>
+          {/* Green Sliding Pill - Absolute positioning with inline styles */}
+          <div style={{
+            position: 'absolute',
+            top: '4px',
+            bottom: '4px',
+            left: '4px',
+            width: 'calc(50% - 4px)',
+            backgroundColor: '#0ea38d',
+            borderRadius: '9999px',
+            transition: 'transform 300ms ease-in-out',
+            transform: activeView === 'status' ? 'translateX(0)' : 'translateX(100%)',
+            zIndex: 0,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }} />
+          
+          <button
+            type="button"
+            onClick={() => setActiveView('status')}
+            style={{
+              position: 'relative',
+              zIndex: 10,
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              height: '100%',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              outline: 'none',
+              color: activeView === 'status' ? 'white' : 'black',
+              fontWeight: activeView === 'status' ? 'bold' : 'normal',
+              transition: 'color 300ms'
+            }}
+          >
+            <Settings2 style={{ width: '16px', height: '16px' }} />
+            <span style={{ fontSize: '14px' }}>Estado</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => setActiveView('assign')}
+            style={{
+              position: 'relative',
+              zIndex: 10,
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              height: '100%',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              outline: 'none',
+              color: activeView === 'assign' ? 'white' : 'black',
+              fontWeight: activeView === 'assign' ? 'bold' : 'normal',
+              transition: 'color 300ms'
+            }}
+          >
+            <ArrowLeftRight style={{ width: '16px', height: '16px' }} />
+            <span style={{ fontSize: '14px' }}>Asignar</span>
+          </button>
+        </div>
+
+        {activeView === 'status' ? (
+          <Form {...form}>
+            <form className="space-y-8">
             <div className="space-y-4">
               <label className="font-semibold">Marcas Existentes:</label>
 
@@ -313,56 +478,17 @@ export function UpdateBrands({
                     return (
                       <Card
                         key={brand.id}
-                        className={`w-full transition-all ${
-                          !brandIsActive ? "opacity-60 pointer-events-none" : ""
+                        className={`w-full transition-all border-l-4 ${
+                          brandIsActive ? "border-l-primary shadow-sm" : "opacity-60 pointer-events-none border-l-gray-300"
                         }`}
                       >
-                        <CardHeader className="p-4 sm:p-6">
-                          <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <span className="text-base sm:text-lg">Nombre de la Marca</span>
-                            <div className="flex flex-col sm:flex-row gap-2">
-                              {/* Botón Guardar */}
-                              <Button
-                                type="button"
-                                size="sm"
-                                className="flex items-center gap-2 w-full sm:w-auto"
-                                onClick={() => handleUpdateBrand(brand.id)}
-                                disabled={isSubmitting || !brandIsActive}
-                              >
-                                <Save size={16} />
-                                <span className="text-xs sm:text-sm">Guardar</span>
-                              </Button>
-
-                              <Button
-                                type="button"
-                                onClick={() => handleToggleStatus(brand.id)}
-                                variant={
-                                  brandIsActive ? "outline" : "secondary"
-                                }
-                                disabled={isSubmitting}
-                                className="w-full sm:w-auto"
-                                size="sm"
-                              >
-                                <span
-                                  className={`text-xs sm:text-sm ${
-                                    brandIsActive
-                                      ? "font-bold"
-                                      : "text-gray-400"
-                                  }`}
-                                >
-                                  {brandIsActive ? "Activo" : "Inactivo"}
-                                </span>
-                                {brandIsActive ? (
-                                  <ToggleRightIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-                                ) : (
-                                  <ToggleLeftIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500" />
-                                )}
-                              </Button>
-                            </div>
+                        <CardHeader className="p-4 sm:p-5 bg-gray-50/50">
+                          <CardTitle>
+                            <span className="text-base sm:text-lg font-bold text-gray-800">Marca: {brand.name}</span>
                           </CardTitle>
                         </CardHeader>
 
-                        <CardContent className="space-y-4 p-4 sm:p-6">
+                        <CardContent className="space-y-4 p-4 sm:p-6 pb-4">
                           <Input
                             type="text"
                             value={
@@ -425,6 +551,44 @@ export function UpdateBrands({
                                 </span>
                               </div>
                             )}
+
+                          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
+                            {/* Botón Actualizar */}
+                            <Button
+                              type="button"
+                              className="flex items-center gap-2 flex-1 font-bold h-10"
+                              onClick={() => handleUpdateBrand(brand.id)}
+                              disabled={isSubmitting || !brandIsActive}
+                            >
+                              <Save size={16} />
+                              <span className="text-sm">Actualizar</span>
+                            </Button>
+
+                            <Button
+                              type="button"
+                              onClick={() => handleToggleStatus(brand.id)}
+                              variant={
+                                brandIsActive ? "outline" : "secondary"
+                              }
+                              disabled={isSubmitting}
+                              className="flex items-center gap-2 flex-1 h-10"
+                            >
+                              <span
+                                className={`text-sm ${
+                                  brandIsActive
+                                    ? "font-bold"
+                                    : "text-gray-400"
+                                }`}
+                              >
+                                {brandIsActive ? "Activo" : "Inactivo"}
+                              </span>
+                              {brandIsActive ? (
+                                <ToggleRightIcon className="w-8 h-8 text-primary" />
+                              ) : (
+                                <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
+                              )}
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     );
@@ -553,18 +717,169 @@ export function UpdateBrands({
               )}
             </div>
 
-            <div className="flex justify-end gap-x-2">
+            </form>
+          </Form>
+        ) : (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {!selectedBrandToReassign ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg text-primary text-sm font-medium">
+                  <Info className="h-5 w-5 flex-shrink-0 text-primary" />
+                  <p>Selecciona una marca del introductor actual para transferirla a otro introductor.</p>
+                </div>
+                
+                <Label className="font-semibold text-gray-700">Tus Marcas Disponibles:</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {introductor.brands && introductor.brands.length > 0 ? (
+                    introductor.brands.map((brand) => (
+                      <div key={brand.id} className="flex items-center justify-between p-3 bg-white border rounded-lg hover:shadow-md transition-all group">
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-gray-800">{brand.name}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {brand.species.map((s, idx) => (
+                              <span key={idx} className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded uppercase">
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white transition-colors"
+                          onClick={() => setSelectedBrandToReassign(brand)}
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" />
+                          <span className="text-xs">Transferir</span>
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 italic col-span-2 py-4">No tienes marcas para reasignar.</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <Tag className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-primary/60 font-semibold uppercase tracking-wider">Marca Seleccionada</p>
+                      <p className="text-sm font-bold text-primary">{selectedBrandToReassign.name}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedBrandToReassign(null)}>
+                    Cambiar
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  <Label className="font-semibold text-gray-700">Buscar Introductor Destino:</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <Input
+                      placeholder="Buscar por nombre (mínimo 3 caracteres)..."
+                      value={targetIntroducerSearch}
+                      onChange={(e) => handleSearchTargetIntroducers(e.target.value)}
+                      className="pl-10 h-11"
+                    />
+                    {isSearchingTarget && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                  {foundTargetIntroducers.length > 0 ? (
+                    foundTargetIntroducers.map((foundIntro) => (
+                      <Card key={foundIntro.id} className="border-gray-200 hover:border-primary/50 transition-colors">
+                        <CardHeader className="p-4 bg-gray-50/50">
+                          <CardTitle className="text-base flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-primary" />
+                              <span>{foundIntro.fullName}</span>
+                            </div>
+                            <Button
+                              size="sm"
+                              className="bg-primary text-white"
+                              onClick={() => {
+                                setTargetIntroToAssign(foundIntro);
+                                setIsConfirmingTransfer(true);
+                              }}
+                              disabled={isSubmitting}
+                            >
+                              <UserPlus className="h-4 w-4 mr-1" />
+                              <span className="text-xs">Confirmar Reasignación</span>
+                            </Button>
+                          </CardTitle>
+                        </CardHeader>
+                      </Card>
+                    ))
+                  ) : targetIntroducerSearch.length >= 3 ? (
+                    <div className="text-center py-10 text-gray-500">
+                      <Search className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                      <p>No se encontraron introductores destino</p>
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 text-gray-400 border-2 border-dashed rounded-xl">
+                      <p className="text-sm">Ingresa el nombre del introductor receptor</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-4 border-t gap-2">
+              {selectedBrandToReassign && (
+                 <Button
+                 type="button"
+                 variant="ghost"
+                 onClick={() => handleResetAssignView()}
+               >
+                 Cancelar
+               </Button>
+              )}
               <Button
                 type="button"
-                variant={"outline"}
-                disabled={form.formState.isSubmitting}
+                variant="outline"
                 onClick={() => handleCloseModal()}
               >
                 Cerrar
               </Button>
             </div>
-          </form>
-        </Form>
+          </div>
+        )}
+
+        <AlertDialog open={isConfirmingTransfer} onOpenChange={setIsConfirmingTransfer}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Confirmar transferencia de marca?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Estás a punto de transferir la marca <span className="font-bold text-gray-900">"{selectedBrandToReassign?.name}"</span> 
+                al introductor <span className="font-bold text-gray-900">"{targetIntroToAssign?.fullName}"</span>. 
+                Esta acción moverá la propiedad de la marca y ya no aparecerá bajo el introductor actual.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isSubmitting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleReassignBrand();
+                }}
+                className="bg-primary hover:bg-primary/90"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Transfiriendo..." : "Sí, transferir marca"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
