@@ -222,7 +222,7 @@ export function LoginForm({
                     type="text"
                     disabled={form.formState.isSubmitting}
                     placeholder="Nombre de usuario"
-                    maxLength={10}
+                    maxLength={100}
                     autoComplete="username"
                     required
                     className="h-10 text-sm"
