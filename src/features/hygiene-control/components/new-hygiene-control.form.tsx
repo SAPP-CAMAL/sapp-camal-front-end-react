@@ -231,6 +231,17 @@ export default function NewHygieneControlForm({
     }));
   };
 
+  const toggleGroup = (items: any[]) => {
+    const allSelected = items.every((item) => checkedItems[item.idSettingHygiene]);
+
+    const newCheckedItems = { ...checkedItems };
+    items.forEach((item) => {
+      newCheckedItems[item.idSettingHygiene] = !allSelected;
+    });
+
+    setCheckedItems(newCheckedItems);
+  };
+
   return (
     <Dialog
       open={open}
@@ -413,7 +424,7 @@ export default function NewHygieneControlForm({
             <div className="flex flex-col gap-4">
               {groupedData?.map((group) => {
                 const selectedCount = group.items.filter(
-                  (item) => checkedItems[item.id]
+                  (item) => checkedItems[item.idSettingHygiene]
                 ).length;
 
                 return (
@@ -423,7 +434,15 @@ export default function NewHygieneControlForm({
                   >
                     {/* Cabecera */}
                     <div className="px-4 py-3 text-sm font-medium bg-muted/30 border-b flex justify-between items-center">
-                      <span>{group.equipmentTypeDescription}</span>
+                      <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={group.items.length > 0 && group.items.every((item: any) => checkedItems[item.idSettingHygiene])}
+                            onChange={() => toggleGroup(group.items)}
+                            className="h-4 w-4 rounded border-gray-300 cursor-pointer accent-[var(--primary)]"
+                        />
+                        <span>{group.equipmentTypeDescription}</span>
+                      </div>
                       <span className="text-xs px-2 py-0.5 bg-gray-200 rounded">
                         {selectedCount} / {group.items.length}
                       </span>
