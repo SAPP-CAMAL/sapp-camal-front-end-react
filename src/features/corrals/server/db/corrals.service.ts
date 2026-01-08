@@ -14,8 +14,8 @@ import {
   ResponseBrandDetails
 } from "@/features/corrals/domain";
 
-// Obtener la URL base de la API desde las variables de entorno
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+// Obtener la URL base de la API (hardcoded para producción como solicitado)
+const API_BASE_URL = "https://sapp-emfi.com";
 
 // Create a silent HTTP client for brand details that won't log errors
 const silentHttp = ky.create({
@@ -125,9 +125,9 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
       const specieDescription = (line.specie?.description || '').toLowerCase();
 
       return description.includes(searchTerm) ||
-             name.includes(searchTerm) ||
-             specieName.includes(searchTerm) ||
-             specieDescription.includes(searchTerm);
+        name.includes(searchTerm) ||
+        specieName.includes(searchTerm) ||
+        specieDescription.includes(searchTerm);
     });
 
     if (matchingLine) {
