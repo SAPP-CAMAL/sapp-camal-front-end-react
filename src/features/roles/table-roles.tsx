@@ -19,20 +19,9 @@ import { Button } from "@/components/ui/button";
 import {
   ChevronLeft,
   ChevronRight,
-  FilterIcon,
   Search,
-  SearchIcon,
 } from "lucide-react";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
-import { useDebouncedCallback } from "use-debounce";
 import { MetaPagination } from "../people/domain";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -82,53 +71,10 @@ export function TableRoles<TData, TValue>({
     ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) +
     (meta?.itemCount ?? 0);
 
-  const debounceName = useDebouncedCallback(
-    (text: string) => meta?.setSearchParams({ name: text, page: 1 }),
-    500
-  );
-
   return (
     <div className="bg-white border rounded-lg overflow-hidden">
-      <div className="p-4 bg-gray-50/50 border-b">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <Label className="text-xl font-bold text-gray-900 block">Lista de Roles ({meta?.totalItems})</Label>
-            <p className="text-sm text-gray-500">Gestiona los roles del sistema y sus permisos asignados</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative h-10 w-full sm:w-64">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar por nombre..."
-                className="pl-9 h-10 w-full bg-white transition-all focus:ring-2 focus:ring-primary/20"
-                defaultValue={searchParams.get("name") ?? ""}
-                onChange={(e) => debounceName(e.target.value)}
-              />
-            </div>
-            <Select
-              onValueChange={(value) => {
-                if (value === "*") {
-                  meta?.setSearchParams({ status: null, page: 1 });
-                  return;
-                }
-                meta?.setSearchParams({
-                  status: value === "true" ? "true" : "false",
-                  page: 1,
-                });
-              }}
-              defaultValue={"*"}
-            >
-              <SelectTrigger className="w-full sm:w-48 h-10 bg-white">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={"*"}>Todos los estados</SelectItem>
-                <SelectItem value={"true"}>Activo</SelectItem>
-                <SelectItem value={"false"}>Inactivo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+      <div className="py-4 px-4 flex flex-col border-b">
+        <Label className="font-semibold text-lg lg:text-base">Lista de Roles</Label>
       </div>
 
       <div className="hidden lg:block">
@@ -137,7 +83,7 @@ export function TableRoles<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="bg-gray-50 font-semibold text-gray-700">
+                  <TableHead key={header.id}>
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
