@@ -21,6 +21,9 @@ import {
   XIcon,
   Check,
   FileSpreadsheet,
+  FileUp,
+  ChevronDown,
+  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -47,6 +50,7 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
 
 import { fetchWithFallback } from "@/lib/ky";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // Componente para mostrar vestuario y lencería
 function VestuarioPopover({ items }: { items: string[] }) {
@@ -249,18 +253,30 @@ export function HygieneControlManagement() {
     queryClient.invalidateQueries({ queryKey: ["locker-room-data"] });
   };
 
-  const handleDownloadReport = async () => {
+  const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+    toast.promise(
+      downloadReport(type),
+      {
+        loading: 'Generando reporte...',
+        success: `Reporte ${type} descargado correctamente`,
+        error: 'Error al descargar el reporte',
+      }
+    );
+  };
+
+  const downloadReport = async (type: 'EXCEL' | 'PDF') => {
     try {
       const formattedDate = format(fecha, "yyyy-MM-dd");
       const token = await window.cookieStore.get("accessToken");
 
       const response = await fetchWithFallback(
-        `/v1/1.0.0/hygiene-control/by-date-register-report?dateRegister=${formattedDate}`,
+        `/v1/1.0.0/hygiene-control/by-date-register-report?dateRegister=${formattedDate}&reportType=${type}`,
         {
           method: "GET",
           headers: {
             Authorization: token ? `Bearer ${token.value}` : "",
           },
+
         }
       );
 
@@ -272,17 +288,16 @@ export function HygieneControlManagement() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `reporte-higiene-${formattedDate}.xlsx`;
+      const extension = type === 'EXCEL' ? 'xlsx' : 'pdf';
+      a.download = `reporte-higiene-${formattedDate}.${extension}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success("Reporte descargado exitosamente");
     } catch (error) {
-      toast.error("No se pudo descargar el reporte");
     }
-  };
+  }
 
   return (
     <div className="space-y-4">
@@ -353,14 +368,41 @@ export function HygieneControlManagement() {
 
             <div className="flex justify-start lg:justify-end gap-2">
               {lockerRoomData.length > 0 && (
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={handleDownloadReport}
-                >
-                  <FileSpreadsheet className="h-4 w-4" />
-                  Reporte
-                </Button>
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      className="w-full sm:w-auto h-9"
+                      title="Generar reporte de los registros actuales"
+                      // disabled={!query.data || query.data.data.length === 0}
+                    >
+                      <FileUp className="h-4 w-4" />
+                      <span className="ml-1.5">Reporte</span>
+                      <ChevronDown className="h-3 w-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48"
+                    sideOffset={5}
+                    alignOffset={0}
+                  >
+                    <DropdownMenuItem
+                      onClick={() => handleDownloadReport("EXCEL")}
+                      className="cursor-pointer"
+                    >
+                      <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                      <span>Descargar Excel</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDownloadReport("PDF")}
+                      className="cursor-pointer"
+                    >
+                      <FileText className="h-4 w-4 mr-2 text-red-600" />
+                      <span>Descargar PDF</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
               <NewLockerRoomControlForm
                 onSuccess={handleRefresh}
