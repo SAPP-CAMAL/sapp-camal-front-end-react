@@ -9,7 +9,8 @@ import type { SlaughterhouseInfo } from "../types/slaughterhouse.types";
  * La información se cachea y se mantiene actualizada automáticamente.
  *
  * Valores por defecto mientras se carga o en caso de error:
- * - CAMAL MUNICIPAL RIOBAMBA para el nombre del camal
+ * - EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO
+DEL CANTÓN  RIOBAMBA para el nombre del camal
  * - CHIMBORAZO para la provincia
  * - EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO para la empresa
  */
@@ -32,7 +33,7 @@ export function useSlaughterhouseInfo() {
 
   // Valores por defecto en caso de que no haya datos o esté cargando
   const defaultInfo: SlaughterhouseInfo = {
-    camalName: "CAMAL MUNICIPAL...",
+    camalName: "EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO DEL CANTÓN ",
     companyName: "EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO",
     location: {
       province: "...",

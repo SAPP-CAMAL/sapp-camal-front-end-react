@@ -110,7 +110,7 @@ export function RoleSwitcher() {
               />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-              <span className="truncate font-medium">CAMAL MUNICIPAL</span>
+              <span className="truncate font-medium">EMFI</span>
               <span className="truncate text-xs">{location.canton}</span>
             </div>
           </SidebarMenuButton>
@@ -139,8 +139,8 @@ export function RoleSwitcher() {
                 />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-medium">CAMAL MUNICIPAL</span>
-                <span className="truncate text-xs">{location.canton}</span>
+                <span className="truncate font-medium">EMFI - {location.canton}</span>
+                {/* <span className="truncate text-xs">{location.canton}</span> */}
               </div>
               <ChevronsUpDown className="ml-auto group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
