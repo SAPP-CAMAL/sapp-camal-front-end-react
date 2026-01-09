@@ -14,34 +14,7 @@ import {
   ResponseBrandDetails
 } from "@/features/corrals/domain";
 
-// Obtener la URL base de la API (hardcoded para producción como solicitado)
-const API_BASE_URL = "https://sapp-emfi.com";
-
-// Create a silent HTTP client for brand details that won't log errors
-const silentHttp = ky.create({
-  prefixUrl: API_BASE_URL,
-  credentials: "include",
-  retry: 0,
-  hooks: {
-    beforeRequest: [
-      async request => {
-        const token = await window.cookieStore.get("accessToken")
-        if (token) {
-          request.headers.set("Authorization", `Bearer ${token.value}`)
-        }
-      }
-    ],
-    afterResponse: [
-      (request, options, response) => {
-        if (response.status === 401) {
-          window.location.href = "/auth/login"
-        }
-        // Don't do anything else - suppress error logging
-        return response
-      }
-    ]
-  }
-});
+// La URL base se maneja dinámicamente través del cliente http de @/lib/ky
 
 export function getLineService(id: number): Promise<ResponseLine> {
   return http.get("v1/1.0.0/line", {
@@ -326,7 +299,7 @@ export async function getBrandDetailsByGroupService(
   try {
     const dateStr = typeof admissionDate === "string" ? admissionDate : `${admissionDate.getFullYear()}-${String(admissionDate.getMonth() + 1).padStart(2, '0')}-${String(admissionDate.getDate()).padStart(2, '0')}`;
 
-    const res = await silentHttp
+    const res = await http
       .get("v1/1.0.0/setting-cert-brand/detail-corrals", {
         searchParams: {
           admissionDate: dateStr,
