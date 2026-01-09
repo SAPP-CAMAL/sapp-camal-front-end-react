@@ -1680,8 +1680,9 @@ export function CorralsManagement() {
     if ((corralVideos[videoTargetCorralId] || []).length >= 2)
       return toast.error("Ya existen 2 videos guardados para este corral");
 
+    const toastLoading = toast.loading("Guardando videos...");
+
     try {
-      const toastLoading = toast.loading("Guardando videos...");
 
       const specieLine = currentLineData?.name || "";
       const statusCorral = statusByDateMap[videoTargetCorralId];
@@ -1733,6 +1734,8 @@ export function CorralsManagement() {
       if (metadata.length >= 2) setVideoDialogOpen(false);
     } catch (error) {
       toast.error("Error al guardar los videos, por favor intente de nuevo");
+    } finally {
+      toast.dismiss(toastLoading);
     }
   };
 
