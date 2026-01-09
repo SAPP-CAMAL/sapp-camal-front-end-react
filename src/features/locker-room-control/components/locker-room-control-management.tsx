@@ -321,6 +321,7 @@ export function LockerRoomControlManagement() {
       // toast.success("Reporte descargado exitosamente");
     } catch (error) {
       // toast.error("No se pudo descargar el reporte");
+      throw error;
     }
   };
 
