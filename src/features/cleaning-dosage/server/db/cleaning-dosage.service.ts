@@ -21,14 +21,16 @@ export const saveCleaningDosageService = async (
 
 
 export const getCleaningDosageByDateService = async (
-  date: string
+  options: { startDate: string; endDate: string }
 ): Promise<CleaningDosage[]> => {
   try {
     const response = await http
-      .get(`v1/1.0.0/cleaning-dosage/by-date-register?dateRegister=${date}`)
-      .json<CleaningDosageResponse>(); 
+      .get(`v1/1.0.0/cleaning-dosage/by-date-register`, {
+        searchParams: options
+      })
+      .json<CleaningDosageResponse>();
 
-    return response.data; 
+    return response.data;
   } catch (error) {
     throw error;
   }
@@ -46,4 +48,3 @@ export const removeCleaningDosageById = (id: number) => {
 	return http
 		.delete(`v1/1.0.0/cleaning-dosage/${id.toString()}`);
 };
-
