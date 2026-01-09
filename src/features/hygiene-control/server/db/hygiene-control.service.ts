@@ -44,7 +44,7 @@ export const mapHygieneControlData = (
       responsibleId: item.idVeterinarian,
       employeeFullName: item.employee.person.fullName ?? "—",
       responsibleFullName: item.veterinarian.user.person.fullName ?? "—",
-      timeRegister: item.createdAt, 
+      timeRegister: item.createdAt,
       commentary: item.commentary,
       detailsHygiene: item.detailsHygiene,
       detailsHygieneGrouped: grouped,
@@ -56,12 +56,14 @@ export const mapHygieneControlData = (
 
 
 export const getHygieneControlByDateService = async (
-  date: string
+rangeDate: {  startDate: string, endDate: string}
 ): Promise<MappedHygieneControl[]> => {
   try {
     const response = await http
-      .get(`v1/1.0.0/hygiene-control/by-date-register?dateRegister=${date}`)
-      .json<HygieneControlResponse>(); 
+      .get(`v1/1.0.0/hygiene-control/by-date-register`, {
+        searchParams: rangeDate
+      })
+      .json<HygieneControlResponse>();
     return mapHygieneControlData(response.data ?? []);
   } catch (error) {
     throw error;
