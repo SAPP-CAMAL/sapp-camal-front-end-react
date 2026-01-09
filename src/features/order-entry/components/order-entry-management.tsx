@@ -56,6 +56,7 @@ import {
   Loader2,
   Weight,
   Info,
+  X,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
@@ -1025,25 +1026,26 @@ export function OrderEntryManagement() {
 
               <div className="flex gap-2 items-center flex-1 max-w-md">
                 <span className="text-sm text-gray-600 whitespace-nowrap">Buscar:</span>
-                <Input
-                  placeholder=""
-                  value={searchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="flex-1"
-                />
+                <div className="relative flex-1">
+                  <Input
+                    placeholder=""
+                    value={searchTerm}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="w-full pr-8"
+                  />
+                  {searchTerm && (
+                    <X
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-black cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSearchChange("")}
+                    />
+                  )}
+                </div>
                 <Button
                   variant="outline"
                   size="icon"
                   className="text-teal-600 border-teal-600 hover:bg-teal-50 shrink-0"
                 >
                   <Search className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="text-red-600 border-red-600 hover:bg-red-50 shrink-0"
-                >
-                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
