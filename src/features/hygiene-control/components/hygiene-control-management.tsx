@@ -303,6 +303,7 @@ export function HygieneControlManagement() {
       document.body.removeChild(a);
 
     } catch (error) {
+      throw error;
     }
   }
 
