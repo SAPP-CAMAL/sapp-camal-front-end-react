@@ -30,6 +30,8 @@ interface Step3CarrierSelectionProps {
   filterByStatus?: boolean; // Opcional: filtrar solo transportistas activos
 }
 
+const isNumbers = (str: string) => /^\d+$/.test(str);
+
 export function Step3CarrierSelection({
   onSelect,
   onBack,
@@ -47,26 +49,35 @@ export function Step3CarrierSelection({
 
   const { data, isLoading } = useQuery({
     queryKey: ["carriers", searchTerm],
-    queryFn: () =>
-      getCarriersByFilterService({
-        page: currentPage,
-        limit: 100, // Pedir más datos para compensar el filtrado
-        fullName: searchTerm || undefined,
-        identification: searchTerm || undefined,
-      }),
-  });
+    queryFn: () => {
 
+      const filters = {
+        page: currentPage,
+        limit: 100
+      } as { page: number; limit: number; identification?: string; fullName?: string};
+
+      if (!searchTerm)
+        return getCarriersByFilterService(filters);
+
+      const isNumber = isNumbers(searchTerm);
+
+      if (isNumber) filters.identification = searchTerm;
+      else filters.fullName = searchTerm;
+
+      return getCarriersByFilterService(filters);
+    },
+  });
   // Filtrar transportistas
   const allCarriers = data?.data?.items || [];
   const filteredCarriers = allCarriers.filter((carrier) => {
     // Siempre filtrar por tipo de transporte "PRS" (PRODUCTOS Y SUBPRODUCTOS)
     const isCorrectType = carrier.vehicle?.vehicleDetail?.transportType?.code === "PRS";
-    
+
     // Si filterByStatus es true, también filtrar por status === true
     if (filterByStatus) {
       return isCorrectType && carrier.status === true;
     }
-    
+
     return isCorrectType;
   });
 
@@ -304,7 +315,7 @@ export function Step3CarrierSelection({
                 </div>
               </div>
             </div>
-            
+
             {/* Botones de paginación */}
             <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2">
               <Button
