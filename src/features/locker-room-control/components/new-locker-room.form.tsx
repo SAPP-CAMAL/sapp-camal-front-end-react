@@ -269,6 +269,19 @@ export default function NewLockerRoomControlForm({
     }));
   };
 
+  const toggleGroup = (items: any[]) => {
+    // Verificar si todos los ítems del grupo están seleccionados
+    const allSelected = items.every((item: any) => checkedItems[item.id]);
+
+    const newCheckedItems = { ...checkedItems };
+    items.forEach((item: any) => {
+      // Si todos están seleccionados, deseleccionamos todos. Si no, seleccionamos todos.
+      newCheckedItems[item.id] = !allSelected;
+    });
+
+    setCheckedItems(newCheckedItems);
+  };
+
   return (
     <Dialog
       open={open}
@@ -478,7 +491,15 @@ export default function NewLockerRoomControlForm({
                     className="rounded-md border bg-white shadow-sm"
                   >
                     <div className="px-4 py-3 text-sm font-medium bg-muted/30 border-b flex justify-between items-center">
-                      <span>{category}</span>
+                      <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={items.length > 0 && items.every((item: any) => checkedItems[item.id])}
+                            onChange={() => toggleGroup(items)}
+                            className="h-4 w-4 rounded border-gray-300 cursor-pointer accent-[var(--primary)]"
+                        />
+                        <span>{category}</span>
+                      </div>
                       <span className="text-xs px-2 py-0.5 bg-gray-200 rounded">
                         {selectedCount} / {items.length}
                       </span>

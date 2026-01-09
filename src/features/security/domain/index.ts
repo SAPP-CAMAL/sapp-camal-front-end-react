@@ -74,7 +74,7 @@ export type Introducer = {
     brands: Brand[];
 }
 
-type Brand = {
+export type Brand = {
     id: number;
     name: string;
     description: string;
@@ -148,7 +148,8 @@ type Role = {
 export interface UpdateBrandRequest {
     name: string;
     description: string;
-    species: Specie[];
+    species: { id: number, status: boolean }[];
+    introducerId?: number;
 }
 
 export interface Species {
@@ -176,20 +177,20 @@ export interface ResetPasswordRequest {
 
 
 export interface GetUserByIdService {
-  id: number;
-  personId: number;
-  userName: string;
-  password: string;
-  email: string;
-  status: boolean;
-  person: Person;
-  userRoles: any[];
-  introducer: IntroducerGetUser;
+    id: number;
+    personId: number;
+    userName: string;
+    password: string;
+    email: string;
+    status: boolean;
+    person: Person;
+    userRoles: any[];
+    introducer: IntroducerGetUser;
 }
 
 interface IntroducerGetUser {
-  id: number;
-  userId: number;
-  status: boolean;
-  brands: any[];
+    id: number;
+    userId: number;
+    status: boolean;
+    brands: any[];
 }

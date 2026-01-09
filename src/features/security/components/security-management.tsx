@@ -7,6 +7,27 @@ import { getPeopleByFilterService } from "@/features/people/server/db/people.ser
 import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toCapitalize } from "@/lib/toCapitalize";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  CreditCardIcon,
+  SearchIcon,
+  UserIcon,
+} from "lucide-react";
+import { useDebouncedCallback } from "use-debounce";
 
 export function SecurityManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
@@ -42,6 +63,16 @@ export function SecurityManagement() {
       }),
   });
 
+  const debounceFullName = useDebouncedCallback(
+    (text: string) => setSearchParams({ fullName: text, page: 1 }),
+    500
+  );
+
+  const debounceIdentification = useDebouncedCallback(
+    (text: string) => setSearchParams({ identification: text, page: 1 }),
+    500
+  );
+
   return (
     <div>
       <section className="mb-4 flex justify-between">
@@ -53,6 +84,94 @@ export function SecurityManagement() {
         </div>
         <div>{/* <NewPerson /> */}</div>
       </section>
+
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle className="flex gap-2 items-center">
+            Filtros de Búsqueda
+          </CardTitle>
+          <CardDescription>
+            Filtre el personal por nombre, identificación, tipo de personal o estado
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col w-full">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Buscar por nombre
+              </label>
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por nombre..."
+                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                  defaultValue={searchParams.fullName}
+                  onChange={(e) => debounceFullName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col w-full">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Buscar por identificación
+              </label>
+              <div className="relative">
+                <CreditCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="Ingrese identificación"
+                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                  defaultValue={searchParams.identification}
+                  onChange={(e) => debounceIdentification(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col w-full">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Tipo de Personal
+              </label>
+              <Select
+                onValueChange={(value) =>
+                  setSearchParams({ isEmployee: value, page: 1 })
+                }
+                defaultValue={searchParams.isEmployee}
+              >
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Seleccione tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="*">Todos</SelectItem>
+                  <SelectItem value="true">Personal Camal</SelectItem>
+                  <SelectItem value="false">Otros</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col w-full">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Estado
+              </label>
+              <Select
+                onValueChange={(value) =>
+                  setSearchParams({ status: value, page: 1 })
+                }
+                defaultValue={searchParams.status}
+              >
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Seleccione un estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="activos">Activos</SelectItem>
+                  <SelectItem value="inactivos">Inactivos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       <TableStaffList
         columns={[
           {
