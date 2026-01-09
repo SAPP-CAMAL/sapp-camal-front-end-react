@@ -1,5 +1,5 @@
 
-import ky, { type KyInstance } from 'ky'
+import ky, { Options, type KyInstance } from 'ky'
 
 function normalizeApiBase(raw: string | undefined) {
     const base = (raw ?? "").trim()
@@ -243,11 +243,11 @@ function getHttpClient(): KyInstance {
 // Cliente ky tradicional - NOTA: Este cliente se crea dinámicamente para evitar
 // problemas de race condition con la variable global
 export const http = {
-    get: (url: string, options?: any) => getHttpClient().get(url, options),
-    post: (url: string, options?: any) => getHttpClient().post(url, options),
-    put: (url: string, options?: any) => getHttpClient().put(url, options),
-    patch: (url: string, options?: any) => getHttpClient().patch(url, options),
-    delete: (url: string, options?: any) => getHttpClient().delete(url, options),
+    get: (url: string, options?: Options) => getHttpClient().get(url, options),
+    post: (url: string, options?: Options) => getHttpClient().post(url, options),
+    put: (url: string, options?: Options) => getHttpClient().put(url, options),
+    patch: (url: string, options?: Options) => getHttpClient().patch(url, options),
+    delete: (url: string, options?: Options) => getHttpClient().delete(url, options),
 }
 
 
