@@ -20,6 +20,19 @@ import { ShipperBasicData } from '@/features/shipping/domain';
 
 const getCurrentTime = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
+// Función para normalizar la hora a formato HH:MM
+const normalizeTime = (time: string): string => {
+	if (!time || typeof time !== 'string') return time;
+	// Remover espacios y dividir por ':'
+	const parts = time.trim().split(':');
+	if (parts.length < 2) return time;
+	// Tomar solo horas y minutos, asegurar formato de 2 dígitos
+	const hours = parts[0].padStart(2, '0');
+	const minutes = parts[1].padStart(2, '0');
+	return `${hours}:${minutes}`;
+};
+
+
 const defaultValues = {
 	disinfectant: '',
 	dosage: '',
@@ -90,8 +103,8 @@ export const useRegisterDisinfectantData = () => {
 			idRegisterVehicle: dailyDisinfectionRegister?.idRegisterVehicle,
 			dosage: dailyDisinfectionRegister?.dosage ?? '',
 			disinfectant: dailyDisinfectionRegister?.disinfectant?.id?.toString() ?? '',
-			admissionApplicationTime: dailyDisinfectionRegister?.timeStar ?? getCurrentTime(),
-			departureApplicationTime: dailyDisinfectionRegister?.timeEnd ?? '',
+			admissionApplicationTime: dailyDisinfectionRegister?.timeStar ? normalizeTime(dailyDisinfectionRegister.timeStar) : getCurrentTime(),
+			departureApplicationTime: dailyDisinfectionRegister?.timeEnd ? normalizeTime(dailyDisinfectionRegister.timeEnd) : '',
 			observations: dailyDisinfectionRegister?.commentary ?? '',
 			transportedSpecie: dailyDisinfectionRegister?.species?.id,
 			shipper: dailyDisinfectionRegister && {
@@ -132,7 +145,8 @@ export const useRegisterDisinfectantData = () => {
 			return toast.error('Por favor seleccione un transportista.');
 		}
 
-		const timeEnd = departureApplicationTime ? departureApplicationTime.split(':').slice(0, 2).join(':') : null;
+		const timeEnd = departureApplicationTime ? normalizeTime(departureApplicationTime) : null;
+		const timeStar = normalizeTime(admissionApplicationTime);
 		let idDetailsRegisterVehicles = shipper.idDetailsRegisterVehicles ?? data.id;
 
 		try {
@@ -143,7 +157,7 @@ export const useRegisterDisinfectantData = () => {
 					commentary: observations,
 					dosage,
 					status: true,
-					timeStar: admissionApplicationTime.split(':').slice(0, 2).join(':'),
+					timeStar,
 					idSpecies: transportedSpecie,
 					...(timeEnd && { timeEnd }),
 				};
@@ -158,7 +172,7 @@ export const useRegisterDisinfectantData = () => {
 					commentary: observations,
 					dosage,
 					status: true,
-					timeStar: admissionApplicationTime,
+					timeStar,
 					idSpecies: transportedSpecie,
 					...(timeEnd && { timeEnd }),
 				};
