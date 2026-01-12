@@ -357,12 +357,20 @@ export function IntroductorManagement() {
 					{
 						header: 'Marcas',
 						cell: ({ row }) => (
-							<div>
+							<div className="flex flex-col gap-1">
 								{row.original.brands.map(brand => {
 									return (
 										<div key={brand.id} className='flex gap-x-2 items-center'>
-											<span className='font-bold ml-2'>{brand.name}</span>
-											<div>[{toCapitalize(brand.species.join(', '))}]</div>
+											<div 
+												className={`h-2 w-2 rounded-full flex-shrink-0 ${brand.status ? 'bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.3)]' : 'bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.3)]'}`} 
+												title={brand.status ? 'Activo' : 'Inactivo'}
+											/>
+											<span className={`ml-1 ${brand.status ? 'font-bold text-gray-800' : 'text-gray-400 font-medium'}`}>
+												{brand.name}
+											</span>
+											<div className={`text-xs ${brand.status ? 'text-gray-600' : 'text-gray-400'}`}>
+												[{toCapitalize(brand.species.join(', '))}]
+											</div>
 										</div>
 									);
 								})}

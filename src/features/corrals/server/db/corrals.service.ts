@@ -326,7 +326,7 @@ export async function getBrandDetailsByGroupService(
   try {
     const dateStr = typeof admissionDate === "string" ? admissionDate : `${admissionDate.getFullYear()}-${String(admissionDate.getMonth() + 1).padStart(2, '0')}-${String(admissionDate.getDate()).padStart(2, '0')}`;
 
-    const res = await silentHttp
+    const res = await http
       .get("v1/1.0.0/setting-cert-brand/detail-corrals", {
         searchParams: {
           admissionDate: dateStr,
