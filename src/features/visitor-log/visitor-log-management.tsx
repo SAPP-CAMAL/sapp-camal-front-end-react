@@ -253,7 +253,7 @@ export function VisitorLogManagement() {
           </div>
         </CardContent>
       </Card>
-      <div className="flex justify-end ml-auto mb-4 gap-2">
+      <div className="flex flex-col sm:flex-row justify-end ml-auto mb-4 gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" disabled={isDownloading !== null}>

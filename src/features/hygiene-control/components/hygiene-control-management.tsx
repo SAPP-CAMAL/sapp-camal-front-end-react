@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -24,6 +23,7 @@ import {
   FileUp,
   ChevronDown,
   FileText,
+  CalendarIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -183,6 +183,8 @@ export function HygieneControlManagement() {
   }, []);
 
   const [fecha, setFecha] = useState<Date>(today);
+  const [startDate, setStartDate] = useState<Date>(today);
+  const [endDate, setEndDate] = useState<Date>(today);
 
   const [floatingPosition, setFloatingPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -230,10 +232,9 @@ export function HygieneControlManagement() {
   }, [isDragging]);
 
   const { data: lockerRoomData = [], isLoading: isLoadingData } = useQuery({
-    queryKey: ["locker-room-data", fecha],
+    queryKey: ["locker-room-data", startDate, endDate],
     queryFn: async () => {
-      const formattedDate = format(fecha, "yyyy-MM-dd");
-      const data = await getHygieneControlByDateService(formattedDate);
+      const data = await getHygieneControlByDateService({ startDate: format(startDate, "yyyy-MM-dd"), endDate: format(endDate, "yyyy-MM-dd") });
       return data ?? [];
     },
   });
@@ -247,6 +248,11 @@ export function HygieneControlManagement() {
       toast.error("No se pudo eliminar el registro");
     }
   };
+
+  const handleTodayClick = () => {
+    setStartDate(today);
+    setEndDate(today);
+  }
 
   const handleRefresh = () => {
     setFecha(today);
@@ -266,11 +272,12 @@ export function HygieneControlManagement() {
 
   const downloadReport = async (type: 'EXCEL' | 'PDF') => {
     try {
-      const formattedDate = format(fecha, "yyyy-MM-dd");
+      const initDate = format(startDate, "yyyy-MM-dd");
+      const finishDate = format(endDate, "yyyy-MM-dd");
       const token = await window.cookieStore.get("accessToken");
 
       const response = await fetchWithFallback(
-        `/v1/1.0.0/hygiene-control/by-date-register-report?dateRegister=${formattedDate}&reportType=${type}`,
+        `/v1/1.0.0/hygiene-control/by-date-register-report?startDate=${initDate}&endDate=${finishDate}&reportType=${type}`,
         {
           method: "GET",
           headers: {
@@ -289,13 +296,14 @@ export function HygieneControlManagement() {
       const a = document.createElement("a");
       a.href = url;
       const extension = type === 'EXCEL' ? 'xlsx' : 'pdf';
-      a.download = `reporte-higiene-${formattedDate}.${extension}`;
+      a.download = `reporte-control-higiene-${initDate}-a-${finishDate}.${extension}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
     } catch (error) {
+      throw error;
     }
   }
 
@@ -305,74 +313,54 @@ export function HygieneControlManagement() {
         <div className="mx-auto max-w-screen-xl px-3 md:px-4 py-3 md:py-4">
           <div className="text-center">
             <h1 className="text-2xl font-normal">INGRESO CONTROL DE HIGIENE</h1>
-            <p className="text-sm text-muted-foreground">
+            {/* <p className="text-sm text-muted-foreground">
               Registros generados para:{" "}
               {format(fecha, "dd 'de' MMMM 'de' yyyy", { locale: es })}
-            </p>
+            </p> */}
           </div>
 
           <div className="mt-3 flex flex-col lg:flex-row gap-3 lg:gap-4 lg:items-center lg:justify-between">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              <Label
-                htmlFor="fecha-antemortem"
-                className="text-sm font-medium whitespace-nowrap"
-              >
-                Fecha:
-              </Label>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                {/* <div className="relative w-full sm:w-[200px]">
-                  <CalendarIcon
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
-                    onClick={() => {
-                      const input = document.getElementById(
-                        "fecha-antemortem"
-                      ) as HTMLInputElement;
-                      if (input) input.showPicker();
-                    }}
+          <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Rango de fechas:
+              </label>
+              <div className="flex gap-2 items-start sm:items-end justify-start sm:flex-row flex-col">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500">Desde:</span>
+                  <DatePicker
+                    inputClassName="bg-secondary"
+                    selected={startDate}
+                    onChange={(newDate) => newDate && setStartDate(newDate)}
                   />
-                  <Input
-                    id="fecha-antemortem"
-                    type="date"
-                    className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                    value={fecha ? format(fecha, "yyyy-MM-dd") : ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const dateValue = e.target.value;
-                      if (dateValue) {
-                        const [year, month, day] = dateValue
-                          .split("-")
-                          .map(Number);
-                        const newDate = new Date(year, month - 1, day);
-                        setFecha(newDate);
-                      }
-                    }}
-                    title="Selecciona la fecha"
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500">Hasta:</span>
+                  <DatePicker
+                    inputClassName="bg-secondary"
+                    selected={endDate}
+                    onChange={(newDate) => newDate && setEndDate(newDate)}
                   />
-                </div> */}
-
-                <DatePicker inputClassName='bg-secondary' selected={fecha} onChange={date => setFecha(date as Date)} />
-
-                {format(fecha, "yyyy-MM-dd") !==
-                  format(today, "yyyy-MM-dd") && (
+                </div>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFecha(today)}
-                    className="text-xs px-2 py-1 h-8 whitespace-nowrap"
-                    title="Volver a hoy"
-                  >
-                    Hoy
-                  </Button>
-                )}
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTodayClick}
+                      className="whitespace-nowrap"
+                      title="Filtrar solo hoy"
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-1" />
+                      Hoy
+                    </Button>
               </div>
-            </div>
+          </div>
 
-            <div className="flex justify-start lg:justify-end gap-2">
+            <div className="flex justify-end gap-2">
               {lockerRoomData.length > 0 && (
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button
                       size="sm"
-                      className="w-full sm:w-auto h-9"
+                      className="w-auto h-9"
                       title="Generar reporte de los registros actuales"
                       // disabled={!query.data || query.data.data.length === 0}
                     >
@@ -407,7 +395,7 @@ export function HygieneControlManagement() {
               <NewLockerRoomControlForm
                 onSuccess={handleRefresh}
                 trigger={
-                  <Button className="w-full sm:w-auto">
+                  <Button className="w-auto">
                     <PlusIcon className="h-4 w-4" />
                     Registrar
                   </Button>

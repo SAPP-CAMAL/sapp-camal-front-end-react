@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -22,10 +21,12 @@ import {
   AlertCircle,
   XIcon,
   Check,
+  FileUp,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { format, formatDate } from "date-fns";
 import {
   Tooltip,
   TooltipContent,
@@ -42,6 +43,9 @@ import NewCleaningDosageForm from "./new-cleaning-dosage.form";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { downloadCleaningDosageReport } from "../utils/download-cleaning-dosage-report";
+
 
 export function CleaningDosageManagement() {
   const queryClient = useQueryClient();
@@ -51,6 +55,8 @@ export function CleaningDosageManagement() {
   }, []);
 
   const [fecha, setFecha] = useState<Date>(today);
+  const [startDate, setStartDate] = useState<Date>(today);
+  const [endDate, setEndDate] = useState<Date>(today);
 
   const [floatingPosition, setFloatingPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -98,10 +104,12 @@ export function CleaningDosageManagement() {
   }, [isDragging]);
 
   const { data: cleaningDosageData = [], isLoading: isLoadingData } = useQuery({
-    queryKey: ["cleaning-dosage", fecha],
+    queryKey: ["cleaning-dosage", startDate, endDate],
     queryFn: async () => {
-      const formattedDate = format(fecha, "yyyy-MM-dd");
-      const data = await getCleaningDosageByDateService(formattedDate);
+      const data = await getCleaningDosageByDateService({
+        startDate: formatDate(startDate, "yyyy-MM-dd"),
+        endDate: formatDate(endDate, "yyyy-MM-dd")
+      });
       return data ?? [];
     },
   });
@@ -122,302 +130,281 @@ export function CleaningDosageManagement() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="mx-auto max-w-screen-xl px-3 md:px-4 py-3 md:py-4">
-          <div className="text-center">
-            <h1 className="text-2xl font-normal">
-              REGISTRO DOSIFICACIÓN PARA LIMPIEZA Y SANITIZACIÓN
-            </h1>
-            <p className="text-sm text-muted-foreground">
+		<div className='space-y-4'>
+			<div className='sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b'>
+				<div className='mx-auto max-w-screen-xl px-3 md:px-4 py-3 md:py-4'>
+					<div className='text-center'>
+						<h1 className='text-2xl font-normal'>REGISTRO DOSIFICACIÓN PARA LIMPIEZA Y SANITIZACIÓN</h1>
+						{/* <p className="text-sm text-muted-foreground">
               Registros generados para:{" "}
               {format(fecha, "dd 'de' MMMM 'de' yyyy", { locale: es })}
-            </p>
-          </div>
+            </p> */}
+					</div>
 
-          <div className="mt-3 flex flex-col lg:flex-row gap-3 lg:gap-4 lg:items-center lg:justify-between">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              <Label
-                htmlFor="fecha-antemortem"
-                className="text-sm font-medium whitespace-nowrap"
-              >
-                Fecha:
-              </Label>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                {/* <div className="relative w-full sm:w-[200px]">
-                  <CalendarIcon
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
-                    onClick={() => {
-                      const input = document.getElementById(
-                        "fecha-antemortem"
-                      ) as HTMLInputElement;
-                      if (input) input.showPicker();
-                    }}
-                  />
-                  <Input
-                    id="fecha-antemortem"
-                    type="date"
-                    className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                    value={fecha ? format(fecha, "yyyy-MM-dd") : ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const dateValue = e.target.value;
-                      if (dateValue) {
-                        const [year, month, day] = dateValue
-                          .split("-")
-                          .map(Number);
-                        const newDate = new Date(year, month - 1, day);
-                        setFecha(newDate);
-                      }
-                    }}
-                    title="Selecciona la fecha"
-                  />
-                </div> */}
+					<div className='mt-3 flex flex-col lg:flex-row gap-3 lg:gap-4 lg:items-center lg:justify-between'>
+						<div className='space-y-2'>
+							<label className='text-sm font-medium text-gray-700'>Rango de fechas:</label>
+							<div className='flex gap-2 items-end'>
+								<div className='flex flex-col gap-1'>
+									<span className='text-xs text-gray-500'>Desde:</span>
+									<DatePicker inputClassName='bg-secondary' selected={startDate} onChange={newDate => newDate && setStartDate(newDate)} />
+								</div>
+								<div className='flex flex-col gap-1'>
+									<span className='text-xs text-gray-500'>Hasta:</span>
+									<DatePicker inputClassName='bg-secondary' selected={endDate} onChange={newDate => newDate && setEndDate(newDate)} />
+								</div>
+								<Button
+									variant='outline'
+									size='sm'
+									onClick={() => {
+										setStartDate(today);
+										setEndDate(today);
+									}}
+									className='whitespace-nowrap'
+									title='Filtrar solo hoy'
+								>
+									<CalendarIcon className='h-4 w-4 mr-1' />
+									Hoy
+								</Button>
+							</div>
+						</div>
 
-                <DatePicker inputClassName='bg-secondary' selected={fecha} onChange={date => setFecha(date as Date)} />
+						<div className='flex justify-end gap-2'>
+							{cleaningDosageData.length > 0 && (
+								<DropdownMenu modal={false}>
+									<DropdownMenuTrigger asChild>
+										<Button
+											size='sm'
+											className='w-auto h-9'
+											title='Generar reporte de los registros actuales'
+											// disabled={!query.data || query.data.data.length === 0}
+										>
+											<FileUp className='h-4 w-4' />
+											<span className='ml-1.5'>Reporte</span>
+											<ChevronDown className='h-3 w-3 ml-1' />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align='end' className='w-48' sideOffset={5} alignOffset={0}>
+										<DropdownMenuItem
+											onClick={() =>
+												toast.promise(downloadCleaningDosageReport(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'), 'EXCEL'), {
+													loading: 'Generando Excel...',
+													success: 'Excel descargado correctamente',
+													error: 'Error al descargar el Excel',
+												})
+											}
+											className='cursor-pointer'
+										>
+											<FileSpreadsheet className='h-4 w-4 mr-2 text-green-600' />
+											<span>Descargar Excel</span>
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											onClick={() =>
+												toast.promise(downloadCleaningDosageReport(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'), 'PDF'), {
+													loading: 'Generando PDF...',
+													success: 'PDF descargado correctamente',
+													error: 'Error al descargar el PDF',
+												})
+											}
+											className='cursor-pointer'
+										>
+											<FileText className='h-4 w-4 mr-2 text-red-600' />
+											<span>Descargar PDF</span>
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							)}
 
-                {format(fecha, "yyyy-MM-dd") !==
-                  format(today, "yyyy-MM-dd") && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFecha(today)}
-                    className="text-xs px-2 py-1 h-8 whitespace-nowrap"
-                    title="Volver a hoy"
-                  >
-                    Hoy
-                  </Button>
-                )}
-              </div>
-            </div>
+							<NewCleaningDosageForm
+								onSuccess={handleRefresh}
+								trigger={
+									<Button className='w-auto'>
+										<PlusIcon className='h-4 w-4' />
+										Registrar
+									</Button>
+								}
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
 
-            <div className="flex justify-start lg:justify-end">
-              <NewCleaningDosageForm
-                onSuccess={handleRefresh}
-                trigger={
-                  <Button className="w-full sm:w-auto">
-                    <PlusIcon className="h-4 w-4" />
-                    Registrar
-                  </Button>
-                }
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+			{/* Tabla */}
+			<div className='relative overflow-auto border-2 rounded-lg' style={{ maxHeight: 'calc(100vh - 280px)' }}>
+				{isLoadingData ? (
+					<div className='flex items-center justify-center py-8'>
+						<div className='text-center'>
+							<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-2'></div>
+							<p className='text-sm text-muted-foreground'>Cargando datos ...</p>
+						</div>
+					</div>
+				) : cleaningDosageData.length === 0 ? (
+					<div className='flex items-center justify-center py-8'>
+						<div className='text-center'>
+							<p className='text-muted-foreground'>No hay datos disponibles para la fecha</p>
+						</div>
+					</div>
+				) : (
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead className='text-center border font-bold' rowSpan={2}>
+									FECHA
+								</TableHead>
+								<TableHead className='text-center border font-bold' rowSpan={2}>
+									MATERIAL
+								</TableHead>
+								<TableHead className='text-center border font-bold' rowSpan={2}>
+									EQUIPO
+								</TableHead>
+								<TableHead className='text-center border font-bold' colSpan={4}>
+									DATOS SOBRE LA DESINFECCIÓN Y LIMPIEZA
+								</TableHead>
+								<TableHead className='text-center border font-bold' rowSpan={2}>
+									ACCIONES
+								</TableHead>
+							</TableRow>
 
-      {/* Tabla */}
-      <div
-        className="relative overflow-auto border-2 rounded-lg"
-        style={{ maxHeight: "calc(100vh - 280px)" }}
-      >
-        {isLoadingData ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-2"></div>
-              <p className="text-sm text-muted-foreground">
-                Cargando datos ...
-              </p>
-            </div>
-          </div>
-        ) : cleaningDosageData.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <p className="text-muted-foreground">
-                No hay datos disponibles para la fecha
-              </p>
-            </div>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-center border font-bold" rowSpan={2}>
-                  FECHA
-                </TableHead>
-                <TableHead className="text-center border font-bold" rowSpan={2}>
-                  MATERIAL
-                </TableHead>
-                <TableHead className="text-center border font-bold" rowSpan={2}>
-                  EQUIPO
-                </TableHead>
-                <TableHead className="text-center border font-bold" colSpan={4}>
-                  DATOS SOBRE LA DESINFECCIÓN Y LIMPIEZA
-                </TableHead>
-                <TableHead className="text-center border font-bold" rowSpan={2}>
-                  ACCIONES
-                </TableHead>
-              </TableRow>
+							<TableRow>
+								<TableHead className='text-center border font-bold'>
+									<div className='flex items-center justify-center gap-2'>
+										<FlaskConical className='h-4 w-4 text-white' />
+										<span>DOSIS</span>
+									</div>
+								</TableHead>
 
-              <TableRow>
-                <TableHead className="text-center border font-bold">
-                  <div className="flex items-center justify-center gap-2">
-                    <FlaskConical className="h-4 w-4 text-white" />
-                    <span>DOSIS</span>
-                  </div>
-                </TableHead>
+								<TableHead className='text-center border font-bold'>
+									<div className='flex items-center justify-center gap-2'>
+										<Beaker className='h-4 w-4 text-white' />
+										<span>MÉTODO</span>
+									</div>
+								</TableHead>
 
-                <TableHead className="text-center border font-bold">
-                  <div className="flex items-center justify-center gap-2">
-                    <Beaker className="h-4 w-4 text-white" />
-                    <span>MÉTODO</span>
-                  </div>
-                </TableHead>
+								<TableHead className='text-center border font-bold'>
+									<div className='flex items-center justify-center gap-2'>
+										<UserRound className='h-4 w-4 text-white' />
+										<span>RESPONSABLE</span>
+									</div>
+								</TableHead>
 
-                <TableHead className="text-center border font-bold">
-                  <div className="flex items-center justify-center gap-2">
-                    <UserRound className="h-4 w-4 text-white" />
-                    <span>RESPONSABLE</span>
-                  </div>
-                </TableHead>
+								<TableHead className='text-center border font-bold'>
+									<div className='flex items-center justify-center gap-2'>
+										<AlertCircle className='h-4 w-4 text-white' />
+										<span>OBSERVACIÓN</span>
+									</div>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
 
-                <TableHead className="text-center border font-bold">
-                  <div className="flex items-center justify-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-white" />
-                    <span>OBSERVACIÓN</span>
-                  </div>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
+						<TableBody>
+							{cleaningDosageData?.map((row, idx) => {
+								const disabled = format(fecha, 'yyyy-MM-dd') !== format(today, 'yyyy-MM-dd');
 
-            <TableBody>
-              {cleaningDosageData?.map((row, idx) => {
-                const disabled =
-                  format(fecha, "yyyy-MM-dd") !== format(today, "yyyy-MM-dd");
+								return (
+									<TableRow key={idx}>
+										<TableCell className='text-center border'>{row.registrationDate}</TableCell>
 
-                return (
-                  <TableRow key={idx}>
-                    <TableCell className="text-center border">
-                      {row.registrationDate}
-                    </TableCell>
+										<TableCell className='text-center border'>
+											<Badge variant='secondary' className='px-3 py-1'>
+												{row.cleaningMaterial.name}
+											</Badge>
+										</TableCell>
 
-                    <TableCell className="text-center border">
-                      <Badge variant="secondary" className="px-3 py-1">
-                        {row.cleaningMaterial.name}
-                      </Badge>
-                    </TableCell>
+										<TableCell className='text-center border'>
+											<Badge variant='outline' className='px-3 py-1'>
+												{row.equipment}
+											</Badge>
+										</TableCell>
 
-                    <TableCell className="text-center border">
-                      <Badge variant="outline" className="px-3 py-1">
-                        {row.equipment}
-                      </Badge>
-                    </TableCell>
+										<TableCell className='text-center border'>
+											<Badge variant='outline' className='px-3 py-1'>
+												{row.dose}
+											</Badge>
+										</TableCell>
 
-                    <TableCell className="text-center border">
-                      <Badge variant="outline" className="px-3 py-1">
-                        {row.dose}
-                      </Badge>
-                    </TableCell>
+										<TableCell className='text-center border'>
+											<Badge variant='secondary' className='px-3 py-1'>
+												{row.cleaningMethod.name}
+											</Badge>
+										</TableCell>
 
-                    <TableCell className="text-center border">
-                      <Badge variant="secondary" className="px-3 py-1">
-                        {row.cleaningMethod.name}
-                      </Badge>
-                    </TableCell>
+										<TableCell className='font-semibold text-center border'>{row.employee.person.fullName}</TableCell>
 
-                    <TableCell className="font-semibold text-center border">
-                      {row.employee.person.fullName}
-                    </TableCell>
+										<TableCell className='text-center border'>
+											{row.observation ? (
+												<Badge variant='outline' className='px-3 py-1 max-w-[200px] truncate'>
+													{row.observation}
+												</Badge>
+											) : (
+												'-'
+											)}
+										</TableCell>
 
-                    <TableCell className="text-center border">
-                      {row.observation ? (
-                        <Badge
-                          variant="outline"
-                          className="px-3 py-1 max-w-[200px] truncate"
-                        >
-                          {row.observation}
-                        </Badge>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
+										<TableCell className='text-center border'>
+											<div className='flex items-center justify-center gap-2'>
+												<Tooltip>
+													<NewCleaningDosageForm
+														onSuccess={handleRefresh}
+														isUpdate={true}
+														cleaningDosageData={row}
+														trigger={
+															<TooltipTrigger asChild>
+																<Button variant='outline' size='icon' disabled={disabled} className={disabled ? 'opacity-50 cursor-not-allowed' : ''}>
+																	<EditIcon className='h-4 w-4' />
+																</Button>
+															</TooltipTrigger>
+														}
+													/>
+													<TooltipContent
+														side='top'
+														align='center'
+														sideOffset={5}
+														avoidCollisions
+														style={{
+															backgroundColor: 'var(--primary)',
+															color: 'var(--primary-foreground)',
+															padding: '0.5rem 1rem',
+															borderRadius: '0.375rem',
+															fontSize: '0.875rem',
+														}}
+													>
+														{disabled ? 'Solo editable en la fecha de hoy' : 'Editar'}
+													</TooltipContent>
+												</Tooltip>
 
-                    <TableCell className="text-center border">
-                      <div className="flex items-center justify-center gap-2">
-                        <Tooltip>
-                          <NewCleaningDosageForm
-                            onSuccess={handleRefresh}
-                            isUpdate={true}
-                            cleaningDosageData={row}
-                            trigger={
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  disabled={disabled}
-                                  className={
-                                    disabled
-                                      ? "opacity-50 cursor-not-allowed"
-                                      : ""
-                                  }
-                                >
-                                  <EditIcon className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                            }
-                          />
-                          <TooltipContent
-                            side="top"
-                            align="center"
-                            sideOffset={5}
-                            avoidCollisions
-                            style={{
-                              backgroundColor: "var(--primary)",
-                              color: "var(--primary-foreground)",
-                              padding: "0.5rem 1rem",
-                              borderRadius: "0.375rem",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            {disabled
-                              ? "Solo editable en la fecha de hoy"
-                              : "Editar"}
-                          </TooltipContent>
-                        </Tooltip>
-
-                        <ConfirmationDialog
-                          title="¿Estás seguro de que deseas eliminar este registro?"
-                          description="Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de dosificación."
-                          onConfirm={() => handleDelete(row.id)}
-                          triggerBtn={
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              disabled={disabled}
-                              className={
-                                disabled ? "opacity-50 cursor-not-allowed" : ""
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          }
-                          cancelBtn={
-                            <Button variant="outline" size="lg">
-                              <XIcon className="h-4 w-4 mr-1" />
-                              No
-                            </Button>
-                          }
-                          confirmBtn={
-                            <Button
-                              variant="ghost"
-                              className="hover:bg-red-600 hover:text-white"
-                              size="lg"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Sí
-                            </Button>
-                          }
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-    </div>
-  );
+												<ConfirmationDialog
+													title='¿Estás seguro de que deseas eliminar este registro?'
+													description='Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de dosificación.'
+													onConfirm={() => handleDelete(row.id)}
+													triggerBtn={
+														<Button variant='outline' size='icon' disabled={disabled} className={disabled ? 'opacity-50 cursor-not-allowed' : ''}>
+															<Trash2 className='h-4 w-4' />
+														</Button>
+													}
+													cancelBtn={
+														<Button variant='outline' size='lg'>
+															<XIcon className='h-4 w-4 mr-1' />
+															No
+														</Button>
+													}
+													confirmBtn={
+														<Button variant='ghost' className='hover:bg-red-600 hover:text-white' size='lg'>
+															<Check className='h-4 w-4 mr-1' />
+															Sí
+														</Button>
+													}
+												/>
+											</div>
+										</TableCell>
+									</TableRow>
+								);
+							})}
+						</TableBody>
+					</Table>
+				)}
+			</div>
+		</div>
+	);
 }
 
 export default CleaningDosageManagement;
