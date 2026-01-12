@@ -402,13 +402,13 @@ export function LockerRoomControlManagement() {
                 </Select>
               </div>
             </div>
-            <div className="flex justify-start lg:justify-end gap-2">
+            <div className="flex justify-end gap-2">
               {lockerRoomData.length > 0 && (
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     size="sm"
-                    className="w-full sm:w-auto h-9"
+                    className="w-auto h-9"
                     title="Generar reporte de los registros actuales"
                     // disabled={!query.data || query.data.data.length === 0}
                   >
@@ -446,7 +446,7 @@ export function LockerRoomControlManagement() {
                 selectedLine={selectedLine}
                 setSelectedLine={setSelectedLine}
                 trigger={
-                  <Button className="w-full sm:w-auto">
+                  <Button className="w-auto">
                     <PlusIcon className="h-4 w-4" />
                     Ingresar Vestuario
                   </Button>
