@@ -196,7 +196,7 @@ export function ListTransportManagement() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
             <div>
               <div className="font-semibold text-sm">
-                {format(parseISO(item.issueDate as string), 'dd/MM/yyyy')}
+                {format(parseISO(item.createdAt as string), 'dd/MM/yyyy')}
               </div>
             </div>
           </div>
@@ -299,7 +299,7 @@ export function ListTransportManagement() {
             <div className="text-xs text-muted-foreground mb-2">Guías</div>
             <CertificateFileManager
               certificateId={item.id}
-              issueDate={item.issueDate}
+              issueDate={item.createdAt}
               fileUrl={item.urlFile}
               onFileChange={handleFileChange}
             />
@@ -578,7 +578,7 @@ export function ListTransportManagement() {
                   <TableRow>
                     <TableHead className="w-32 whitespace-normal leading-tight text-center">
                       <span className="block text-xs font-semibold">
-                        Fecha Emisión
+                        Fecha Ingreso
                       </span>
                     </TableHead>
                     <TableHead className="w-32 whitespace-normal leading-tight text-center">
@@ -640,8 +640,8 @@ export function ListTransportManagement() {
                         className="hover:bg-muted/50 transition-colors"
                       >
                         <TableCell className="whitespace-normal text-center text-sm">
-                          {item.issueDate
-                            ?  format(parseISO(item.issueDate as string), 'dd/MM/yyyy')
+                          {item.createdAt
+                            ?  format(parseISO(item.createdAt as string), 'dd/MM/yyyy')
                             : "N/A"}
                         </TableCell>
                         <TableCell className="whitespace-normal text-center text-sm font-medium">
@@ -709,7 +709,7 @@ export function ListTransportManagement() {
                         <TableCell className="text-center">
                           <CertificateFileManager
                             certificateId={item.id}
-                            issueDate={item.issueDate}
+                            issueDate={item.createdAt}
                             fileUrl={item.urlFile}
                             onFileChange={handleFileChange}
                           />
