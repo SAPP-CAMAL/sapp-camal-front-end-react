@@ -52,7 +52,7 @@ interface WeightReading {
 }
 
 const DEFAULT_CONFIG: SerialScaleConfig = {
-  baudRate: 4800, // Prueba también: 4800, 19200, 115200
+  baudRate: 9600, // Velocidad estándar para Bernalo X1
   dataBits: 8,
   stopBits: 1,
   parity: 'none',
@@ -87,16 +87,33 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
     try {
       // Limpiar datos
       const cleaned = data.trim();
+      
+      console.log('🔧 [BALANZA] Parseando datos:', {
+        original: data,
+        cleaned: cleaned,
+        length: cleaned.length,
+      });
 
       // Patrón específico de Bernalo X1
       // Formato: =X.YYYY o =-X.YYYY (con signo negativo)
       // Los dígitos están invertidos, hay que revertirlos
       const bernaloMatch = cleaned.match(/^(=)(-?)(\d+)\.?(\d*)$/);
+      
+      console.log('🔧 [BALANZA] Resultado del match regex:', {
+        match: bernaloMatch,
+        pattern: '/^(=)(-?)(\\d+)\\.?(\\d*)$/',
+      });
 
       if (bernaloMatch) {
         const sign = bernaloMatch[2]; // "-" o ""
         const wholePart = bernaloMatch[3]; // "9"
         const decimalPart = bernaloMatch[4] || ""; // "7400"
+
+        console.log('🔧 [BALANZA] Partes del match:', {
+          sign: sign,
+          wholePart: wholePart,
+          decimalPart: decimalPart,
+        });
 
         // Concatenar todos los dígitos
         const allDigits = wholePart + decimalPart; // "97400"
@@ -109,6 +126,13 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
 
         // Aplicar el signo si es negativo
         const finalValue = sign === '-' ? -numValue : numValue;
+        
+        console.log('🔧 [BALANZA] Cálculo del peso:', {
+          allDigits: allDigits,
+          reversed: reversed,
+          numValue: numValue,
+          finalValue: finalValue,
+        });
 
         return {
           value: finalValue,
@@ -121,12 +145,23 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
 
       // Si no coincide con el patrón completo, rechazar la lectura
       if (cleaned.startsWith('=') && cleaned.length < 5) {
+        console.log('⚠️ [BALANZA] Datos incompletos (empieza con = pero muy corto):', {
+          cleaned: cleaned,
+          length: cleaned.length,
+        });
         return null;
       }
 
+      console.log('❌ [BALANZA] No coincide con el patrón esperado:', {
+        cleaned: cleaned,
+        startsWithEquals: cleaned.startsWith('='),
+      });
       return null;
     } catch (err) {
-      console.error('Error parsing weight:', err);
+      console.error('❌ [BALANZA] Error al parsear peso:', {
+        error: err,
+        data: data,
+      });
       return null;
     }
   }, []);
@@ -146,18 +181,98 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
       const port = await navigator.serial.requestPort();
 
       // Abrir puerto con configuración
-      await port.open({
+      const portConfig = {
         baudRate: finalConfig.baudRate!,
         dataBits: finalConfig.dataBits!,
         stopBits: finalConfig.stopBits!,
         parity: finalConfig.parity!,
         bufferSize: finalConfig.bufferSize!,
         flowControl: finalConfig.flowControl!,
-      });
+      };
+      
+      console.log('🔌 [BALANZA] Configuración del puerto:', portConfig);
+      
+      // Intentar obtener información del puerto (si está disponible)
+      try {
+        const portInfo = (port as any).getInfo?.();
+        if (portInfo) {
+          console.log('📋 [BALANZA] Información del puerto:', portInfo);
+        }
+      } catch (e) {
+        // No todos los navegadores soportan getInfo
+      }
+      
+      console.log('⚠️ [BALANZA] PROBLEMA DETECTADO: Bytes no válidos (0x86, 0x87, 0x84)');
+      console.log('');
+      console.log('🔧 [BALANZA] GUÍA PARA SOLUCIONAR EL PROBLEMA DEL DRIVER:');
+      console.log('');
+      console.log('1️⃣ IDENTIFICAR EL TIPO DE ADAPTADOR USB-SERIAL:');
+      console.log('   - Abre el Administrador de Dispositivos (Win + X → Administrador de dispositivos)');
+      console.log('   - Busca "Puertos (COM y LPT)" o "Ports (COM & LPT)"');
+      console.log('   - Expande y busca tu puerto (ej: COM3, COM4)');
+      console.log('   - Haz clic derecho → Propiedades → Pestaña "Detalles"');
+      console.log('   - En "Propiedad" selecciona "Id. de hardware" o "Hardware Ids"');
+      console.log('   - Busca uno de estos identificadores:');
+      console.log('');
+      console.log('   📌 FTDI (más común):');
+      console.log('      - Busca "VID_0403" o "FTDI"');
+      console.log('      - Driver: FTDI VCP Driver');
+      console.log('      - Descarga: https://ftdichip.com/drivers/vcp-drivers/');
+      console.log('');
+      console.log('   📌 CH340/CH341:');
+      console.log('      - Busca "VID_1A86" o "CH340"');
+      console.log('      - Driver: CH340 Driver');
+      console.log('      - Descarga: https://github.com/WCHSoftGroup/ch34xser_linux');
+      console.log('');
+      console.log('   📌 Prolific PL2303 (TU CASO - VID_067B&PID_2303):');
+      console.log('      - ⚠️ PROBLEMA DETECTADO: "THIS IS NOT PROLIFIC PL2303"');
+      console.log('      - Esto significa que tienes un adaptador CLON o NO ORIGINAL');
+      console.log('      - Los drivers oficiales de Prolific NO funcionan con clones');
+      console.log('');
+      console.log('   🔧 SOLUCIONES:');
+      console.log('      1. Driver modificado (funciona con clones):');
+      console.log('         - Busca: "Prolific PL2303 driver modified clone"');
+      console.log('         - O: "PL2303_Prolific_DriverInstaller_v1.12.0" (versión antigua)');
+      console.log('         - ⚠️ ADVERTENCIA: Drivers modificados no son oficiales');
+      console.log('');
+      console.log('      2. Comprar adaptador original (RECOMENDADO):');
+      console.log('         - FTDI FT232RL (más compatible y estable)');
+      console.log('         - Prolific PL2303 original');
+      console.log('         - CH340 (más barato pero funciona bien)');
+      console.log('');
+      console.log('      3. Driver antiguo sin protección:');
+      console.log('         - Versión 3.3.2.105 o anterior');
+      console.log('         - Puede funcionar con clones pero es menos seguro');
+      console.log('');
+      console.log('   📌 Silicon Labs CP210x:');
+      console.log('      - Busca "VID_10C4" o "CP210"');
+      console.log('      - Driver: CP210x Driver');
+      console.log('      - Descarga: https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers');
+      console.log('');
+      console.log('2️⃣ REINSTALAR EL DRIVER:');
+      console.log('   - Desinstala el driver actual desde el Administrador de Dispositivos');
+      console.log('   - Reinicia la computadora');
+      console.log('   - Instala el driver correcto según el tipo de adaptador');
+      console.log('   - Vuelve a conectar el cable USB');
+      console.log('');
+      console.log('3️⃣ CONFIGURACIÓN RECOMENDADA PARA BERNALO X1:');
+      console.log('   - baudRate: 4800 (estándar para X1)');
+      console.log('   - dataBits: 8');
+      console.log('   - stopBits: 1');
+      console.log('   - parity: "none"');
+      console.log('   - flowControl: "none"');
+      console.log('');
+      console.log('4️⃣ VERIFICAR QUE EL PUERTO FUNCIONE:');
+      console.log('   - El puerto debe aparecer SIN signos de exclamación amarillos');
+      console.log('   - Si aparece con error, el driver está mal instalado');
+      console.log('');
+      
+      await port.open(portConfig);
 
       portRef.current = port;
       setIsConnected(true);
       setError(null);
+      console.log('✅ [BALANZA] Puerto conectado exitosamente');
       toast.success('Balanza conectada correctamente');
 
       // El usuario debe llamar startReading() manualmente después de conectar
@@ -166,9 +281,15 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
         ? 'No se seleccionó ningún puerto'
         : `Error al conectar: ${err.message}`;
 
+      console.error('❌ [BALANZA] Error de conexión:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+        error: err,
+      });
+      
       setError(errorMsg);
       toast.error(errorMsg);
-      console.error('Connection error:', err);
     }
   }, [finalConfig]);
 
@@ -227,18 +348,28 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
 
   // Iniciar lectura continua
   const startReading = useCallback(async () => {
-    if (!portRef.current || isReadingRef.current) return;
+    if (!portRef.current || isReadingRef.current) {
+      console.log('⚠️ [BALANZA] No se puede iniciar lectura:', {
+        hasPort: !!portRef.current,
+        isReading: isReadingRef.current,
+      });
+      return;
+    }
 
     try {
+      console.log('🚀 [BALANZA] Iniciando lectura continua...');
       isReadingRef.current = true;
       setIsReading(true);
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+      // Decoder ASCII para convertir bytes a texto
+      const decoder = new TextDecoder('ascii');
+      let textBuffer = '';
 
       // Obtener reader del puerto
       const reader = portRef.current.readable!.getReader();
       readerRef.current = reader;
+      
+      console.log('📖 [BALANZA] Reader obtenido, comenzando a leer datos...');
 
       // Leer datos continuamente
       while (isReadingRef.current) {
@@ -249,123 +380,152 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
             break;
           }
 
-          // Decodificar y agregar al buffer
+          // Convertir bytes a diferentes formatos para análisis
+          const bytes = Array.from(value);
+          
+          console.log('📥 [BALANZA] Bytes recibidos:', {
+            bytes: bytes,
+            hex: bytes.map(b => `0x${b.toString(16).padStart(2, '0')}`).join(' '),
+            decimal: bytes.map(b => b.toString().padStart(3, '0')).join(' '),
+            length: bytes.length,
+          });
+          
+          // Decodificar como texto ASCII
           const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
-
-          // Log para debugging
-
-          // Procesar cada valor que empiece con =
-          // La balanza envía datos en fragmentos: primero "=9" luego ".7400"
-          // Formato completo: =9.7400 (representa 47.9 kg con dígitos invertidos)
-
-          // Solo procesar cuando tengamos un patrón completo con = y punto decimal
-          // Buscar patrones =X.YYYY donde X puede ser uno o más dígitos, YYYY son 4 dígitos
-          const regex = /=(\d+)\.(\d{4})/g;
+          textBuffer += chunk;
+          
+          console.log('📦 [BALANZA] Buffer de texto:', {
+            chunk: chunk,
+            textBuffer: textBuffer,
+            bufferLength: textBuffer.length,
+          });
+          
+          // Limitar tamaño del buffer
+          if (textBuffer.length > 200) {
+            textBuffer = textBuffer.slice(-100);
+            console.log('⚠️ [BALANZA] Buffer recortado para evitar crecimiento infinito');
+          }
+          
+          // Buscar patrón: =X.XXXXX (formato Bernalo X1)
+          // Ejemplo: =0.50000 o =47.9000
+          const regex = /=(\d+\.\d+)/g;
           let match;
           let lastIndex = 0;
 
-          while ((match = regex.exec(buffer)) !== null) {
-            const fullMatch = match[0]; // Por ejemplo: "=9.7400"
+          while ((match = regex.exec(textBuffer)) !== null) {
+            const fullMatch = match[0]; // Por ejemplo: "=0.50000"
+            const weightStr = match[1]; // Por ejemplo: "0.50000"
             lastIndex = regex.lastIndex;
 
-            const weight = parseWeight(fullMatch);
-            if (weight) {
+            console.log('🔍 [BALANZA] Patrón encontrado:', {
+              fullMatch: fullMatch,
+              weightStr: weightStr,
+              matchIndex: match.index,
+              lastIndex: lastIndex,
+            });
 
-              // Ignorar lecturas de cero - no son válidas para el pesaje
-              if (weight.value === 0) {
-                continue; // Saltar al siguiente match
-              }
+            // La balanza envía el valor dividido entre 10, hay que multiplicar
+            const weightValue = parseFloat(weightStr) * 10;
+            
+            console.log('⚖️ [BALANZA] Peso parseado:', {
+              raw: fullMatch,
+              rawValue: parseFloat(weightStr),
+              value: weightValue,
+            });
 
-              // Agregar peso al buffer (redondear a 2 decimales para agrupar valores similares)
-              const roundedWeight = Math.round(weight.value * 100) / 100;
+            // Ignorar lecturas de cero o muy pequeñas (tara)
+            if (weightValue > 1.0) {
+              // Agregar peso al buffer (redondear a 1 decimal)
+              const roundedWeight = Math.round(weightValue * 10) / 10;
               weightBufferRef.current.push(roundedWeight);
+              
+              console.log('📊 [BALANZA] Peso agregado al buffer:', {
+                roundedWeight: roundedWeight,
+                bufferSize: weightBufferRef.current.length,
+                bufferContent: [...weightBufferRef.current],
+              });
 
-              // Iniciar intervalo de 5 segundos si no existe
+              // Iniciar intervalo de 3 segundos si no existe
               if (!intervalTimerRef.current) {
-                const currentUnit = weight.unit; // Guardar unit en el scope
-
                 intervalTimerRef.current = setTimeout(() => {
-
                   if (weightBufferRef.current.length === 0) {
                     intervalTimerRef.current = null;
                     return;
                   }
 
-
                   // Función para encontrar el valor que más se repite
                   const findMostFrequent = (arr: number[]): number => {
                     const frequency: { [key: number]: number } = {};
-
-                    // Contar frecuencias
                     arr.forEach(num => {
                       frequency[num] = (frequency[num] || 0) + 1;
                     });
 
-
-                    // Encontrar el más frecuente
                     let maxFreq = 0;
                     let mostFrequentValue = arr[0];
-
                     for (const [value, freq] of Object.entries(frequency)) {
                       if (freq > maxFreq) {
                         maxFreq = freq;
                         mostFrequentValue = parseFloat(value);
                       }
                     }
-
-
                     return mostFrequentValue;
                   };
 
                   const mostFrequentWeight = findMostFrequent(weightBufferRef.current);
 
-
-                  // Establecer el peso más frecuente
-                  const finalWeight = {
+                  const finalWeight: WeightReading = {
                     value: mostFrequentWeight,
-                    unit: currentUnit,
-                    raw: `=${mostFrequentWeight * 1000}`,
+                    unit: 'kg',
+                    raw: `=${mostFrequentWeight}`,
                     timestamp: new Date(),
                     stable: true,
                   };
 
                   setCurrentWeight(finalWeight);
-
+                  console.log('✅ [BALANZA] Peso estable establecido:', finalWeight);
 
                   // Limpiar buffer y timer
                   weightBufferRef.current = [];
                   intervalTimerRef.current = null;
-                }, 5000); // 5 segundos
-
-              } else {
+                }, 3000); // 3 segundos
               }
             } else {
+              console.log('⚠️ [BALANZA] Peso ignorado (cero o tara):', weightValue);
             }
           }
 
           // Limpiar el buffer de los datos ya procesados
           if (lastIndex > 0) {
-            buffer = buffer.substring(lastIndex);
+            textBuffer = textBuffer.substring(lastIndex);
+            console.log('🧹 [BALANZA] Buffer limpiado, caracteres eliminados:', lastIndex);
           }
-
-          // Si el buffer crece demasiado sin matches, limpiarlo
-          if (buffer.length > 50) {
-            buffer = '';
-          }
+          
         } catch (readError: any) {
+          console.error('❌ [BALANZA] Error al leer:', {
+            name: readError.name,
+            message: readError.message,
+            stack: readError.stack,
+            error: readError,
+          });
+          
           if (readError.name === 'NetworkError' || readError.name === 'NotReadableError') {
-            console.error('Read error:', readError);
+            console.error('🔴 [BALANZA] Error de red o puerto no legible, deteniendo lectura');
             break;
           }
-          console.error('Unexpected read error:', readError);
+          console.error('🔴 [BALANZA] Error inesperado al leer');
         }
       }
     } catch (err: any) {
-      console.error('Reading error:', err);
+      console.error('❌ [BALANZA] Error general de lectura:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+        error: err,
+      });
       setError(`Error de lectura: ${err.message}`);
       toast.error('Error al leer datos de la balanza');
     } finally {
+      console.log('🛑 [BALANZA] Lectura detenida');
       isReadingRef.current = false;
       setIsReading(false);
     }
