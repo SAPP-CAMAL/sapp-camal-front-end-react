@@ -172,7 +172,7 @@ export function TransportConditionsManagement() {
   const totals = useMemo(
     () => ({
       registros: totalRecords,
-      totalAnimales: Array.isArray(apiData) 
+      totalAnimales: Array.isArray(apiData)
         ? apiData.reduce((acc, item) => acc + (item.quantity || 0), 0)
         : 0,
     }),
@@ -390,7 +390,7 @@ export function TransportConditionsManagement() {
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row lg:flex-col gap-2 sm:col-span-2 lg:col-span-1">
+            <div className="flex flex-col lg:flex-col gap-2 sm:col-span-1">
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button className="w-full" disabled={isLoading || !Array.isArray(apiData) || apiData.length === 0}>
