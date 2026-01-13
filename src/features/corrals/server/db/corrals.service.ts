@@ -15,7 +15,7 @@ import {
 } from "@/features/corrals/domain";
 
 // Obtener la URL base de la API desde las variables de entorno
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://sapp-riobamba.com";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://sapp-ruminahui.com";
 
 // Create a silent HTTP client for brand details that won't log errors
 const silentHttp = ky.create({
