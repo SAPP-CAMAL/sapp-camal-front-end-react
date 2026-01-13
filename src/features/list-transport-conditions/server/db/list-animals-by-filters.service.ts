@@ -5,8 +5,6 @@ import { ConditionTransportListFilters } from '../../domain';
 // Servicio para obtener certificados de transporte por filtros
 export async function getListAnimalsByFiltersService(filters: ListAnimalsFilters): Promise<any[]> {
 	try {
-		console.log('Enviando filtros a la API:', filters);
-
 		// Construir el objeto de filtros, eliminando valores null/undefined
 		const cleanFilters: any = {
 			entryDate: filters.entryDate, // Siempre obligatorio
@@ -23,8 +21,6 @@ export async function getListAnimalsByFiltersService(filters: ListAnimalsFilters
 				json: cleanFilters,
 			})
 			.json<any>();
-
-		console.log('Respuesta de la API:', response);
 
 		if (response.code === 200 || response.code === 201) {
 			return response.data;

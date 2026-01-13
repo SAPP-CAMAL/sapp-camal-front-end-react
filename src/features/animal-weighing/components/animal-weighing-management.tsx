@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2, Ticket, Layers, PawPrint, Activity } from "lucide-react";
+import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2, Ticket, Layers, PawPrint, Activity, Truck } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLines } from "@/features/postmortem/hooks/use-lines";
@@ -1011,10 +1011,10 @@ export function AnimalWeighingManagement() {
   const totalRecords = filteredRows.length;
 
   return (
-    <div className="space-y-4 p-2 sm:p-4 pb-64 max-w-full overflow-x-hidden min-h-full">
+    <div className="space-y-3 p-3 sm:p-4 md:p-6 pb-16 max-w-full overflow-x-hidden min-h-full">
       <div className="text-center">
-        <h1 className="text-lg sm:text-xl font-semibold mb-2">PESAJE DE ANIMALES</h1>
-        <p className="text-muted-foreground text-xs sm:text-sm">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2">PESAJE DE ANIMALES</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
           Fecha de Faenamiento:{" "}
           {parseLocalDateString(slaughterDate).toLocaleDateString("es-ES", {
             weekday: "long",
@@ -1025,36 +1025,36 @@ export function AnimalWeighingManagement() {
         </p>
       </div>
 
-      {/* Balanza Serial */}
+      {/* Balanza Serial - Optimizado para Tablet */}
       <Card className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Scale className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-              <Label className="text-sm sm:text-base font-semibold">
+              <Scale className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+              <Label className="text-base sm:text-lg font-semibold">
                 EQUIPOS DE PESAJE INDUSTRIAL X1
               </Label>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
               {isConnected ? (
                 <>
-                  <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs sm:text-sm text-green-700 font-medium">
+                  <span className="flex h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-sm sm:text-base text-green-700 font-medium">
                     Conectada
                   </span>
-                  <Button size="sm" variant="outline" onClick={disconnectScale} className="text-xs sm:text-sm">
+                  <Button size="sm" variant="outline" onClick={disconnectScale} className="text-sm">
                     Desconectar
                   </Button>
                 </>
               ) : (
                 <>
-                  <span className="flex h-2 w-2 rounded-full bg-gray-400" />
-                  <span className="text-xs sm:text-sm text-gray-600">Desconectada</span>
+                  <span className="flex h-3 w-3 rounded-full bg-gray-400" />
+                  <span className="text-sm sm:text-base text-gray-600">Desconectada</span>
                   <Button
                     size="sm"
                     onClick={connectScale}
                     disabled={!isSupported}
-                    className="text-xs sm:text-sm"
+                    className="text-sm"
                   >
                     Conectar Balanza
                   </Button>
@@ -1064,14 +1064,14 @@ export function AnimalWeighingManagement() {
           </div>
 
           {isConnected && (
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 bg-white rounded-lg border-2 border-blue-300">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-4 sm:p-5 bg-white rounded-lg border-2 border-blue-300">
               <div className="flex-1 w-full">
-                <p className="text-xs sm:text-sm text-gray-600 mb-2">Peso Actual</p>
+                <p className="text-sm sm:text-base text-gray-600 mb-3">Peso Actual</p>
                 {currentWeight ? (
                   <div className="space-y-2">
                     {/* Peso principal - mostrar en la unidad configurada */}
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className={`text-2xl sm:text-3xl md:text-4xl font-bold ${currentWeight.value < 0 ? 'text-red-900' : 'text-blue-900'}`}>
+                    <div className="flex items-baseline gap-3 flex-wrap">
+                      <span className={`text-3xl sm:text-4xl md:text-5xl font-bold ${currentWeight.value < 0 ? 'text-red-900' : 'text-blue-900'}`}>
                         {(() => {
                           const unitCode = unitMeasureData?.data?.code || 'KG';
                           const isLbUnit = unitCode === 'LB';
@@ -1080,26 +1080,26 @@ export function AnimalWeighingManagement() {
                           return displayWeight.toFixed(2);
                         })()}
                       </span>
-                      <span className={`text-xl sm:text-2xl font-semibold ${currentWeight.value < 0 ? 'text-red-700' : 'text-blue-700'}`}>
+                      <span className={`text-2xl sm:text-3xl font-semibold ${currentWeight.value < 0 ? 'text-red-700' : 'text-blue-700'}`}>
                         {unitMeasureData?.data?.symbol || 'kg'}
                       </span>
                       {currentWeight.stable && (
-                        <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
+                        <span className="ml-2 px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded">
                           ESTABLE
                         </span>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <span className="text-lg sm:text-xl md:text-2xl text-gray-400">
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-400">
                     Esperando lectura...
                   </span>
                 )}
               </div>
               {selectedRowId && (
-                <div className="text-left md:text-right w-full md:w-auto">
-                  <p className="text-xs sm:text-sm text-gray-600">Animal Seleccionado</p>
-                  <p className="text-base sm:text-lg font-semibold text-blue-900">
+                <div className="text-left lg:text-right w-full lg:w-auto">
+                  <p className="text-sm sm:text-base text-gray-600">Animal Seleccionado</p>
+                  <p className="text-lg sm:text-xl font-semibold text-blue-900">
                     {rows.find((r) => r.id === selectedRowId)?.code}
                   </p>
                 </div>
@@ -1425,20 +1425,20 @@ export function AnimalWeighingManagement() {
       </>
       )}
 
-      {/* Búsqueda y Tabla */}
-      <Card className="p-2 sm:p-3 md:p-4">
-        <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+      {/* Búsqueda y Tabla - Optimizado para Tablet */}
+      <Card className="p-3 sm:p-4 md:p-6">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm sm:text-base text-muted-foreground">
               {totalAnimals} animal{totalAnimals !== 1 ? "es" : ""} ({totalRecords} registro{totalRecords !== 1 ? "s" : ""})
             </span>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por código de animal"
-                className="pl-8 w-full"
+                className="pl-10 w-full text-base"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -1455,15 +1455,15 @@ export function AnimalWeighingManagement() {
         </div>
 
         {/* Versión móvil - Cards */}
-        <div className="block lg:hidden space-y-3">
-          {filteredRows.length === 0 ? (
+        <div className="block lg:hidden space-y-1.5">
+          {paginatedRows.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {isLoadingWeighingData ? "Cargando animales..." : "No hay registros disponibles"}
             </div>
           ) : (
             (() => {
-              const groupedRows: { [key: string]: typeof filteredRows } = {};
-              filteredRows.forEach((row) => {
+              const groupedRows: { [key: string]: typeof paginatedRows } = {};
+              paginatedRows.forEach((row) => {
                 if (!groupedRows[row.code]) {
                   groupedRows[row.code] = [];
                 }
@@ -1471,53 +1471,55 @@ export function AnimalWeighingManagement() {
               });
 
               return Object.entries(groupedRows).map(([animalCode, animalRows]) => (
-                <Card key={animalCode} className={`p-3 border-4 border-teal-600 shadow-lg ${animalRows[0].isComplete ? 'bg-[#86c6c5]' : 'bg-green-50'}`}>
-                  {/* Información del animal */}
-                  <div className="mb-3 pb-3 border-b">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                          <Tag className="h-3 w-3" />
-                          <span>ID-Marca</span>
-                        </div>
-                        <div className="text-lg font-bold">
-                          {animalRows[0].brandName ? `${animalCode} - ${animalRows[0].brandName}` : animalCode}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1 justify-end">
-                          <Calendar className="h-3 w-3" />
-                          <span>Fecha de Ingreso</span>
-                        </div>
-                        <div className="text-sm">
-                          {new Date(animalRows[0].fechaIngreso).toLocaleDateString("es-ES", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })}
+                <Card key={animalCode} className={`p-1 border-2 border-teal-600 shadow-md ${animalRows[0].isComplete ? 'bg-[#86c6c5]' : 'bg-green-50'}`}>
+                  {/* Información del animal - Compacta */}
+                  <div className="mb-0.5 pb-0.5 border-b border-teal-400/30">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground/80 mb-0.5">
+                              <Tag className="h-2.5 w-2.5" />
+                              <span className="truncate">ID-Marca</span>
+                            </div>
+                            <div className="text-sm font-bold truncate">
+                              {animalRows[0].brandName ? `${animalCode} - ${animalRows[0].brandName}` : animalCode}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground/80 mb-0.5">
+                              <Package className="h-2.5 w-2.5" />
+                              <span className="truncate">Género - Etapa</span>
+                            </div>
+                            <div className="text-xs font-medium truncate">{animalRows[0].producto}</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                          <Package className="h-3 w-3" />
-                          <span>Género - Etapa Productiva</span>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <div className="text-right">
+                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground/80 mb-0.5 justify-end">
+                            <Calendar className="h-2.5 w-2.5" />
+                            <span>Ingreso</span>
+                          </div>
+                          <div className="text-xs font-medium">
+                            {new Date(animalRows[0].fechaIngreso).toLocaleDateString("es-ES", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })}
+                          </div>
                         </div>
-                        <div className="text-sm">{animalRows[0].producto}</div>
-                      </div>
-                      {animalRows[0].idAnimalWeighing && isToday && (
-                        <div className="flex items-center gap-1">
+                        {animalRows[0].idAnimalWeighing && isToday && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 w-7 p-0"
                                   onClick={() => handleDeleteClick(animalRows[0].idAnimalWeighing!, animalCode)}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -1525,84 +1527,103 @@ export function AnimalWeighingManagement() {
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Secciones */}
-                  <div className="space-y-2">
-                    {animalRows.map((row) => (
-                      <div key={row.id} className="p-2 bg-white/50 rounded border">
-                        {weighingStageId !== 1 && row.sectionCode && (
-                          <div className="mb-2">
-                            <div className="flex items-center gap-1 mb-1">
-                              <MapPin className="h-3 w-3 text-blue-600" />
-                              <span className="font-bold text-blue-600 text-sm">{row.sectionCode}</span>
-                              <span className="text-xs text-white/90 ml-1">{row.sectionDescription}</span>
-                            </div>
-                            {row.hasPartialConfiscation && (
-                              <div className="flex items-center gap-1 mt-1 text-yellow-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-xs font-semibold">Decomiso parcial</span>
+                  {/* Destinatario y Transportista - Compacto o Botón Agregar */}
+                  {weighingStageId !== 1 && (
+                    <div className="mb-1">
+                      {(animalRows[0].addressee || animalRows[0].carrier) ? (
+                        <div className="p-1.5 bg-teal-50/30 rounded border border-teal-200/20">
+                          <div className="flex items-center justify-between gap-3 text-xs">
+                            {animalRows[0].addressee && (
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1 text-[9px] text-teal-600 mb-0.5">
+                                  <User className="h-2 w-2" />
+                                  <span className="font-medium">Destinatario</span>
+                                </div>
+                                <div className="text-[10px] font-medium truncate">{animalRows[0].addressee.fullName}</div>
+                                <div className="text-[9px] text-muted-foreground truncate">ID: {animalRows[0].addressee.identification}</div>
                               </div>
                             )}
-                          </div>
-                        )}
-
-                        {/* Destinatario en móvil */}
-                        {weighingStageId !== 1 && (
-                          <div className="mb-2 pb-2 border-b">
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                              <User className="h-3 w-3" />
-                              <span>Destinatario</span>
-                            </div>
-                            {row.addressee ? (
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <div className="text-sm font-medium">{toCapitalize(row.addressee.fullName, true)}</div>
-                                  <div className="text-xs text-white/90">{row.addressee.identification}</div>
+                            {animalRows[0].carrier && (
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1 text-[9px] text-teal-600 mb-0.5">
+                                  <Truck className="h-2 w-2" />
+                                  <span className="font-medium">Transportista</span>
                                 </div>
-                                {isToday && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-white hover:text-teal-700 h-7 px-2"
-                                    onClick={() => setAddresseeSelectionRowId(row.id)}
-                                  >
-                                    <Edit className="h-3 w-3 mr-1" />
-                                    Cambiar
-                                  </Button>
-                                )}
+                                <div className="text-[10px] font-medium truncate">{animalRows[0].carrier.fullName}</div>
+                                <div className="text-[9px] text-muted-foreground truncate">
+                                  ID: {animalRows[0].carrier.identification} | Placa: {animalRows[0].carrier.plate}
+                                </div>
                               </div>
-                            ) : (
-                              isToday && (
-                                <Button
-                                  size="sm"
-                                  className="bg-teal-600 hover:bg-teal-700 w-full"
-                                  onClick={() => setAddresseeSelectionRowId(row.id)}
-                                >
-                                  Agregar Destinatario
-                                </Button>
-                              )
+                            )}
+                            {isToday && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-teal-700 hover:text-teal-800 hover:bg-teal-50 h-6 px-1.5 shrink-0"
+                                onClick={() => setAddresseeSelectionRowId(animalRows[0].id)}
+                              >
+                                <Edit className="h-2.5 w-2.5 mr-0.5" />
+                                <span className="text-[10px]">Cambiar</span>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        isToday && (
+                          <div className="p-2 bg-teal-50/20 rounded border border-teal-200/30 text-center">
+                            <Button
+                              size="sm"
+                              className="bg-teal-600 hover:bg-teal-700 h-8 text-sm w-full"
+                              onClick={() => setAddresseeSelectionRowId(animalRows[0].id)}
+                            >
+                              <User className="h-3 w-3 mr-1" />
+                              Agregar Destinatario
+                            </Button>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+
+                  {/* Secciones - Compactas */}
+                  <div className="space-y-1">
+                    {animalRows.map((row) => (
+                      <div key={row.id} className="p-1 bg-white/50 rounded border border-teal-200/50">
+                        {weighingStageId !== 1 && row.sectionCode && (
+                          <div className="mb-1">
+                            <div className="flex items-center gap-1 mb-0.5">
+                              <MapPin className="h-2.5 w-2.5 text-blue-600" />
+                              <span className="font-bold text-blue-600 text-xs">{row.sectionCode}</span>
+                              <span className="text-[10px] text-black ml-0.5 truncate">{row.sectionDescription}</span>
+                            </div>
+                            {row.hasPartialConfiscation && (
+                              <div className="flex items-center gap-1 text-yellow-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-[10px] font-semibold">Decomiso parcial</span>
+                              </div>
                             )}
                           </div>
                         )}
 
                         <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                              <Weight className="h-3 w-3" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground/80 mb-0.5">
+                              <Weight className="h-2.5 w-2.5" />
                               <span>Peso</span>
                             </div>
-                            <div className={`font-semibold ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            <div className={`text-xs font-semibold ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
                               {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || 'kg'}` : "-"}
                             </div>
                           </div>
 
-                          <div className="flex gap-1 items-center">
+                          <div className="flex gap-1 items-center shrink-0">
                             <Button
                               size="sm"
                               variant={selectedRowId === row.id ? "default" : "outline"}
@@ -1799,7 +1820,7 @@ export function AnimalWeighingManagement() {
                                   <User className="h-3 w-3 text-teal-600" />
                                   <span className="text-xs font-medium leading-tight">{toCapitalize(row.addressee.fullName, true)}</span>
                                 </div>
-                                <span className="text-[10px] text-white/90 leading-tight">{row.addressee.identification}</span>
+                                <span className="text-[10px] text-black leading-tight">{row.addressee.identification}</span>
                                 <div className="w-full border-t border-gray-200 my-0.5"></div>
                                 {row.carrier ? (
                                   <>
@@ -1813,7 +1834,7 @@ export function AnimalWeighingManagement() {
                                       </svg>
                                       <span className="text-xs font-medium leading-tight text-blue-600">{toCapitalize(row.carrier.fullName, true)}</span>
                                     </div>
-                                    <span className="text-[10px] text-white/90 leading-tight">{row.carrier.plate}</span>
+                                    <span className="text-[10px] text-black leading-tight">{row.carrier.plate}</span>
                                   </>
                                 ) : (
                                   <div className="flex items-center gap-1">
@@ -1987,7 +2008,7 @@ export function AnimalWeighingManagement() {
 
         {/* Paginación */}
         {totalAnimals > 0 && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 px-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 px-2 sm:px-4 border-t border-gray-200 mt-3">
             <div className="flex items-center gap-3">
               <div className="text-sm text-muted-foreground">
                 Mostrando {startAnimalIndex + 1} a{" "}
@@ -2014,53 +2035,83 @@ export function AnimalWeighingManagement() {
               </div>
             </div>
             {totalPages > 1 && (
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-1.5 flex-wrap">
               <Button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((prev) => prev - 1)}
                 variant="outline"
                 size="sm"
+                className="h-8 text-xs"
               >
                 Anterior
               </Button>
-              {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+              {/* Mostrar primera página */}
+              {currentPage > 3 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-xs"
+                    onClick={() => setCurrentPage(1)}
+                  >
+                    1
+                  </Button>
+                  {currentPage > 4 && (
+                    <span className="px-1 text-xs text-muted-foreground">...</span>
+                  )}
+                </>
+              )}
+              {/* Mostrar páginas alrededor de la actual */}
+              {Array.from({ length: totalPages }, (_, i) => {
                 const pageNumber = i + 1;
                 const isCurrentPage = pageNumber === currentPage;
-
-                // Mostrar primera página, última página, página actual y páginas alrededor
-                const showPage =
+                
+                // Mostrar página si está cerca de la actual o es primera/última
+                const shouldShow =
                   pageNumber === 1 ||
                   pageNumber === totalPages ||
-                  Math.abs(pageNumber - currentPage) <= 2;
+                  (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1);
 
-                if (!showPage) return null;
+                if (!shouldShow) return null;
 
                 return (
                   <Button
                     key={pageNumber}
                     variant="outline"
                     size="sm"
-                    className={
+                    className={`h-8 w-8 p-0 text-xs ${
                       isCurrentPage
-                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
+                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white border-teal-600"
                         : ""
-                    }
+                    }`}
                     onClick={() => setCurrentPage(pageNumber)}
                   >
                     {pageNumber}
                   </Button>
                 );
               })}
-              {totalPages > 10 && (
-                <span className="px-2 text-sm text-muted-foreground">
-                  ... {totalPages}
-                </span>
+              {/* Mostrar última página */}
+              {currentPage < totalPages - 2 && (
+                <>
+                  {currentPage < totalPages - 3 && (
+                    <span className="px-1 text-xs text-muted-foreground">...</span>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-xs"
+                    onClick={() => setCurrentPage(totalPages)}
+                  >
+                    {totalPages}
+                  </Button>
+                </>
               )}
               <Button
                 variant="outline"
                 size="sm"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((prev) => prev + 1)}
+                className="h-8 text-xs"
               >
                 Siguiente
               </Button>
@@ -2070,7 +2121,7 @@ export function AnimalWeighingManagement() {
         )}
       </Card>
 
-      {/* Dialog de Selección de Destinatario y Transportista */}
+      {/* Dialog de Selección de Destinatario y Transportista - Optimizado para Tablet */}
       <Dialog 
         open={addresseeSelectionRowId !== null} 
         onOpenChange={(open) => {
@@ -2082,11 +2133,14 @@ export function AnimalWeighingManagement() {
           }
         }}
       >
-        <DialogContent className="!w-[95vw] sm:!w-[90vw] md:!w-[85vw] lg:!w-[82vw] !max-w-[1000px] h-[88vh] max-h-[88vh] overflow-y-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] p-3 sm:p-4">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="text-base sm:text-lg font-bold truncate">
-              {modalStep === 1 ? "Seleccionar Destinatario y Transportista" : "Seleccionar Destinatario y Transportista"}
+        <DialogContent className="!w-[95vw] sm:!w-[90vw] md:!w-[85vw] lg:!w-[80vw] !max-w-[1200px] h-[90vh] max-h-[90vh] overflow-y-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] p-4 sm:p-6">
+          <DialogHeader className="pb-3">
+            <DialogTitle className="text-lg sm:text-xl font-bold truncate">
+              Asignar Destinatario y Transportista
             </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Seleccione un destinatario y transportista para el animal seleccionado
+            </p>
           </DialogHeader>
           <div className="w-full min-w-0 space-y-4">
             {/* Paso 1: Seleccionar Destinatario */}
@@ -2140,11 +2194,11 @@ export function AnimalWeighingManagement() {
               />
             )}
 
-            {/* Botón Finalizar (solo cuando ambos están seleccionados) */}
+            {/* Botón Finalizar - Optimizado para Tablet */}
             {tempAddressee && tempCarrier && (
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-6">
                 <Button
-                  className="bg-teal-600 hover:bg-teal-700"
+                  className="bg-teal-600 hover:bg-teal-700 px-8 py-3 text-base font-semibold"
                   onClick={() => {
                     if (addresseeSelectionRowId) {
                       handleAddresseeSelect(addresseeSelectionRowId, tempAddressee, tempCarrier);
@@ -2155,7 +2209,7 @@ export function AnimalWeighingManagement() {
                     setTempCarrier(null);
                   }}
                 >
-                  Finalizar
+                  Asignar al Animal
                 </Button>
               </div>
             )}
