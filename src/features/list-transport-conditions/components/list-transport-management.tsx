@@ -196,7 +196,9 @@ export function ListTransportManagement() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
             <div>
               <div className="font-semibold text-sm">
-                {format(parseISO(item.createdAt as string), 'dd/MM/yyyy')}
+                {item.createdAt
+                  ? format(parseISO(item.createdAt as string), 'dd/MM/yyyy')
+                  : "N/A"}
               </div>
             </div>
           </div>

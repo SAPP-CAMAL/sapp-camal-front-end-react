@@ -45,7 +45,7 @@ export function CertificateFileManager({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Verificar si la fecha es hoy
-  const isDateToday = isToday(parseISO(issueDate));
+  const isDateToday = issueDate ? isToday(parseISO(issueDate)) : false;
   const canEdit = isDateToday;
 
   // Detectar el tipo de archivo basándose en la extensión de la URL
