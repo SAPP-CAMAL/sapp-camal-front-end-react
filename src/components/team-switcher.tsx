@@ -48,13 +48,13 @@ export function RoleSwitcher() {
     enabled: isMounted, // Solo ejecutar cuando esté montado en el cliente
   });
 
-  // Cargar el rol activo desde localStorage o usar el rol del usuario
+  // Cargar el rol activo desde localStorage o usar el primer rol del listado
   React.useEffect(() => {
     if (!isMounted || !query.data?.data || query.data.data.length === 0 || activeRoleId !== null) {
       return;
     }
 
-    // Intentar obtener el rol guardado en localStorage
+    // Intentar obtener el rol guardado en localStorage (cuando el usuario cambió de rol manualmente)
     const savedRoleId = localStorage.getItem('activeRoleId');
     
     if (savedRoleId) {
@@ -67,29 +67,8 @@ export function RoleSwitcher() {
       }
     }
     
-    // Si no hay rol guardado o no existe, intentar obtener del usuario en cookies usando document.cookie
-    try {
-      const cookies = document.cookie.split(';');
-      const userCookie = cookies.find(cookie => cookie.trim().startsWith('user='));
-      
-      if (userCookie) {
-        const userValue = userCookie.split('=')[1];
-        const userData = JSON.parse(decodeURIComponent(userValue));
-        
-        if (userData.role?.id) {
-          const roleExists = query.data.data.some((role: any) => role.id === userData.role.id);
-          if (roleExists) {
-            setActiveRoleId(userData.role.id);
-            localStorage.setItem('activeRoleId', userData.role.id.toString());
-            return;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error al leer cookies:', error);
-    }
-    
-    // Si todo falla, usar el primer rol
+    // Si no hay rol guardado en localStorage, SIEMPRE usar el primer rol del listado
+    // Esto asegura que al iniciar sesión siempre se muestre el primer rol
     setActiveRoleId(query.data.data[0].id);
     localStorage.setItem('activeRoleId', query.data.data[0].id.toString());
   }, [query.data, activeRoleId, isMounted]);

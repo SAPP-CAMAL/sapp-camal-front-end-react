@@ -112,6 +112,8 @@ export function LoginForm({
         window.localStorage.setItem("accessToken", accessToken);
         window.localStorage.setItem("refreshToken", refreshToken);
         window.localStorage.setItem("user", userJson);
+        // Limpiar el rol activo para que siempre muestre el primer rol del listado al iniciar sesión
+        window.localStorage.removeItem("activeRoleId");
       } catch { /* ignore */ }
 
       console.log("Tokens stored, redirecting...");
