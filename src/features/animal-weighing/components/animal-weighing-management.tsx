@@ -55,8 +55,8 @@ import {
 } from "@/features/postmortem/utils/postmortem-helpers";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO } from "date-fns";
-import { Step2AddresseeSelection } from "@/features/order-entry/components/step-2-addressee-selection";
-import { AddresseeSummaryCard } from "@/features/order-entry/components/addressee-summary-card";
+import { AddresseeSelectionWeighing } from "./addressee-selection-weighing";
+import { AddresseeSummaryCardWeighing } from "./addressee-summary-card-weighing";
 import { Step3CarrierSelection } from "@/features/order-entry/components/step-3-carrier-selection";
 import { CarrierSummaryCard } from "@/features/order-entry/components/carrier-summary-card";
 import type { Addressees } from "@/features/addressees/domain";
@@ -128,6 +128,7 @@ export function AnimalWeighingManagement() {
   const [modalStep, setModalStep] = useState<1 | 2>(1); // 1: Seleccionar destinatario, 2: Seleccionar transportista
   const [tempAddressee, setTempAddressee] = useState<Addressees | null>(null);
   const [tempCarrier, setTempCarrier] = useState<Carrier | null>(null);
+  const [skipAutoSelect, setSkipAutoSelect] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     idAnimalWeighing: number | null;
@@ -429,13 +430,16 @@ export function AnimalWeighingManagement() {
           }
         }
 
-        const brandName = animal.detailCertificateBrands?.detailsCertificateBrand?.brand?.name;
+        const brandData = animal.detailCertificateBrands?.detailsCertificateBrand?.brand;
+        const brandName = brandData?.name;
+        const brandId = brandData?.id;
         
         newRows.push({
           id: `${animal.id}`,
           animalId: animal.id,
           code: animal.code,
           producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
+          brandId: brandId,
           brandName: brandName,
           peso: savedWeight,
           savedWeight: savedWeight,
@@ -520,12 +524,15 @@ export function AnimalWeighingManagement() {
             const detailId = sectionData?.detailId;
             const hasPartialConfiscation = checkPartialConfiscation(animal, section.sectionCode);
 
+            const brandData = animal.detailCertificateBrands?.detailsCertificateBrand?.brand;
+
             newRows.push({
               id: `${animal.id}-${section.id}`,
               animalId: animal.id,
               code: animal.code,
               producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
-              brandName: animal.detailCertificateBrands?.detailsCertificateBrand?.brand?.name,
+              brandId: brandData?.id,
+              brandName: brandData?.name,
               peso: savedWeight,
               savedWeight: savedWeight,
               fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
@@ -548,12 +555,15 @@ export function AnimalWeighingManagement() {
             if (sectionInfo) {
               const hasPartialConfiscation = checkPartialConfiscation(animal, sectionInfo.code);
 
+              const brandData = animal.detailCertificateBrands?.detailsCertificateBrand?.brand;
+
               newRows.push({
                 id: `${animal.id}-${sectionId}`,
                 animalId: animal.id,
                 code: animal.code,
                 producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
-                brandName: animal.detailCertificateBrands?.detailsCertificateBrand?.brand?.name,
+                brandId: brandData?.id,
+                brandName: brandData?.name,
                 peso: sectionData.weight,
                 savedWeight: sectionData.weight,
                 fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
@@ -574,13 +584,15 @@ export function AnimalWeighingManagement() {
           // Si no hay datos guardados, mostrar todas las secciones del tipo actual
           channelSectionsData.data.forEach((section) => {
             const hasPartialConfiscation = checkPartialConfiscation(animal, section.sectionCode);
+            const brandData = animal.detailCertificateBrands?.detailsCertificateBrand?.brand;
 
             newRows.push({
               id: `${animal.id}-${section.id}`,
               animalId: animal.id,
               code: animal.code,
               producto: `${animal.animalSex.name} - ${animal.detailCertificateBrands.productiveStage.name}`,
-              brandName: animal.detailCertificateBrands?.detailsCertificateBrand?.brand?.name,
+              brandId: brandData?.id,
+              brandName: brandData?.name,
               peso: 0,
               savedWeight: 0,
               fechaIngreso: animal.detailCertificateBrands.detailsCertificateBrand.createdAt,
@@ -828,6 +840,7 @@ export function AnimalWeighingManagement() {
       }
 
       // Decidir si es POST (nuevo) o PATCH (actualización)
+      let response: any;
       if (row.idAnimalWeighing) {
         // PATCH - Actualizar peso existente
         const updateData: any = {
@@ -846,7 +859,7 @@ export function AnimalWeighingManagement() {
           updateData.idShipping = row.carrier.id;
         }
         
-        await updateWeighingMutation.mutateAsync({
+        response = await updateWeighingMutation.mutateAsync({
           idAnimalWeighing: row.idAnimalWeighing,
           data: updateData
         });
@@ -870,7 +883,7 @@ export function AnimalWeighingManagement() {
           saveData.idShipping = row.carrier.id;
         }
         
-        await saveWeighingMutation.mutateAsync(saveData);
+        response = await saveWeighingMutation.mutateAsync(saveData);
       }
 
       const message = weighingStageId === 1
@@ -878,6 +891,16 @@ export function AnimalWeighingManagement() {
         : `Peso ${row.idAnimalWeighing ? 'actualizado' : 'guardado'}: Bruto ${grossWeightDisplay.toFixed(2)} ${unitSymbol}, Neto ${netWeightDisplay.toFixed(2)} ${unitSymbol}`;
 
       toast.success(message);
+
+      // Descargar PDF automáticamente
+      // Intentar obtener el ID del detalle desde la respuesta de la API
+      const detailId = response?.data?.detailsAnimalWeighing?.[0]?.id 
+                    || response?.data?.[0]?.id 
+                    || row.idDetailAnimalWeighing;
+
+      if (detailId) {
+        handleDownloadPdf(detailId);
+      }
 
       // Invalidar la query para refrescar los datos desde la API
       queryClient.invalidateQueries({ queryKey: ["animal-weighing"] });
@@ -2130,6 +2153,7 @@ export function AnimalWeighingManagement() {
             setModalStep(1);
             setTempAddressee(null);
             setTempCarrier(null);
+            setSkipAutoSelect(false);
           }
         }}
       >
@@ -2145,7 +2169,9 @@ export function AnimalWeighingManagement() {
           <div className="w-full min-w-0 space-y-4">
             {/* Paso 1: Seleccionar Destinatario */}
             {modalStep === 1 && !tempAddressee && (
-              <Step2AddresseeSelection
+              <AddresseeSelectionWeighing
+                initialBrandId={skipAutoSelect ? undefined : rows.find(r => r.id === addresseeSelectionRowId)?.brandId}
+                initialBrandName={skipAutoSelect ? undefined : rows.find(r => r.id === addresseeSelectionRowId)?.brandName}
                 onSelect={(addressee) => {
                   setTempAddressee(addressee);
                 }}
@@ -2160,12 +2186,13 @@ export function AnimalWeighingManagement() {
 
             {/* Card de resumen del destinatario seleccionado */}
             {tempAddressee && (
-              <AddresseeSummaryCard
+              <AddresseeSummaryCardWeighing
                 addressee={tempAddressee}
                 onEdit={() => {
                   setTempAddressee(null);
                   setTempCarrier(null);
                   setModalStep(1);
+                  setSkipAutoSelect(true);
                 }}
               />
             )}

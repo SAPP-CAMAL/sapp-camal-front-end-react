@@ -39,7 +39,7 @@ export function CarrierSummaryCard({
           <div className="space-y-3">
             <div>
               <span className="text-gray-600">Transportista: </span>
-              <span className="font-medium">{carrier.person.fullName}</span>
+              <span className="font-medium">{carrier.person?.fullName || "N/A"}</span>
             </div>
             <div>
               <span className="text-gray-600">Identificación: </span>
@@ -50,12 +50,12 @@ export function CarrierSummaryCard({
           <div className="space-y-3">
             <div>
               <span className="text-gray-600">Vehículo: </span>
-              <span className="font-medium">{carrier.vehicle.plate}</span>
+              <span className="font-medium">{carrier.vehicle?.plate || "N/A"}</span>
             </div>
             <div>
               <span className="text-gray-600">Tipo: </span>
               <span className="font-medium">
-                {carrier.vehicle.vehicleDetail.vehicleType.name}
+                {carrier.vehicle?.vehicleDetail?.vehicleType?.name || "N/A"}
               </span>
             </div>
           </div>
