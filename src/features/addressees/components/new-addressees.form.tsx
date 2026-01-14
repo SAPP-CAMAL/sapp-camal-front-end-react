@@ -25,6 +25,10 @@ import {
   ToggleLeftIcon,
   ToggleRightIcon,
   User,
+  Settings2,
+  ArrowLeftRight,
+  Tag,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -34,6 +38,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { ResponseProvinces } from "@/features/provinces/server/provinces.service";
@@ -43,12 +57,33 @@ import { Person, ResponsePeopleByFilter } from "@/features/people/domain";
 import {
   createAdresseesService,
   updateAdresseesService,
+  assignBrandToAddresseeService,
 } from "../server/addressees.service";
 import { getPeopleByFilterService } from "@/features/people/server/db/people.service";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Addressees } from "../domain";
 import { useDebouncedCallback } from "use-debounce";
+import { getBrandsByName } from "@/features/brand/server/db/brand.service";
+
+// Type for the brand with introducer info
+type BrandWithIntroducer = {
+  id: number;
+  name: string;
+  description: string | null;
+  introducerId: number;
+  status: boolean;
+  introducer: {
+    id: number;
+    user: {
+      id: number;
+      person: {
+        identification: string;
+        fullName: string;
+      };
+    };
+  };
+};
 
 interface NewAddresseesFormProps {
   provinces: ResponseProvinces[];
@@ -78,6 +113,17 @@ export default function NewAddresseesForm({
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [debouncedFullName, setDebouncedFullName] = useState("");
   const [debouncedIdentification, setDebouncedIdentification] = useState("");
+  
+  // New states for Estado/Asignar views
+  const [activeView, setActiveView] = useState<'status' | 'assign'>('status');
+  const [brandSearchText, setBrandSearchText] = useState("");
+  const [debouncedBrandSearch, setDebouncedBrandSearch] = useState("");
+  const [foundBrands, setFoundBrands] = useState<BrandWithIntroducer[]>([]);
+  const [isSearchingBrands, setIsSearchingBrands] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState<BrandWithIntroducer | null>(null);
+  const [showBrandSearch, setShowBrandSearch] = useState(false);
+  const [currentBrandName, setCurrentBrandName] = useState<string>("");
+  const [showRemoveBrandDialog, setShowRemoveBrandDialog] = useState(false);
 
   const { data: cantons, isLoading: cantonsLoading } = useCantonsByProvinceId(
     Number(provinceId)
@@ -90,6 +136,15 @@ export default function NewAddresseesForm({
   useEffect(() => {
     if (open && isUpdate && addresseeData) {
       initializeFormWithData(addresseeData);
+      
+      // Initialize current brand if available
+      if (addresseeData.brand) {
+        setCurrentBrandName(addresseeData.brand);
+        setShowBrandSearch(false);
+      } else {
+        setCurrentBrandName("");
+        setShowBrandSearch(true);
+      }
       
       // Initialize province immediately if available
       if (addresseeData.addresses && provinces) {
@@ -162,6 +217,13 @@ export default function NewAddresseesForm({
     500
   );
 
+  const updateDebouncedBrandSearch = useDebouncedCallback(
+    (value: string) => {
+      setDebouncedBrandSearch(value);
+    },
+    500
+  );
+
   const query = useQuery<ResponsePeopleByFilter>({
     queryKey: ["people", debouncedFullName, debouncedIdentification],
     queryFn: () =>
@@ -206,6 +268,40 @@ export default function NewAddresseesForm({
   useEffect(() => {
     updateDebouncedIdentification(filterIdentification);
   }, [filterIdentification]);
+
+  // Brand search effect
+  useEffect(() => {
+    if (debouncedBrandSearch.length < 1) {
+      setFoundBrands([]);
+      return;
+    }
+
+    const searchBrands = async () => {
+      setIsSearchingBrands(true);
+      try {
+        const response = await getBrandsByName(debouncedBrandSearch);
+        setFoundBrands(response.data || []);
+      } catch (error: any) {
+        setFoundBrands([]);
+        
+        // Mostrar mensaje de error del backend
+        if (error.response) {
+          try {
+            const errorData = await error.response.json();
+            toast.error(errorData.data || errorData.message || "Error al buscar marcas");
+          } catch {
+            toast.error("Error al buscar marcas");
+          }
+        } else {
+          toast.error("Error al buscar marcas");
+        }
+      } finally {
+        setIsSearchingBrands(false);
+      }
+    };
+
+    searchBrands();
+  }, [debouncedBrandSearch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,10 +368,77 @@ export default function NewAddresseesForm({
     setDebouncedFullName("");
     setDebouncedIdentification("");
     setIsActive(true);
+    setActiveView('status');
+    setBrandSearchText("");
+    setDebouncedBrandSearch("");
+    setFoundBrands([]);
+    setSelectedBrand(null);
+    setShowBrandSearch(false);
+    setCurrentBrandName("");
   };
 
   const handleToggleStatus = () => {
     setIsActive(!isActive);
+  };
+
+  const handleRemoveBrand = async () => {
+    if (!selectedPerson) {
+      toast.error("No hay destinatario seleccionado");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await assignBrandToAddresseeService(selectedPerson.id, null);
+      toast.success("Marca eliminada exitosamente");
+      
+      // Clear current brand
+      setCurrentBrandName("");
+      setShowBrandSearch(true);
+      setShowRemoveBrandDialog(false);
+      
+      onSuccess?.();
+    } catch (error: any) {
+      console.error("Error al eliminar marca:", error);
+      toast.error("Error al eliminar la marca");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAssignBrand = async () => {
+    if (!selectedBrand) {
+      toast.error("Debe seleccionar una marca");
+      return;
+    }
+
+    if (!selectedPerson) {
+      toast.error("No hay destinatario seleccionado");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await assignBrandToAddresseeService(selectedPerson.id, selectedBrand.id);
+      toast.success(`Marca "${selectedBrand.name}" asignada exitosamente`);
+      
+      // Update current brand name and hide search
+      setCurrentBrandName(selectedBrand.name);
+      setShowBrandSearch(false);
+      setSelectedBrand(null);
+      setBrandSearchText("");
+      setDebouncedBrandSearch("");
+      setFoundBrands([]);
+      
+      onSuccess?.();
+    } catch (error: any) {
+      console.error("Error al asignar marca:", error);
+      toast.error("Error al asignar la marca");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -302,18 +465,106 @@ export default function NewAddresseesForm({
           </DialogDescription>
         </DialogHeader>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-gray-700" />
-              Información del Destinatario
-            </CardTitle>
-            <CardDescription>
-              {isUpdate
-                ? "La persona está bloqueada en modo edición."
-                : "Busque y seleccione la persona que actuará como destinatario."}
-            </CardDescription>
-          </CardHeader>
+        {isUpdate && (
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            padding: '4px',
+            backgroundColor: 'white',
+            borderRadius: '9999px',
+            marginBottom: '24px',
+            border: '1px solid #e5e7eb',
+            width: '100%',
+            maxWidth: '280px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            height: '44px',
+            overflow: 'hidden',
+            userSelect: 'none',
+            isolation: 'isolate',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+          }}>
+            {/* Green Sliding Pill */}
+            <div style={{
+              position: 'absolute',
+              top: '4px',
+              bottom: '4px',
+              left: '4px',
+              width: 'calc(50% - 4px)',
+              backgroundColor: '#0ea38d',
+              borderRadius: '9999px',
+              transition: 'transform 300ms ease-in-out',
+              transform: activeView === 'status' ? 'translateX(0)' : 'translateX(100%)',
+              zIndex: 0,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }} />
+            
+            <button
+              type="button"
+              onClick={() => setActiveView('status')}
+              style={{
+                position: 'relative',
+                zIndex: 10,
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                height: '100%',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                outline: 'none',
+                color: activeView === 'status' ? 'white' : 'black',
+                fontWeight: activeView === 'status' ? 'bold' : 'normal',
+                transition: 'color 300ms'
+              }}
+            >
+              <Settings2 style={{ width: '16px', height: '16px' }} />
+              <span style={{ fontSize: '14px' }}>Estado</span>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setActiveView('assign')}
+              style={{
+                position: 'relative',
+                zIndex: 10,
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                height: '100%',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                outline: 'none',
+                color: activeView === 'assign' ? 'white' : 'black',
+                fontWeight: activeView === 'assign' ? 'bold' : 'normal',
+                transition: 'color 300ms'
+              }}
+            >
+              <ArrowLeftRight style={{ width: '16px', height: '16px' }} />
+              <span style={{ fontSize: '14px' }}>Asignar</span>
+            </button>
+          </div>
+        )}
+
+        {activeView === 'status' ? (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-gray-700" />
+                  Información del Destinatario
+                </CardTitle>
+                <CardDescription>
+                  {isUpdate
+                    ? "La persona está bloqueada en modo edición."
+                    : "Busque y seleccione la persona que actuará como destinatario."}
+                </CardDescription>
+              </CardHeader>
 
           <CardContent>
             <Label htmlFor="" className="font-semibold">
@@ -581,6 +832,248 @@ export default function NewAddresseesForm({
             )}
           </Button>
         </div>
+          </>
+        ) : (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg text-primary text-sm font-medium">
+              <Info className="h-5 w-5 shrink-0 text-primary" />
+              <p>Busca y asigna marcas al destinatario actual.</p>
+            </div>
+
+            {/* Show current brand if exists and search is not active */}
+            {!showBrandSearch && currentBrandName ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Tag className="h-5 w-5 text-gray-700" />
+                    Marca Seleccionada
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-full">
+                          <Tag className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-primary/60 font-semibold uppercase tracking-wider">Marca Actual</p>
+                          <p className="text-sm font-bold text-primary">{currentBrandName}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setShowBrandSearch(true)}
+                          disabled={isSubmitting}
+                        >
+                          Cambiar
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setShowRemoveBrandDialog(true)}
+                          disabled={isSubmitting}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Tag className="h-5 w-5 text-gray-700" />
+                    Buscar Marca
+                  </CardTitle>
+                  <CardDescription>
+                    Ingrese el nombre de la marca para buscar
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <div className="relative">
+                    <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <Input
+                      placeholder="Buscar marca por nombre..."
+                      value={brandSearchText}
+                      onChange={(e) => {
+                        setBrandSearchText(e.target.value);
+                        updateDebouncedBrandSearch(e.target.value);
+                      }}
+                      className="pl-10 h-11"
+                    />
+                    {isSearchingBrands && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedBrand && (
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-primary/10 rounded-full">
+                            <Tag className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-primary/60 font-semibold uppercase tracking-wider">Marca Seleccionada</p>
+                            <p className="text-sm font-bold text-primary">{selectedBrand.name}</p>
+                            {selectedBrand.description && (
+                              <p className="text-xs text-gray-600">{selectedBrand.description}</p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-1">
+                              Introductor: {selectedBrand.introducer.user.person.fullName}
+                            </p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setSelectedBrand(null)}
+                        >
+                          Cambiar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+                    {foundBrands.length > 0 && !selectedBrand ? (
+                      foundBrands.map((brand) => (
+                        <Card 
+                          key={brand.id} 
+                          className="border-gray-200 hover:border-primary/50 transition-colors cursor-pointer"
+                          onClick={() => setSelectedBrand(brand)}
+                        >
+                          <CardHeader className="p-4 bg-gray-50/50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 flex-1">
+                                <Tag className="h-4 w-4 text-primary" />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold">{brand.name}</span>
+                                  <Badge variant={brand.status ? 'default' : 'secondary'}>
+                                    {brand.status ? 'Activa' : 'Inactiva'}
+                                  </Badge>
+                                </div>
+                                {brand.description && (
+                                  <p className="text-xs text-gray-600 mt-1">{brand.description}</p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Introductor: <span className="font-medium">{brand.introducer.user.person.fullName}</span>
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  CI: {brand.introducer.user.person.identification}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
+                      </Card>
+                    ))
+                  ) : brandSearchText.length >= 1 && !isSearchingBrands && !selectedBrand ? (
+                    <div className="text-center py-10 text-gray-500">
+                      <SearchIcon className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                      <p>No se encontraron marcas</p>
+                    </div>
+                  ) : !selectedBrand ? (
+                    <div className="text-center py-10 text-gray-400 border-2 border-dashed rounded-xl">
+                      <SearchIcon className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                      <p className="text-sm">Ingresa el nombre de la marca para buscar</p>
+                    </div>
+                  ) : null}
+                </div>
+
+                {selectedBrand && (
+                  <Button
+                    onClick={handleAssignBrand}
+                    className="w-full bg-primary hover:bg-primary/90"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                        Asignando...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-1 h-4 w-4" />
+                        Asignar Marca
+                      </>
+                    )}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+            )}
+
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setActiveView('status');
+                  setSelectedBrand(null);
+                  setBrandSearchText("");
+                  setDebouncedBrandSearch("");
+                  setFoundBrands([]);
+                  setShowBrandSearch(false);
+                }}
+              >
+                Volver a Estado
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  resetForm();
+                  setOpen(false);
+                }}
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <AlertDialog open={showRemoveBrandDialog} onOpenChange={setShowRemoveBrandDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Está seguro de eliminar la marca?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción eliminará la marca <span className="font-bold text-gray-900">"{currentBrandName}"</span> del destinatario. 
+                Podrá asignar una nueva marca en cualquier momento.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isSubmitting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleRemoveBrand();
+                }}
+                className="bg-destructive hover:bg-destructive/90"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Eliminando...
+                  </>
+                ) : (
+                  "Sí, eliminar marca"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
