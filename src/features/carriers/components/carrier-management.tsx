@@ -110,8 +110,8 @@ export function CarriersManagement({}) {
     try {
       // Construir body con filtros actuales
       const body: any = {
-        page: searchParams.page,
-        limit: searchParams.limit,
+        // page: searchParams.page,
+        // limit: searchParams.limit,
       };
       if (searchParams.identification && searchParams.identification.length > 0) body.identification = searchParams.identification;
       if (searchParams.fullName && searchParams.fullName.length > 0) body.fullName = searchParams.fullName;
@@ -168,7 +168,7 @@ export function CarriersManagement({}) {
             Gestión de transportistas y vehículos registrados en el sistema
           </p>
         </div>
-        <ReportDownloadButtons 
+        <ReportDownloadButtons
           onDownloadExcel={handleDownloadExcel}
           onDownloadPdf={handleDownloadPdf}
           isLoadingExcel={isLoadingExcel}

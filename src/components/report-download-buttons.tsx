@@ -47,7 +47,7 @@ export function ReportDownloadButtons({
           {isLoadingExcel && SpinnerIcon ? (
             <SpinnerIcon className="h-4 w-4 mr-2 animate-spin" />
           ) : (
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
           )}
           {isLoadingExcel ? "Descargando..." : "Descargar Excel"}
         </DropdownMenuItem>
@@ -59,7 +59,7 @@ export function ReportDownloadButtons({
           {isLoadingPdf && SpinnerIcon ? (
             <SpinnerIcon className="h-4 w-4 mr-2 animate-spin" />
           ) : (
-            <FileText className="h-4 w-4 mr-2" />
+            <FileText className="h-4 w-4 mr-2 text-red-600" />
           )}
           {isLoadingPdf ? "Descargando..." : "Descargar PDF"}
         </DropdownMenuItem>
