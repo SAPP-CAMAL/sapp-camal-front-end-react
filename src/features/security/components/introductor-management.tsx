@@ -80,7 +80,7 @@ export function IntroductorManagement() {
 		500
 	);
 
-	const hasActiveFilters = 
+	const hasActiveFilters =
 		searchParams.fullName.trim() !== '' ||
 		searchParams.identification.trim() !== '' ||
 		searchParams.brandName.trim() !== '' ||
@@ -134,8 +134,8 @@ export function IntroductorManagement() {
 		try {
 			// Construir body con filtros actuales
 			const body: any = {
-				page: searchParams.page,
-				limit: searchParams.limit,
+				// page: searchParams.page,
+				// limit: searchParams.limit,
 			};
 			if (searchParams.fullName && searchParams.fullName.length > 0) body.fullName = searchParams.fullName;
 			if (searchParams.identification && searchParams.identification.length > 0) body.identification = searchParams.identification;
@@ -193,7 +193,7 @@ export function IntroductorManagement() {
 						Administra usuarios con rol de Introductor y gestiona sus marcas
 					</p>
 				</div>
-				<ReportDownloadButtons 
+				<ReportDownloadButtons
 					onDownloadExcel={handleDownloadExcel}
 					onDownloadPdf={handleDownloadPdf}
 					isLoadingExcel={isLoadingExcel}
@@ -361,8 +361,8 @@ export function IntroductorManagement() {
 								{row.original.brands.map(brand => {
 									return (
 										<div key={brand.id} className='flex gap-x-2 items-center'>
-											<div 
-												className={`h-2 w-2 rounded-full flex-shrink-0 ${brand.status ? 'bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.3)]' : 'bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.3)]'}`} 
+											<div
+												className={`h-2 w-2 rounded-full flex-shrink-0 ${brand.status ? 'bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.3)]' : 'bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.3)]'}`}
 												title={brand.status ? 'Activo' : 'Inactivo'}
 											/>
 											<span className={`ml-1 ${brand.status ? 'font-bold text-gray-800' : 'text-gray-400 font-medium'}`}>

@@ -33,11 +33,7 @@ import { capitalizeText } from "@/lib/utils";
 import { getVehicleByFilterService } from "../server/db/vehicle.service";
 import NewVehicleForm from "./new-vehicle.form";
 import { toCapitalize } from "@/lib/toCapitalize";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 
 export function VehiclesManagement({}) {
   const searchCarriersParams = useSearchParams();
@@ -90,8 +86,8 @@ export function VehiclesManagement({}) {
     try {
       // Construir body con filtros actuales
       const body: any = {
-        page: searchParams.page,
-        limit: searchParams.limit,
+        // page: searchParams.page,
+        // limit: searchParams.limit,
       };
       if (searchParams.plate && searchParams.plate.length > 0) body.plate = searchParams.plate;
       if (searchParams.brand && searchParams.brand.length > 0) body.brand = searchParams.brand;
@@ -146,7 +142,7 @@ export function VehiclesManagement({}) {
             Gestión de vehículos registrados en el sistema
           </p>
         </div>
-        <ReportDownloadButtons 
+        <ReportDownloadButtons
           onDownloadExcel={handleDownloadExcel}
           onDownloadPdf={handleDownloadPdf}
           isLoadingExcel={isLoadingExcel}
