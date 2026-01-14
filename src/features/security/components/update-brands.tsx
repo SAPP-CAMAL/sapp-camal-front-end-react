@@ -79,6 +79,15 @@ type NewIntroductorProps = {
   onRefresh: () => void;
 };
 
+// Función para formatear errores de validación de la API
+const formatValidationErrors = (errors: Record<string, string>): string => {
+  const errorMessages = Object.values(errors);
+  if (errorMessages.length === 1) {
+    return errorMessages[0];
+  }
+  return errorMessages.map((msg, idx) => `${idx + 1}. ${msg}`).join('\n');
+};
+
 export function UpdateBrands({
   species,
   introductor,
@@ -96,6 +105,7 @@ export function UpdateBrands({
   const [isConfirmingTransfer, setIsConfirmingTransfer] = useState(false);
   const [targetIntroToAssign, setTargetIntroToAssign] = useState<Introducer | null>(null);
   
+  const [brandToToggle, setBrandToToggle] = useState<number | null>(null);
   const [isActive, setIsActive] = useState<Record<number, boolean>>({});
   const [selectedSpecies, setSelectedSpecies] = useState<
     Record<number, Specie[]>
@@ -184,8 +194,31 @@ export function UpdateBrands({
       form.reset({ description: "" });
       setNewBrandSpecies([]);
       handleCloseModal();
-    } catch (error) {
-      toast.error("Error al crear la Marca");
+    } catch (error: any) {
+      console.error("Error al crear la marca:", error);
+      
+      // Intentar obtener el mensaje de error del backend
+      if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          console.error("Error data:", errorData);
+          
+          // Si hay errores de validación, formatearlos elegantemente
+          if (errorData.errors && typeof errorData.errors === 'object') {
+            const formattedErrors = formatValidationErrors(errorData.errors);
+            toast.error(formattedErrors, {
+              duration: 5000,
+              style: { whiteSpace: 'pre-line' }
+            });
+          } else {
+            toast.error(errorData.message || "Error al crear la marca");
+          }
+        } catch {
+          toast.error("Error al crear la marca. Verifica los datos.");
+        }
+      } else {
+        toast.error("Error al crear la marca");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -230,7 +263,17 @@ export function UpdateBrands({
         try {
           const errorData = await error.response.json();
           console.error("Error data:", errorData);
-          toast.error(errorData.message || "Error al actualizar la marca");
+          
+          // Si hay errores de validación, formatearlos elegantemente
+          if (errorData.errors && typeof errorData.errors === 'object') {
+            const formattedErrors = formatValidationErrors(errorData.errors);
+            toast.error(formattedErrors, {
+              duration: 5000,
+              style: { whiteSpace: 'pre-line' }
+            });
+          } else {
+            toast.error(errorData.message || "Error al actualizar la marca");
+          }
         } catch {
           toast.error("Error al actualizar la marca. Verifica los datos.");
         }
@@ -248,9 +291,20 @@ export function UpdateBrands({
     onRefresh();
   };
 
-  const handleToggleStatus = async (brandId: number) => {
-    const newStatus = !isActive[brandId];
+  const confirmToggleStatus = async () => {
+    if (brandToToggle === null) return;
+    
+    // Determine the new status based on current status
+    const currentStatus = isActive[brandToToggle];
+    const newStatus = !currentStatus;
 
+    // Proceed with status change
+    await changeBrandStatus(brandToToggle, newStatus);
+    setBrandToToggle(null);
+  };
+
+  const changeBrandStatus = async (brandId: number, newStatus: boolean) => {
+    // Optimistic update
     setIsActive((prev) => ({
       ...prev,
       [brandId]: newStatus,
@@ -265,6 +319,7 @@ export function UpdateBrands({
       );
       handleCloseModal();
     } catch (error) {
+      // Revert optimization
       setIsActive((prev) => ({
         ...prev,
         [brandId]: !newStatus,
@@ -273,6 +328,11 @@ export function UpdateBrands({
       toast.error("No se pudo actualizar el estado de la marca.");
       console.error(error);
     }
+  };
+
+  const handleToggleStatus = (brandId: number) => {
+    // Always ask for confirmation for both activation and inactivation
+    setBrandToToggle(brandId);
   };
 
   const handleResetAssignView = () => {
@@ -467,138 +527,8 @@ export function UpdateBrands({
         {activeView === 'status' ? (
           <Form {...form}>
             <form className="space-y-8">
-            <div className="space-y-4">
-              <label className="font-semibold">Marcas Existentes:</label>
-
-              {introductor.brands?.length > 0 ? (
-                <div className="space-y-4">
-                  {introductor.brands.map((brand) => {
-                    const brandIsActive = isActive[brand.id];
-
-                    return (
-                      <Card
-                        key={brand.id}
-                        className={`w-full transition-all border-l-4 ${
-                          brandIsActive ? "border-l-primary shadow-sm" : "opacity-60 pointer-events-none border-l-gray-300"
-                        }`}
-                      >
-                        <CardHeader className="p-4 sm:p-5 bg-gray-50/50">
-                          <CardTitle>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">Marca: {brand.name}</span>
-                          </CardTitle>
-                        </CardHeader>
-
-                        <CardContent className="space-y-4 p-4 sm:p-6 pb-4">
-                          <Input
-                            type="text"
-                            value={
-                              brandNames.hasOwnProperty(brand.id)
-                                ? brandNames[brand.id]
-                                : brand.name
-                            }
-                            className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100 text-sm sm:text-base"
-                            onChange={(e) =>
-                              handleBrandNameChange(brand.id, e.target.value)
-                            }
-                            disabled={!brandIsActive || isSubmitting}
-                          />
-
-                          <div>
-                            <label className="font-semibold block mb-2 text-sm sm:text-base">
-                              Especies *
-                            </label>
-                            <div className="flex flex-wrap gap-3 sm:gap-4">
-                              {species.map((specie) => (
-                                <Label
-                                  key={specie.id}
-                                  className={`flex items-center gap-x-2 cursor-pointer text-sm sm:text-base ${
-                                    !brandIsActive
-                                      ? "cursor-not-allowed opacity-70"
-                                      : ""
-                                  }`}
-                                >
-                                  <Checkbox
-                                    checked={selectedSpecies[brand.id]?.some(
-                                      (s) => s.id === specie.id
-                                    )}
-                                    onCheckedChange={(checked: boolean) =>
-                                      handleCheckboxChange(
-                                        brand.id,
-                                        specie,
-                                        checked
-                                      )
-                                    }
-                                    disabled={!brandIsActive || isSubmitting}
-                                  />
-                                  {specie.name}
-                                </Label>
-                              ))}
-                            </div>
-                          </div>
-
-                          {selectedSpecies[brand.id] &&
-                            selectedSpecies[brand.id].length > 0 && (
-                              <div className="p-3 bg-gray-50 rounded-lg border text-sm sm:text-base">
-                                <span className="font-bold">
-                                  {brandNames[brand.id] || brand.name}:
-                                </span>
-                                <span className="ml-2">
-                                  [
-                                  {selectedSpecies[brand.id]
-                                    .map((s) => (s.name ?? "").toUpperCase())
-                                    .join(", ")}
-                                  ]
-                                </span>
-                              </div>
-                            )}
-
-                          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
-                            {/* Botón Actualizar */}
-                            <Button
-                              type="button"
-                              className="flex items-center gap-2 flex-1 font-bold h-10"
-                              onClick={() => handleUpdateBrand(brand.id)}
-                              disabled={isSubmitting || !brandIsActive}
-                            >
-                              <Save size={16} />
-                              <span className="text-sm">Actualizar</span>
-                            </Button>
-
-                            <Button
-                              type="button"
-                              onClick={() => handleToggleStatus(brand.id)}
-                              variant={
-                                brandIsActive ? "outline" : "secondary"
-                              }
-                              disabled={isSubmitting}
-                              className="flex items-center gap-2 flex-1 h-10"
-                            >
-                              <span
-                                className={`text-sm ${
-                                  brandIsActive
-                                    ? "font-bold"
-                                    : "text-gray-400"
-                                }`}
-                              >
-                                {brandIsActive ? "Activo" : "Inactivo"}
-                              </span>
-                              {brandIsActive ? (
-                                <ToggleRightIcon className="w-8 h-8 text-primary" />
-                              ) : (
-                                <ToggleLeftIcon className="w-8 h-8 text-gray-500" />
-                              )}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-gray-500">No hay marcas registradas</p>
-              )}
-            </div>
-
+            
+            {/* Botón y Card de Nueva Marca - Movido al inicio */}
             <div className="space-y-6">
               {!showNewBrandCard && (
                 <Button
@@ -699,21 +629,154 @@ export function UpdateBrands({
 
                     <Button
                       type="button"
-                      className="w-full mt-4"
-                      onClick={() => handleSaveBrands()}
+                      onClick={handleSaveBrands}
+                      className="w-full font-bold"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? (
-                        "Guardando..."
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Creando...
+                        </>
                       ) : (
                         <>
-                          <Save size={16} className="mr-2" />
-                          Guardar Marca
+                          <Save className="w-4 h-4 mr-2" />
+                          Crear Marca
                         </>
                       )}
                     </Button>
                   </CardContent>
                 </Card>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <label className="font-semibold">Marcas Existentes:</label>
+
+              {introductor.brands?.length > 0 ? (
+                <div className="space-y-4">
+                  {introductor.brands.map((brand) => {
+                    const brandIsActive = isActive[brand.id];
+
+                    return (
+                      <Card
+                        key={brand.id}
+                        className={`w-full transition-all border-l-4 ${
+                          brandIsActive ? "border-l-primary shadow-sm" : "bg-gray-50 border-l-gray-300"
+                        }`}
+                      >
+                        <CardHeader className="p-4 sm:p-5 bg-gray-50/50">
+                          <CardTitle>
+                            <span className="text-base sm:text-lg font-bold text-gray-800">Marca: {brand.name}</span>
+                          </CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="space-y-4 p-4 sm:p-6 pb-4">
+                          <Input
+                            type="text"
+                            value={
+                              brandNames.hasOwnProperty(brand.id)
+                                ? brandNames[brand.id]
+                                : brand.name
+                            }
+                            className="w-full border border-gray-300 rounded-md shadow-sm bg-gray-100 text-sm sm:text-base"
+                            onChange={(e) =>
+                              handleBrandNameChange(brand.id, e.target.value)
+                            }
+                            disabled={!brandIsActive || isSubmitting}
+                          />
+
+                          <div>
+                            <label className="font-semibold block mb-2 text-sm sm:text-base">
+                              Especies *
+                            </label>
+                            <div className="flex flex-wrap gap-3 sm:gap-4">
+                              {species.map((specie) => (
+                                <Label
+                                  key={specie.id}
+                                  className={`flex items-center gap-x-2 cursor-pointer text-sm sm:text-base ${
+                                    !brandIsActive
+                                      ? "cursor-not-allowed opacity-70"
+                                      : ""
+                                  }`}
+                                >
+                                  <Checkbox
+                                    checked={selectedSpecies[brand.id]?.some(
+                                      (s) => s.id === specie.id
+                                    )}
+                                    onCheckedChange={(checked: boolean) =>
+                                      handleCheckboxChange(
+                                        brand.id,
+                                        specie,
+                                        checked
+                                      )
+                                    }
+                                    disabled={!brandIsActive || isSubmitting}
+                                  />
+                                  {specie.name}
+                                </Label>
+                              ))}
+                            </div>
+                          </div>
+
+                          {selectedSpecies[brand.id] &&
+                            selectedSpecies[brand.id].length > 0 && (
+                              <div className="p-3 bg-gray-50 rounded-lg border text-sm sm:text-base">
+                                <span className="font-bold">
+                                  {brandNames[brand.id] || brand.name}:
+                                </span>
+                                <span className="ml-2">
+                                  [
+                                  {selectedSpecies[brand.id]
+                                    .map((s) => (s.name ?? "").toUpperCase())
+                                    .join(", ")}
+                                  ]
+                                </span>
+                              </div>
+                            )}
+
+                          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
+                            {/* Botón Actualizar */}
+                            <Button
+                              type="button"
+                              className="flex items-center gap-2 flex-1 font-bold h-10"
+                              onClick={() => handleUpdateBrand(brand.id)}
+                              disabled={isSubmitting || !brandIsActive}
+                            >
+                              <Save size={16} />
+                              <span className="text-sm">Actualizar</span>
+                            </Button>
+
+                            <Button
+                              type="button"
+                              onClick={() => handleToggleStatus(brand.id)}
+                              variant={
+                                brandIsActive ? "default" : "outline"
+                              }
+                              disabled={isSubmitting}
+                              className={`flex items-center gap-2 flex-1 h-10 transition-colors ${
+                                !brandIsActive 
+                                  ? "bg-red-50 hover:bg-red-100 border-red-200 text-red-700" 
+                                  : "bg-primary hover:bg-primary/90 text-white border-transparent"
+                              }`}
+                            >
+                              <span className="text-sm font-bold">
+                                {brandIsActive ? "Activo" : "Inactivo"}
+                              </span>
+                              {brandIsActive ? (
+                                <ToggleRightIcon className="w-8 h-8 text-white" />
+                              ) : (
+                                <ToggleLeftIcon className="w-8 h-8 text-red-500" />
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-gray-500">No hay marcas registradas</p>
               )}
             </div>
 
@@ -827,6 +890,7 @@ export function UpdateBrands({
                     </div>
                   ) : (
                     <div className="text-center py-10 text-gray-400 border-2 border-dashed rounded-xl">
+                      <Search className="h-10 w-10 mx-auto mb-2 opacity-20" />
                       <p className="text-sm">Ingresa el nombre del introductor receptor</p>
                     </div>
                   )}
@@ -877,6 +941,26 @@ export function UpdateBrands({
               >
                 {isSubmitting ? "Transfiriendo..." : "Sí, transferir marca"}
               </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={!!brandToToggle} onOpenChange={(open) => !open && setBrandToToggle(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {brandToToggle && isActive[brandToToggle] 
+                  ? "¿Está seguro que desea inactivar esta marca?" 
+                  : "¿Está seguro que desea activar esta marca?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {brandToToggle && isActive[brandToToggle] 
+                  ? "Al inactivar la marca, esta dejará de estar disponible para las operaciones. Podrá volver a activarla en cualquier momento." 
+                  : "Al activar la marca, esta volverá a estar disponible para todas las operaciones del sistema."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmToggleStatus}>Continuar</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

@@ -177,8 +177,8 @@ function createKyClient(prefixUrl: string): KyInstance {
 
                             debug["body"] = bodyText
 
-                            // eslint-disable-next-line no-console
-                            console.error("[HTTP] Request failed", debug)
+                            // Logging deshabilitado para evitar mensajes en consola
+                            // console.error("[HTTP] Request failed", debug)
                         }
                     }
 

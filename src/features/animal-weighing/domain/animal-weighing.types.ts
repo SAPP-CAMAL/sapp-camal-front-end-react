@@ -2,7 +2,7 @@
  * Tipos para el pesaje de animales en diferentes etapas
  */
 
-export type ProductType = "CANAL" | "MEDIA_CANAL";
+export type ProductType = "CANAL" | "MEDIA_CANAL" | "CUARTA_CANAL";
 
 export type WeighingStage = "ANTE" | "POST" | "DIST";
 
