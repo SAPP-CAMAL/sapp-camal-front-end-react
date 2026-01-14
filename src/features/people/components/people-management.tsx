@@ -87,8 +87,8 @@ export function PeopleManagement({}) {
     try {
       // Construir body con filtros actuales
       const body: any = {
-        page: searchParams.page,
-        limit: searchParams.limit,
+        // page: searchParams.page,
+        // limit: searchParams.limit,
       };
       if (searchParams.fullName && searchParams.fullName.length > 0) body.fullName = searchParams.fullName;
       if (searchParams.identification && searchParams.identification.length > 0) body.identificacion = searchParams.identification;
@@ -146,7 +146,7 @@ export function PeopleManagement({}) {
             Administra la información de todas las personas en el sistema
           </p>
         </div>
-        <ReportDownloadButtons 
+        <ReportDownloadButtons
           onDownloadExcel={handleDownloadExcel}
           onDownloadPdf={handleDownloadPdf}
           isLoadingExcel={isLoadingExcel}
