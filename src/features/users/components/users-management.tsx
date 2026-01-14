@@ -76,8 +76,8 @@ export function UsersManagement() {
     try {
       // Construir body con filtros actuales
       const body: any = {
-        page: searchParams.page,
-        limit: searchParams.limit,
+        // page: searchParams.page,
+        // limit: searchParams.limit,
       };
       if (searchParams.fullName && searchParams.fullName.length > 0) body.fullName = searchParams.fullName;
       if (searchParams.email && searchParams.email.length > 0) body.email = searchParams.email;
@@ -136,7 +136,7 @@ export function UsersManagement() {
           </p>
         </div>
 			</div>
-        <ReportDownloadButtons 
+        <ReportDownloadButtons
           onDownloadExcel={handleDownloadExcel}
           onDownloadPdf={handleDownloadPdf}
           isLoadingExcel={isLoadingExcel}

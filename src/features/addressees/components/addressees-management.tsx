@@ -96,8 +96,8 @@ export function AddresseesManagement({}) {
     if (searchParams.fullName && searchParams.fullName.length > 0) filters.fullName = searchParams.fullName;
     if (searchParams.identification && searchParams.identification.length > 0) filters.identification = searchParams.identification;
     if (searchParams.providenceId && searchParams.providenceId !== 0) filters.provinceId = searchParams.providenceId;
-    if (searchParams.page) filters.page = searchParams.page;
-    if (searchParams.limit) filters.limit = searchParams.limit;
+    // if (searchParams.page) filters.page = searchParams.page;
+    // if (searchParams.limit) filters.limit = searchParams.limit;
 
     try {
       // Obtener token manualmente (como en locker-room-control)
@@ -152,7 +152,7 @@ export function AddresseesManagement({}) {
             Gestión de destinatarios registrados en el sistema
           </p>
         </div>
-        <ReportDownloadButtons 
+        <ReportDownloadButtons
           onDownloadExcel={handleDownloadExcel}
           onDownloadPdf={handleDownloadPdf}
           isLoadingExcel={isLoadingExcel}
