@@ -16,10 +16,10 @@ export interface Addressees {
     id:             number;
     fullName:       string;
     personId?:      number;
-    email:          string;
     identification: string;
     status:         boolean;
     createdAt:      Date;
+    brand:          string;
     addresses:      Address;
 }
 

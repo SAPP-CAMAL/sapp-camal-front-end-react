@@ -149,7 +149,7 @@ export function Step3CarrierSelection({
                       <span>Transportista</span>
                     </div>
                     <div className="font-semibold text-sm">
-                      {carrier.person.fullName}
+                      {carrier.person?.fullName || "Nombre no disponible"}
                     </div>
                   </div>
 
@@ -171,9 +171,9 @@ export function Step3CarrierSelection({
                       <span>Vehículo</span>
                     </div>
                     <div className="text-sm">
-                      <div className="font-medium">{carrier.vehicle.plate}</div>
+                      <div className="font-medium">{carrier.vehicle?.plate || "N/A"}</div>
                       <div className="text-xs text-muted-foreground">
-                        {carrier.vehicle.vehicleDetail.vehicleType.name}
+                        {carrier.vehicle?.vehicleDetail?.vehicleType?.name || "Tipo no especificado"}
                       </div>
                     </div>
                   </div>
@@ -250,7 +250,7 @@ export function Step3CarrierSelection({
                   >
                     <TableCell className="text-sm border">
                       <span className="font-medium">
-                        {carrier.person.fullName}
+                        {carrier.person?.fullName || "N/A"}
                       </span>
                     </TableCell>
                     <TableCell className="text-sm text-center border">
@@ -259,10 +259,10 @@ export function Step3CarrierSelection({
                     <TableCell className="text-sm text-center border">
                       <div className="flex flex-col">
                         <span className="font-medium">
-                          {carrier.vehicle.plate}
+                          {carrier.vehicle?.plate}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {carrier.vehicle.vehicleDetail.vehicleType.name}
+                          {carrier.vehicle?.vehicleDetail?.vehicleType?.name || "N/A"}
                         </span>
                       </div>
                     </TableCell>

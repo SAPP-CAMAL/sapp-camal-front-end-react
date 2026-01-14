@@ -14,7 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
-import { EditIcon, MapPin, PlusIcon, SearchIcon } from "lucide-react";
+import { EditIcon, MapPin, PlusIcon, SearchIcon, Tag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -255,15 +255,11 @@ export function AddresseesManagement({}) {
                     {toCapitalize(row.original.fullName ?? "", true) ?? "—"}
                   </span>
                   <span className="text-gray-600 text-xs">
-                    {row.original.email ?? "—"}{" "}
+                    {row.original.identification ?? "—"}
                   </span>
                 </div>
               );
             },
-          },
-          {
-            accessorKey: "identification",
-            header: "Identificación",
           },
           {
             header: "Dirección",
@@ -286,12 +282,12 @@ export function AddresseesManagement({}) {
             },
           },
           {
-            header: "Provincia",
+            header: "Marca",
             cell: ({ row }) => (
               <Badge variant="outline" className="flex items-center gap-1">
-                <MapPin className="text-purple-500" />
+                <Tag className="text-purple-500 h-4 w-4" />
                 <span className="text-purple-600 font-medium">
-                  {row.original.addresses?.province ?? "—"}
+                  {row.original.brand ?? "—"}
                 </span>
               </Badge>
             ),
