@@ -119,11 +119,11 @@ export function NewPerson({
 
       toast.success("Persona creada exitosamente");
     } catch (error: any) {
-      console.error("Error al crear persona:", error);
       if (error.response) {
         try {
-          const { data } = await error.response.json();
-          toast.error(data || "Error al crear la persona");
+          const errorData = await error.response.json();
+          const errorMessage = errorData?.data || errorData?.message || "Error al crear la persona";
+          toast.error(errorMessage);
         } catch {
           toast.error("Error al crear la persona");
         }
@@ -136,7 +136,12 @@ export function NewPerson({
   return (
     <Dialog
       open={form.watch("open")}
-      onOpenChange={(open) => form.setValue("open", open)}
+      onOpenChange={(open) => {
+        form.setValue("open", open);
+        if (!open) {
+          form.reset(defaultValues);
+        }
+      }}
     >
       <DialogTrigger asChild>
         <Button type="button">

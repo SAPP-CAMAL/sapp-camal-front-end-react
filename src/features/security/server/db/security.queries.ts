@@ -37,6 +37,10 @@ export function updateBrandService(brandId: number, body: Partial<UpdateBrandReq
     ).json<ResponseCreateIntroducerBrandService>()
 }
 
+export function reassignBrandService(brandId: number, targetIntroducerId: number): Promise<ResponseCreateIntroducerBrandService> {
+    return http.patch(`v1/1.0.0/brands/assignation/${brandId}/${targetIntroducerId}`).json<ResponseCreateIntroducerBrandService>()
+}
+
 export function getUserRolesService(): Promise<CommonHttpResponse<Role>> {
     return http.get("v1/1.0.0/users/roles").json()
 }

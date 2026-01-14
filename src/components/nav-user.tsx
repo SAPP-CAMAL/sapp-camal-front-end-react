@@ -114,6 +114,7 @@ export function NavUser({ user }: { user: LoginResponse }) {
                     window.localStorage.removeItem("accessToken");
                     window.localStorage.removeItem("refreshToken");
                     window.localStorage.removeItem("user");
+                    window.localStorage.removeItem("activeRoleId");
                     
                     // Borrar cookies del navegador
                     document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";

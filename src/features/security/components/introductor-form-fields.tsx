@@ -41,6 +41,16 @@ export type BrandCreating = {
   name: string;
   species: string[];
 };
+
+// Función para formatear errores de validación de la API
+const formatValidationErrors = (errors: Record<string, string>): string => {
+  const errorMessages = Object.values(errors);
+  if (errorMessages.length === 1) {
+    return errorMessages[0];
+  }
+  return errorMessages.map((msg, idx) => `${idx + 1}. ${msg}`).join('\n');
+};
+
 export function IntroductorFormFields({
   species,
   introducerRolId,
@@ -153,8 +163,31 @@ export function IntroductorFormFields({
 
       form.reset({ description: "" });
       setSelectedSpecies([]);
-    } catch (error) {
-      toast.error("Error al crear la Marca");
+    } catch (error: any) {
+      console.error("Error al crear la marca:", error);
+      
+      // Intentar obtener el mensaje de error del backend
+      if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          console.error("Error data:", errorData);
+          
+          // Si hay errores de validación, formatearlos elegantemente
+          if (errorData.errors && typeof errorData.errors === 'object') {
+            const formattedErrors = formatValidationErrors(errorData.errors);
+            toast.error(formattedErrors, {
+              duration: 5000,
+              style: { whiteSpace: 'pre-line' }
+            });
+          } else {
+            toast.error(errorData.message || "Error al crear la marca");
+          }
+        } catch {
+          toast.error("Error al crear la marca. Verifica los datos.");
+        }
+      } else {
+        toast.error("Error al crear la marca");
+      }
     } finally {
       setIsSubmitting(false);
     }
