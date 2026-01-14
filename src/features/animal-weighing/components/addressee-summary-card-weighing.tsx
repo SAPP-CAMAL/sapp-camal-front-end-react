@@ -2,36 +2,36 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, User, MapPin, Mail, Phone } from "lucide-react";
+import { Edit, User, MapPin } from "lucide-react";
 import { Addressees } from "@/features/addressees/domain";
 import { toCapitalize } from "@/lib/toCapitalize";
 
-interface AddresseeSummaryCardProps {
+interface AddresseeSummaryCardWeighingProps {
   addressee: Addressees;
   onEdit: () => void;
 }
 
-export function AddresseeSummaryCard({
+export function AddresseeSummaryCardWeighing({
   addressee,
   onEdit,
-}: AddresseeSummaryCardProps) {
+}: AddresseeSummaryCardWeighingProps) {
   const address = addressee.addresses;
 
   return (
-    <Card>
+    <Card className="border-teal-200">
       <CardContent className="pt-6">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="bg-teal-600 text-white p-3 rounded">
-            <User className="h-6 w-6" />
+        <div className="flex items-center gap-4 mb-4 border-b border-teal-100 pb-3">
+          <div className="bg-teal-600 text-white p-2.5 rounded shadow-sm">
+            <User className="h-5 w-5" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-700">
+          <h2 className="text-lg font-bold text-gray-800 tracking-tight">
             Destinatario Seleccionado
           </h2>
           <Button
             variant="outline"
             size="sm"
             onClick={onEdit}
-            className="ml-auto text-teal-600 hover:text-teal-700 hover:bg-teal-100"
+            className="ml-auto text-teal-600 border-teal-200 hover:text-teal-700 hover:bg-teal-50 shadow-sm"
           >
             <Edit className="h-4 w-4 mr-2" />
             Cambiar
@@ -41,33 +41,26 @@ export function AddresseeSummaryCard({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
           <div className="space-y-3">
             <div>
-              <span className="text-gray-600">Nombre Completo: </span>
-              <span className="font-medium">
+              <span className="text-muted-foreground font-medium">Nombre Completo: </span>
+              <span className="font-bold text-gray-900 block sm:inline mt-1 sm:mt-0">
                 {toCapitalize(addressee.fullName, true)}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-gray-600">Identificación: </span>
-              <span className="font-medium">
-                {addressee.identification}
               </span>
             </div>
           </div>
 
           <div className="space-y-3">
             <div>
-              <span className="text-gray-600">Marca: </span>
-              <span className="font-medium">
-                {addressee.brand || "—"}
+              <span className="text-muted-foreground font-medium">Identificación: </span>
+              <span className="font-bold text-gray-900">
+                {addressee.identification}
               </span>
             </div>
 
             <div>
-              <span className="text-gray-600">Ubicación: </span>
-              <div className="inline-flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                <span className="font-medium">
+              <span className="text-muted-foreground font-medium">Ubicación: </span>
+              <div className="flex items-center gap-2 mt-1">
+                <MapPin className="h-4 w-4 text-teal-500 shrink-0" />
+                <span className="font-bold text-gray-900">
                   {address
                     ? `${toCapitalize(address.canton, true)} - ${toCapitalize(
                         address.province,
