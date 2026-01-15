@@ -407,34 +407,42 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
           }
           
           // Buscar patrón: =X.XXXXX (formato Bernalo X1)
-          // Ejemplo: =0.50000 o =47.9000
-          const regex = /=(\d+\.\d+)/g;
+          // La balanza Bernalo X1 envía los dígitos INVERTIDOS
+          // Ejemplo: si marca 33.5 envía =5.33000
+          const regex = /=(\d+)\.(\d+)/g;
           let match;
           let lastIndex = 0;
 
           while ((match = regex.exec(textBuffer)) !== null) {
-            const fullMatch = match[0]; // Por ejemplo: "=0.50000"
-            const weightStr = match[1]; // Por ejemplo: "0.50000"
+            const fullMatch = match[0]; // Por ejemplo: "=5.33000"
+            const wholePart = match[1]; // Por ejemplo: "5"
+            const decimalPart = match[2]; // Por ejemplo: "33000"
             lastIndex = regex.lastIndex;
 
             console.log('🔍 [BALANZA] Patrón encontrado:', {
               fullMatch: fullMatch,
-              weightStr: weightStr,
+              wholePart: wholePart,
+              decimalPart: decimalPart,
               matchIndex: match.index,
               lastIndex: lastIndex,
             });
 
-            // La balanza envía el valor dividido entre 10, hay que multiplicar
-            const weightValue = parseFloat(weightStr) * 10;
+            // Concatenar todos los dígitos y luego invertir
+            const allDigits = wholePart + decimalPart; // "533000"
+            const reversedDigits = allDigits.split('').reverse().join(''); // "000335"
+            
+            // Convertir a número y dividir entre 10 para obtener el decimal correcto
+            const weightValue = parseFloat(reversedDigits) / 10; // 33.5
             
             console.log('⚖️ [BALANZA] Peso parseado:', {
               raw: fullMatch,
-              rawValue: parseFloat(weightStr),
-              value: weightValue,
+              allDigits: allDigits,
+              reversedDigits: reversedDigits,
+              weightValue: weightValue,
             });
 
             // Ignorar lecturas de cero o muy pequeñas (tara)
-            if (weightValue > 1.0) {
+            if (weightValue > 0.5) {
               // Agregar peso al buffer (redondear a 1 decimal)
               const roundedWeight = Math.round(weightValue * 10) / 10;
               weightBufferRef.current.push(roundedWeight);
@@ -475,7 +483,7 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
 
                   const finalWeight: WeightReading = {
                     value: mostFrequentWeight,
-                    unit: 'kg',
+                    unit: 'raw', // Valor crudo sin unidad, se gestiona desde el componente
                     raw: `=${mostFrequentWeight}`,
                     timestamp: new Date(),
                     stable: true,

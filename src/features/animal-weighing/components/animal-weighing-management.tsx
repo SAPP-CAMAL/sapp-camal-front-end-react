@@ -286,6 +286,44 @@ export function AnimalWeighingManagement() {
     }
   };
 
+  // Función para abrir PDF en nueva pestaña
+  const handleOpenPdf = async (idDetailAnimalWeighing: number) => {
+    try {
+      // Crear ventana inmediatamente para evitar bloqueo del navegador
+      const newWindow = window.open('', '_blank');
+      if (!newWindow) {
+        toast.error("No se pudo abrir el PDF. Por favor, permite ventanas emergentes.");
+        return;
+      }
+
+      // Mostrar mensaje de carga en la nueva ventana
+      newWindow.document.write('<html><body><h2>Generando ticket...</h2></body></html>');
+
+      // Obtener el PDF
+      const response = await http.get(
+        `v1/1.0.0/detail-specie-cert/pdf-report-animal-tag-data-by-id?idDetailsAnimalWeighing=${idDetailAnimalWeighing}`,
+        {
+          headers: {
+            'Accept': 'application/pdf',
+          },
+        }
+      );
+
+      // Convertir la respuesta a blob
+      const blob = await response.blob();
+      
+      // Crear un URL temporal para el blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Cargar el PDF en la ventana que ya abrimos
+      newWindow.location.href = url;
+      
+    } catch (error) {
+      toast.error("Error al abrir el PDF");
+      console.error('Error opening PDF:', error);
+    }
+  };
+
   // Función helper para verificar si hay decomiso parcial
   // Los datos de productPostmortem ya vienen en weighingData dentro de cada animal
   const checkPartialConfiscation = (animal: any, sectionCode: string): boolean => {
@@ -804,8 +842,8 @@ export function AnimalWeighingManagement() {
 
     if (weighingStageId !== 1 && selectedHook) {
       const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
-      const hookWeightKg = selectedHookData ? parseFloat(selectedHookData.weight) : 0;
-      hookWeightDisplay = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
+      // El peso del gancho ya está en la misma unidad que el sistema
+      hookWeightDisplay = selectedHookData ? parseFloat(selectedHookData.weight) : 0;
       grossWeightDisplay = netWeightDisplay + hookWeightDisplay;
     }
 
@@ -813,15 +851,10 @@ export function AnimalWeighingManagement() {
       // Obtener el ID de la unidad de medida desde la API
       const unitMeasureId = unitMeasureData?.data?.id || 1; // Default a 1 (KG) si no hay datos
 
-      // Convertir pesos a kg si la unidad configurada es LB (la base siempre guarda en kg)
-      // Si la unidad es KG, el peso ya está en kg y no necesita conversión
-      const grossWeightToSave = isLbUnit 
-        ? roundUpToTwoDecimals(convertLbToKg(grossWeightDisplay)) 
-        : roundUpToTwoDecimals(grossWeightDisplay);
-      
-      const netWeightToSave = isLbUnit 
-        ? roundUpToTwoDecimals(convertLbToKg(netWeightDisplay)) 
-        : roundUpToTwoDecimals(netWeightDisplay);
+      // Guardar los pesos tal cual en la unidad configurada
+      // La balanza ya envía el valor correcto en lb o kg según la configuración
+      const grossWeightToSave = roundUpToTwoDecimals(grossWeightDisplay);
+      const netWeightToSave = roundUpToTwoDecimals(netWeightDisplay);
 
       const detailsAnimalWeighing: any = {
         grossWeight: grossWeightToSave,
@@ -892,14 +925,14 @@ export function AnimalWeighingManagement() {
 
       toast.success(message);
 
-      // Descargar PDF automáticamente
+      // Abrir PDF automáticamente en nueva pestaña
       // Intentar obtener el ID del detalle desde la respuesta de la API
       const detailId = response?.data?.detailsAnimalWeighing?.[0]?.id 
                     || response?.data?.[0]?.id 
                     || row.idDetailAnimalWeighing;
 
       if (detailId) {
-        handleDownloadPdf(detailId);
+        handleOpenPdf(detailId);
       }
 
       // Invalidar la query para refrescar los datos desde la API
@@ -918,20 +951,18 @@ export function AnimalWeighingManagement() {
     if (currentWeight && selectedRowId) {
 
       const unitCode = unitMeasureData?.data?.code || 'KG';
-      const isLbUnit = unitCode === 'LB';
       const unitSymbol = unitMeasureData?.data?.symbol || 'kg';
       
-      // La balanza envía en kg, convertir a lb solo si la unidad configurada es LB
-      const weightFromScale = currentWeight.value;
-      let weightToDisplay = isLbUnit ? convertKgToLb(weightFromScale) : weightFromScale;
+      // La balanza ya envía el valor en la unidad configurada (lb o kg)
+      let weightToDisplay = currentWeight.value;
 
       // Restar el peso del gancho si aplica (no es EN PIE y hay gancho seleccionado)
       if (weighingStageId !== 1 && selectedHook) {
         const selectedHookData = hookTypesData?.data.find(h => h.id === selectedHook);
         if (selectedHookData) {
-          const hookWeightKg = parseFloat(selectedHookData.weight);
-          const hookWeightInUnit = isLbUnit ? convertKgToLb(hookWeightKg) : hookWeightKg;
-          weightToDisplay = weightToDisplay - hookWeightInUnit;
+          const hookWeight = parseFloat(selectedHookData.weight);
+          // El peso del gancho está en la misma unidad que weightToDisplay
+          weightToDisplay = weightToDisplay - hookWeight;
         }
       }
 
@@ -1095,13 +1126,7 @@ export function AnimalWeighingManagement() {
                     {/* Peso principal - mostrar en la unidad configurada */}
                     <div className="flex items-baseline gap-3 flex-wrap">
                       <span className={`text-3xl sm:text-4xl md:text-5xl font-bold ${currentWeight.value < 0 ? 'text-red-900' : 'text-blue-900'}`}>
-                        {(() => {
-                          const unitCode = unitMeasureData?.data?.code || 'KG';
-                          const isLbUnit = unitCode === 'LB';
-                          // La balanza envía en kg, convertir a lb solo si la unidad configurada es LB
-                          const displayWeight = isLbUnit ? convertKgToLb(currentWeight.value) : currentWeight.value;
-                          return displayWeight.toFixed(2);
-                        })()}
+                        {currentWeight.value.toFixed(2)}
                       </span>
                       <span className={`text-2xl sm:text-3xl font-semibold ${currentWeight.value < 0 ? 'text-red-700' : 'text-blue-700'}`}>
                         {unitMeasureData?.data?.symbol || 'kg'}
