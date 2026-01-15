@@ -277,56 +277,8 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
                 continue; // Saltar al siguiente match
               }
 
-              // Agregar peso al buffer (redondear a 2 decimales para agrupar valores similares)
+                  // Agregar peso al buffer (redondear a 2 decimales para agrupar valores similares)
               const roundedWeight = Math.round(weight.value * 100) / 100;
-          
-          console.log('📦 [BALANZA] Buffer de texto:', {
-            chunk: chunk,
-            textBuffer: textBuffer,
-            bufferLength: textBuffer.length,
-          });
-          
-          // Limitar tamaño del buffer
-          if (textBuffer.length > 200) {
-            textBuffer = textBuffer.slice(-100);
-            console.log('⚠️ [BALANZA] Buffer recortado para evitar crecimiento infinito');
-          }
-          
-          // Buscar patrón: =X.XXXXX (formato Bernalo X1)
-          // La balanza Bernalo X1 envía los dígitos INVERTIDOS
-          // Ejemplo: si marca 33.5 envía =5.33000
-          const regex = /=(\d+)\.(\d+)/g;
-          let match;
-          let lastIndex = 0;
-
-          while ((match = regex.exec(textBuffer)) !== null) {
-            const fullMatch = match[0]; // Por ejemplo: "=5.33000"
-            const wholePart = match[1]; // Por ejemplo: "5"
-            const decimalPart = match[2]; // Por ejemplo: "33000"
-            lastIndex = regex.lastIndex;
-
-            console.log('🔍 [BALANZA] Patrón encontrado:', {
-              fullMatch: fullMatch,
-              wholePart: wholePart,
-              decimalPart: decimalPart,
-              matchIndex: match.index,
-              lastIndex: lastIndex,
-            });
-
-            // Concatenar todos los dígitos y luego invertir
-            const allDigits = wholePart + decimalPart; // "533000"
-            const reversedDigits = allDigits.split('').reverse().join(''); // "000335"
-            
-            // Convertir a número y dividir entre 10 para obtener el decimal correcto
-            const weightValue = parseFloat(reversedDigits) / 10; // 33.5
-            
-            console.log('⚖️ [BALANZA] Peso parseado:', {
-              raw: fullMatch,
-              allDigits: allDigits,
-              reversedDigits: reversedDigits,
-                    unit: currentUnit,
-                    raw: `=${mostFrequentWeight * 1000}`,nd(weightValue * 10) / 10;
->>>>>>> e9f8cb5 (feat:hotfix issues balance)
               weightBufferRef.current.push(roundedWeight);
 
               // Iniciar intervalo de 5 segundos si no existe
@@ -372,13 +324,8 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
                   // Establecer el peso más frecuente
                   const finalWeight = {
                     value: mostFrequentWeight,
-<<<<<<< HEAD
                     unit: currentUnit,
                     raw: `=${mostFrequentWeight * 1000}`,
-=======
-                    unit: 'raw', // Valor crudo sin unidad, se gestiona desde el componente
-                    raw: `=${mostFrequentWeight}`,
->>>>>>> e9f8cb5 (feat:hotfix issues balance)
                     timestamp: new Date(),
                     stable: true,
                   };
