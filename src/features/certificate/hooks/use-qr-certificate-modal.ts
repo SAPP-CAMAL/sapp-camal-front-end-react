@@ -144,8 +144,8 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 			toast.success('Código QR escaneado correctamente');
 		} catch (error: any) {
 			setQrState('active');
-			const { data, message } = await error.response.json();
-			toast.success(data ?? message ?? 'Ocurrió un error al escanear el código QR');
+			const { data } = await error.response.json();
+			toast.error(data ?? 'Ocurrió un error al escanear el código QR');
 		}
 	};
 
