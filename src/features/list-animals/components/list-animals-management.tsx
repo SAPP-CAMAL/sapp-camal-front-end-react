@@ -54,6 +54,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 export function ListAnimalsManagement() {
   const [fechaIngreso, setFechaIngreso] = useState<Date | null>(null);
+  const [fechaIngresoFin, setFechaIngresoFin] = useState<Date | null>(null);
   const [fechaFaenamiento, setFechaFaenamiento] = useState<Date | null>(null);
   const [availableSpecies, setAvailableSpecies] = useState<Specie[]>([]);
   const [selectedSpecies, setSelectedSpecies] = useState<Species[]>([]);
@@ -106,8 +107,11 @@ export function ListAnimalsManagement() {
             : null;
 
         const filters = {
-          entryDate: fechaIngreso
+          startDate: fechaIngreso
             ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
+            : getCurrentDate(),
+          endDate: fechaIngresoFin
+            ? `${fechaIngresoFin.getFullYear()}-${String(fechaIngresoFin.getMonth() + 1).padStart(2, '0')}-${String(fechaIngresoFin.getDate()).padStart(2, '0')}`
             : getCurrentDate(),
           slaughterDate: fechaFaenamiento
             ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
@@ -142,6 +146,7 @@ export function ListAnimalsManagement() {
     selectedFinishType,
     marca,
     availableSpecies.length,
+    fechaIngresoFin
   ]);
 
   // Función para manejar el cambio de especies
@@ -185,6 +190,7 @@ export function ListAnimalsManagement() {
 
   const clear = () => {
     setFechaIngreso(null);
+    setFechaIngresoFin(null);
     setFechaFaenamiento(null);
     setSelectedSpecies([]);
     setSelectedFinishType(null);
@@ -220,8 +226,11 @@ export function ListAnimalsManagement() {
         ? availableSpecies.filter(specie => selectedSpecies.includes(specie.name as Species)).map(specie => specie.id)
         : null;
     const filters = {
-      entryDate: fechaIngreso
+      startDate: fechaIngreso
         ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
+        : getCurrentDate(),
+      endDate: fechaIngresoFin
+        ? `${fechaIngresoFin.getFullYear()}-${String(fechaIngresoFin.getMonth() + 1).padStart(2, '0')}-${String(fechaIngresoFin.getDate()).padStart(2, '0')}`
         : getCurrentDate(),
       slaughterDate: fechaFaenamiento
         ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
@@ -386,11 +395,59 @@ export function ListAnimalsManagement() {
 
   return (
     <div className="space-y-4">
-      <section>
-        <h1 className="font-semibold text-xl">Lista de Ingreso de Animales</h1>
-        <p className="text-sm text-muted-foreground">
-          Registro detallado de todos los ingresos de animales al camal
-        </p>
+      <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="font-semibold text-xl">Lista de Ingreso de Animales</h1>
+          <p className="text-sm text-muted-foreground">
+            Registro detallado de todos los ingresos de animales al camal
+          </p>
+        </div>
+
+        {/* Botones */}
+        <div className="flex flex-row gap-2 shrink-0">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                title="Generar reporte de los registros actuales"
+                disabled={isLoading || apiData.length === 0}
+              >
+                <FileUp className="h-4 w-4" />
+                <span className="ml-2">Reporte</span>
+                <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-56"
+              sideOffset={5}
+              alignOffset={0}
+            >
+              <DropdownMenuItem
+                onClick={() => handleDownloadReport('EXCEL')}
+                className="cursor-pointer"
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                <span>Descargar Excel</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDownloadReport('PDF')}
+                className="cursor-pointer"
+              >
+                <FileText className="h-4 w-4 mr-2 text-red-600" />
+                <span>Descargar PDF</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="outline"
+            onClick={clear}
+            title="Limpiar todos los filtros y volver a la vista inicial"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Limpiar
+          </Button>
+        </div>
       </section>
 
       <Card>
@@ -404,81 +461,38 @@ export function ListAnimalsManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-end">
+            {/* Fecha Inicio */}
             <div className="flex flex-col gap-1 min-w-0">
               <span className="text-xs text-muted-foreground font-medium">
-                Fecha de Ingreso
+                Fecha Inicio
               </span>
-              {/* <div className="relative">
-                <Calendar
-                  className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
-                  onClick={() => {
-                    const input = document.getElementById(
-                      "fecha-ingreso"
-                    ) as HTMLInputElement;
-                    if (input) input.showPicker();
-                  }}
-                />
-                <Input
-                  id="fecha-ingreso"
-                  type="date"
-                  className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                  value={
-                    fechaIngreso
-                      ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
-                      : getCurrentDate()
-                  }
-                  onChange={(e) => {
-                    const date = e.target.value
-                      ? parseLocalDateString(e.target.value)
-                      : null;
-                    setFechaIngreso(date);
-                  }}
-                  title="Selecciona la fecha de ingreso de los animales"
-                />
-              </div> */}
-
               <DatePicker
                 inputClassName='bg-secondary'
                 iconClassName="text-muted-foreground"
                 selected={fechaIngreso || new Date()}
                 onChange={date => setFechaIngreso(date as Date)}
               />
-
             </div>
+
+            {/* Fecha Fin */}
+            <div className="flex flex-col gap-1 min-w-0">
+              <span className="text-xs text-muted-foreground font-medium">
+                Fecha Fin
+              </span>
+              <DatePicker
+                inputClassName='bg-secondary'
+                iconClassName="text-muted-foreground"
+                selected={fechaIngresoFin || new Date()}
+                onChange={date => setFechaIngresoFin(date as Date)}
+              />
+            </div>
+
+            {/* Fecha Faenamiento */}
             <div className="flex flex-col gap-1 min-w-0">
               <span className="text-xs text-muted-foreground font-medium">
                 Fecha de Faenamiento
               </span>
-              {/* <div className="relative">
-                <CalendarDays
-                  className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
-                  onClick={() => {
-                    const input = document.getElementById(
-                      "fecha-faenamiento"
-                    ) as HTMLInputElement;
-                    if (input) input.showPicker();
-                  }}
-                />
-                <Input
-                  id="fecha-faenamiento"
-                  type="date"
-                  className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                  value={
-                    fechaFaenamiento
-                      ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const date = e.target.value
-                      ? parseLocalDateString(e.target.value)
-                      : null;
-                    setFechaFaenamiento(date);
-                  }}
-                  title="Selecciona la fecha de faenamiento de los animales"
-                />
-              </div> */}
-
               <DatePicker
                 inputClassName='bg-secondary'
                 selected={fechaFaenamiento}
@@ -486,6 +500,8 @@ export function ListAnimalsManagement() {
                 icon={<CalendarDays className="text-muted-foreground" />}
               />
             </div>
+
+            {/* Especies */}
             <SpeciesMenu
               className="w-full"
               label="Especies"
@@ -495,6 +511,8 @@ export function ListAnimalsManagement() {
               onSelectFinishType={setSelectedFinishType}
               speciesList={availableSpecies}
             />
+
+            {/* Buscar Marca */}
             <div className="flex flex-col gap-1 min-w-0">
               <span className="text-xs text-muted-foreground font-medium">
                 Buscar Marca
@@ -516,53 +534,6 @@ export function ListAnimalsManagement() {
                   </div>
                 )}
               </div>
-            </div>
-            <div className="flex flex-col gap-2 lg:items-end lg:justify-end">
-
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    className="w-full"
-                    title="Generar reporte de los registros actuales"
-                    disabled={isLoading || apiData.length === 0}
-                  >
-                    <FileUp className="h-4 w-4" />
-                    <span className="ml-2">Reporte</span>
-                    <ChevronDown className="h-3 w-3 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-56"
-                  sideOffset={5}
-                  alignOffset={0}
-                >
-                  <DropdownMenuItem
-                    onClick={() => handleDownloadReport('EXCEL')}
-                    className="cursor-pointer"
-                  >
-                    <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
-                    <span>Descargar Excel</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleDownloadReport('PDF')}
-                    className="cursor-pointer"
-                  >
-                    <FileText className="h-4 w-4 mr-2 text-red-600" />
-                    <span>Descargar PDF</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button
-                variant="outline"
-                onClick={clear}
-                className="w-full"
-                title="Limpiar todos los filtros y volver a la vista inicial"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Limpiar
-              </Button>
             </div>
           </div>
         </CardContent>
