@@ -100,10 +100,9 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 
 			form.setValue('open', false);
 		} catch (error: any) {
-			const { message, statusCode, data } = await error.response.json();
+			const { data, statusCode } = await error.response.json();
 
 			if (data && statusCode !== 500) return toast.error(data);
-			if (message && statusCode !== 500) return toast.error(message);
 
 			if (createOrUpdateType === 'create') return toast.error('Ocurrió un error al crear el certificado.');
 			else if (createOrUpdateType === 'update') return toast.error('Ocurrió un error al actualizar el certificado.');
