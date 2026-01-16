@@ -55,7 +55,7 @@ export function NewUser() {
       toast.success("Usuario creado exitosamente");
     } catch (error: any) {
       const resp = await error.response.json();
-      toast.error(`Error: ${JSON.stringify(resp?.errors ?? resp.message)}`);
+      toast.error(resp?.data || "Error al crear el usuario");
     }
   };
 

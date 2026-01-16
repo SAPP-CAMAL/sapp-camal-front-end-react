@@ -288,7 +288,7 @@ export default function NewAddresseesForm({
         if (error.response) {
           try {
             const errorData = await error.response.json();
-            toast.error(errorData.data || errorData.message || "Error al buscar marcas");
+            toast.error(errorData.data || "Error al buscar marcas");
           } catch {
             toast.error("Error al buscar marcas");
           }

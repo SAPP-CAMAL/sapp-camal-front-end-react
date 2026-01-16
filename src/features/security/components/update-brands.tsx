@@ -211,7 +211,7 @@ export function UpdateBrands({
               style: { whiteSpace: 'pre-line' }
             });
           } else {
-            toast.error(errorData.message || "Error al crear la marca");
+            toast.error(errorData.data || "Error al crear la marca");
           }
         } catch {
           toast.error("Error al crear la marca. Verifica los datos.");
@@ -272,7 +272,7 @@ export function UpdateBrands({
               style: { whiteSpace: 'pre-line' }
             });
           } else {
-            toast.error(errorData.message || "Error al actualizar la marca");
+            toast.error(errorData.data || "Error al actualizar la marca");
           }
         } catch {
           toast.error("Error al actualizar la marca. Verifica los datos.");
