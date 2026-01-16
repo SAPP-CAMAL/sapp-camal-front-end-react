@@ -91,14 +91,14 @@ export function AnimalDistributionManagement() {
     useState<AnimalDistribution | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const certificateRef = useRef<HTMLDivElement>(null);
-  
+
   // Estados para cargar especies desde la API
   const [availableLines, setAvailableLines] = useState<LineItem[]>([]);
   const [isLoadingLines, setIsLoadingLines] = useState(false);
-  
+
   // Estado para controlar si el filtro de fecha está activo
   const [isDateFilterActive, setIsDateFilterActive] = useState(false);
-  
+
   // Estados para los datos de distribuciones desde la API
   const [distributions, setDistributions] = useState<AnimalDistribution[]>([]);
   const [orders, setOrders] = useState<Order[]>([]); // Pedidos completos para acceder a detalles
@@ -106,12 +106,12 @@ export function AnimalDistributionManagement() {
   const [isLoadingDistributions, setIsLoadingDistributions] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null); // Pedido seleccionado para el modal
-  
+
   // Estados para el modal de productos
   const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
   const [selectedOrderForProducts, setSelectedOrderForProducts] = useState<Order | null>(null);
   const [productType, setProductType] = useState<"producto" | "subproducto">("producto");
-  
+
   // Estados para modales de confirmación
   const [confirmAction, setConfirmAction] = useState<{
     isOpen: boolean;
@@ -153,7 +153,7 @@ export function AnimalDistributionManagement() {
 
       // Obtener el blob del PDF
       const blob = await response.blob();
-      
+
       // Crear URL temporal y descargar
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -181,7 +181,7 @@ export function AnimalDistributionManagement() {
     if (!printWindow) return;
 
     const content = certificateRef.current.innerHTML;
-    
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -354,7 +354,7 @@ export function AnimalDistributionManagement() {
         </body>
       </html>
     `);
-    
+
     printWindow.document.close();
   };
 
@@ -382,29 +382,29 @@ export function AnimalDistributionManagement() {
     try {
       setIsLoadingDistributions(true);
       setLoadError(null);
-      
+
       // Encontrar el ID de la especie seleccionada
       const selectedLine = availableLines.find(line => line.description === selectedSpecie);
       const idSpecie = selectedLine?.idSpecie;
-      
+
       const filters: any = {
         page: currentPage,
         limit: itemsPerPage,
       };
-      
+
       // Agregar idSpecie si existe
       if (idSpecie) {
         filters.idSpecie = idSpecie;
       }
-      
+
       // Solo agregar filtros de fecha si está activo
       if (isDateFilterActive) {
         filters.startDate = format(startDate, "yyyy-MM-dd");
         filters.endDate = format(endDate, "yyyy-MM-dd");
       }
-      
+
       const response = await getPaginatedOrders(filters);
-      
+
       if (response.code === 201 && response.data) {
         // Guardar los pedidos completos
         setOrders(response.data.items);
@@ -427,12 +427,12 @@ export function AnimalDistributionManagement() {
       setIsLoadingDistributions(false);
     }
   };
-  
+
   // Efecto para cargar especies disponibles al montar el componente
   useEffect(() => {
     loadAvailableLines();
   }, []);
-  
+
   // Efecto para cargar distribuciones cuando cambien los filtros
   useEffect(() => {
     // Solo cargar si ya tenemos las líneas disponibles
@@ -444,9 +444,9 @@ export function AnimalDistributionManagement() {
   // Filtrado local: buscar en todas las columnas
   const filteredDistributions = distributions.filter((dist) => {
     if (!searchTerm) return true;
-    
+
     const searchLower = searchTerm.toLowerCase();
-    
+
     // Buscar en todas las columnas
     return (
       dist.nroDistribucion.toString().toLowerCase().includes(searchLower) ||
@@ -526,16 +526,16 @@ export function AnimalDistributionManagement() {
       const { updateOrderStatus } = await import("../server/db/animal-distribution.service");
       const statusCode = confirmAction.type === "approve" ? "APR" : "REC";
       await updateOrderStatus(confirmAction.orderId, statusCode);
-      
+
       // Mostrar toast de éxito
-      const message = confirmAction.type === "approve" 
-        ? "Orden aprobada exitosamente" 
+      const message = confirmAction.type === "approve"
+        ? "Orden aprobada exitosamente"
         : "Orden rechazada exitosamente";
       toast.success(message);
-      
+
       // Recargar las distribuciones
       loadDistributions();
-      
+
       // Cerrar el modal
       setConfirmAction({
         isOpen: false,
@@ -742,13 +742,13 @@ export function AnimalDistributionManagement() {
                   className="pl-10"
                 />
               </div>
-              <Button
+              {/* <Button
                 variant="outline"
                 className="text-teal-600 border-teal-600 hover:bg-teal-50"
               >
                 <FileText className="h-4 w-4 mr-2" />
                 Reporte
-              </Button>
+              </Button> */}
             </div>
           </div>
 
@@ -897,7 +897,7 @@ export function AnimalDistributionManagement() {
             {paginatedDistributions.map((dist) => {
               // Separar fecha y hora
               const [fecha, hora] = dist.fechaDistribucion.split(" ");
-              
+
               // Separar placa y conductor
               const placaParts = dist.placaMedioTransporte.split("/");
               const placa = placaParts[0] || "";
@@ -994,16 +994,16 @@ export function AnimalDistributionManagement() {
                             <ShoppingBag className="h-4 w-4 mr-2" />
                             Productos y Subproductos
                           </DropdownMenuItem>
-                          
+
                           {/* Solo mostrar opciones de cambio de estado si el estado es PENDIENTE */}
                           {dist.estado === "PENDIENTE" && (
                             <>
                               <DropdownMenuSeparator />
-                              
+
                               <DropdownMenuLabel className="text-xs text-muted-foreground">
                                 Cambiar Estado
                               </DropdownMenuLabel>
-                              
+
                               <DropdownMenuItem
                                 onClick={() => handleApproveOrderClick(dist.id, dist.nroDistribucion)}
                                 className="text-green-600 focus:text-green-600"
@@ -1011,7 +1011,7 @@ export function AnimalDistributionManagement() {
                                 <Check className="h-4 w-4 mr-2" />
                                 Aprobar
                               </DropdownMenuItem>
-                              
+
                               <DropdownMenuItem
                                 onClick={() => handleRejectOrderClick(dist.id, dist.nroDistribucion)}
                                 className="text-red-600 focus:text-red-600"
@@ -1296,7 +1296,7 @@ export function AnimalDistributionManagement() {
               </div>
 
               <div className="flex justify-center pt-4 pb-3">
-                <Button 
+                <Button
                   onClick={handleDownloadCertificatePdf}
                   disabled={isDownloadingPdf}
                   className="bg-teal-600 hover:bg-teal-700 px-6 sm:px-8 text-sm sm:text-base"
@@ -1346,7 +1346,7 @@ export function AnimalDistributionManagement() {
                         // Calcular el peso total desde animalWeighing
                         const totalWeight = detail.animalProduct?.detailsSpeciesCertificate?.animalWeighing
                           ?.reduce((sum, weighing) => sum + weighing.totalWeight, 0) || 0;
-                        
+
                         return (
                           <TableRow key={detail.id}>
                             <TableCell className="text-center border py-2 px-1">

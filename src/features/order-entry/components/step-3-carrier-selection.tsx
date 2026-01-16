@@ -23,6 +23,7 @@ import { Search, Truck, User, CreditCard, ChevronLeft, CheckSquare } from "lucid
 import { useQuery } from "@tanstack/react-query";
 import { getCarriersByFilterService } from "@/features/carriers/server/carriers.service";
 import { Carrier } from "@/features/carriers/domain";
+import { defaultShippingFilter } from "@/features/carriers/constants/default-shipping-filter";
 
 interface Step3CarrierSelectionProps {
   onSelect: (carrier: Carrier) => void;
@@ -53,8 +54,9 @@ export function Step3CarrierSelection({
 
       const filters = {
         page: currentPage,
-        limit: 100
-      } as { page: number; limit: number; identification?: string; fullName?: string};
+        // limit: 100,
+        ...defaultShippingFilter
+      } as { page: number; limit?: number; identification?: string; fullName?: string};
 
       if (!searchTerm)
         return getCarriersByFilterService(filters);
