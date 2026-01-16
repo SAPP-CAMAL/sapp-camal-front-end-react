@@ -130,11 +130,13 @@ export function Step2AddresseeSelection({
                           {toCapitalize(addressee.fullName, true)}
                         </span>
                         <span className="text-xs text-muted-foreground leading-tight">
-                          {addressee.email}
-                        </span>
-                        <span className="text-xs text-muted-foreground font-medium leading-tight">
                           CI: {addressee.identification}
                         </span>
+                        {addressee.brand && (
+                          <span className="text-xs text-muted-foreground font-medium leading-tight">
+                            Marca: {addressee.brand}
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-sm py-1.5 px-2">

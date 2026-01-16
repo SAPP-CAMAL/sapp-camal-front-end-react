@@ -19,6 +19,7 @@ export type AnimalWeighingRow = {
   animalId: number; // ID del animal de la API
   code: string; // Código del animal
   producto: string; // Sexo + Etapa productiva
+  brandId?: number; // ID de la marca para el filtro de destinatario
   brandName?: string; // Nombre de la marca
   peso: number; // Peso actual (puede ser capturado o guardado)
   savedWeight: number; // Peso guardado en la BD
