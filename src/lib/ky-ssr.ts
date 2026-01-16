@@ -15,7 +15,7 @@ function getSsrApiBases() {
         // FALLBACK: Si la variable de entorno no está configurada en el servidor,
         // usar la URL de producción por defecto
         console.warn("[SSR API] NEXT_PUBLIC_API_URL no está configurado. Usando URL de producción como fallback.");
-        return ["https://sapp-riobamba.com"]
+        return ["https://sapp-ruminahui.com"]
     }
 
     // En servidor, usar SOLO la URL configurada

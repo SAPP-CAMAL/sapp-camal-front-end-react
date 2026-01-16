@@ -277,7 +277,7 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
                 continue; // Saltar al siguiente match
               }
 
-              // Agregar peso al buffer (redondear a 2 decimales para agrupar valores similares)
+                  // Agregar peso al buffer (redondear a 2 decimales para agrupar valores similares)
               const roundedWeight = Math.round(weight.value * 100) / 100;
               weightBufferRef.current.push(roundedWeight);
 

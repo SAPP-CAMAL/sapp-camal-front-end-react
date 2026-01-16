@@ -78,8 +78,8 @@ export const ShipperFields = () => {
 								const response = await validateDocumentTypeService(currentValue.code, value);
 								return !!response?.data?.isValid;
 							} catch (error: any) {
-								const { message } = await error.response.json();
-								return message;
+								const { data } = await error.response.json();
+								return data;
 							}
 						},
 					},

@@ -213,9 +213,9 @@ export const useShipperModal = ({ shipperData = {}, onSetShipper }: Props) => {
 
 			form.setValue('open', false);
 		} catch (error: any) {
-			const { message } = await error.response.json();
+			const { data } = await error.response.json();
 
-			if (message) return toast.error(message);
+			if (data) return toast.error(data);
 
 			if (editAllData) return toast.error('Ocurrió un error al actualizar el transportista.');
 			else if (addShipper) return toast.error('Ocurrió un error al agregar el transportista al vehículo.');
