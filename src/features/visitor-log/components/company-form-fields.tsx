@@ -79,8 +79,8 @@ export function NewCompanyFields() {
                 await validateDocumentTypeService("RUCN", value);
                 return true;
               } catch (error: any) {
-                const { message } = await error.response.json();
-                return message;
+                const { data } = await error.response.json();
+                return data;
               }
             },
           },

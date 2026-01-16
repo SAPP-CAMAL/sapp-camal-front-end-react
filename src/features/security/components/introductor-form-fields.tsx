@@ -180,7 +180,7 @@ export function IntroductorFormFields({
               style: { whiteSpace: 'pre-line' }
             });
           } else {
-            toast.error(errorData.message || "Error al crear la marca");
+            toast.error(errorData.data || "Error al crear la marca");
           }
         } catch {
           toast.error("Error al crear la marca. Verifica los datos.");

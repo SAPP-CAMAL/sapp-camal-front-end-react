@@ -117,7 +117,7 @@ export function UpdateUserForm({ userId }: { userId: number }) {
       toast.success("Usuario actualizado exitosamente");
     } catch (error: any) {
       const resp = await error.response.json();
-      toast.error(`Error: ${JSON.stringify(resp?.errors ?? resp.message)}`);
+      toast.error(resp?.data || "Error al actualizar el usuario");
     }
   };
 

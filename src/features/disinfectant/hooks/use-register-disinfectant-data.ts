@@ -222,12 +222,8 @@ export const useRegisterDisinfectantData = () => {
 
 			await queryClient.invalidateQueries({ queryKey: [DETAIL_REGISTER_VEHICLE_TAG] });
 		} catch (error: any) {
-			const { message } = await error.response.json();
-			toast.error(message ?? 'Ocurrió un error al guardar el registro.');
-		}
-	};
-
-	const handleRemoveSelected = () => {
+		const { data } = await error.response.json();
+		toast.error(data ?? 'Ocurrió un error al guardar el registro.');
 		// Reset form to default values
 		form.reset({ ...defaultValues, admissionApplicationTime: getCurrentTime() });
 		form.setValue('id', undefined);

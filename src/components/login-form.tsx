@@ -151,7 +151,7 @@ export function LoginForm({
           errorDescription = "El servidor no está disponible en este momento. Intente más tarde.";
         } else if (error?.response) {
           const errorData = await error.response.json();
-          errorMessage = errorData?.message || errorMessage;
+          errorMessage = errorData?.data || errorMessage;
         } else if (error?.message?.includes("fetch") || error?.message?.includes("network")) {
           errorMessage = "Error de conexión";
           errorDescription = "No se pudo conectar con el servidor. Verifique su conexión a internet.";
