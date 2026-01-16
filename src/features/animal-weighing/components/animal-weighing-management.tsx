@@ -1022,7 +1022,7 @@ export function AnimalWeighingManagement() {
   const filteredRows = useMemo(() => {
     if (!searchTerm) return rowsWithDisplayWeight;
     return rowsWithDisplayWeight.filter((row) =>
-      row.code.toLowerCase().includes(searchTerm.toLowerCase())
+      row.brandName?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [rowsWithDisplayWeight, searchTerm]);
 
@@ -1485,7 +1485,7 @@ export function AnimalWeighingManagement() {
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por código de animal"
+                placeholder="Buscar por marca"
                 className="pl-10 w-full text-base"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
