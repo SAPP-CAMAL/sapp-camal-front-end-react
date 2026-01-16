@@ -38,7 +38,7 @@ export async function getReportListAnimalsByFiltersService(filters: ListAnimalsF
 	const contentDisposition = response.headers.get('content-disposition') || '';
 
 	const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-	const defaultFilename = `Reporte-de-animales-${filters.entryDate}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
+	const defaultFilename = `Reporte-de-animales-${filters.startDate}-${filters.endDate}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
 	const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
 
 	return { blob, filename, contentType };
