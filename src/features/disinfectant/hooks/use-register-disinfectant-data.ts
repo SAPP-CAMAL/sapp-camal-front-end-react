@@ -222,21 +222,22 @@ export const useRegisterDisinfectantData = () => {
 
 			await queryClient.invalidateQueries({ queryKey: [DETAIL_REGISTER_VEHICLE_TAG] });
 		} catch (error: any) {
-		const { data } = await error.response.json();
-		toast.error(data ?? 'Ocurrió un error al guardar el registro.');
-		// Reset form to default values
-		form.reset({ ...defaultValues, admissionApplicationTime: getCurrentTime() });
-		form.setValue('id', undefined);
-		form.setValue('shipper', undefined);
-		form.clearErrors();
+			const { data } = await error.response.json();
+			toast.error(data ?? 'Ocurrió un error al guardar el registro.');
+			// Reset form to default values
+			form.reset({ ...defaultValues, admissionApplicationTime: getCurrentTime() });
+			form.setValue('id', undefined);
+			form.setValue('shipper', undefined);
+			form.clearErrors();
 
-		// Reset search params
-		setSearchParams(defaultSearchParams);
+			// Reset search params
+			setSearchParams(defaultSearchParams);
 
-		// Remove selected data from context
-		handleRemoveSelectedFormData();
-		handleRemoveDailyDisinfectionRegister();
-		handleRemoveSelectedCertificate();
+			// Remove selected data from context
+			handleRemoveSelectedFormData();
+			handleRemoveDailyDisinfectionRegister();
+			handleRemoveSelectedCertificate();
+		}
 	};
 
 	const handleSetShipper = async (shipper?: ShipperBasicData) => {
@@ -293,7 +294,6 @@ export const useRegisterDisinfectantData = () => {
 		// actions
 		handleSetShipper,
 		handleSearchFields,
-		handleRemoveSelected,
 		handleRegisterDisinfectantData,
 		handleRemoveSelectedCertificate,
 	};
