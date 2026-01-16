@@ -9,6 +9,7 @@ import { toCapitalize } from "@/lib/toCapitalize";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRegisterDisinfectantData } from "@/features/disinfectant/hooks";
+import { useDailyDisinfectionRegisterContext } from "@/features/disinfectant/hooks";
 import { ShipperDataCard } from "@/features/shipping/components/shipper-data-card";
 import {
   Form,
@@ -34,6 +35,11 @@ import { BasicResultsCard } from "@/features/reception/components";
 
 export function RegisterDisinfectantDataForm() {
   const {
+    handleRemoveSelectedFormData,
+    handleRemoveDailyDisinfectionRegister,
+  } = useDailyDisinfectionRegisterContext();
+
+  const {
     form,
     species,
     shippers,
@@ -50,9 +56,16 @@ export function RegisterDisinfectantDataForm() {
     showCreateShippingFromSomeFields,
     handleSetShipper,
     handleSearchFields,
-    handleRemoveSelected,
     handleRegisterDisinfectantData,
+    handleRemoveSelectedCertificate,
   } = useRegisterDisinfectantData();
+
+  const handleRemoveSelected = () => {
+    form.reset();
+    handleRemoveSelectedFormData();
+    handleRemoveDailyDisinfectionRegister();
+    handleRemoveSelectedCertificate();
+  };
 
   // Actualizar la hora automáticamente cada segundo
   React.useEffect(() => {
