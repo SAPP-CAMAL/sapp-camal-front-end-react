@@ -81,6 +81,8 @@ import { Carrier } from "@/features/carriers/domain";
 import { useAllSpecies } from "@/features/specie/hooks/use-all-species";
 import { Specie } from "@/features/specie/domain";
 import { useStockBySpecie, useStockByIds, useSaveOrder, useSpecieProductsByCode, useOrderByIdAndDetail, useRemoveOrderDetail } from "../hooks";
+import { useUnitMeasure } from "@/features/animal-weighing/hooks";
+import { toCapitalize } from "@/lib/toCapitalize";
 
 export function OrderEntryManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,6 +93,7 @@ export function OrderEntryManagement() {
   const [fechaFaenamiento, setFechaFaenamiento] = useState<Date>(new Date());
   const [selectedEspecieId, setSelectedEspecieId] = useState<number | null>(null);
   const [selectedIntroductor, setSelectedIntroductor] = useState<string>("");
+  const [brandAddressee, setBrandAddressee] = useState<string | undefined>(undefined);
   const [introductorSearch, setIntroductorSearch] = useState("");
   const [checkedOrders, setCheckedOrders] = useState<Set<number>>(new Set());
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -122,11 +125,13 @@ export function OrderEntryManagement() {
     productName: "",
   });
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
-  
+
   // Cache en memoria de las selecciones de productos por animal (no se guarda en BD)
   // Estructura: Map<animalId, {productos: Set<productStockId>, subproductos: Set<productStockId>}>
   const [productSelectionsCache, setProductSelectionsCache] = useState<Map<number, {productos: Set<number>, subproductos: Set<number>}>>(new Map());
-  
+
+  const { data: unitMeasureData } = useUnitMeasure();
+
   // Cache de todos los productos cargados (productos y subproductos) para poder encontrarlos al finalizar
   const [productStockCache, setProductStockCache] = useState<Map<number, ProductStockItem>>(new Map());
 
@@ -138,14 +143,14 @@ export function OrderEntryManagement() {
   // Hooks de API
   const saveOrderMutation = useSaveOrder();
   const removeOrderDetailMutation = useRemoveOrderDetail();
-  
+
   // Consumir API de especies
   const speciesQuery = useAllSpecies();
   const species: Specie[] = (speciesQuery.data?.data as Specie[]) || [];
 
   const stockByIdsRequest: StockByIdsRequest | null = useMemo(() => {
     if (!isProductModalOpen || checkedOrders.size === 0) return null;
-    
+
     return {
       productTypeCode: productType === "producto" ? "PRO" : "SUB",
       idDetailsSpeciesCertificate: Array.from(checkedOrders),
@@ -162,7 +167,7 @@ export function OrderEntryManagement() {
 
   // Consumir API de todos los productos configurados para la especie
   const allProductsQuery = useSpecieProductsByCode(
-    selectedEspecieId, 
+    selectedEspecieId,
     productType === "producto" ? "PRO" : "SUB"
   );
   const allConfiguredProducts = (allProductsQuery.data?.data || []) as SpecieProductConfig[];
@@ -188,10 +193,10 @@ export function OrderEntryManagement() {
   // Efecto para pre-seleccionar productos cuando cambia el animal o el tipo de producto
   useEffect(() => {
     if (!currentAnimalId) return;
-    
+
     // Primero verificar si hay selecciones en cache para este animal
     const cachedSelections = productSelectionsCache.get(currentAnimalId);
-    
+
     if (cachedSelections) {
       // Cargar las selecciones según el tipo actual
       if (productType === "producto") {
@@ -201,7 +206,7 @@ export function OrderEntryManagement() {
       }
       return;
     }
-    
+
     // Si no hay cache, verificar si hay datos de la orden existente
     if (existingOrderData?.orderDetails) {
       const productIds = new Set<number>();
@@ -243,14 +248,14 @@ export function OrderEntryManagement() {
     if (selectedIntroductor && animal.introducer !== selectedIntroductor) {
       return false;
     }
-    
+
     // Filtro por término de búsqueda
     if (searchTerm) {
       return Object.values(animal).some((value) =>
         value.toString().toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     return true;
   });
 
@@ -281,7 +286,7 @@ export function OrderEntryManagement() {
   const handleRemoveProductClick = (productId: number, idAnimalProduct: number) => {
     // Encontrar el producto para mostrar su nombre en el modal
     const product = products.find((p) => p.id === productId);
-    
+
     setDeleteConfirmation({
       isOpen: true,
       productId,
@@ -292,38 +297,38 @@ export function OrderEntryManagement() {
 
   const handleConfirmRemoveProduct = () => {
     const { productId, idAnimalProduct } = deleteConfirmation;
-    
+
     if (!productId || !idAnimalProduct) return;
-    
+
     // Encontrar el producto que se va a eliminar para obtener su nroIngreso (animalId)
     const productToRemove = products.find((p) => p.id === productId);
-    
+
     if (productToRemove) {
       const animalId = parseInt(productToRemove.nroIngreso);
-      
+
       // Actualizar el cache de selecciones para este animal
       const newCache = new Map(productSelectionsCache);
       const animalSelections = newCache.get(animalId);
-      
+
       if (animalSelections) {
         // Remover el producto del cache (puede estar en productos o subproductos)
         animalSelections.productos.delete(productId);
         animalSelections.subproductos.delete(productId);
-        
+
         // Si no quedan productos ni subproductos seleccionados, eliminar la entrada del cache
         if (animalSelections.productos.size === 0 && animalSelections.subproductos.size === 0) {
           newCache.delete(animalId);
         } else {
           newCache.set(animalId, animalSelections);
         }
-        
+
         setProductSelectionsCache(newCache);
       }
     }
-    
+
     // Remover el producto de la lista
     setProducts(products.filter((p) => p.id !== productId));
-    
+
     // Cerrar el modal
     setDeleteConfirmation({
       isOpen: false,
@@ -385,7 +390,7 @@ export function OrderEntryManagement() {
     if (selectedAnimalsList.length > 0) {
       const firstAnimal = selectedAnimalsList[0];
       const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
-      
+
       // Crear un OrderEntry temporal para mantener compatibilidad
       setSelectedOrder({
         id: 0, // ID 0 indica que es una nueva orden (no persistida). Evita enviar el ID del animal como ID de orden.
@@ -396,12 +401,12 @@ export function OrderEntryManagement() {
         especie: selectedSpecieName,
         totalAnimales: selectedAnimalsList.length,
       });
-      
+
       // Si no hay introductor seleccionado, usar el introductor del primer animal
       if (!selectedIntroductor && firstAnimal.introducer) {
         setSelectedIntroductor(firstAnimal.introducer);
       }
-      
+
       setStep(2); // Move to Step 2 (Addressee Selection)
     }
   };
@@ -447,7 +452,7 @@ export function OrderEntryManagement() {
   // Agrupar productos por animal y ordenar por displayOrder
   const groupedProducts = useMemo(() => {
     const grouped = new Map<number, ProductStockItem[]>();
-    
+
     availableProducts.forEach((product) => {
       const animalId = product.idDetailsSpeciesCertificate;
       if (!grouped.has(animalId)) {
@@ -455,12 +460,12 @@ export function OrderEntryManagement() {
       }
       grouped.get(animalId)!.push(product);
     });
-    
+
     // Ordenar productos dentro de cada grupo por displayOrder
     grouped.forEach((products) => {
       products.sort((a, b) => a.speciesProduct.displayOrder - b.speciesProduct.displayOrder);
     });
-    
+
     return grouped;
   }, [availableProducts]);
 
@@ -513,7 +518,7 @@ export function OrderEntryManagement() {
 
     // Primero, eliminar productos existentes de este animal
     const productsWithoutCurrentAnimal = products.filter(p => p.nroIngreso !== animal.id.toString());
-    
+
     // Si hay selecciones, crear los productos
     if (allSelectedIds.size > 0) {
       const newProducts: ProductSubproduct[] = [];
@@ -544,7 +549,7 @@ export function OrderEntryManagement() {
     // Limpiar selección actual
     setSelectedProducts(new Set());
     setSelectedSubproducts(new Set());
-    
+
     // Pasar al siguiente animal si hay más
     const animalsArray = Array.from(checkedOrders);
     const currentIndex = animalsArray.indexOf(currentAnimalId);
@@ -567,21 +572,21 @@ export function OrderEntryManagement() {
       newSelected.add(productId);
     }
     setSelectedProducts(newSelected);
-    
+
     // Guardar en cache para este animal
     if (currentAnimalId) {
       const cachedSelections = productSelectionsCache.get(currentAnimalId) || {
         productos: new Set<number>(),
         subproductos: new Set<number>()
       };
-      
+
       // Actualizar según el tipo actual
       if (productType === "producto") {
         cachedSelections.productos = newSelected;
       } else {
         cachedSelections.subproductos = newSelected;
       }
-      
+
       const newCache = new Map(productSelectionsCache);
       newCache.set(currentAnimalId, cachedSelections);
       setProductSelectionsCache(newCache);
@@ -591,28 +596,28 @@ export function OrderEntryManagement() {
   // Función para cambiar el tipo de producto guardando las selecciones actuales
   const handleChangeProductType = (newType: "producto" | "subproducto") => {
     if (newType === productType) return; // No hacer nada si es el mismo tipo
-    
+
     // Guardar las selecciones actuales en el cache antes de cambiar
     if (currentAnimalId) {
       const cachedSelections = productSelectionsCache.get(currentAnimalId) || {
         productos: new Set<number>(),
         subproductos: new Set<number>()
       };
-      
+
       // Guardar según el tipo ACTUAL (antes de cambiar)
       if (productType === "producto") {
         cachedSelections.productos = new Set(selectedProducts);
       } else {
         cachedSelections.subproductos = new Set(selectedProducts);
       }
-      
+
       const newCache = new Map(productSelectionsCache);
       newCache.set(currentAnimalId, cachedSelections);
       setProductSelectionsCache(newCache);
-      
+
       // Cambiar el tipo
       setProductType(newType);
-      
+
       // Cargar las selecciones del NUEVO tipo
       if (newType === "producto") {
         setSelectedProducts(new Set(cachedSelections.productos));
@@ -681,7 +686,7 @@ export function OrderEntryManagement() {
         }
 
         toast.success("Pedido completado exitosamente");
-        
+
         // Limpiar todo y volver al paso 1
         setProducts([]);
         setSelectedOrder(null);
@@ -749,7 +754,7 @@ export function OrderEntryManagement() {
                     {animalStock
                       .filter((animal) => checkedOrders.has(animal.id))
                       .reduce((total, animal) => total + (animal.netWeight || 0), 0)
-                      .toFixed(2)} kg
+                      .toFixed(2)} {toCapitalize(unitMeasureData?.data?.name?.toLowerCase?.() ?? '')}
                   </span>
                 </div>
               </div>
@@ -776,6 +781,7 @@ export function OrderEntryManagement() {
       {/* Paso 2: Selección de Destinatario */}
       {step === 2 && (
         <Step2AddresseeSelection
+          selectedBrand={brandAddressee}
           onSelect={handleAddresseeSelect}
           onBack={() => setStep(1)}
         />
@@ -862,7 +868,7 @@ export function OrderEntryManagement() {
                             No hay productos agregados
                           </h3>
                           <p className="text-sm text-gray-500 text-center max-w-md">
-                            Haga clic en el botón "PRODUCTOS O SUBPRODUCTOS" para agregar productos a esta orden
+                            Haga clic en el botón &quot;PRODUCTOS O SUBPRODUCTOS&quot; para agregar productos a esta orden
                           </p>
                         </div>
                       </TableCell>
@@ -1103,7 +1109,7 @@ export function OrderEntryManagement() {
                         colSpan={5}
                         className="text-center py-8 text-gray-500"
                       >
-                        {selectedEspecieId 
+                        {selectedEspecieId
                           ? "No hay animales disponibles para esta especie"
                           : "Seleccione una especie para ver los animales disponibles"}
                       </TableCell>
@@ -1114,10 +1120,13 @@ export function OrderEntryManagement() {
                       const hora = format(new Date(animal.createAt), "HH:mm:ss", { locale: es });
 
                       return (
-                        <TableRow 
-                          key={animal.id} 
+                        <TableRow
+                          key={animal.id}
                           className="cursor-pointer hover:bg-teal-50/30 transition-colors"
-                          onClick={() => handleCheckOrder(animal.id, !checkedOrders.has(animal.id))}
+                          onClick={() =>{
+                            handleCheckOrder(animal.id, !checkedOrders.has(animal.id))
+                            setBrandAddressee(animal?.brandName)
+                          }}
                         >
                           <TableCell className="text-center border">
                             <div className="flex flex-col">
@@ -1147,8 +1156,10 @@ export function OrderEntryManagement() {
                             <div className="flex justify-center">
                               <Checkbox
                                 checked={checkedOrders.has(animal.id)}
-                                onCheckedChange={(checked) =>
-                                  handleCheckOrder(animal.id, checked as boolean)
+                                onCheckedChange={(checked) => {
+                                    handleCheckOrder(animal.id, checked as boolean)
+                                    setBrandAddressee(animal?.brandName)
+                                  }
                                 }
                               />
                             </div>
@@ -1429,7 +1440,7 @@ export function OrderEntryManagement() {
                         const isInOrder = orderId && assignedProductCodes.has(configProduct.productCode);
                         const isAvailable = !!stockProduct || isInOrder;
                         const productStockId = stockProduct?.id || orderProduct?.animalProduct?.id;
-                        
+
                         return (
                           <div
                             key={configProduct.id}
@@ -1494,14 +1505,14 @@ export function OrderEntryManagement() {
                         productos: new Set<number>(),
                         subproductos: new Set<number>()
                       };
-                      
+
                       // Actualizar según el tipo actual
                       if (productType === "producto") {
                         cachedSelections.productos = new Set(selectedProducts);
                       } else {
                         cachedSelections.subproductos = new Set(selectedProducts);
                       }
-                      
+
                       const newCache = new Map(productSelectionsCache);
                       newCache.set(currentAnimalId, cachedSelections);
                       setProductSelectionsCache(newCache);
@@ -1516,7 +1527,7 @@ export function OrderEntryManagement() {
 
                       // Eliminar productos existentes de este animal
                       const productsWithoutCurrentAnimal = products.filter(p => p.nroIngreso !== animal.id.toString());
-                      
+
                       // Si hay selecciones, crear los productos
                       if (allSelectedIds.size > 0) {
                         const newProducts: ProductSubproduct[] = [];
@@ -1543,7 +1554,7 @@ export function OrderEntryManagement() {
                       }
                     }
                   }
-                  
+
                   setIsProductModalOpen(false);
                   setSelectedProducts(new Set());
                   setCurrentAnimalId(null);
@@ -1560,20 +1571,20 @@ export function OrderEntryManagement() {
                   {(() => {
                     const animalsArray = Array.from(checkedOrders);
                     const isLastAnimal = animalsArray.indexOf(currentAnimalId!) === animalsArray.length - 1;
-                    
+
                     // Obtener el total de productos + subproductos seleccionados para este animal
                     const cachedSelections = productSelectionsCache.get(currentAnimalId!) || {
                       productos: new Set<number>(),
                       subproductos: new Set<number>()
                     };
-                    
+
                     // Actualizar con la selección actual según el tipo
                     const currentProductos = productType === "producto" ? selectedProducts : cachedSelections.productos;
                     const currentSubproductos = productType === "subproducto" ? selectedProducts : cachedSelections.subproductos;
-                    
+
                     // Combinar ambos Sets para obtener el total
                     const totalCount = new Set([...currentProductos, ...currentSubproductos]).size;
-                    
+
                     return isLastAnimal ? (totalCount > 0 ? `Siguiente (${totalCount})` : 'Siguiente') : (totalCount > 0 ? `Siguiente (${totalCount})` : 'Siguiente');
                   })()}
                 </>
