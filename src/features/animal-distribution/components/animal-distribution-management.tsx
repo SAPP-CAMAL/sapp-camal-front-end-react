@@ -42,6 +42,9 @@ import {
   MoreVertical,
   ShoppingBag,
   Receipt,
+  FileSpreadsheet,
+  ChevronDown,
+  FileUp,
 } from "lucide-react";
 import {
   Dialog,
@@ -78,6 +81,7 @@ import type { LineItem } from "@/features/antemortem/domain/line.types";
 import { getPaginatedOrders } from "../server/db/animal-distribution.service";
 import { ProductsModal } from "@/features/order-entry/components/products-modal";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
+import { downloadAnimalDistributionReport } from "../utils/download-animal-distribution-report";
 
 export function AnimalDistributionManagement() {
   const { camalName, location, getFullCompanyName } = useSlaughterhouseInfo(); // camalName = nombre completo del camal para certificados
@@ -551,6 +555,26 @@ export function AnimalDistributionManagement() {
     }
   };
 
+    const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+			toast.promise(
+				downloadAnimalDistributionReport(
+					{
+						startDate: format(startDate, 'yyyy-MM-dd'),
+						endDate: format(endDate, 'yyyy-MM-dd'),
+						weighingStageCode: 'CAN',
+						idSpecie: availableLines.find(line => line.description === selectedSpecie)?.idSpecie || 0,
+					},
+					type,
+				),
+				{
+					loading: 'Generando reporte...',
+					success: `Reporte ${type} descargado correctamente`,
+					error: 'Error al descargar el reporte',
+				},
+			);
+		};
+
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -742,13 +766,39 @@ export function AnimalDistributionManagement() {
                   className="pl-10"
                 />
               </div>
+             <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
               <Button
-                variant="outline"
-                className="text-teal-600 border-teal-600 hover:bg-teal-50"
+                title="Generar reporte de los registros actuales"
+                // disabled={isLoading || apiData.length === 0}
               >
-                <FileText className="h-4 w-4 mr-2" />
-                Reporte
+                <FileUp className="h-4 w-4" />
+                <span className="ml-2">Reporte</span>
+                <ChevronDown className="h-3 w-3 ml-1" />
               </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-56"
+              sideOffset={5}
+              alignOffset={0}
+            >
+              <DropdownMenuItem
+                onClick={() => handleDownloadReport('EXCEL')}
+                className="cursor-pointer"
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                <span>Descargar Excel</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDownloadReport('PDF')}
+                className="cursor-pointer"
+              >
+                <FileText className="h-4 w-4 mr-2 text-red-600" />
+                <span>Descargar PDF</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
             </div>
           </div>
 
