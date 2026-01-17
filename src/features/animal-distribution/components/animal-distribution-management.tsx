@@ -82,6 +82,7 @@ import { getPaginatedOrders } from "../server/db/animal-distribution.service";
 import { ProductsModal } from "@/features/order-entry/components/products-modal";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 import { downloadAnimalDistributionReport } from "../utils/download-animal-distribution-report";
+import { WeighingStageCodes } from "../constants/weighing-stage-codes";
 
 export function AnimalDistributionManagement() {
   const { camalName, location, getFullCompanyName } = useSlaughterhouseInfo(); // camalName = nombre completo del camal para certificados
@@ -561,7 +562,7 @@ export function AnimalDistributionManagement() {
 					{
 						startDate: format(startDate, 'yyyy-MM-dd'),
 						endDate: format(endDate, 'yyyy-MM-dd'),
-						weighingStageCode: 'CAN',
+						weighingStageCode: WeighingStageCodes.POSTMORTEM,
 						idSpecie: availableLines.find(line => line.description === selectedSpecie)?.idSpecie || 0,
 					},
 					type,
