@@ -47,3 +47,33 @@ export async function updateOrderStatus(orderId: number, orderStatusCode: "APR" 
         throw error;
     }
 }
+
+
+interface AnimalDistributionFilters{
+  startDate: string,
+  endDate: string,
+  weighingStageCode: string,
+  idSpecie: number,
+  page: number,
+  limit: number
+}
+
+export async function getAnimalDistributionReportService(filters: AnimalDistributionFilters, typeReport: 'EXCEL' | 'PDF') {
+    const response = await http.post('v1/1.0.0/detail-specie-cert/distribution-report', {
+        searchParams: { typeReport },
+        json: filters,
+    });
+
+    const blob = await response.blob();
+    const contentType = response.headers.get('content-type') || '';
+    const contentDisposition = response.headers.get('content-disposition') || '';
+
+    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    let dateRange = `${filters.startDate}-${filters.endDate}`;
+    if (filters.startDate === filters.endDate) dateRange = filters.startDate;
+
+    const defaultFilename = `Reporte-distribucion-${dateRange}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
+    const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
+
+    return { blob, filename, contentType };
+}
