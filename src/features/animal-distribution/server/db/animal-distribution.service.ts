@@ -53,9 +53,9 @@ export interface AnimalDistributionFilters{
   startDate: string,
   endDate: string,
   weighingStageCode: string,
-  idSpecie: number,
-  page: number,
-  limit: number
+  idSpecie?: number,
+  page?: number,
+  limit?: number
 }
 
 export async function getAnimalDistributionReportService(filters: AnimalDistributionFilters, typeReport: 'EXCEL' | 'PDF') {
