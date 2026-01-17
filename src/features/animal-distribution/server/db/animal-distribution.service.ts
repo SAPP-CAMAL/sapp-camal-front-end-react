@@ -49,7 +49,7 @@ export async function updateOrderStatus(orderId: number, orderStatusCode: "APR" 
 }
 
 
-interface AnimalDistributionFilters{
+export interface AnimalDistributionFilters{
   startDate: string,
   endDate: string,
   weighingStageCode: string,
