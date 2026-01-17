@@ -73,7 +73,8 @@ export async function getAnimalDistributionReportService(filters: AnimalDistribu
     if (filters.startDate === filters.endDate) dateRange = filters.startDate;
 
     const defaultFilename = `Reporte-distribucion-${dateRange}.${typeReport.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`;
-    const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
+    // const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
+    const filename =  defaultFilename;
 
     return { blob, filename, contentType };
 }
