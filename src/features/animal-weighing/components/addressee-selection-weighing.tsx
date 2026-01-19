@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { SearchIcon, MapPin, ChevronLeft, ChevronRight, User, MousePointerClick, Tag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAddresseesByFiltersWeighingService } from "@/features/addressees/server/addressees.service";
@@ -23,6 +24,7 @@ import { AddresseeSummaryCardWeighing } from "./addressee-summary-card-weighing"
 interface AddresseeSelectionWeighingProps {
   initialBrandId?: number;
   initialBrandName?: string;
+  initialBrandIds?: string; // Para order-entry: "4,3,5,67"
   onSelect: (addressee: Addressees) => void;
   onBack: () => void;
 }
@@ -30,30 +32,34 @@ interface AddresseeSelectionWeighingProps {
 export function AddresseeSelectionWeighing({
   initialBrandId,
   initialBrandName,
+  initialBrandIds,
   onSelect,
   onBack,
 }: AddresseeSelectionWeighingProps) {
   const [namesSearch, setNamesSearch] = useState("");
   const [brandSearch, setBrandSearch] = useState(""); // Empezamos vacío para no disparar búsqueda por nombre inicialmente
   const [effectiveBrandId, setEffectiveBrandId] = useState<number | undefined>(initialBrandId);
+  const [effectiveBrandIds, setEffectiveBrandIds] = useState<string | undefined>(initialBrandIds);
   const [page, setPage] = useState(1);
   const itemsPerPage = 5;
 
   const query = useQuery({
-    queryKey: ["addressees", "weighing", namesSearch, brandSearch, effectiveBrandId],
+    queryKey: ["addressees", "weighing", namesSearch, brandSearch, effectiveBrandId, effectiveBrandIds],
     queryFn: () => {
-      // Si el usuario ya está buscando activamente por nombre o marca, NO enviamos el brandId
+      // Si el usuario ya está buscando activamente por nombre o marca, NO enviamos brandId ni brandIds
       const useBrandId = !namesSearch && !brandSearch ? effectiveBrandId : undefined;
+      const useBrandIds = !namesSearch && !brandSearch ? effectiveBrandIds : undefined;
       
       return getAddresseesByFiltersWeighingService({
         names: namesSearch,
         brand: brandSearch,
         brandId: useBrandId,
+        brandIds: useBrandIds,
       });
     },
   });
 
-  // Efecto para limpiar el effectiveBrandId si no se encuentra un resultado único
+  // Efecto para limpiar el effectiveBrandId/effectiveBrandIds si no se encuentra un resultado único
   useEffect(() => {
     // La nueva API devuelve un array directamente en 'data'
     const items = Array.isArray(query.data?.data) ? query.data.data : [];
@@ -61,31 +67,34 @@ export function AddresseeSelectionWeighing({
     
     if (!query.isLoading && query.data?.data) {
       // AUTO-SELECCIÓN: Si se encuentra un único destinatario por marca (sin búsqueda manual), seleccionar de una
-      if (activeItems.length === 1 && effectiveBrandId && !namesSearch && !brandSearch) {
+      if (activeItems.length === 1 && (effectiveBrandId || effectiveBrandIds) && !namesSearch && !brandSearch) {
         onSelect(activeItems[0]);
         return;
       }
 
       // Si ya hay filtros manuales, o si la búsqueda por ID no devolvió exactamente 1, 
-      // y todavía tenemos un effectiveBrandId, lo limpiamos para búsquedas futuras
-      if ((namesSearch || brandSearch || activeItems.length !== 1) && effectiveBrandId) {
+      // y todavía tenemos un effectiveBrandId/effectiveBrandIds, lo limpiamos para búsquedas futuras
+      if ((namesSearch || brandSearch || activeItems.length !== 1) && (effectiveBrandId || effectiveBrandIds)) {
         // Solo limpiamos si no se encontró el resultado único inicial
         if (activeItems.length !== 1 || namesSearch || brandSearch) {
            setEffectiveBrandId(undefined);
+           setEffectiveBrandIds(undefined);
         }
       }
     }
-  }, [query.isLoading, query.data, namesSearch, brandSearch, effectiveBrandId, onSelect]);
+  }, [query.isLoading, query.data, namesSearch, brandSearch, effectiveBrandId, effectiveBrandIds, onSelect]);
 
   const debouncedNamesSearch = useDebouncedCallback((value) => {
     setNamesSearch(value);
     setEffectiveBrandId(undefined);
+    setEffectiveBrandIds(undefined);
     setPage(1);
   }, 500);
 
   const debouncedBrandSearch = useDebouncedCallback((value) => {
     setBrandSearch(value);
     setEffectiveBrandId(undefined);
+    setEffectiveBrandIds(undefined);
     setPage(1);
   }, 500);
 
@@ -126,8 +135,8 @@ export function AddresseeSelectionWeighing({
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl border border-teal-100 w-full shadow-sm overflow-hidden bg-white">
+      {/* Table - Desktop */}
+      <div className="hidden lg:block rounded-xl border border-teal-100 w-full shadow-sm overflow-hidden bg-white">
         <Table className="w-full">
           <TableHeader>
             <TableRow className="bg-teal-600 hover:bg-teal-600 border-b-0">
@@ -207,7 +216,7 @@ export function AddresseeSelectionWeighing({
                     )}
                   </TableCell>
                   <TableCell className="py-3 px-4">
-                    <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 text-[10px] uppercase font-bold px-2 py-0">
+                    <Badge variant="outline" className="text-blue-700 border-blue-300 bg-blue-50 text-sm font-bold px-3 py-1">
                       {addressee.brand || "SIN MARCA"}
                     </Badge>
                   </TableCell>
@@ -228,6 +237,91 @@ export function AddresseeSelectionWeighing({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Cards - Mobile/Tablet */}
+      <div className="lg:hidden space-y-3">
+        {query.isLoading ? (
+          <Card className="p-6 text-center text-teal-600 font-medium animate-pulse">
+            Cargando destinatarios...
+          </Card>
+        ) : data.length === 0 ? (
+          <Card className="p-8 text-center bg-gray-50/50">
+            <div className="flex flex-col items-center justify-center gap-2">
+              <SearchIcon className="h-10 w-10 text-gray-300" />
+              <span className="text-muted-foreground">No se encontraron destinatarios</span>
+            </div>
+          </Card>
+        ) : (
+          data.map((addressee) => (
+            <Card 
+              key={addressee.id} 
+              className="p-4 cursor-pointer hover:shadow-lg hover:border-teal-300 transition-all border-2 border-teal-100"
+              onClick={() => handleSelect(addressee)}
+            >
+              <div className="space-y-3">
+                {/* Destinatario */}
+                <div className="flex items-start gap-2">
+                  <User className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-500 mb-1 uppercase">Destinatario</div>
+                    <div className="font-bold text-gray-900 text-base leading-tight">
+                      {toCapitalize(addressee.fullName, true)}
+                    </div>
+                    <div className="text-sm text-teal-600 font-medium mt-1">
+                      CI: {addressee.identification}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dirección */}
+                {addressee.addresses && (
+                  <div className="flex items-start gap-2 pt-2 border-t border-gray-100">
+                    <MapPin className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-gray-500 mb-1 uppercase">Dirección</div>
+                      <div className="text-sm font-semibold text-gray-700">
+                        {toCapitalize(addressee.addresses.province, true)}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {toCapitalize(addressee.addresses.canton, true)} - {toCapitalize(addressee.addresses.firstStree, true)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Marca - Más grande y prominente */}
+                <div className="flex items-start gap-2 pt-2 border-t border-gray-100">
+                  <Tag className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-500 mb-2 uppercase">Marca</div>
+                    <Badge 
+                      variant="outline" 
+                      className="text-blue-700 border-blue-300 bg-blue-50 text-lg font-bold px-4 py-2 w-full justify-center"
+                    >
+                      {addressee.brand || "SIN MARCA"}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Botón de Acción */}
+                <div className="pt-3">
+                  <Button
+                    size="lg"
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-base font-semibold shadow-md"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelect(addressee);
+                    }}
+                  >
+                    <MousePointerClick className="h-5 w-5 mr-2" />
+                    Seleccionar Destinatario
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Pagination */}

@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAllSpecies } from "@/features/specie/hooks/use-all-species";
 import { Specie } from "@/features/specie/domain";
+import { useUnitMeasure } from "@/features/animal-weighing/hooks";
 import {
   useStockByIds,
   useSpecieProductsByCode,
@@ -63,6 +64,7 @@ export function ProductsModal({
 
   const speciesQuery = useAllSpecies();
   const species: Specie[] = (speciesQuery.data?.data as Specie[]) || [];
+  const { data: unitMeasureData } = useUnitMeasure();
 
   // Usar los IDs de animales que vienen de la orden
   const animalIdsInOrder = useMemo(() => {
@@ -367,7 +369,7 @@ export function ProductsModal({
                         {animal.code}
                       </span>
                       <Badge className="bg-blue-500">
-                        {animal.netWeight.toFixed(2)} kg
+                        {animal.netWeight.toFixed(2)} {unitMeasureData?.data?.symbol || 'kg'}
                       </Badge>
                     </div>
                     <div className="text-sm text-gray-700 font-medium mb-2">

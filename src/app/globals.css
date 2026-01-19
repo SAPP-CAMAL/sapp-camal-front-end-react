@@ -523,21 +523,77 @@ button[role="checkbox"][data-state="checked"] {
   border-color: hsl(var(--primary)) !important;
 }
 
-/* FORZAR el indicador (checkmark) blanco cuando está marcado */
-button[data-slot="checkbox"][data-state="checked"] *,
-[data-slot="checkbox"][data-state="checked"] *,
-button[data-slot="checkbox"][data-state="checked"] svg,
-[data-slot="checkbox"][data-state="checked"] svg,
+/* FORZAR el indicador (checkmark) blanco cuando está marcado - MÁS ESPECÍFICO */
+button[data-slot="checkbox"][data-state="checked"] > span[data-slot="checkbox-indicator"],
+[data-slot="checkbox"][data-state="checked"] > span[data-slot="checkbox-indicator"],
 button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"],
 [data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: #ffffff !important;
+}
+
+/* Color del SVG dentro del indicador - MÁXIMA ESPECIFICIDAD */
+button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] > svg,
+[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] > svg,
+button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] svg,
+[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] svg,
+button[data-slot="checkbox"][data-state="checked"] svg,
+[data-slot="checkbox"][data-state="checked"] svg,
+button[data-slot="checkbox"][data-state="checked"] .lucide,
+[data-slot="checkbox"][data-state="checked"] .lucide,
+button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] .lucide,
+[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] .lucide {
   color: #ffffff !important;
   stroke: #ffffff !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Forzar todos los paths dentro del SVG */
+button[data-slot="checkbox"][data-state="checked"] svg path,
+[data-slot="checkbox"][data-state="checked"] svg path,
+button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] svg path,
+[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] svg path {
+  stroke: #ffffff !important;
+  fill: none !important;
 }
 
 /* Ocultar el check cuando NO está marcado */
 button[data-slot="checkbox"]:not([data-state="checked"]) [data-slot="checkbox-indicator"],
 [data-slot="checkbox"]:not([data-state="checked"]) [data-slot="checkbox-indicator"] {
   display: none !important;
+  opacity: 0 !important;
+}
+
+/* ========================================
+   FIX ESPECIAL PARA MÓVIL/TABLET - CHECKBOX
+   ======================================== */
+@media (max-width: 1024px) {
+  /* Forzar display del indicador en móvil/tablet */
+  button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"],
+  [data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Forzar color blanco del SVG en móvil/tablet */
+  button[data-slot="checkbox"][data-state="checked"] svg,
+  [data-slot="checkbox"][data-state="checked"] svg,
+  button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] svg,
+  [data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] svg,
+  button[data-slot="checkbox"][data-state="checked"] svg *,
+  [data-slot="checkbox"][data-state="checked"] svg * {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+  }
 }
 
 /* Fix específico para multi-select y command items */
@@ -874,6 +930,32 @@ span[class*="rounded-full"] {
 
   button:not([data-sidebar] button) {
     padding: 0.625rem 1rem;
+  }
+
+  /* FORZAR CHECKBOX VISIBLE EN MÓVIL */
+  button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"],
+  [data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"],
+  button[data-slot="checkbox"][data-state="checked"] > span,
+  [data-slot="checkbox"][data-state="checked"] > span {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  button[data-slot="checkbox"][data-state="checked"] svg,
+  [data-slot="checkbox"][data-state="checked"] svg,
+  button[data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] svg,
+  [data-slot="checkbox"][data-state="checked"] [data-slot="checkbox-indicator"] svg,
+  button[data-slot="checkbox"][data-state="checked"] svg path,
+  [data-slot="checkbox"][data-state="checked"] svg path,
+  button[data-slot="checkbox"][data-state="checked"] svg polyline,
+  [data-slot="checkbox"][data-state="checked"] svg polyline,
+  button[data-slot="checkbox"][data-state="checked"] svg line,
+  [data-slot="checkbox"][data-state="checked"] svg line {
+    stroke: #ffffff !important;
+    color: #ffffff !important;
+    fill: none !important;
+    stroke-width: 2px !important;
   }
 }
 
