@@ -72,15 +72,15 @@ import type {
   SpecieProductConfig,
   OrderByIdAndDetailResponse,
 } from "../domain/order-entry.types";
-import { Step2AddresseeSelection } from "./step-2-addressee-selection";
-import { AddresseeSummaryCard } from "./addressee-summary-card";
 import { Step3CarrierSelection } from "./step-3-carrier-selection";
 import { CarrierSummaryCard } from "./carrier-summary-card";
+import { AddresseeSelectionWeighing } from "@/features/animal-weighing/components/addressee-selection-weighing";
+import { AddresseeSummaryCardWeighing } from "@/features/animal-weighing/components/addressee-summary-card-weighing";
 import { Addressees } from "@/features/addressees/domain";
 import { Carrier } from "@/features/carriers/domain";
 import { useAllSpecies } from "@/features/specie/hooks/use-all-species";
 import { Specie } from "@/features/specie/domain";
-import { useStockBySpecie, useStockByIds, useSaveOrder, useSpecieProductsByCode, useOrderByIdAndDetail, useRemoveOrderDetail } from "../hooks";
+import { useStockBySpecie, useStockByIds, useSaveOrder, useSpecieProductsByCode, useOrderByIdAndDetail, useRemoveOrderDetail, useValidateTimeOrder } from "../hooks";
 import { useUnitMeasure } from "@/features/animal-weighing/hooks";
 import { toCapitalize } from "@/lib/toCapitalize";
 
@@ -143,6 +143,7 @@ export function OrderEntryManagement() {
   // Hooks de API
   const saveOrderMutation = useSaveOrder();
   const removeOrderDetailMutation = useRemoveOrderDetail();
+  const { data: timeValidation, error: timeValidationError } = useValidateTimeOrder();
 
   // Consumir API de especies
   const speciesQuery = useAllSpecies();
@@ -383,6 +384,22 @@ export function OrderEntryManagement() {
   };
 
   const handleNext = () => {
+    // Validar horario antes de continuar
+    if (timeValidationError) {
+      const errorMessage = timeValidationError.message || "No se puede crear pedidos en este horario";
+      toast.error(errorMessage, {
+        duration: 5000,
+        style: {
+          background: '#fee2e2',
+          border: '2px solid #ef4444',
+          color: '#991b1b',
+          fontSize: '14px',
+          fontWeight: '600',
+        },
+      });
+      return;
+    }
+
     const selectedAnimalsList = animalStock.filter((animal) =>
       checkedOrders.has(animal.id)
     );
@@ -779,17 +796,32 @@ export function OrderEntryManagement() {
       )}
 
       {/* Paso 2: Selección de Destinatario */}
-      {step === 2 && (
-        <Step2AddresseeSelection
-          selectedBrand={brandAddressee}
-          onSelect={handleAddresseeSelect}
-          onBack={() => setStep(1)}
-        />
-      )}
+      {step === 2 && (() => {
+        // Obtener brandIds de los animales seleccionados
+        const selectedAnimals = stockData
+          .flatMap((item) => item.animal || [])
+          .filter((animal) => checkedOrders.has(animal.id));
+        
+        const brandIds = selectedAnimals
+          .map(animal => animal.brandId)
+          .filter((id): id is number => id !== undefined && id !== null);
+        
+        const uniqueBrandIds = [...new Set(brandIds)].join(',');
+        
+        return (
+          <AddresseeSelectionWeighing
+            initialBrandId={undefined}
+            initialBrandName={brandAddressee}
+            initialBrandIds={uniqueBrandIds || undefined}
+            onSelect={handleAddresseeSelect}
+            onBack={() => setStep(1)}
+          />
+        );
+      })()}
 
       {/* Resumen Paso 2: Destinatario Seleccionado - Se muestra en pasos 3 y 4 */}
       {step >= 3 && selectedAddressee && (
-        <AddresseeSummaryCard
+        <AddresseeSummaryCardWeighing
           addressee={selectedAddressee}
           onEdit={handleBackToStep2}
         />
@@ -1056,8 +1088,8 @@ export function OrderEntryManagement() {
               </div>
             </div>
 
-            {/* Table */}
-            <div className="relative overflow-auto border-2 rounded-lg">
+            {/* Table - Desktop */}
+            <div className="hidden lg:block relative overflow-auto border-2 rounded-lg">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-teal-600 hover:bg-teal-600">
@@ -1130,9 +1162,9 @@ export function OrderEntryManagement() {
                         >
                           <TableCell className="text-center border">
                             <div className="flex flex-col">
-                              <span className="font-medium">{animal.code}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {animal.brandName}
+                              <span className="text-lg font-bold text-blue-700">{animal.brandName}</span>
+                              <span className="text-sm text-muted-foreground">
+                                {animal.code}
                               </span>
                             </div>
                           </TableCell>
@@ -1149,7 +1181,7 @@ export function OrderEntryManagement() {
                           </TableCell>
                           <TableCell className="text-center border">
                             <Badge className="bg-blue-500 hover:bg-blue-600">
-                              {animal.netWeight.toFixed(2)} kg
+                              {animal.netWeight.toFixed(2)} {unitMeasureData?.data?.symbol || 'kg'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center border">
@@ -1170,6 +1202,107 @@ export function OrderEntryManagement() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Cards - Mobile/Tablet */}
+            <div className="lg:hidden space-y-3">
+              {stockQuery.isLoading ? (
+                <Card className="p-8">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="h-10 w-10 animate-spin text-teal-600" />
+                    <span className="text-sm text-gray-500">Cargando animales...</span>
+                  </div>
+                </Card>
+              ) : paginatedOrders.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Search className="h-10 w-10 text-gray-300" />
+                    <span className="text-gray-500">
+                      {selectedEspecieId
+                        ? "No hay animales disponibles para esta especie"
+                        : "Seleccione una especie para ver los animales disponibles"}
+                    </span>
+                  </div>
+                </Card>
+              ) : (
+                paginatedOrders.map((animal) => {
+                  const fecha = format(new Date(animal.createAt), "dd/MM/yyyy", { locale: es });
+                  const hora = format(new Date(animal.createAt), "HH:mm:ss", { locale: es });
+
+                  return (
+                    <Card
+                      key={animal.id}
+                      className="p-4 cursor-pointer hover:shadow-lg hover:border-teal-300 transition-all border-2"
+                      style={{
+                        borderColor: checkedOrders.has(animal.id) ? '#0d9488' : undefined,
+                        backgroundColor: checkedOrders.has(animal.id) ? '#f0fdfa' : undefined,
+                      }}
+                      onClick={() => {
+                        handleCheckOrder(animal.id, !checkedOrders.has(animal.id));
+                        setBrandAddressee(animal?.brandName);
+                      }}
+                    >
+                      <div className="space-y-3">
+                        {/* Marca y Código */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 flex-1">
+                            <Tag className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-semibold text-gray-500 mb-1 uppercase">Marca</div>
+                              <div className="text-2xl font-bold text-blue-700 leading-tight">
+                                {animal.brandName}
+                              </div>
+                              <div className="text-base text-muted-foreground mt-1">
+                                {animal.code}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-center w-10 h-10">
+                            <Checkbox
+                              checked={checkedOrders.has(animal.id)}
+                              onCheckedChange={(checked) => {
+                                handleCheckOrder(animal.id, checked as boolean);
+                                setBrandAddressee(animal?.brandName);
+                              }}
+                              className="w-5 h-5"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Fecha de Ingreso */}
+                        <div className="flex items-start gap-2 pt-2 border-t border-gray-100">
+                          <Calendar className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-gray-500 mb-1 uppercase">Fecha de Ingreso</div>
+                            <div className="text-sm font-medium text-gray-700">{fecha}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{hora}</div>
+                          </div>
+                        </div>
+
+                        {/* Introductor */}
+                        <div className="flex items-start gap-2 pt-2 border-t border-gray-100">
+                          <User className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-gray-500 mb-1 uppercase">Introductor</div>
+                            <div className="text-sm font-medium text-gray-700">{animal.introducer}</div>
+                          </div>
+                        </div>
+
+                        {/* Peso */}
+                        <div className="flex items-start gap-2 pt-2 border-t border-gray-100">
+                          <Weight className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-gray-500 mb-2 uppercase">Peso</div>
+                            <Badge className="bg-blue-500 hover:bg-blue-600 text-base px-3 py-1">
+                              {animal.netWeight.toFixed(2)} {unitMeasureData?.data?.symbol || 'kg'}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
             </div>
 
             {/* Paginación */}
@@ -1322,7 +1455,7 @@ export function OrderEntryManagement() {
                           {animal.code}
                         </span>
                         <Badge className="bg-blue-500">
-                          {animal.netWeight.toFixed(2)} kg
+                          {animal.netWeight.toFixed(2)} {unitMeasureData?.data?.symbol || 'kg'}
                         </Badge>
                       </div>
                       <div className="text-sm text-gray-700 font-medium mb-2">

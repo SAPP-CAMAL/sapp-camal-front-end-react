@@ -35,6 +35,7 @@ export type AnimalWeighingRow = {
   hasPartialConfiscation?: boolean; // Si la sección tiene decomiso parcial
   addressee?: any; // Destinatario asignado a esta fila
   carrier?: any; // Transportista asignado a esta fila
+  commentary?: string; // Observación del pesaje
 };
 
 export type DetailAnimalWeighing = {

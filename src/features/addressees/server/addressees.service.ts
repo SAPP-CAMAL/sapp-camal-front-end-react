@@ -12,11 +12,12 @@ export function getAdresseesByFilterService(filters: FiltersAddressees = {}): Pr
     }).json<ResponseAddresseesByFilter>()
 }
 
-export function getAddresseesByFiltersWeighingService(filters: { names?: string; brand?: string; brandId?: number }): Promise<CommonHttpResponse<Addressees>> {
+export function getAddresseesByFiltersWeighingService(filters: { names?: string; brand?: string; brandId?: number; brandIds?: string }): Promise<CommonHttpResponse<Addressees>> {
     const searchParams = new URLSearchParams();
     if (filters.names) searchParams.append("names", filters.names);
     if (filters.brand) searchParams.append("brand", filters.brand);
     if (filters.brandId) searchParams.append("brandId", filters.brandId.toString());
+    if (filters.brandIds) searchParams.append("brandIds", filters.brandIds);
 
     return http.get("v1/1.0.0/addressees/by-filters", {
         searchParams
