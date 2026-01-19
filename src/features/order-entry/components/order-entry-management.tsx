@@ -797,22 +797,11 @@ export function OrderEntryManagement() {
 
       {/* Paso 2: Selección de Destinatario */}
       {step === 2 && (() => {
-        // Obtener brandIds de los animales seleccionados
-        const selectedAnimals = stockData
-          .flatMap((item) => item.animal || [])
-          .filter((animal) => checkedOrders.has(animal.id));
-        
-        const brandIds = selectedAnimals
-          .map(animal => animal.brandId)
-          .filter((id): id is number => id !== undefined && id !== null);
-        
-        const uniqueBrandIds = [...new Set(brandIds)].join(',');
-        
         return (
           <AddresseeSelectionWeighing
             initialBrandId={undefined}
             initialBrandName={brandAddressee}
-            initialBrandIds={uniqueBrandIds || undefined}
+            initialBrandIds={undefined}
             onSelect={handleAddresseeSelect}
             onBack={() => setStep(1)}
           />
