@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2, Ticket, Layers, PawPrint, Activity, Truck } from "lucide-react";
+import { CalendarIcon, Download, Search, Scale, Calendar, Tag, Package, MapPin, Weight, Settings, User, Edit, Trash2, Ticket, Layers, PawPrint, Activity, Truck, MessageCircle } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLines } from "@/features/postmortem/hooks/use-lines";
@@ -439,6 +439,7 @@ export function AnimalWeighingManagement() {
         let idDetailAnimalWeighing: number | undefined = undefined;
         let addresseeData = undefined;
         let carrierData = undefined;
+        let commentary: string | undefined = undefined;
         if (animal.animalWeighing && animal.animalWeighing.length > 0) {
           const weighingForStage = animal.animalWeighing.find(
             (w: any) => w.idWeighingStage === weighingStageId
@@ -448,6 +449,7 @@ export function AnimalWeighingManagement() {
             savedWeight = parseFloat(weighingForStage.detailAnimalWeighing[0].netWeight) || 0;
             idAnimalWeighing = weighingForStage.id;
             idDetailAnimalWeighing = weighingForStage.detailAnimalWeighing[0].id; // Capturar el ID del detalle
+            commentary = weighingForStage.detailAnimalWeighing[0].commentary || '';
           }
           // Extraer addressee si existe
           if (weighingForStage?.addressee?.personRole?.person) {
@@ -488,13 +490,14 @@ export function AnimalWeighingManagement() {
           carrier: carrierData,
           idAnimalWeighing: idAnimalWeighing,
           idDetailAnimalWeighing: idDetailAnimalWeighing, // Agregar el ID del detalle
+          commentary: commentary,
         });
       });
     } else {
       // Si hay secciones de canal, solo mostrar filas con datos guardados
       allAnimals.forEach((animal) => {
         // Obtener TODAS las secciones guardadas para este animal en esta etapa
-        const savedSections = new Map<number, { weight: number; detailId: number }>(); // Map<idConfigSectionChannel, {peso, idDetail}>
+        const savedSections = new Map<number, { weight: number; detailId: number; commentary?: string }>(); // Map<idConfigSectionChannel, {peso, idDetail, commentary}>
         let idAnimalWeighing: number | undefined = undefined;
 
         if (animal.animalWeighing && animal.animalWeighing.length > 0) {
@@ -510,7 +513,8 @@ export function AnimalWeighingManagement() {
                     detail.idConfigSectionChannel,
                     {
                       weight: parseFloat(detail.netWeight) || 0,
-                      detailId: detail.id // Guardar el ID del detalle (204)
+                      detailId: detail.id, // Guardar el ID del detalle (204)
+                      commentary: detail.commentary || ''
                     }
                   );
                 }
@@ -560,6 +564,7 @@ export function AnimalWeighingManagement() {
             const sectionData = savedSections.get(section.id);
             const savedWeight = sectionData?.weight || 0;
             const detailId = sectionData?.detailId;
+            const commentary = sectionData?.commentary || '';
             const hasPartialConfiscation = checkPartialConfiscation(animal, section.sectionCode);
 
             const brandData = animal.detailCertificateBrands?.detailsCertificateBrand?.brand;
@@ -584,6 +589,7 @@ export function AnimalWeighingManagement() {
               hasPartialConfiscation,
               addressee: addresseeData,
               carrier: carrierData,
+              commentary: commentary,
             });
           });
         } else if (savedSections.size > 0) {
@@ -615,6 +621,7 @@ export function AnimalWeighingManagement() {
                 hasPartialConfiscation,
                 addressee: addresseeData,
                 carrier: carrierData,
+                commentary: sectionData.commentary || '',
               });
             }
           });
@@ -1669,6 +1676,12 @@ export function AnimalWeighingManagement() {
                             <div className={`text-xs font-semibold ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
                               {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || 'kg'}` : "-"}
                             </div>
+                            {/* Observaciones debajo del peso en móvil - solo si hay peso guardado */}
+                            {row.savedWeight > 0 && (
+                              <div className="mt-1 text-[10px] text-muted-foreground italic">
+                                {row.commentary ? row.commentary : 'Sin observaciones'}
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex gap-1 items-center shrink-0">
@@ -1747,8 +1760,8 @@ export function AnimalWeighingManagement() {
             
             // Calcular el número total de columnas para el colspan
             const totalColumns = weighingStageId !== 1 
-              ? (hasDeleteButton ? 8 : 7)  // CANAL/DISTRIBUCIÓN: 6 columnas + acción (+ delete si aplica)
-              : (hasDeleteButton ? 6 : 5); // EN PIE: 4 columnas + acción (+ delete si aplica)
+              ? (hasDeleteButton ? 9 : 8)  // CANAL/DISTRIBUCIÓN: 6 columnas + obs + acción (+ delete si aplica)
+              : (hasDeleteButton ? 7 : 6); // EN PIE: 4 columnas + obs + acción (+ delete si aplica)
             
             return (
           <Table className="min-w-full border [&_td]:!rounded-none [&_th]:!rounded-none [&_tr]:!rounded-none">
@@ -1794,6 +1807,12 @@ export function AnimalWeighingManagement() {
                   <div className="flex items-center justify-center gap-1">
                     <Weight className="h-3 w-3" />
                     <span>Peso</span>
+                  </div>
+                </TableHead>
+                <TableHead className="text-center text-xs whitespace-nowrap py-0.5 px-1">
+                  <div className="flex items-center justify-center gap-1">
+                    <MessageCircle className="h-3 w-3" />
+                    <span>Obs.</span>
                   </div>
                 </TableHead>
                 <TableHead className="text-center text-xs whitespace-nowrap py-0.5 px-1" colSpan={hasDeleteButton ? 2 : 1}>
@@ -1948,6 +1967,22 @@ export function AnimalWeighingManagement() {
                       <span className={`font-semibold text-xs ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
                         {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || 'kg'}` : "-"}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-center py-0.5 px-1">
+                      {row.savedWeight > 0 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-center cursor-help">
+                                <MessageCircle className="h-3.5 w-3.5 text-blue-600" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">{row.commentary || 'Sin observaciones'}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </TableCell>
                     <TableCell className="py-0.5 px-1">
                       <div className="flex gap-0 justify-start items-center">
