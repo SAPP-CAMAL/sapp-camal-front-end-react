@@ -808,9 +808,7 @@ export function CorralsManagement() {
           males: selectedMales,
           females: selectedFemales,
           slaughterDate,
-          commentary:
-            originalBrand.codes ||
-            `Transferido completamente al corral ${targetCorralId}`,
+
           detailsCertificateBrand: detailsCertificateBrand,
           idFinishType: originalSettingCert.idFinishType,
           ...(targetCorralGroup?.id && {idCorralGroup: targetCorralGroup?.groupId})
@@ -860,7 +858,7 @@ export function CorralsManagement() {
           males: selectedMales,
           females: selectedFemales,
           slaughterDate: slaughterDate,
-          commentary: `Transferido desde corral ${originalBrand.idCorral}`,
+          commentary: originalSettingCert.commentary || '',
           status: true,
           idCorralGroup: targetCorralGroup?.groupId!,
           detailsCertificateBrand: detailsCertificateBrand,
@@ -913,9 +911,7 @@ export function CorralsManagement() {
           males: remainingMalesTotal,
           females: remainingFemalesTotal,
           slaughterDate: slaughterDate,
-          commentary:
-            originalBrand.codes ||
-            "Cantidad actualizada por transferencia parcial",
+
           detailsCertificateBrand: remainingDetailsCertificateBrand,
           idFinishType: originalSettingCert.idFinishType,
           ...(targetCorralGroup?.id && {idCorralGroup: targetCorralGroup?.groupId})

@@ -1,68 +1,91 @@
 import { CommonHttpResponsePagination } from "@/features/people/domain";
 
-export type SeizureType = "products" | "subproducts";
-
 export type FiltersSeizures = {
   page?: number;
   limit?: number;
-  createdAt?: string;
-  specieId: number;
+  startDate?: string;
+  endDate?: string;
+  idSpecie: number;
 };
 
-export type ResponseProductSeizures = CommonHttpResponsePagination<ProductSeizureItem>;
+export type ResponseAnimalSeizures = CommonHttpResponsePagination<AnimalSeizureItem>;
 
-export interface ProductSeizureItem {
-  id: number;
+export interface AnimalSeizureItem {
   createdAt: string;
+  id: number;
+  idDetailsCertificateBrands: number;
+  idAnimalSex: number;
+  code: string;
+  status: boolean;
+  detailCertificateBrands: {
+    id: number;
+    detailsCertificateBrand: {
+      id: number;
+      brand: {
+        id: number;
+        name: string;
+        description: string | null;
+        introducerId: number;
+        status: boolean;
+      };
+    };
+    productiveStage: {
+      id: number;
+      name: string;
+      code: string;
+      status: boolean;
+      idSpecies: number;
+      idAnimalSex: number;
+    };
+  };
+  postmortem: PostmortemItem[];
+}
+
+export interface PostmortemItem {
+  id: number;
+  idDetailsSpeciesCertificate: number;
+  idVeterinarian: number;
+  status: boolean;
+  subProductPostmortem: SubProductPostmortem[];
+  productPostmortem: ProductPostmortem[];
+}
+
+export interface BodyPart {
+  id: number;
+  idPartType: number;
+  code: string;
+  description: string;
+  status: boolean;
+}
+
+export interface ProductPostmortem {
+  id: number;
   idPostmortem: number;
   idBodyPart: number;
   weight: string;
   isTotalConfiscation: boolean;
   status: boolean;
-  bodyPartId: number;
-  bodyPartCode: string;
-  bodyPartDescription: string;
-  code: string;
-  idCertificate: number;
-  commentary: string;
-  slaughterDate: string;
-  specieName: string;
-  specieDescription: string;
-  specieCode: string;
-  productiveStageId: number;
-  productiveStageName: string;
-  productiveStageCode: string;
-  brandId: number;
-  brandName: string;
-  brandDescription: string | null;
-  introducerId: number;
-  userId: number;
-  fullNameIntroducer: string;
+  bodyPart: BodyPart;
 }
 
-export type ResponseSubproductSeizures = CommonHttpResponsePagination<SubproductSeizureItem>;
-
-export interface SubproductSeizureItem {
-  subProductPostmortem_id: number;
+export interface SubProductPostmortem {
+  id: number;
   idPostmortem: number;
-  idSpeciesDisease: number;
-  idProductAnatomicalLocation: number | null;
-  presence: number;
   weight: string;
-  percentageAffection: string;
   status: boolean;
-  specieId: number;
-  specieName: string;
-  productId: number;
-  productCode: string;
-  productDescription: string;
-  productiveStageId: number;
-  productiveStageName: string;
-  brandId: number;
-  brandName: string;
-  brandDescription: string | null;
-  introducerId: number;
-  userId: number;
-  fullName: string;
-  createdAt: string;
+  percentageAffection: string;
+  speciesDisease: {
+    id: number;
+    productDisease: {
+      id: number;
+      product: {
+        id: number;
+        description: string;
+      };
+      disease: {
+        id: number;
+        names: string;
+      };
+    };
+  };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { subDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -59,7 +60,9 @@ import { Badge } from "@/components/ui/badge";
 
 export function WeighingReportManagement() {
   // Estados de filtros
-  const [startDate, setStartDate] = useState<string>(getLocalDateString());
+  const [startDate, setStartDate] = useState<string>(
+    getLocalDateString(subDays(new Date(), 1))
+  );
   const [endDate, setEndDate] = useState<string>(getLocalDateString());
   const [selectedLineId, setSelectedLineId] = useState<string>("");
   const [selectedSpecieId, setSelectedSpecieId] = useState<number | null>(null);
