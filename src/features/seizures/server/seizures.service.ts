@@ -1,62 +1,36 @@
 import { http } from "@/lib/ky";
 import {
   FiltersSeizures,
-  ResponseProductSeizures,
-  ResponseSubproductSeizures,
+  ResponseAnimalSeizures,
 } from "../domain";
 
-export function getProductSeizuresService(
+export function getAnimalSeizuresService(
   filters: FiltersSeizures
-): Promise<ResponseProductSeizures> {
+): Promise<ResponseAnimalSeizures> {
+  const today = new Date().toISOString().split("T")[0];
+
   return http
-    .post("v1/1.0.0/product-postmortem/by-filters", {
+    .post("v1/1.0.0/detail-specie-cert/animal-confiscation-data", {
       json: {
-        specieId: filters.specieId,
-        page: filters.page,
-        limit: filters.limit,
-        ...(filters.createdAt && { createdAt: filters.createdAt }),
+        page: filters.page || 1,
+        limit: filters.limit || 10,
+        idSpecie: filters.idSpecie,
+        startDate: filters.startDate || today,
+        endDate: today,
       },
     })
-    .json<ResponseProductSeizures>();
+    .json<ResponseAnimalSeizures>();
 }
 
-export function getSubproductSeizuresService(
-  filters: FiltersSeizures
-): Promise<ResponseSubproductSeizures> {
-  return http
-    .post("v1/1.0.0/subproduct-postmortem/by-filters", {
-      json: {
-        idSpecie: filters.specieId,
-        page: filters.page,
-        limit: filters.limit,
-        ...(filters.createdAt && { createdAt: filters.createdAt }),
-      },
-    })
-    .json<ResponseSubproductSeizures>();
-}
-
-export async function downloadSubproductTicket(
-  subProductPostmortemId: number
+export async function getAnimalConfiscationReportService(
+  animalId: number
 ): Promise<{ blob: Blob; filename: string }> {
   const response = await http.get(
-    `v1/1.0.0/subproduct-postmortem/ticket-report/${subProductPostmortemId}`
+    `v1/1.0.0/detail-specie-cert/animal-confiscation-report-by-id/${animalId}`
   );
 
   const blob = await response.blob();
-  const filename = `ticket_subproducto_${subProductPostmortemId}.pdf`;
-
-  return { blob, filename };
-}
-
-export async function downloadProductTicket(
-  productId: number
-): Promise<{ blob: Blob; filename: string }> {
-  const response = await http.get(
-    `v1/1.0.0/product-postmortem/ticket-report/${productId}`
-  );
-
-  const blob = await response.blob();
-  const filename = `ticket_producto_${productId}.pdf`;
+  const filename = `reporte_decomiso_animal_${animalId}.pdf`;
 
   return { blob, filename };
 }

@@ -36,6 +36,7 @@ export type AnimalWeighingRow = {
   addressee?: any; // Destinatario asignado a esta fila
   carrier?: any; // Transportista asignado a esta fila
   commentary?: string; // Observación del pesaje
+  isPrimaryRow?: boolean; // Marca si esta es la fila principal (donde se asignó el destinatario)
 };
 
 export type DetailAnimalWeighing = {
@@ -88,6 +89,7 @@ export type DetailsCertificateBrand = {
   id: number;
   corralType: CorralType;
   brand?: Brand;
+  commentary?: string;
 };
 
 export type DetailCertificateBrands = {

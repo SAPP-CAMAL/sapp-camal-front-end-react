@@ -837,25 +837,23 @@ export function OrderEntryManagement() {
       {step === 4 && selectedOrder && (
         <Card>
           <CardContent className="pt-6 space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-700">
+            <div className="flex flex-col gap-3 mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-gray-700">
                 4.- Agregar productos y subproductos
               </h2>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="text-purple-600 border-purple-600 hover:bg-purple-50"
-                  onClick={handleOpenProductModal}
-                  disabled={checkedOrders.size === 0}
-                >
-                  <ShoppingBag className="h-4 w-4 mr-2" />
-                  PRODUCTOS O SUBPRODUCTOS
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                className="text-purple-600 border-purple-600 hover:bg-purple-50 text-xs md:text-sm w-full md:w-auto md:self-end px-3 py-2"
+                onClick={handleOpenProductModal}
+                disabled={checkedOrders.size === 0}
+              >
+                <ShoppingBag className="h-4 w-4 mr-2 shrink-0" />
+                <span className="text-[10px] sm:text-xs md:text-sm">PRODUCTOS O SUBPRODUCTOS</span>
+              </Button>
             </div>
 
-            {/* Tabla de Productos */}
-            <div className="relative overflow-auto border-2 rounded-lg">
+            {/* Tabla de Productos - Desktop */}
+            <div className="hidden md:block relative overflow-auto border-2 rounded-lg">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-teal-600 hover:bg-teal-600">
@@ -927,6 +925,70 @@ export function OrderEntryManagement() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Cards de Productos - Mobile/Tablet */}
+            <div className="md:hidden space-y-3">
+              {products.length === 0 ? (
+                <Card className="p-8">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <ShoppingBag className="h-16 w-16 text-gray-400" />
+                    <h3 className="text-lg font-semibold text-gray-700 text-center">
+                      No hay productos agregados
+                    </h3>
+                    <p className="text-sm text-gray-500 text-center">
+                      Haga clic en el botón &quot;PRODUCTOS O SUBPRODUCTOS&quot; para agregar productos a esta orden
+                    </p>
+                  </div>
+                </Card>
+              ) : (
+                products.map((product, index) => (
+                  <Card
+                    key={`${product.id}-${product.nroIngreso}-${index}`}
+                    className="p-4 hover:shadow-lg transition-shadow border-2"
+                  >
+                    <div className="space-y-3">
+                      {/* Especie y Código */}
+                      <div className="flex items-start gap-2">
+                        <PiggyBank className="h-5 w-5 text-teal-600 mt-1 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-500 mb-1 uppercase">Especie</div>
+                          <div className="text-base font-medium text-gray-900">
+                            {product.especie}
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {product.codigoAnimal}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Subproducto */}
+                      <div className="flex items-start gap-2 pt-2 border-t border-gray-100">
+                        <Package className="h-5 w-5 text-teal-600 mt-1 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-500 mb-1 uppercase">Subproducto</div>
+                          <div className="text-base font-medium text-gray-900">
+                            {product.subproducto}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botón Eliminar */}
+                      <div className="pt-2 border-t border-gray-100">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => handleRemoveProductClick(product.id, product.idAnimalProduct)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Eliminar Producto
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
             </div>
 
             {/* Botón Finalizar - Solo se muestra si hay productos */}

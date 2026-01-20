@@ -61,7 +61,7 @@ import { Badge } from "@/components/ui/badge";
 export function WeighingReportManagement() {
   // Estados de filtros
   const [startDate, setStartDate] = useState<string>(
-    getLocalDateString(subDays(new Date(), 30))
+    getLocalDateString(subDays(new Date(), 1))
   );
   const [endDate, setEndDate] = useState<string>(getLocalDateString());
   const [selectedLineId, setSelectedLineId] = useState<string>("");
