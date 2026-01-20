@@ -91,3 +91,32 @@ export const getPostmortemByFiltersService = async (
     throw error;
   }
 };
+
+
+
+/**
+ * Obtiene el reporte de decomiso mensual de Agrocalidad
+ * @param monthDate - Fecha del mes en formato 'YYYY-MM'
+ * @returns Promise con un arreglo de AntemortemRow
+ */
+export const getMonthlySummaryAgrocalidadReport = async (
+  monthDate: string,
+) => {
+	try {
+		const response = await http.get('v1/1.0.0/setting-cert-brand/monthly-summary-agrocalidad-report', {
+			searchParams: { date: monthDate },
+		});
+
+		const blob = await response.blob();
+		const contentType = response.headers.get('content-type') || '';
+		const contentDisposition = response.headers.get('content-disposition') || '';
+
+		const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+		const defaultFilename = `Reporte-mensual-agrocalidad-${monthDate}.xlsx`;
+		const filename = filenameMatch?.[1]?.replace(/['"]/g, '') || defaultFilename;
+
+		return { blob, filename, contentType };
+	} catch (error) {
+		throw error;
+	}
+};

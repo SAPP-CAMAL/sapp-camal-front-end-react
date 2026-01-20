@@ -9,6 +9,7 @@ export interface WeighingReportFilters {
     startDate: string;
     endDate: string;
     brandName?: string; // Opcional - para buscar por nombre de marca
+    specieName?: string;
 }
 
 // Estructura de la respuesta de la API

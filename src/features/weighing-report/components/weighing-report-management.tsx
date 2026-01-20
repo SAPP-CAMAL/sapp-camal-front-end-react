@@ -43,7 +43,6 @@ import {
   Tag,
   Layers,
 } from "lucide-react";
-import { subDays } from "date-fns";
 import { toast } from "sonner";
 
 import { useLines } from "@/features/postmortem/hooks/use-lines";
@@ -57,6 +56,7 @@ import {
 } from "@/features/postmortem/utils/postmortem-helpers";
 import { useDebouncedCallback } from "use-debounce";
 import { Badge } from "@/components/ui/badge";
+import { subDays } from "date-fns";
 
 export function WeighingReportManagement() {
   // Estados de filtros
@@ -99,8 +99,9 @@ export function WeighingReportManagement() {
       startDate,
       endDate,
       brandName: debouncedBrandSearch || undefined,
+      specieName: selectedLineId && lines ? lines.find(line => line.id?.toString() === selectedLineId)?.description?.toLowerCase() : undefined,
     };
-  }, [startDate, endDate, selectedSpecieId, weighingStageId, debouncedBrandSearch]);
+  }, [startDate, endDate, selectedSpecieId, weighingStageId, debouncedBrandSearch, selectedLineId, lines]);
 
   const {
     data: reportData,
