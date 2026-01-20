@@ -28,6 +28,8 @@ import {
   FileText,
   FileBarChart,
   Calendar,
+  CalendarRange,
+  Calendar1,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -91,6 +93,7 @@ import {
   downloadMonthlyConfiscationReport,
 } from "../server/db/postmortem-report.service";
 import { toast } from "sonner";
+import { downloadMonthlySummaryAgrocalidadReport } from "../utils/download-monthly-summary-agrocalidad.report";
 
 export function PostmortemManagement() {
   const [rows, setRows] = useState<IntroductorRow[]>([
@@ -454,12 +457,12 @@ export function PostmortemManagement() {
     if (words.length <= 2) {
       return { line1: fullName, line2: "" };
     }
-    
+
     // Dividir aproximadamente a la mitad
     const midPoint = Math.ceil(words.length / 2);
     const line1 = words.slice(0, midPoint).join(" ");
     const line2 = words.slice(midPoint).join(" ");
-    
+
     return { line1, line2 };
   };
 
@@ -708,7 +711,7 @@ export function PostmortemManagement() {
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <Calendar className="h-4 w-4 mr-2" />
+                    <Calendar1 className="h-4 w-4 mr-2 text-gray-500" />
                     Reporte Diario de Decomisos
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
@@ -786,6 +789,27 @@ export function PostmortemManagement() {
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   Reporte Mensual de Decomisos
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (!selectedSpecieId) {
+                      toast.error("Selecciona una línea de producción");
+                      return;
+                    }
+                    // Extraer año y mes de la fecha seleccionada (YYYY-MM)
+                    const yearMonth = slaughterDate.substring(0, 7);
+                    toast.promise(
+                      downloadMonthlySummaryAgrocalidadReport(yearMonth),
+                      {
+                        loading: "Generando reporte mensual de agrocalidad...",
+                        success: "Reporte mensual de agrocalidad descargado correctamente",
+                        error: "Error al descargar el reporte mensual de agrocalidad",
+                      }
+                    );
+                  }}
+                >
+                  <CalendarRange className="h-4 w-4 mr-2" />
+                  Reporte Mensual de Agrocalidad
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -798,7 +822,7 @@ export function PostmortemManagement() {
             onFilterChange={setCorralTypeFilter}
             counts={filterCounts}
           />
-          
+
           {/* Botón para expandir/colapsar todos */}
           <Button
             variant="outline"
@@ -1113,7 +1137,7 @@ export function PostmortemManagement() {
                                 currentIndex++;
                                 return;
                               }
-                              
+
                               const count = row.introductor
                                 ? countAnimalsWithDisease(
                                     postmortemData?.data,
