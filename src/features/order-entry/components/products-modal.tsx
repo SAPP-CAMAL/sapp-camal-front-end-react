@@ -9,6 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -325,151 +332,129 @@ export function ProductsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-none! w-[95vw] h-[90vh] max-h-[90vh] p-0 overflow-hidden flex flex-col">
-        <DialogHeader className="px-6 pt-5 pb-3 border-b">
+      <DialogContent className="max-w-[100vw] w-full sm:w-[95vw] md:w-[90vw] lg:w-[85vw] xl:w-[80vw] h-[96vh] md:h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
+        <DialogHeader className="px-2 sm:px-4 md:px-6 pt-2 sm:pt-3 md:pt-5 pb-2 border-b shrink-0">
           <DialogTitle>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-base font-semibold">
-                  {readOnly ? 'Ver' : 'Seleccionar'} Productos y Subproductos - Orden #{orderId}
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                <span className="text-xs sm:text-sm md:text-base font-semibold leading-tight">
+                  Productos - Orden #{orderId}
                 </span>
-                <Badge variant="outline" className="bg-blue-500 text-white border-blue-500">
+                <Badge variant="outline" className="bg-blue-500 text-white border-blue-500 text-[10px] sm:text-xs px-1 sm:px-2">
                   {animalIdsInOrder.length} {animalIdsInOrder.length === 1 ? "animal" : "animales"}
                 </Badge>
-                {currentAnimalId && (
-                  <Badge variant="outline" className="bg-teal-600 text-white border-teal-600">
-                    Animal #{currentAnimalId}
-                  </Badge>
-                )}
               </div>
               {stockQuery.isLoading && (
-                <span className="text-xs text-gray-500">Cargando animales disponibles...</span>
+                <span className="text-[10px] sm:text-xs text-gray-500">Cargando...</span>
               )}
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-1 overflow-hidden">
-          <div className="w-64 border-r overflow-y-auto p-3 bg-muted/20">
-            <div className="text-neutral-950 mb-2 font-semibold">
-              Animal actual
-            </div>
-            <div className="text-xs text-muted-foreground mb-3">
-              {currentAnimalId ? animalIdsInOrder.indexOf(currentAnimalId) + 1 : 0} de {animalIdsInOrder.length}
-            </div>
-            {currentAnimalId &&
-              (() => {
+        <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-6">
+          <div className="max-w-5xl mx-auto space-y-2 sm:space-y-3 md:space-y-4">
+            {/* Selector de Animal */}
+            <div className="space-y-1 sm:space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700">
+                Animal:
+              </label>
+              <Select
+                value={currentAnimalId?.toString() || ""}
+                onValueChange={(value) => setCurrentAnimalId(Number(value))}
+              >
+                <SelectTrigger className="w-full h-9 sm:h-10 text-xs sm:text-sm">
+                  <SelectValue placeholder="Seleccione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {animalIdsInOrder.map((animalId) => {
+                    const animal = animalStock.find((a) => a.id === animalId);
+                    if (!animal) return null;
+                    const selectedSpecieName = species.find((s) => s.id === specieId)?.name || "";
+                    
+                    return (
+                      <SelectItem key={animalId} value={animalId.toString()} className="text-xs sm:text-sm">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-blue-600">{animal.code}</span>
+                          <span className="text-xs text-gray-500">{selectedSpecieName}</span>
+                          <Badge className="bg-blue-500 text-[10px] px-1.5">
+                            {animal.netWeight.toFixed(2)} {unitMeasureData?.data?.symbol || 'kg'}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+
+              {/* Info del animal actual */}
+              {currentAnimalId && (() => {
                 const animal = animalStock.find((a) => a.id === currentAnimalId);
                 if (!animal) return null;
-                const selectedSpecieName = species.find((s) => s.id === specieId)?.name || "";
                 return (
-                  <div className="p-4 rounded-lg border-2 bg-white border-teal-500">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-bold text-blue-600 text-lg">
-                        {animal.code}
-                      </span>
-                      <Badge className="bg-blue-500">
-                        {animal.netWeight.toFixed(2)} {unitMeasureData?.data?.symbol || 'kg'}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-gray-700 font-medium mb-2">
-                      {animal.introducer}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {selectedSpecieName}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2">
-                      Marca: {animal.brandName}
+                  <div className="mt-1 sm:mt-2 p-2 sm:p-3 rounded-lg border bg-teal-50 border-teal-300">
+                    <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                      <div>
+                        <span className="text-gray-600">Introductor: </span>
+                        <span className="font-medium">{animal.introducer}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Marca: </span>
+                        <span className="font-medium">{animal.brandName}</span>
+                      </div>
                     </div>
                   </div>
                 );
               })()}
-
-            <div className="mt-4">
-              <div className="text-xs font-semibold text-gray-600 mb-2">
-                Todos los animales:
-              </div>
-              <div className="space-y-1">
-                {animalIdsInOrder.map((animalId) => {
-                  if (animalId === currentAnimalId) return null;
-                  const animal = animalStock.find((a) => a.id === animalId);
-                  if (!animal) return null;
-
-                  const selectedSpecieName = species.find((s) => s.id === specieId)?.name || "";
-
-                  return (
-                    <div
-                      key={animalId}
-                      onClick={() => setCurrentAnimalId(animalId)}
-                      className="p-2 rounded bg-gray-100 hover:bg-teal-100 text-xs cursor-pointer transition-colors border-2 border-transparent hover:border-teal-500"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-bold text-blue-600">
-                            {animal.code}
-                          </span>
-                          <span className="text-gray-500 ml-1">
-                            - {selectedSpecieName}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-          </div>
 
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-5xl mx-auto space-y-6">
-              <div className="flex gap-2 justify-center">
-                <Button
-                  variant={productType === "producto" ? "default" : "outline"}
-                  onClick={() => onProductTypeChange("producto")}
-                  className={productType === "producto" ? "bg-teal-600 hover:bg-teal-700" : ""}
-                >
-                  Producto
-                </Button>
-                <Button
-                  variant={productType === "subproducto" ? "default" : "outline"}
-                  onClick={() => onProductTypeChange("subproducto")}
-                  className={productType === "subproducto" ? "bg-teal-600 hover:bg-teal-700" : ""}
-                >
-                  Subproducto
-                </Button>
-              </div>
-
-              <div className="border-2 rounded-lg p-6 bg-white">
-                <h3 className="font-semibold text-gray-700 mb-4 text-lg">
-                  Seleccione {productType === "producto" ? "productos" : "subproductos"}:
-                </h3>
+            {/* Botón de Tipo de Producto */}
+            <div className="flex gap-1 sm:gap-2 justify-center">
+              <Button
+                variant={productType === "producto" ? "default" : "outline"}
+                onClick={() => onProductTypeChange("producto")}
+                className={`${productType === "producto" ? "bg-teal-600 hover:bg-teal-700" : ""} text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 h-8 sm:h-9 md:h-10`}
+              >
+                Producto
+              </Button>
+              <Button
+                variant={productType === "subproducto" ? "default" : "outline"}
+                onClick={() => onProductTypeChange("subproducto")}
+                className={`${productType === "subproducto" ? "bg-teal-600 hover:bg-teal-700" : ""} text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 h-8 sm:h-9 md:h-10`}
+              >
+                Subproducto
+              </Button>
+            </div>
+            {/* Sección de Productos */}
+            <div className="border rounded-lg p-2 sm:p-3 md:p-6 bg-white">
+              <h3 className="font-semibold text-gray-700 mb-2 sm:mb-3 md:mb-4 text-sm sm:text-base md:text-lg">
+                {productType === "producto" ? "Productos" : "Subproductos"}
+              </h3>
                 
-                {/* Información de depuración para el usuario */}
-                {currentAnimalId && (
-                  <div className="mb-4 text-xs text-gray-500 space-y-1">
-                    <div>Animal actual: {currentAnimalId}</div>
-                    <div>Productos disponibles: {currentAnimalProducts.length}</div>
-                    <div>Productos configurados: {allConfiguredProducts.length}</div>
-                    <div>Productos seleccionados: {selectedProducts.size}</div>
-                    {existingOrderQuery.isLoading && (
-                      <div className="text-blue-600">Cargando datos de la orden...</div>
-                    )}
-                  </div>
-                )}
-                
-                {allProductsQuery.isLoading || productsQuery.isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-12 gap-3">
-                    <Loader2 className="h-10 w-10 animate-spin text-teal-600" />
-                    <span className="text-sm text-gray-500">
-                      Cargando {productType === "producto" ? "productos" : "subproductos"}...
-                    </span>
-                  </div>
-                ) : allConfiguredProducts.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No hay {productType === "producto" ? "productos" : "subproductos"} configurados
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Información de depuración para el usuario - Solo desktop */}
+              {currentAnimalId && (
+                <div className="hidden md:block mb-3 md:mb-4 text-xs text-gray-500 space-y-1">
+                  <div>Animal actual: {currentAnimalId}</div>
+                  <div>Productos disponibles: {currentAnimalProducts.length}</div>
+                  <div>Productos configurados: {allConfiguredProducts.length}</div>
+                  <div>Productos seleccionados: {selectedProducts.size}</div>
+                  {existingOrderQuery.isLoading && (
+                    <div className="text-blue-600">Cargando datos de la orden...</div>
+                  )}
+                </div>
+              )}
+              {allProductsQuery.isLoading || productsQuery.isLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <Loader2 className="h-10 w-10 animate-spin text-teal-600" />
+                  <span className="text-sm text-gray-500">
+                    Cargando {productType === "producto" ? "productos" : "subproductos"}...
+                  </span>
+                </div>
+              ) : allConfiguredProducts.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No hay {productType === "producto" ? "productos" : "subproductos"} configurados
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
                     {allConfiguredProducts.map((configProduct) => {
                       // Buscar el producto en stock del animal actual
                       const stockProduct = currentAnimalProducts.find(
@@ -495,7 +480,7 @@ export function ProductsModal({
                       return (
                         <div
                           key={configProduct.id}
-                          className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-colors ${
+                          className={`flex items-center justify-between gap-2 p-3 rounded-lg border-2 transition-colors ${
                             isAvailable 
                               ? isInOrder 
                                 ? "border-teal-500 bg-teal-50 hover:bg-teal-100" 
@@ -503,34 +488,35 @@ export function ProductsModal({
                               : "bg-gray-100 opacity-60 cursor-not-allowed border-gray-200"
                           }`}
                         >
-                          <Checkbox
-                            id={`prod-${configProduct.id}-${currentAnimalId}`}
-                            checked={isAvailable && productStockId ? selectedProducts.has(productStockId) : false}
-                            onCheckedChange={() => {
-                              if (isAvailable && productStockId && !readOnly) {
-                                handleToggleProduct(productStockId);
-                              }
-                            }}
-                            disabled={!isAvailable || readOnly}
-                          />
-                          <label
-                            htmlFor={`prod-${configProduct.id}-${currentAnimalId}`}
-                            className={`text-sm font-medium leading-none flex-1 ${
-                              isAvailable ? "cursor-pointer" : "cursor-not-allowed text-gray-500"
-                            }`}
-                          >
-                            <div className="flex flex-col gap-1 flex-1 text-center">
-                              <span>
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <Checkbox
+                              id={`prod-${configProduct.id}-${currentAnimalId}`}
+                              checked={isAvailable && productStockId ? selectedProducts.has(productStockId) : false}
+                              onCheckedChange={() => {
+                                if (isAvailable && productStockId && !readOnly) {
+                                  handleToggleProduct(productStockId);
+                                }
+                              }}
+                              disabled={!isAvailable || readOnly}
+                              className="shrink-0"
+                            />
+                            <label
+                              htmlFor={`prod-${configProduct.id}-${currentAnimalId}`}
+                              className={`text-sm md:text-base font-medium leading-tight flex-1 min-w-0 ${
+                                isAvailable ? "cursor-pointer" : "cursor-not-allowed text-gray-500"
+                              }`}
+                            >
+                              <span className="line-clamp-2">
                                 {productType === "subproducto" && configProduct.productName.includes(' - ')
                                   ? configProduct.productName.split(' - ')[0]
                                   : configProduct.productName
                                 }
                               </span>
-                            </div>
-                          </label>
+                            </label>
+                          </div>
                           {isInOrder && (
-                            <Badge variant="outline" className="bg-teal-600 text-white text-xs">
-                              Asignado
+                            <Badge variant="outline" className="bg-teal-600 text-white text-xs shrink-0">
+                              ✓
                             </Badge>
                           )}
                         </div>
@@ -539,37 +525,37 @@ export function ProductsModal({
                   </div>
                 )}
               </div>
-            </div>
           </div>
         </div>
 
-        <div className="border-t px-6 py-4 bg-muted/20">
-          <div className="flex justify-between items-center">
-            <div>
+        <div className="border-t px-2 sm:px-3 md:px-6 py-2 md:py-3 bg-muted/20 shrink-0">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
+            <div className="text-center sm:text-left order-2 sm:order-1">
               {hasChanges && orderStatus === 'PENDIENTE' && (
-                <span className="text-sm text-amber-600 font-medium">
-                  ⚠️ Hay cambios sin guardar
+                <span className="text-[10px] sm:text-xs md:text-sm text-amber-600 font-medium">
+                  ⚠️ Cambios sin guardar
                 </span>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 order-1 sm:order-2">
               {orderStatus === 'PENDIENTE' && hasChanges && (
                 <Button 
                   onClick={handleUpdateOrder}
                   disabled={updateOrderMutation.isPending}
-                  className="bg-teal-600 hover:bg-teal-700"
+                  className="bg-teal-600 hover:bg-teal-700 flex-1 sm:flex-none text-xs sm:text-sm md:text-base h-8 sm:h-9 md:h-10"
                 >
                   {updateOrderMutation.isPending ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Actualizando...
+                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                      <span className="hidden sm:inline">Actualizando...</span>
+                      <span className="sm:hidden">...</span>
                     </>
                   ) : (
                     'Actualizar'
                   )}
                 </Button>
               )}
-              <Button variant="outline" onClick={handleClose}>
+              <Button variant="outline" onClick={handleClose} className="flex-1 sm:flex-none text-xs sm:text-sm md:text-base h-8 sm:h-9 md:h-10">
                 Cerrar
               </Button>
             </div>

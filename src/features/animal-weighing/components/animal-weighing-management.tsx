@@ -287,17 +287,23 @@ export function AnimalWeighingManagement() {
   };
 
   // Función para abrir PDF en nueva pestaña
-  const handleOpenPdf = async (idDetailAnimalWeighing: number) => {
+  const handleOpenPdf = async (idDetailAnimalWeighing: number, existingWindow?: Window | null) => {
+    let newWindow = existingWindow;
     try {
-      // Crear ventana inmediatamente para evitar bloqueo del navegador
-      const newWindow = window.open('', '_blank');
+      // Si no hay ventana, crear una nueva (para llamadas manuales desde el icono)
+      if (!newWindow) {
+        newWindow = window.open('', '_blank');
+      }
+
       if (!newWindow) {
         toast.error("No se pudo abrir el PDF. Por favor, permite ventanas emergentes.");
         return;
       }
 
-      // Mostrar mensaje de carga en la nueva ventana
-      newWindow.document.write('<html><body><h2>Generando ticket...</h2></body></html>');
+      // Mostrar mensaje de carga en la ventana si es nueva
+      if (!existingWindow) {
+        newWindow.document.write('<html><head><title>Generando ticket...</title></head><body style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; color: #444;"><div><h2>Generando ticket...</h2><p>Por favor espere un momento.</p></div></body></html>');
+      }
 
       // Obtener el PDF
       const response = await http.get(
@@ -451,6 +457,13 @@ export function AnimalWeighingManagement() {
             idDetailAnimalWeighing = weighingForStage.detailAnimalWeighing[0].id; // Capturar el ID del detalle
             commentary = weighingForStage.detailAnimalWeighing[0].commentary || '';
           }
+          // Si no hay comentario en la etapa actual, buscar en cualquier otra etapa
+          if (!commentary) {
+            commentary = animal.animalWeighing
+              ?.flatMap((w: any) => w.detailAnimalWeighing || [])
+              .find((d: any) => d.commentary)?.commentary || 
+              animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '';
+          }
           // Extraer addressee si existe
           if (weighingForStage?.addressee?.personRole?.person) {
             addresseeData = {
@@ -523,6 +536,15 @@ export function AnimalWeighingManagement() {
           }
         }
 
+        // Si no hay comentario en la etapa actual, buscar en cualquier otra etapa
+        let commentary = savedSections.get(channelSectionsData.data[0]?.id || -1)?.commentary || '';
+        if (!commentary) {
+          commentary = animal.animalWeighing
+            ?.flatMap((w: any) => w.detailAnimalWeighing || [])
+            .find((d: any) => d.commentary)?.commentary || 
+            animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '';
+        }
+
         // Extraer addressee y carrier si existen
         let addresseeData = undefined;
         let carrierData = undefined;
@@ -589,7 +611,10 @@ export function AnimalWeighingManagement() {
               hasPartialConfiscation,
               addressee: addresseeData,
               carrier: carrierData,
-              commentary: commentary,
+              commentary: commentary || animal.animalWeighing
+                ?.flatMap((w: any) => w.detailAnimalWeighing || [])
+                .find((d: any) => d.commentary)?.commentary || 
+                animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '',
             });
           });
         } else if (savedSections.size > 0) {
@@ -621,7 +646,10 @@ export function AnimalWeighingManagement() {
                 hasPartialConfiscation,
                 addressee: addresseeData,
                 carrier: carrierData,
-                commentary: sectionData.commentary || '',
+                commentary: sectionData.commentary || animal.animalWeighing
+                  ?.flatMap((w: any) => w.detailAnimalWeighing || [])
+                  .find((d: any) => d.commentary)?.commentary || 
+                  animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '',
               });
             }
           });
@@ -649,6 +677,10 @@ export function AnimalWeighingManagement() {
               hasPartialConfiscation,
               addressee: addresseeData,
               carrier: carrierData,
+              commentary: animal.animalWeighing
+                ?.flatMap((w: any) => w.detailAnimalWeighing || [])
+                .find((d: any) => d.commentary)?.commentary || 
+                animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '',
             });
           });
         }
@@ -768,6 +800,7 @@ export function AnimalWeighingManagement() {
     const animalCode = selectedRow.code;
     
     // Asignar el destinatario y transportista a TODAS las filas del mismo animal
+    // Marcar la fila seleccionada como principal (isPrimaryRow: true)
     setRows((prev) =>
       prev.map((row) => 
         row.code === animalCode ? { 
@@ -782,7 +815,8 @@ export function AnimalWeighingManagement() {
             fullName: carrier.person.fullName,
             identification: carrier.person.identification,
             plate: carrier.vehicle.plate,
-          } : undefined
+          } : undefined,
+          isPrimaryRow: row.id === rowId // Marcar solo la fila seleccionada como principal
         } : row
       )
     );
@@ -797,29 +831,38 @@ export function AnimalWeighingManagement() {
     
     const animalCode = selectedRow.code;
     
-    // Remover el destinatario de TODAS las filas del mismo animal
+    // Remover el destinatario de TODAS las filas del mismo animal y limpiar isPrimaryRow
     setRows((prev) =>
       prev.map((row) => 
-        row.code === animalCode ? { ...row, addressee: undefined } : row
+        row.code === animalCode ? { ...row, addressee: undefined, carrier: undefined, isPrimaryRow: false } : row
       )
     );
   };
 
   const handleSaveWeight = async (row: AnimalWeighingRow) => {
+    // Pre-abrir la ventana para evitar el bloqueo del navegador
+    const ticketWindow = window.open('', '_blank');
+    if (ticketWindow) {
+      ticketWindow.document.write('<html><head><title>Procesando...</title></head><body style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; color: #444;"><div><h2>Procesando pesaje...</h2><p>El ticket se abrirá automáticamente en unos segundos.</p></div></body></html>');
+    }
+
     if (row.peso <= 0) {
       toast.error("El peso debe ser mayor a 0");
+      if (ticketWindow) ticketWindow.close();
       return;
     }
 
     // Validar que haya especie e ID de etapa de pesaje
     if (!selectedSpecieId || !weighingStageId) {
       toast.error("Faltan datos requeridos");
+      if (ticketWindow) ticketWindow.close();
       return;
     }
 
     // Si NO es EN PIE, validar que haya un gancho seleccionado
     if (weighingStageId !== 1 && !selectedHook) {
       toast.error("Debe seleccionar un gancho");
+      if (ticketWindow) ticketWindow.close();
       return;
     }
 
@@ -827,10 +870,12 @@ export function AnimalWeighingManagement() {
     if (weighingStageId !== 1) {
       if (!row.addressee?.id) {
         toast.error("Debe agregar un destinatario");
+        if (ticketWindow) ticketWindow.close();
         return;
       }
       if (!row.carrier?.id) {
         toast.error("Debe agregar un transportista");
+        if (ticketWindow) ticketWindow.close();
         return;
       }
     }
@@ -933,13 +978,40 @@ export function AnimalWeighingManagement() {
       toast.success(message);
 
       // Abrir PDF automáticamente en nueva pestaña
+      console.log('📄 Respuesta completa del API:', response);
+      
       // Intentar obtener el ID del detalle desde la respuesta de la API
-      const detailId = response?.data?.detailsAnimalWeighing?.[0]?.id 
-                    || response?.data?.[0]?.id 
-                    || row.idDetailAnimalWeighing;
+      let detailId = row.idDetailAnimalWeighing; // Usar el existente como fallback
+      
+      // Intentar extraer de diferentes posibles estructuras de respuesta
+      if (response?.data) {
+        if (Array.isArray(response.data)) {
+          // Si es un array, tomar el primer elemento
+          detailId = response.data[0]?.id || response.data[0]?.idDetailAnimalWeighing || detailId;
+        } else if (response.data.detailsAnimalWeighing) {
+          // Si tiene detailsAnimalWeighing
+          if (Array.isArray(response.data.detailsAnimalWeighing)) {
+            detailId = response.data.detailsAnimalWeighing[0]?.id || 
+                      response.data.detailsAnimalWeighing[0]?.idDetailAnimalWeighing || 
+                      detailId;
+          } else {
+            detailId = response.data.detailsAnimalWeighing.id || 
+                      response.data.detailsAnimalWeighing.idDetailAnimalWeighing || 
+                      detailId;
+          }
+        } else if (response.data.id) {
+          detailId = response.data.id;
+        }
+      }
+
+      console.log('📄 ID del detalle para ticket:', detailId);
 
       if (detailId) {
-        handleOpenPdf(detailId);
+        handleOpenPdf(detailId, ticketWindow);
+      } else {
+        console.error('❌ No se pudo obtener el ID del detalle para generar el ticket');
+        if (ticketWindow) ticketWindow.close();
+        toast.warning("Peso guardado, pero no se pudo abrir el ticket automáticamente");
       }
 
       // Invalidar la query para refrescar los datos desde la API
@@ -950,6 +1022,7 @@ export function AnimalWeighingManagement() {
       lastCapturedWeightRef.current = null;
     } catch (error) {
       toast.error("Error al guardar el peso");
+      if (ticketWindow) ticketWindow.close();
     }
   };
 
@@ -1028,9 +1101,14 @@ export function AnimalWeighingManagement() {
 
   const filteredRows = useMemo(() => {
     if (!searchTerm) return rowsWithDisplayWeight;
-    return rowsWithDisplayWeight.filter((row) =>
-      row.brandName?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const searchLower = searchTerm.toLowerCase().trim();
+    return rowsWithDisplayWeight.filter((row) => {
+      // Búsqueda exacta en código de animal
+      const codeMatch = row.code?.toLowerCase() === searchLower;
+      // Búsqueda exacta en nombre de marca (opcional)
+      const brandMatch = row.brandName?.toLowerCase() === searchLower;
+      return codeMatch || brandMatch;
+    });
   }, [rowsWithDisplayWeight, searchTerm]);
 
   // Agrupar filas por animal
@@ -1045,8 +1123,27 @@ export function AnimalWeighingManagement() {
     return groups;
   }, [filteredRows]);
 
-  // Obtener lista de códigos de animales únicos
-  const animalCodes = useMemo(() => Object.keys(groupedByAnimal), [groupedByAnimal]);
+  // Obtener lista de códigos de animales únicos y ordenarlos por prioridad
+  const animalCodes = useMemo(() => {
+    const codes = Object.keys(groupedByAnimal);
+    
+    // Ordenar animales: primero los que tienen destinatario sin peso, luego los demás
+    return codes.sort((codeA, codeB) => {
+      const rowsA = groupedByAnimal[codeA];
+      const rowsB = groupedByAnimal[codeB];
+      
+      // Verificar si el animal tiene destinatario y alguna fila sin peso
+      const aHasAddresseeAndNoPeso = rowsA.some(r => r.addressee && r.savedWeight === 0);
+      const bHasAddresseeAndNoPeso = rowsB.some(r => r.addressee && r.savedWeight === 0);
+      
+      // Prioridad 1: Animales con destinatario y sin peso van primero
+      if (aHasAddresseeAndNoPeso && !bHasAddresseeAndNoPeso) return -1;
+      if (!aHasAddresseeAndNoPeso && bHasAddresseeAndNoPeso) return 1;
+      
+      // Prioridad 2: Si ambos tienen o no tienen destinatario, mantener orden original
+      return 0;
+    });
+  }, [groupedByAnimal]);
 
   // Calcular paginación por animales (no por filas)
   const totalAnimals = animalCodes.length;
@@ -1525,8 +1622,47 @@ export function AnimalWeighingManagement() {
                 groupedRows[row.code].push(row);
               });
 
-              return Object.entries(groupedRows).map(([animalCode, animalRows]) => (
-                <Card key={animalCode} className={`p-1 border-2 border-teal-600 shadow-md ${animalRows[0].isComplete ? 'bg-[#86c6c5]' : 'bg-green-50'}`}>
+              return Object.entries(groupedRows).map(([animalCode, animalRows]) => {
+                // Ordenar filas: priorizar las que tienen destinatario pero no tienen peso aún
+                const sortedRows = [...animalRows].sort((a, b) => {
+                  // 1. Priorizar filas con destinatario Y sin peso (listas para pesar)
+                  const aReadyToWeigh = !!a.addressee && a.savedWeight === 0;
+                  const bReadyToWeigh = !!b.addressee && b.savedWeight === 0;
+                  if (aReadyToWeigh && !bReadyToWeigh) return -1;
+                  if (!aReadyToWeigh && bReadyToWeigh) return 1;
+                  
+                  // 2. Dentro de las listas para pesar, priorizar la marcada como principal
+                  if (aReadyToWeigh && bReadyToWeigh) {
+                    if (a.isPrimaryRow && !b.isPrimaryRow) return -1;
+                    if (!a.isPrimaryRow && b.isPrimaryRow) return 1;
+                  }
+                  
+                  // 3. Luego filas sin destinatario y sin peso (en espera)
+                  const aWaiting = !a.addressee && a.savedWeight === 0;
+                  const bWaiting = !b.addressee && b.savedWeight === 0;
+                  if (aWaiting && !bWaiting) return -1;
+                  if (!aWaiting && bWaiting) return 1;
+                  
+                  // 4. Al final filas con peso ya guardado (completadas)
+                  // Estas se ordenan por idChannelSection
+                  const idA = a.idChannelSection || 0;
+                  const idB = b.idChannelSection || 0;
+                  return idA - idB;
+                });
+                
+                // Log solo cuando hay destinatario asignado
+                if (sortedRows.some(r => r.addressee)) {
+                  console.log(`👑 Animal ${animalCode}:`, sortedRows.map(r => ({
+                    section: r.sectionCode,
+                    prioridad: r.addressee && r.savedWeight === 0 ? '1-LISTO PARA PESAR ⭐' : 
+                               !r.addressee && r.savedWeight === 0 ? '2-ESPERANDO' :
+                               '3-COMPLETADO',
+                    isPrimary: r.isPrimaryRow,
+                    peso: r.savedWeight
+                  })));
+                }
+                return (
+                <Card key={animalCode} className={`p-1 border-2 border-teal-600 shadow-md ${sortedRows[0].isComplete ? 'bg-[#86c6c5]' : 'bg-green-50'}`}>
                   {/* Información del animal - Compacta */}
                   <div className="mb-0.5 pb-0.5 border-b border-teal-400/30">
                     <div className="flex justify-between items-start gap-2">
@@ -1538,7 +1674,7 @@ export function AnimalWeighingManagement() {
                               <span className="truncate">ID-Marca</span>
                             </div>
                             <div className="text-sm font-bold truncate">
-                              {animalRows[0].brandName ? `${animalCode} - ${animalRows[0].brandName}` : animalCode}
+                              {sortedRows[0].brandName ? `${animalCode} - ${sortedRows[0].brandName}` : animalCode}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
@@ -1546,7 +1682,7 @@ export function AnimalWeighingManagement() {
                               <Package className="h-2.5 w-2.5" />
                               <span className="truncate">Género - Etapa</span>
                             </div>
-                            <div className="text-xs font-medium truncate">{animalRows[0].producto}</div>
+                            <div className="text-xs font-medium truncate">{sortedRows[0].producto}</div>
                           </div>
                         </div>
                       </div>
@@ -1557,14 +1693,14 @@ export function AnimalWeighingManagement() {
                             <span>Ingreso</span>
                           </div>
                           <div className="text-xs font-medium">
-                            {new Date(animalRows[0].fechaIngreso).toLocaleDateString("es-ES", {
+                            {new Date(sortedRows[0].fechaIngreso).toLocaleDateString("es-ES", {
                               day: "2-digit",
                               month: "2-digit",
                               year: "numeric",
                             })}
                           </div>
                         </div>
-                        {animalRows[0].idAnimalWeighing && isToday && (
+                        {sortedRows[0].idAnimalWeighing && isToday && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -1572,7 +1708,7 @@ export function AnimalWeighingManagement() {
                                   size="sm"
                                   variant="ghost"
                                   className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 w-7 p-0"
-                                  onClick={() => handleDeleteClick(animalRows[0].idAnimalWeighing!, animalCode)}
+                                  onClick={() => handleDeleteClick(sortedRows[0].idAnimalWeighing!, animalCode)}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
@@ -1590,28 +1726,28 @@ export function AnimalWeighingManagement() {
                   {/* Destinatario y Transportista - Compacto o Botón Agregar */}
                   {weighingStageId !== 1 && (
                     <div className="mb-1">
-                      {(animalRows[0].addressee || animalRows[0].carrier) ? (
+                      {(sortedRows[0].addressee || sortedRows[0].carrier) ? (
                         <div className="p-1.5 bg-teal-50/30 rounded border border-teal-200/20">
                           <div className="flex items-center justify-between gap-3 text-xs">
-                            {animalRows[0].addressee && (
+                            {sortedRows[0].addressee && (
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1 text-[9px] text-teal-600 mb-0.5">
                                   <User className="h-2 w-2" />
                                   <span className="font-medium">Destinatario</span>
                                 </div>
-                                <div className="text-[10px] font-medium truncate">{animalRows[0].addressee.fullName}</div>
-                                <div className="text-[9px] text-muted-foreground truncate">ID: {animalRows[0].addressee.identification}</div>
+                                <div className="text-[10px] font-medium truncate">{sortedRows[0].addressee.fullName}</div>
+                                <div className="text-[9px] text-muted-foreground truncate">ID: {sortedRows[0].addressee.identification}</div>
                               </div>
                             )}
-                            {animalRows[0].carrier && (
+                            {sortedRows[0].carrier && (
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1 text-[9px] text-teal-600 mb-0.5">
                                   <Truck className="h-2 w-2" />
                                   <span className="font-medium">Transportista</span>
                                 </div>
-                                <div className="text-[10px] font-medium truncate">{animalRows[0].carrier.fullName}</div>
+                                <div className="text-[10px] font-medium truncate">{sortedRows[0].carrier.fullName}</div>
                                 <div className="text-[9px] text-muted-foreground truncate">
-                                  ID: {animalRows[0].carrier.identification} | Placa: {animalRows[0].carrier.plate}
+                                  ID: {sortedRows[0].carrier.identification} | Placa: {sortedRows[0].carrier.plate}
                                 </div>
                               </div>
                             )}
@@ -1620,7 +1756,7 @@ export function AnimalWeighingManagement() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-teal-700 hover:text-teal-800 hover:bg-teal-50 h-6 px-1.5 shrink-0"
-                                onClick={() => setAddresseeSelectionRowId(animalRows[0].id)}
+                                onClick={() => setAddresseeSelectionRowId(sortedRows[0].id)}
                               >
                                 <Edit className="h-2.5 w-2.5 mr-0.5" />
                                 <span className="text-[10px]">Cambiar</span>
@@ -1634,7 +1770,7 @@ export function AnimalWeighingManagement() {
                             <Button
                               size="sm"
                               className="bg-teal-600 hover:bg-teal-700 h-8 text-sm w-full"
-                              onClick={() => setAddresseeSelectionRowId(animalRows[0].id)}
+                              onClick={() => setAddresseeSelectionRowId(sortedRows[0].id)}
                             >
                               <User className="h-3 w-3 mr-1" />
                               Agregar Destinatario
@@ -1647,7 +1783,7 @@ export function AnimalWeighingManagement() {
 
                   {/* Secciones - Compactas */}
                   <div className="space-y-1">
-                    {animalRows.map((row) => (
+                    {sortedRows.map((row) => (
                       <div key={row.id} className="p-1 bg-white/50 rounded border border-teal-200/50">
                         {weighingStageId !== 1 && row.sectionCode && (
                           <div className="mb-1">
@@ -1676,12 +1812,10 @@ export function AnimalWeighingManagement() {
                             <div className={`text-xs font-semibold ${row.displayWeight < 0 ? 'text-red-600' : 'text-green-600'}`}>
                               {row.displayWeight !== 0 ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || 'kg'}` : "-"}
                             </div>
-                            {/* Observaciones debajo del peso en móvil - solo si hay peso guardado */}
-                            {row.savedWeight > 0 && (
-                              <div className="mt-1 text-[10px] text-muted-foreground italic">
-                                {row.commentary ? row.commentary : 'Sin observaciones'}
-                              </div>
-                            )}
+                            {/* Observaciones debajo del peso en móvil - siempre visibles */}
+                            <div className={`mt-1 text-xs italic font-medium ${row.commentary ? 'text-amber-600' : 'text-muted-foreground/60'}`}>
+                              {row.commentary ? row.commentary : 'Sin observaciones'}
+                            </div>
                           </div>
 
                           <div className="flex gap-1 items-center shrink-0">
@@ -1747,7 +1881,8 @@ export function AnimalWeighingManagement() {
                     ))}
                   </div>
                 </Card>
-              ));
+                );
+              });
             })()
           )}
         </div>
@@ -1842,10 +1977,49 @@ export function AnimalWeighingManagement() {
                   });
 
                   return Object.entries(groupedRows).map(([animalCode, animalRows]) => {
-                    const rowSpan = animalRows.length;
-                    return animalRows.map((row, index) => {
+                    // Ordenar filas: priorizar las que tienen destinatario pero no tienen peso aún
+                    const sortedRows = [...animalRows].sort((a, b) => {
+                      // 1. Priorizar filas con destinatario Y sin peso (listas para pesar)
+                      const aReadyToWeigh = !!a.addressee && a.savedWeight === 0;
+                      const bReadyToWeigh = !!b.addressee && b.savedWeight === 0;
+                      if (aReadyToWeigh && !bReadyToWeigh) return -1;
+                      if (!aReadyToWeigh && bReadyToWeigh) return 1;
+                      
+                      // 2. Dentro de las listas para pesar, priorizar la marcada como principal
+                      if (aReadyToWeigh && bReadyToWeigh) {
+                        if (a.isPrimaryRow && !b.isPrimaryRow) return -1;
+                        if (!a.isPrimaryRow && b.isPrimaryRow) return 1;
+                      }
+                      
+                      // 3. Luego filas sin destinatario y sin peso (en espera)
+                      const aWaiting = !a.addressee && a.savedWeight === 0;
+                      const bWaiting = !b.addressee && b.savedWeight === 0;
+                      if (aWaiting && !bWaiting) return -1;
+                      if (!aWaiting && bWaiting) return 1;
+                      
+                      // 4. Al final filas con peso ya guardado (completadas)
+                      // Estas se ordenan por idChannelSection
+                      const idA = a.idChannelSection || 0;
+                      const idB = b.idChannelSection || 0;
+                      return idA - idB;
+                    });
+                    
+                    // Log solo cuando hay destinatario asignado
+                    if (sortedRows.some(r => r.addressee)) {
+                      console.log(`👑 Animal ${animalCode} (DESKTOP):`, sortedRows.map(r => ({
+                        section: r.sectionCode,
+                        prioridad: r.addressee && r.savedWeight === 0 ? '1-LISTO PARA PESAR ⭐' : 
+                                   !r.addressee && r.savedWeight === 0 ? '2-ESPERANDO' :
+                                   '3-COMPLETADO',
+                        isPrimary: r.isPrimaryRow,
+                        peso: r.savedWeight
+                      })));
+                    }
+                    
+                    const rowSpan = sortedRows.length;
+                    return sortedRows.map((row, index) => {
                       const isFirstRow = index === 0;
-                      const isLastRow = index === animalRows.length - 1;
+                      const isLastRow = index === sortedRows.length - 1;
                       return (
                       <TableRow
                         key={row.id}
@@ -1881,15 +2055,15 @@ export function AnimalWeighingManagement() {
                         {/* Destinatario - solo en la primera fila del animal cuando no es EN PIE */}
                         {weighingStageId !== 1 && index === 0 && (
                           <TableCell className="text-center py-0.5 px-1" rowSpan={rowSpan}>
-                            {row.addressee ? (
+                            {sortedRows[0].addressee ? (
                               <div className="flex flex-col items-center gap-0.5">
                                 <div className="flex items-center gap-1">
                                   <User className="h-3 w-3 text-teal-600" />
-                                  <span className="text-xs font-medium leading-tight">{toCapitalize(row.addressee.fullName, true)}</span>
+                                  <span className="text-xs font-medium leading-tight">{toCapitalize(sortedRows[0].addressee.fullName, true)}</span>
                                 </div>
-                                <span className="text-[10px] text-black leading-tight">{row.addressee.identification}</span>
+                                <span className="text-[10px] text-black leading-tight">{sortedRows[0].addressee.identification}</span>
                                 <div className="w-full border-t border-gray-200 my-0.5"></div>
-                                {row.carrier ? (
+                                {sortedRows[0].carrier ? (
                                   <>
                                     <div className="flex items-center gap-1">
                                       <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1899,9 +2073,9 @@ export function AnimalWeighingManagement() {
                                         <circle cx="17" cy="18" r="2"/>
                                         <circle cx="7" cy="18" r="2"/>
                                       </svg>
-                                      <span className="text-xs font-medium leading-tight text-blue-600">{toCapitalize(row.carrier.fullName, true)}</span>
+                                      <span className="text-xs font-medium leading-tight text-blue-600">{toCapitalize(sortedRows[0].carrier.fullName, true)}</span>
                                     </div>
-                                    <span className="text-[10px] text-black leading-tight">{row.carrier.plate}</span>
+                                    <span className="text-[10px] text-black leading-tight">{sortedRows[0].carrier.plate}</span>
                                   </>
                                 ) : (
                                   <div className="flex items-center gap-1">
@@ -1920,7 +2094,7 @@ export function AnimalWeighingManagement() {
                                     size="sm"
                                     variant="ghost"
                                     className="text-teal-600 hover:text-teal-700 h-5 px-1.5 text-[10px]"
-                                    onClick={() => setAddresseeSelectionRowId(row.id)}
+                                    onClick={() => setAddresseeSelectionRowId(sortedRows[0].id)}
                                   >
                                     <Edit className="h-2.5 w-2.5 mr-0.5" />
                                     Cambiar
@@ -1933,7 +2107,7 @@ export function AnimalWeighingManagement() {
                                   <Button
                                     size="sm"
                                     className="bg-teal-600 hover:bg-teal-700 h-6 text-xs px-2"
-                                    onClick={() => setAddresseeSelectionRowId(row.id)}
+                                    onClick={() => setAddresseeSelectionRowId(sortedRows[0].id)}
                                   >
                                     Agregar
                                   </Button>
@@ -1969,20 +2143,18 @@ export function AnimalWeighingManagement() {
                       </span>
                     </TableCell>
                     <TableCell className="text-center py-0.5 px-1">
-                      {row.savedWeight > 0 && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center justify-center cursor-help">
-                                <MessageCircle className="h-3.5 w-3.5 text-blue-600" />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs">{row.commentary || 'Sin observaciones'}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center justify-center cursor-help">
+                              <MessageCircle className={`h-3.5 w-3.5 ${row.commentary ? 'text-blue-600' : 'text-gray-300'}`} />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">{row.commentary || 'Sin observaciones'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                     <TableCell className="py-0.5 px-1">
                       <div className="flex gap-0 justify-start items-center">

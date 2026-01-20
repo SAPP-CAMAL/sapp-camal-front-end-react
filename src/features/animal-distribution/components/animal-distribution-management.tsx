@@ -86,8 +86,8 @@ import { WeighingStageCodes } from "../constants/weighing-stage-codes";
 
 export function AnimalDistributionManagement() {
   const { camalName, location, getFullCompanyName } = useSlaughterhouseInfo(); // camalName = nombre completo del camal para certificados
-  const [startDate, setStartDate] = useState<Date>(new Date());
-  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedSpecie, setSelectedSpecie] = useState<string>("Bovino");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -402,8 +402,8 @@ export function AnimalDistributionManagement() {
         filters.idSpecie = idSpecie;
       }
 
-      // Solo agregar filtros de fecha si está activo
-      if (isDateFilterActive) {
+      // Solo agregar filtros de fecha si está activo y las fechas existen
+      if (isDateFilterActive && startDate && endDate) {
         filters.startDate = format(startDate, "yyyy-MM-dd");
         filters.endDate = format(endDate, "yyyy-MM-dd");
       }
@@ -481,9 +481,14 @@ export function AnimalDistributionManagement() {
 
   // Función para aplicar el filtro de fecha
   const handleApplyDateFilter = () => {
+    // Validar que ambas fechas existan
+    if (!startDate || !endDate) {
+      toast.error("Por favor seleccione ambas fechas");
+      return;
+    }
     // Validar que la fecha fin no sea anterior a la fecha inicio
     if (endDate < startDate) {
-      alert("La fecha fin no puede ser anterior a la fecha inicio");
+      toast.error("La fecha fin no puede ser anterior a la fecha inicio");
       return;
     }
     setIsDateFilterActive(true);
@@ -491,6 +496,8 @@ export function AnimalDistributionManagement() {
 
   // Función para limpiar el filtro de fecha
   const handleClearDateFilter = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
     setIsDateFilterActive(false);
   };
 
@@ -560,8 +567,8 @@ export function AnimalDistributionManagement() {
 			toast.promise(
 				downloadAnimalDistributionReport(
 					{
-						startDate: format(startDate, 'yyyy-MM-dd'),
-						endDate: format(endDate, 'yyyy-MM-dd'),
+						startDate: startDate ? format(startDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+						endDate: endDate ? format(endDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
 						weighingStageCode: WeighingStageCodes.POSTMORTEM,
 						idSpecie: availableLines.find(line => line.description === selectedSpecie)?.idSpecie || 0,
 					},
@@ -587,9 +594,9 @@ export function AnimalDistributionManagement() {
           {isDateFilterActive ? (
             <>
               Mostrando distribuciones del{" "}
-              <span className="font-semibold">{format(startDate, "dd/MM/yyyy")}</span>
+              <span className="font-semibold">{startDate ? format(startDate, "dd/MM/yyyy") : ''}</span>
               {" "}al{" "}
-              <span className="font-semibold">{format(endDate, "dd/MM/yyyy")}</span>
+              <span className="font-semibold">{endDate ? format(endDate, "dd/MM/yyyy") : ''}</span>
             </>
           ) : (
             "Mostrando todas las distribuciones"
@@ -623,18 +630,19 @@ export function AnimalDistributionManagement() {
                     onChange={(newDate) => newDate && setEndDate(newDate)}
                   />
                 </div>
-                {!isDateFilterActive ? (
+                {!isDateFilterActive && startDate && endDate && (
                   <Button
                     variant="default"
                     size="sm"
                     onClick={handleApplyDateFilter}
-                    className="bg-teal-600 hover:bg-teal-700 whitespace-nowrap"
+                    className="bg-teal-600 hover:bg-teal-700 whitespace-nowrap animate-in fade-in zoom-in duration-300"
                     title="Filtrar por este rango de fechas"
                   >
                     <CalendarIcon className="h-4 w-4 mr-1" />
                     Filtrar
                   </Button>
-                ) : (
+                )}
+                {isDateFilterActive && (
                   <>
                     <Button
                       variant="outline"
@@ -746,7 +754,7 @@ export function AnimalDistributionManagement() {
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-md">
                   <CalendarIcon className="h-4 w-4 text-teal-600" />
                   <span className="text-sm font-medium text-teal-700">
-                    {format(startDate, "dd/MM/yyyy")} - {format(endDate, "dd/MM/yyyy")}
+                    {startDate && format(startDate, "dd/MM/yyyy")} - {endDate && format(endDate, "dd/MM/yyyy")}
                   </span>
                   {filteredDistributions.length > 0 && (
                     <span className="ml-1 px-2 py-0.5 bg-teal-600 text-white text-xs font-semibold rounded-full">
@@ -841,11 +849,11 @@ export function AnimalDistributionManagement() {
                   <>
                     No se encontraron distribuciones entre el{" "}
                     <span className="font-medium text-gray-700">
-                      {format(startDate, "dd/MM/yyyy")}
+                      {startDate ? format(startDate, "dd/MM/yyyy") : ''}
                     </span>
                     {" "}y el{" "}
                     <span className="font-medium text-gray-700">
-                      {format(endDate, "dd/MM/yyyy")}
+                      {endDate ? format(endDate, "dd/MM/yyyy") : ''}
                     </span>
                   </>
                 ) : (
