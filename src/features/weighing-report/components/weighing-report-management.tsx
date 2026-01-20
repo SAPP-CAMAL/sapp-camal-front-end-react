@@ -43,7 +43,6 @@ import {
   Tag,
   Layers,
 } from "lucide-react";
-import { subDays } from "date-fns";
 import { toast } from "sonner";
 
 import { useLines } from "@/features/postmortem/hooks/use-lines";
@@ -60,9 +59,7 @@ import { Badge } from "@/components/ui/badge";
 
 export function WeighingReportManagement() {
   // Estados de filtros
-  const [startDate, setStartDate] = useState<string>(
-    getLocalDateString(subDays(new Date(), 30))
-  );
+  const [startDate, setStartDate] = useState<string>(getLocalDateString());
   const [endDate, setEndDate] = useState<string>(getLocalDateString());
   const [selectedLineId, setSelectedLineId] = useState<string>("");
   const [selectedSpecieId, setSelectedSpecieId] = useState<number | null>(null);
