@@ -136,10 +136,13 @@ export async function downloadWeighingPdfReport(
     const blob = await response.blob();
     const contentDisposition = response.headers.get("content-disposition") || "";
 
+    let date = filters.startDate;
+    if (filters.startDate !== filters.endDate) date = `${filters.startDate}-a-${filters.endDate}`;
+
     const filenameMatch = contentDisposition.match(
         /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
     );
-    const defaultFilename = `Reporte-Pesajes-${filters.startDate}-${filters.endDate}.pdf`;
+    const defaultFilename = `Reporte-Pesajes-${date}-${filters.specieName ?? ''}.pdf`;
     const filename =
         filenameMatch?.[1]?.replace(/['"]/g, "") || defaultFilename;
 
