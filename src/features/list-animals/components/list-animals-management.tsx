@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
   Card,
@@ -10,9 +10,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -39,11 +45,13 @@ import {
   Truck,
   Hash,
   CalendarDays,
-  Users,
-  Badge as BadgeIcon,
   ChevronDown,
   FileSpreadsheet,
   FileText,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -62,12 +70,17 @@ export function ListAnimalsManagement() {
     null
   );
   const [marca, setMarca] = useState("");
-  const [apiData, setApiData] = useState<any[]>([]);
+  const [allData, setAllData] = useState<any[]>([]); // Todos los datos del backend
+  const [apiData, setApiData] = useState<any[]>([]); // Datos paginados para mostrar
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(true);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
     null
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [pageSize, setPageSize] = useState(10); // Tamaño de página configurable
   const isMobile = useIsMobile();
 
   // Cargar las especies al montar el componente
@@ -124,12 +137,26 @@ export function ListAnimalsManagement() {
           brandName: marca.trim() || null,
         };
 
-        const data = await getListAnimalsByFiltersService(filters);
-        setApiData(data);
+        const response = await getListAnimalsByFiltersService(filters);
+
+        // Guardar todos los datos
+        setAllData(response);
+        setTotalRecords(response.length);
+
+        // Calcular total de páginas
+        const calculatedTotalPages = Math.ceil(response.length / pageSize);
+        setTotalPages(calculatedTotalPages);
+
+        // Resetear a página 1 si la página actual es mayor al total de páginas
+        if (currentPage > calculatedTotalPages && calculatedTotalPages > 0) {
+          setCurrentPage(1);
+        }
       } catch (error) {
         console.error("Error cargando datos:", error);
         toast.error("Error al cargar los datos");
-        setApiData([]);
+        setAllData([]);
+        setTotalPages(1);
+        setTotalRecords(0);
       } finally {
         setIsLoading(false);
       }
@@ -145,13 +172,23 @@ export function ListAnimalsManagement() {
     selectedSpecies,
     selectedFinishType,
     marca,
-    availableSpecies.length,
-    fechaIngresoFin
+    availableSpecies,
+    fechaIngresoFin,
+    pageSize,
   ]);
+
+  // Efecto para paginar los datos cuando cambie la página o los datos
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedData = allData.slice(startIndex, endIndex);
+    setApiData(paginatedData);
+  }, [allData, currentPage, pageSize]);
 
   // Función para manejar el cambio de especies
   const handleSpeciesChange = useCallback((newSelectedSpecies: Species[]) => {
     setSelectedSpecies(newSelectedSpecies);
+    setCurrentPage(1); // Resetear a la primera página
 
     // Reset finish type if PORCINO is not selected
     if (!newSelectedSpecies.includes("PORCINO")) {
@@ -159,10 +196,21 @@ export function ListAnimalsManagement() {
     }
   }, []);
 
+  // Resetear la página cuando cambien los filtros de fecha o finish type
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [fechaIngreso, fechaIngresoFin, fechaFaenamiento, selectedFinishType]);
+
+  // Resetear la página cuando cambie el tamaño de página
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [pageSize]);
+
   // Función de búsqueda con debounce
   const handleMarcaChange = useCallback(
     (value: string) => {
       setMarca(value);
+      setCurrentPage(1); // Resetear a la primera página al cambiar el filtro
 
       // Limpiar timeout anterior
       if (searchTimeout) {
@@ -195,15 +243,16 @@ export function ListAnimalsManagement() {
     setSelectedSpecies([]);
     setSelectedFinishType(null);
     setMarca("");
+    setCurrentPage(1);
   };
 
   const totals = {
-    registros: apiData.length,
-    totalEnGuia: apiData.reduce(
+    registros: totalRecords,
+    totalEnGuia: allData.reduce(
       (acc, item) => acc + (item.males || 0) + (item.females || 0),
       0
     ),
-    totalFaenamiento: apiData.reduce((acc, item) => {
+    totalFaenamiento: allData.reduce((acc, item) => {
       const targetDateObj = fechaFaenamiento || new Date();
       const targetDate = getLocalDateString(targetDateObj);
 
@@ -540,7 +589,7 @@ export function ListAnimalsManagement() {
       </Card>
 
       {/* Totales */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatsCard
           color="orange"
           title="Total Registros"
@@ -551,11 +600,11 @@ export function ListAnimalsManagement() {
           title="Total de animales en guía"
           value={totals.totalEnGuia}
         />
-        <StatsCard
+        {/* <StatsCard
           color="blue"
           title="Total de Animales dejado en faenamiento"
           value={totals.totalFaenamiento}
-        />
+        /> */}
       </div>
 
       {/* Tabla */}
@@ -806,6 +855,99 @@ export function ListAnimalsManagement() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Paginación */}
+      {!isLoading && apiData.length > 0 && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Información de registros y selector de tamaño */}
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {((currentPage - 1) * pageSize) + 1} a{" "}
+                  {Math.min(currentPage * pageSize, totalRecords)} de{" "}
+                  {totalRecords} registros
+                </div>
+
+                {/* Selector de tamaño de página */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Mostrar:
+                  </span>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) => setPageSize(Number(value))}
+                  >
+                    <SelectTrigger className="w-20 h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Controles de paginación */}
+              <div className="flex items-center gap-2">
+                {/* Primera página */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  title="Primera página"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Página anterior */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  title="Página anterior"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Indicador de página actual */}
+                <div className="flex items-center gap-2 px-4">
+                  <span className="text-sm font-medium">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                </div>
+
+                {/* Página siguiente */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  title="Página siguiente"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                {/* Última página */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  title="Última página"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
