@@ -1,13 +1,14 @@
 import { http } from '@/lib/ky';
-import { ListAnimalsFilters } from '@/features/list-animals/domain';
+import { ListAnimalsFilters, SettingCertBrandByFilters } from '@/features/list-animals/domain';
+import { CommonHttpResponse } from '@/features/people/domain';
 
 // Servicio para obtener animales por filtros
-export async function getListAnimalsByFiltersService(filters: ListAnimalsFilters): Promise<any[]> {
+export async function getListAnimalsByFiltersService(filters: ListAnimalsFilters): Promise<SettingCertBrandByFilters[]> {
 	try {
-		const response = await http.post('v1/1.0.0/setting-cert-brand/by-filters', { json: filters }).json<any>();
+		const response = await http.post('v1/1.0.0/setting-cert-brand/by-filters', { json: filters }).json<CommonHttpResponse<SettingCertBrandByFilters>>();
 
 		if (response.code === 201) {
-			return response.data; // Retorna los datos tal cual vienen de la API
+			return response.data;
 		}
 
 		throw new Error(response.message || 'Error al obtener los animales');
