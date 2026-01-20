@@ -96,8 +96,9 @@ export function WeighingReportManagement() {
       startDate,
       endDate,
       brandName: debouncedBrandSearch || undefined,
+      specieName: selectedLineId && lines ? lines.find(line => line.id?.toString() === selectedLineId)?.description?.toLowerCase() : undefined,
     };
-  }, [startDate, endDate, selectedSpecieId, weighingStageId, debouncedBrandSearch]);
+  }, [startDate, endDate, selectedSpecieId, weighingStageId, debouncedBrandSearch, selectedLineId, lines]);
 
   const {
     data: reportData,
