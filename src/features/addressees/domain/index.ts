@@ -2,6 +2,7 @@ import { CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type FiltersAddressees = {
     fullName?:       string;
+    brandName?:       string;
     identification?: string;
     provinceId?:     number;
     page?:           number;
