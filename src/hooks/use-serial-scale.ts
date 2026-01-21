@@ -82,54 +82,82 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
     setIsSupported(typeof window !== 'undefined' && 'serial' in navigator);
   }, []);
 
-  // Parsear datos de la balanza Bernalo X1
+  // Parsear datos de la balanza Bernalo X1 (Preserva la lógica original para producción)
+  const parseBernaloFormat = useCallback((data: string): WeightReading | null => {
+    // Patrón específico de Bernalo X1: =X.YYYY o =-X.YYYY
+    const bernaloMatch = data.match(/^(=)(-?)(\d+)\.?(\d*)$/);
+
+    if (bernaloMatch) {
+      const sign = bernaloMatch[2]; // "-" o ""
+      const wholePart = bernaloMatch[3]; // "9"
+      const decimalPart = bernaloMatch[4] || ""; // "7400"
+
+      // Concatenar todos los dígitos
+      const allDigits = wholePart + decimalPart; // "97400"
+
+      // Invertir los dígitos
+      const reversed = allDigits.split('').reverse().join(''); // "00479"
+
+      // Convertir a número y dividir entre 10 para obtener el decimal
+      const numValue = parseFloat(reversed) / 10; // 47.9
+
+      // Aplicar el signo si es negativo
+      const finalValue = sign === '-' ? -numValue : numValue;
+
+      return {
+        value: finalValue,
+        unit: 'raw',
+        raw: data,
+        timestamp: new Date(),
+        stable: true,
+      };
+    }
+    return null;
+  }, []);
+
+  // Parsear datos de formato estándar (10-11 bytes o similar)
+  const parseStandardFormat = useCallback((data: string): WeightReading | null => {
+    // Intenta extraer el número directamente
+    // Soporta: "+00123.4", " 123.4kg", "ST,GS,123.4", "+0000.00"
+    // Limpiamos caracteres no numéricos comunes al inicio/fin pero mantenemos el punto y signo
+    const cleaned = data.replace(/[^\d\.\+\-]/g, '');
+    const match = cleaned.match(/([+-]?\d+\.?\d*)/);
+
+    if (match) {
+      const numValue = parseFloat(match[1]);
+      if (isNaN(numValue)) return null;
+
+      return {
+        value: numValue,
+        unit: 'kg',
+        raw: data,
+        timestamp: new Date(),
+        stable: true,
+      };
+    }
+    return null;
+  }, []);
+
+  // Coordinador de parseo (Intenta Bernalo primero para mantener compatibilidad)
   const parseWeight = useCallback((data: string): WeightReading | null => {
     try {
-      // Limpiar datos
       const cleaned = data.trim();
+      if (!cleaned) return null;
 
-      // Patrón específico de Bernalo X1
-      // Formato: =X.YYYY o =-X.YYYY (con signo negativo)
-      // Los dígitos están invertidos, hay que revertirlos
-      const bernaloMatch = cleaned.match(/^(=)(-?)(\d+)\.?(\d*)$/);
+      // 1. Intentar formato Bernalo (Mantiene comportamiento actual)
+      const bernaloResult = parseBernaloFormat(cleaned);
+      if (bernaloResult) return bernaloResult;
 
-      if (bernaloMatch) {
-        const sign = bernaloMatch[2]; // "-" o ""
-        const wholePart = bernaloMatch[3]; // "9"
-        const decimalPart = bernaloMatch[4] || ""; // "7400"
-
-        // Concatenar todos los dígitos
-        const allDigits = wholePart + decimalPart; // "97400"
-
-        // Invertir los dígitos
-        const reversed = allDigits.split('').reverse().join(''); // "00479"
-
-        // Convertir a número y dividir entre 10 para obtener el decimal
-        const numValue = parseFloat(reversed) / 10; // 47.9
-
-        // Aplicar el signo si es negativo
-        const finalValue = sign === '-' ? -numValue : numValue;
-
-        return {
-          value: finalValue,
-          unit: 'raw', // Unidad cruda, se mostrará desde la API
-          raw: cleaned,
-          timestamp: new Date(),
-          stable: true,
-        };
-      }
-
-      // Si no coincide con el patrón completo, rechazar la lectura
-      if (cleaned.startsWith('=') && cleaned.length < 5) {
-        return null;
-      }
+      // 2. Intentar formato Estándar (Nueva mejora)
+      const standardResult = parseStandardFormat(cleaned);
+      if (standardResult) return standardResult;
 
       return null;
     } catch (err) {
       console.error('Error parsing weight:', err);
       return null;
     }
-  }, []);
+  }, [parseBernaloFormat, parseStandardFormat]);
 
   // Conectar a la balanza
   const connect = useCallback(async () => {
@@ -255,13 +283,13 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
 
           // Log para debugging
 
-          // Procesar cada valor que empiece con =
-          // La balanza envía datos en fragmentos: primero "=9" luego ".7400"
-          // Formato completo: =9.7400 (representa 47.9 kg con dígitos invertidos)
+          // Procesar cada valor que coincida con patrones conocidos
+          // 1. Formato Bernalo: =X.YYYY (X dígitos, punto, YYYY son 4 dígitos)
+          // 2. Formato Estándar: +00123.4 (Signo opcional, dígitos, punto opcional)
+          // 3. Formato delimitado: ST,GS,+  123.4kg
 
-          // Solo procesar cuando tengamos un patrón completo con = y punto decimal
-          // Buscar patrones =X.YYYY donde X puede ser uno o más dígitos, YYYY son 4 dígitos
-          const regex = /=(\d+)\.(\d{4})/g;
+          // Regex más abierta para capturar diferentes tipos de "paquetes" de datos
+          const regex = /(=[\d\.]+|[+-]?\s*\d+\.\d+|ST,GS,[^=]+|[+-]\s*\d+)/g;
           let match;
           let lastIndex = 0;
 
@@ -336,7 +364,7 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
                   // Limpiar buffer y timer
                   weightBufferRef.current = [];
                   intervalTimerRef.current = null;
-                }, 5000); // 5 segundos
+                }, 3000); // 3 segundos
 
               } else {
               }
