@@ -16,14 +16,15 @@ import {
   Hash,
   Calendar,
   Info,
-  Ticket,
-  X,
   User,
   Loader2,
+  Clock,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { toCapitalize } from "@/lib/toCapitalize";
 import { default as BaseDatePicker } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "@/components/ui/react-datepicker-custom-styles.css";
@@ -193,21 +194,23 @@ export function SeizuresManagement() {
               </Select>
             </div>
 
-            <Button
-              variant="outline"
-              className="h-10 text-xs sm:text-sm px-4 bg-background"
-              onClick={() => {
-                setSearchParams({
-                  startDate: "",
-                  specieId: 0,
-                  page: 1,
-                });
-              }}
-              disabled={!searchParams.startDate && searchParams.specieId === 0}
-            >
-              <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1 ml-[-4px]" />
-              Limpiar
-            </Button>
+            <div className="flex items-end h-full">
+              <Button
+                variant="outline"
+                className="h-10 text-xs sm:text-sm px-4 bg-background w-full sm:w-auto"
+                onClick={() => {
+                  setSearchParams({
+                    startDate: "",
+                    specieId: 0,
+                    page: 1,
+                  });
+                }}
+                disabled={!searchParams.startDate && searchParams.specieId === 0}
+              >
+                <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1 ml-[-4px]" />
+                Limpiar
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -219,7 +222,7 @@ export function SeizuresManagement() {
             id: "rowNumber",
             header: () => (
               <div className="flex items-center gap-1">
-                <Hash className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                <Hash className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Nro</span>
                 <span className="sm:hidden">#</span>
               </div>
@@ -234,22 +237,35 @@ export function SeizuresManagement() {
             id: "seizureDate",
             header: () => (
               <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                <span className="hidden md:inline">Fecha</span>
-                <span className="md:hidden">Fecha</span>
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Fecha</span>
               </div>
             ),
             cell: ({ row }) => {
               const date = row.original.createdAt;
               if (!date) return "—";
-              return format(parseISO(date), "dd/MM/yyyy HH:mm");
+              return format(parseISO(date), "dd/MM/yyyy");
+            },
+          },
+          {
+            id: "seizureTime",
+            header: () => (
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Hora</span>
+              </div>
+            ),
+            cell: ({ row }) => {
+              const date = row.original.createdAt;
+              if (!date) return "—";
+              return format(parseISO(date), "HH:mm");
             },
           },
           {
             id: "details",
             header: () => (
               <div className="flex items-center gap-1">
-                <Info className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                <Info className="h-3 w-3 sm:h-4 sm:w-4" />
                 Animal / Marca
               </div>
             ),
@@ -302,16 +318,19 @@ export function SeizuresManagement() {
             id: "introducer",
             header: () => (
               <div className="flex items-center gap-1">
-                <User className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                <User className="h-3 w-3 sm:h-4 sm:w-4" />
                 Introductor
               </div>
             ),
             cell: ({ row }) => {
               const brand = row.original.detailCertificateBrands?.detailsCertificateBrand?.brand;
+              const fullName = brand?.introducer?.user?.person?.fullName;
               return (
-                <span className="font-medium text-xs">
-                  ID: {brand?.introducerId ?? "—"}
-                </span>
+                <div className="flex flex-col max-w-[150px]">
+                  <span className="font-semibold text-xs truncate">
+                    {fullName ? toCapitalize(fullName, true) : "—"}
+                  </span>
+                </div>
               );
             },
           },
@@ -319,7 +338,7 @@ export function SeizuresManagement() {
             id: "actions",
             header: () => (
               <div className="flex items-center justify-center gap-1">
-                <Ticket className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                 <span className="hidden sm:inline">Ticket</span>
               </div>
             ),

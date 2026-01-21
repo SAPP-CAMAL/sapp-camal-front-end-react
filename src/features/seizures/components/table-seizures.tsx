@@ -87,7 +87,7 @@ export function SeizuresTable<TData extends { id: number }, TValue>({
       <div className="py-2 sm:py-4 px-2 flex flex-col">
         <Label className="font-semibold text-sm sm:text-base">{title}</Label>
       </div>
-      <div className="overflow-x-auto">
+      <div className="hidden lg:block">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -155,6 +155,44 @@ export function SeizuresTable<TData extends { id: number }, TValue>({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="lg:hidden space-y-4">
+        {isLoading ? (
+          <div className="h-48 flex items-center justify-center animate-pulse font-semibold text-sm">
+            Cargando...
+          </div>
+        ) : table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => (
+            <Card key={row.id} className="overflow-hidden border border-muted shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                {row.getVisibleCells().map((cell) => {
+                  const headerContent = cell.column.columnDef.header;
+                  const isAction = cell.column.id === "actions";
+                  
+                  return (
+                    <div key={cell.id} className={`flex ${isAction ? "justify-center pt-2" : "flex-col gap-1 border-b border-muted/50 pb-2"} last:border-0 last:pb-0`}>
+                      {!isAction && (
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                           {typeof headerContent === 'function' 
+                            ? headerContent({} as any) 
+                            : headerContent?.toString()}
+                        </div>
+                      )}
+                      <div className={isAction ? "w-full flex justify-center" : "text-sm"}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="py-10 text-center text-muted-foreground text-sm border rounded-lg bg-muted/20">
+            No se encontraron registros
+          </div>
+        )}
       </div>
       <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-3">
         <p className="text-xs sm:text-sm text-gray-600 order-2 sm:order-1">
