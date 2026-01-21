@@ -14,7 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
-import { EditIcon, MapPin, PlusIcon, SearchIcon, Tag } from "lucide-react";
+import { EditIcon, MapPin, PlusIcon, SearchIcon, Tag, TagIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -48,6 +48,7 @@ export function AddresseesManagement({}) {
       page: parseAsInteger.withDefault(1),
       limit: parseAsInteger.withDefault(10),
       fullName: parseAsString.withDefault(""),
+      brandName: parseAsString.withDefault(""),
       identification: parseAsString.withDefault(""),
       providenceId: parseAsInteger.withDefault(0),
     },
@@ -67,6 +68,9 @@ export function AddresseesManagement({}) {
         ...(searchParams.fullName.length > 2 && {
           fullName: searchParams.fullName,
         }),
+        ...(searchParams.brandName.length > 0 && {
+          brandName: searchParams.brandName,
+        }),
         ...(searchParams.providenceId != null && {
           provinceId: searchParams.providenceId,
         }),
@@ -79,6 +83,11 @@ export function AddresseesManagement({}) {
 
   const debounceIdentification = useDebouncedCallback(
     (text: string) => setSearchParams({ identification: text, page: 1 }),
+    500
+  );
+
+  const debounceBrandName = useDebouncedCallback(
+    (text: string) => setSearchParams({ brandName: text, page: 1 }),
     500
   );
 
@@ -170,7 +179,7 @@ export function AddresseesManagement({}) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
             <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por nombre
@@ -201,6 +210,22 @@ export function AddresseesManagement({}) {
                     searchAddresseesParams.get("identification") ?? ""
                   }
                   onChange={(e) => debounceIdentification(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className='flex flex-col w-full'>
+              <label className='mb-1 text-sm font-medium text-gray-700'>
+                Buscar por marca
+              </label>
+              <div className='relative'>
+                <TagIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5' />
+                <Input
+                  type='text'
+                  placeholder='Buscar por marca'
+                  className='pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 h-10'
+                  defaultValue={searchAddresseesParams.get('brandName') ?? ''}
+                  onChange={(e) => debounceBrandName(e.target.value)}
                 />
               </div>
             </div>
