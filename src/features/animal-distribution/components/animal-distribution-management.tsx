@@ -44,6 +44,9 @@ import {
   FileSpreadsheet,
   ChevronDown,
   FileUp,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -666,12 +669,41 @@ export function AnimalDistributionManagement() {
               </div>
             </div>
 
-            {/* Species Buttons */}
-            <div className="space-y-2">
+            {/* Species Selection */}
+            <div className="space-y-2 w-full lg:w-auto">
               <label className="text-sm font-medium text-gray-700">
                 Especie:
               </label>
-              <div className="flex gap-2 flex-wrap">
+              
+              {/* Select for Mobile/Tablet */}
+              <div className="block lg:hidden w-full">
+                <Select
+                  value={selectedSpecie}
+                  onValueChange={(value) => setSelectedSpecie(value)}
+                  disabled={isLoadingLines}
+                >
+                  <SelectTrigger className="w-full bg-white h-11 border-teal-200">
+                    <SelectValue placeholder={isLoadingLines ? "Cargando especies..." : "Seleccione especie"} />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100]">
+                    {availableLines.map((line) => (
+                      <SelectItem key={line.id} value={line.description}>
+                        {line.description}
+                      </SelectItem>
+                    ))}
+                    {availableLines.length === 0 && !isLoadingLines && (
+                      <>
+                        <SelectItem value="Bovino">Bovino</SelectItem>
+                        <SelectItem value="Porcino">Porcino</SelectItem>
+                        <SelectItem value="Ovino-Caprino">Ovino-Caprino</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Grid for Desktop */}
+              <div className="hidden lg:flex gap-2 flex-wrap">
                 {isLoadingLines ? (
                   <div className="text-sm text-gray-500">Cargando especies...</div>
                 ) : availableLines.length > 0 ? (
@@ -682,48 +714,33 @@ export function AnimalDistributionManagement() {
                       onClick={() => setSelectedSpecie(line.description)}
                       className={
                         selectedSpecie === line.description
-                          ? "bg-teal-600 hover:bg-teal-700"
-                          : ""
+                          ? "bg-teal-600 hover:bg-teal-700 font-bold"
+                          : "font-medium"
                       }
                     >
                       {line.description}
                     </Button>
                   ))
                 ) : (
-                  // Fallback a botones estáticos si no hay datos de la API
                   <>
                     <Button
                       variant={selectedSpecie === "Bovino" ? "default" : "outline"}
                       onClick={() => setSelectedSpecie("Bovino")}
-                      className={
-                        selectedSpecie === "Bovino"
-                          ? "bg-teal-600 hover:bg-teal-700"
-                          : ""
-                      }
+                      className={selectedSpecie === "Bovino" ? "bg-teal-600 hover:bg-teal-700 font-bold" : ""}
                     >
                       Bovino
                     </Button>
                     <Button
                       variant={selectedSpecie === "Porcino" ? "default" : "outline"}
                       onClick={() => setSelectedSpecie("Porcino")}
-                      className={
-                        selectedSpecie === "Porcino"
-                          ? "bg-teal-600 hover:bg-teal-700"
-                          : ""
-                      }
+                      className={selectedSpecie === "Porcino" ? "bg-teal-600 hover:bg-teal-700 font-bold" : ""}
                     >
                       Porcino
                     </Button>
                     <Button
-                      variant={
-                        selectedSpecie === "Ovino-Caprino" ? "default" : "outline"
-                      }
+                      variant={selectedSpecie === "Ovino-Caprino" ? "default" : "outline"}
                       onClick={() => setSelectedSpecie("Ovino-Caprino")}
-                      className={
-                        selectedSpecie === "Ovino-Caprino"
-                          ? "bg-teal-600 hover:bg-teal-700"
-                          : ""
-                      }
+                      className={selectedSpecie === "Ovino-Caprino" ? "bg-teal-600 hover:bg-teal-700 font-bold" : ""}
                     >
                       Ovino-Caprino
                     </Button>
@@ -808,306 +825,346 @@ export function AnimalDistributionManagement() {
             </div>
           </div>
 
-          {/* Table */}
-          {isLoadingDistributions ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mb-4"></div>
-              <p className="text-sm text-gray-500">Cargando distribuciones...</p>
-            </div>
-          ) : loadError ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4">
-              <div className="bg-red-100 rounded-full p-4 mb-4">
-                <AlertCircle className="h-8 w-8 text-red-600" />
+          {/* Tarjetas Mobile / Tabla Desktop */}
+          <div className="space-y-4">
+            {isLoadingDistributions ? (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <Loader2 className="h-12 w-12 animate-spin text-teal-600 mb-4" />
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Cargando distribuciones...</p>
               </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Error al cargar distribuciones
-              </h3>
-              <p className="text-sm text-gray-500 text-center max-w-md mb-4">
-                {loadError}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => loadDistributions()}
-              >
-                Reintentar
-              </Button>
-            </div>
-          ) : filteredDistributions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4">
-              <div className="bg-gray-100 rounded-full p-4 mb-4">
-                <Info className="h-8 w-8 text-gray-400" />
+            ) : loadError ? (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <div className="bg-red-50 rounded-full p-4 mb-4">
+                  <AlertCircle className="h-8 w-8 text-red-600" />
+                </div>
+                <h3 className="text-lg font-black text-gray-800 mb-2 uppercase tracking-tight">Error de Carga</h3>
+                <p className="text-sm text-gray-500 mb-6 max-w-xs">{loadError}</p>
+                <Button variant="outline" className="h-12 px-8 border-teal-600 text-teal-700 font-black uppercase text-xs tracking-widest hover:bg-teal-50" onClick={() => loadDistributions()}>
+                  Reintentar
+                </Button>
               </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                No hay distribuciones registradas
-              </h3>
-              <p className="text-sm text-gray-500 text-center max-w-md">
-                {isDateFilterActive ? (
-                  <>
-                    No se encontraron distribuciones entre el{" "}
-                    <span className="font-medium text-gray-700">
-                      {startDate ? format(startDate, "dd/MM/yyyy") : ''}
-                    </span>
-                    {" "}y el{" "}
-                    <span className="font-medium text-gray-700">
-                      {endDate ? format(endDate, "dd/MM/yyyy") : ''}
-                    </span>
-                  </>
-                ) : (
-                  "No se encontraron distribuciones"
-                )}
-                {searchTerm && (
-                  <>
-                    {" "}que coincidan con &quot;<span className="font-medium text-gray-700">{searchTerm}</span>&quot;
-                  </>
-                )}
-              </p>
-              <div className="flex gap-2 mt-4">
-                {isDateFilterActive ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleTodayClick}
-                    >
-                      <CalendarIcon className="h-4 w-4 mr-2" />
-                      Ver distribuciones de hoy
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleClearDateFilter}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Ver todas las distribuciones
-                    </Button>
-                  </>
-                ) : searchTerm && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSearchTerm("")}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Limpiar búsqueda
-                  </Button>
-                )}
+            ) : filteredDistributions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+                  <Package className="h-8 w-8 text-gray-300" />
+                </div>
+                <h3 className="text-lg font-black text-gray-800 mb-2 uppercase tracking-tight">Sin registros</h3>
+                <p className="text-sm text-gray-500 max-w-xs">No se encontraron distribuciones con los filtros actuales.</p>
               </div>
-            </div>
-          ) : (
-            <div className="relative overflow-auto border-2 rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-teal-600 hover:bg-teal-600">
-              <TableHead className="text-center border font-bold text-white py-3">
-                <div className="flex flex-col items-center gap-1">
-                  <Hash className="w-4 h-4" />
-                  <span className="text-xs leading-tight">Nro<br />Distribución</span>
-                </div>
-              </TableHead>
-              <TableHead className="text-center border font-bold text-white py-3">
-                <div className="flex flex-col items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span className="text-xs leading-tight">Fecha de<br />PEDIDO</span>
-                </div>
-              </TableHead>
-              <TableHead className="text-center border font-bold text-white py-3">
-                <div className="flex flex-col items-center gap-1">
-                  <PiggyBank className="w-4 h-4" />
-                  <span className="text-xs leading-tight">Nombre de<br />destinatario</span>
-                </div>
-              </TableHead>
-              <TableHead className="text-center border font-bold text-white py-3">
-                <div className="flex flex-col items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-xs leading-tight">Lugar<br />destino</span>
-                </div>
-              </TableHead>
-              <TableHead className="text-center border font-bold text-white py-3">
-                <div className="flex flex-col items-center gap-1">
-                  <Truck className="w-4 h-4" />
-                  <span className="text-xs leading-tight">Placa del medio<br />de transporte</span>
-                </div>
-              </TableHead>
-              <TableHead className="text-center border font-bold text-white py-3">
-                <div className="flex flex-col items-center gap-1">
-                  <Package className="w-4 h-4" />
-                  <span className="text-xs leading-tight">Ingresos</span>
-                </div>
-              </TableHead>
-              <TableHead className="text-center border font-bold text-white py-3">
-                <div className="flex flex-col items-center gap-1">
-                <PencilLine className="w-4 h-4"/>
-                <span className="text-xs">Estado</span>
-                </div>
-              </TableHead>
-              <TableHead className="text-center border font-bold text-white py-3">
-                <div className="flex flex-col items-center gap-1">
-                <CircleEllipsis className= "w-4 h-4" />
-                <span className="text-xs">Opción</span>
-                </div>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedDistributions.map((dist) => {
-              // Separar fecha y hora
-              const [fecha, hora] = dist.fechaDistribucion.split(" ");
+            ) : (
+              <>
+                {/* Vista de Tarjetas (Mobile) */}
+                <div className="grid grid-cols-1 md:hidden gap-4">
+                  {paginatedDistributions.map((dist) => {
+                    const [fecha, hora] = dist.fechaDistribucion.split(" ");
+                    const placaParts = dist.placaMedioTransporte.split("/");
+                    const placa = placaParts[0] || "";
+                    const conductor = placaParts[1] || "";
 
-              // Separar placa y conductor
-              const placaParts = dist.placaMedioTransporte.split("/");
-              const placa = placaParts[0] || "";
-              const conductor = placaParts[1] || "";
-
-              return (
-                <TableRow key={dist.id}>
-                  <TableCell className="font-medium text-center border">
-                    {dist.nroDistribucion}
-                  </TableCell>
-                  <TableCell className="text-xs text-center border py-2">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{hora}</span>
-                      <span className="text-muted-foreground">{fecha}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs text-center border py-2">
-                    <span className="font-medium">{dist.nombreDestinatario}</span>
-                  </TableCell>
-                  <TableCell className="text-xs text-center border py-2">
-                    <div className="flex flex-col">
-                      <span>{dist.lugarDestino.split(".")[0]}</span>
-                      <span className="text-muted-foreground">
-                        {dist.lugarDestino.split(".").slice(1).join(".")}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs text-center border py-2">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{placa}</span>
-                      <span className="text-muted-foreground">{conductor}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-center border">
-                    {dist.idsIngresos}
-                  </TableCell>
-                  <TableCell className="text-center border">
-                    <Badge
-                    className={
-                        dist.estado === "PENDIENTE"
-                          ? "bg-white text-orange-600 border border-orange-600 hover:bg-orange-600 hover:text-white hover:border-orange-700 flex items-center gap-1 justify-center mx-auto w-fit"
-                          : dist.estado === "APROBADO"
-                          ? "bg-primary hover:bg-green-600 flex items-center gap-1 justify-center mx-auto w-fit"
-                          : dist.estado === "RECHAZADO"
-                          ? "bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white hover:border-red-700 flex items-center gap-1 justify-center mx-auto w-fit"
-                          : "bg-teal-600 hover:bg-teal-700 flex items-center gap-1 justify-center mx-auto w-fit"
-                      }
-                    >
-                      {dist.estado === "PENDIENTE" ? (
-                        <AlertCircle className="h-3 w-3" />
-                      ) : dist.estado === "RECHAZADO" ? (
-                        <X className="h-3 w-3" />
-                      ) : (
-                        <CheckCircle2 className="h-3 w-3" />
-                      )}
-                      {dist.estado}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center border">
-                    <div className="flex justify-center">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                    return (
+                      <div key={dist.id} className="bg-white rounded-2xl border-2 border-gray-100 p-5 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="bg-teal-100 p-2 rounded-lg text-teal-700">
+                              <Hash className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-1">Nro. Distribución</p>
+                              <p className="text-sm font-black text-gray-800">{dist.nroDistribucion}</p>
+                            </div>
+                          </div>
+                          <Badge
+                            className={
+                              dist.estado === "PENDIENTE"
+                                ? "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 font-bold"
+                                : dist.estado === "APROBADO"
+                                ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100 font-bold"
+                                : dist.estado === "RECHAZADO"
+                                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 font-bold"
+                                : "bg-teal-50 text-teal-600 border-teal-200 hover:bg-teal-100 font-bold"
+                            }
                           >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel className="text-xs text-muted-foreground">
-                            Opciones
-                          </DropdownMenuLabel>
-                          <DropdownMenuItem
+                            {dist.estado}
+                          </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 py-3 border-y border-dashed border-gray-100">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase">
+                              <Clock className="w-3 h-3" /> Fecha Pedido
+                            </div>
+                            <p className="text-xs font-bold text-gray-700">{fecha}</p>
+                            <p className="text-[10px] text-gray-500">{hora}</p>
+                          </div>
+                          <div className="space-y-1 text-right">
+                            <div className="flex items-center justify-end gap-1.5 text-[10px] font-bold text-gray-400 uppercase">
+                              <Truck className="w-3 h-3" /> Placa / Chofer
+                            </div>
+                            <p className="text-xs font-bold text-teal-700">{placa}</p>
+                            <p className="text-[10px] text-gray-500 truncate">{conductor}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            <PiggyBank className="w-3.5 h-3.5" /> Destinatario
+                          </div>
+                          <p className="text-sm font-bold text-gray-800 leading-tight">
+                            {dist.nombreDestinatario}
+                          </p>
+                          <div className="flex items-start gap-1 mt-1">
+                            <MapPin className="w-3 h-3 text-gray-300 shrink-0 mt-0.5" />
+                            <p className="text-[11px] text-gray-500 leading-none">
+                              {dist.lugarDestino.replace(".", " - ")}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-2">
+                          <Button 
+                            variant="outline" 
+                            className="flex-1 h-11 border-teal-600 text-teal-700 font-black text-[10px] tracking-widest uppercase hover:bg-teal-50"
                             onClick={() => {
                               setSelectedDistribution(dist);
-                              // Encontrar el pedido completo correspondiente
                               const order = orders.find(o => o.id === dist.id);
                               setSelectedOrder(order || null);
                               setIsModalOpen(true);
                             }}
                           >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver Certificado
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
+                            <Eye className="w-4 h-4 mr-2" />
+                            Certificado
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="flex-1 h-11 border-blue-600 text-blue-700 font-black text-[10px] tracking-widest uppercase hover:bg-blue-50"
                             onClick={() => {
                               const order = orders.find(o => o.id === dist.id);
                               setSelectedOrderForProducts(order || null);
                               setIsProductsModalOpen(true);
                             }}
                           >
-                            <ShoppingBag className="h-4 w-4 mr-2" />
-                            Productos y Subproductos
-                          </DropdownMenuItem>
-
-                          {/* Solo mostrar opciones de cambio de estado si el estado es PENDIENTE */}
+                            <ShoppingBag className="w-4 h-4 mr-2" />
+                            Productos
+                          </Button>
+                          
                           {dist.estado === "PENDIENTE" && (
-                            <>
-                              <DropdownMenuSeparator />
-
-                              <DropdownMenuLabel className="text-xs text-muted-foreground">
-                                Cambiar Estado
-                              </DropdownMenuLabel>
-
-                              <DropdownMenuItem
-                                onClick={() => handleApproveOrderClick(dist.id, dist.nroDistribucion)}
-                                className="text-green-600 focus:text-green-600"
-                              >
-                                <Check className="h-4 w-4 mr-2" />
-                                Aprobar
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem
-                                onClick={() => handleRejectOrderClick(dist.id, dist.nroDistribucion)}
-                                className="text-red-600 focus:text-red-600"
-                              >
-                                <X className="h-4 w-4 mr-2" />
-                                Rechazar
-                              </DropdownMenuItem>
-                            </>
+                            <DropdownMenu modal={false}>
+                              <DropdownMenuTrigger asChild>
+                                <Button className="h-11 w-12 bg-teal-600 hover:bg-teal-700 text-white p-0 shadow-lg shadow-teal-100">
+                                  <MoreVertical className="h-5 w-5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-52 p-2">
+                                <DropdownMenuLabel className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 px-2">Gestión</DropdownMenuLabel>
+                                <DropdownMenuItem
+                                  onClick={() => handleApproveOrderClick(dist.id, dist.nroDistribucion)}
+                                  className="text-green-600 font-bold p-3 rounded-lg focus:bg-green-50"
+                                >
+                                  <Check className="h-4 w-4 mr-3" />
+                                  Aprobar Orden
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleRejectOrderClick(dist.id, dist.nroDistribucion)}
+                                  className="text-red-600 font-bold p-3 rounded-lg focus:bg-red-50"
+                                >
+                                  <X className="h-4 w-4 mr-3" />
+                                  Rechazar Orden
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-            </div>
-          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Vista de Tabla (Desktop) */}
+                <div className="hidden md:block relative overflow-auto border-2 border-gray-100 rounded-2xl shadow-sm">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-teal-600 hover:bg-teal-600">
+                        <TableHead className="text-center border font-bold text-white py-4 px-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <Hash className="w-4 h-4" />
+                            <span className="text-[10px] uppercase tracking-widest leading-tight">Nro.<br />Distribución</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center border font-bold text-white py-4 px-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <Clock className="w-4 h-4" />
+                            <span className="text-[10px] uppercase tracking-widest leading-tight">Fecha / Hora<br />PEDIDO</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center border font-bold text-white py-4 px-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <PiggyBank className="w-4 h-4" />
+                            <span className="text-[10px] uppercase tracking-widest leading-tight">Nombre de<br />Destinatario</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center border font-bold text-white py-4 px-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <MapPin className="w-4 h-4" />
+                            <span className="text-[10px] uppercase tracking-widest leading-tight">Lugar de<br />Destino</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center border font-bold text-white py-4 px-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <Truck className="w-4 h-4" />
+                            <span className="text-[10px] uppercase tracking-widest leading-tight">Placa /<br />Conductor</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center border font-bold text-white py-4 px-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <Package className="w-4 h-4" />
+                            <span className="text-[10px] uppercase tracking-widest">Ingresos</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center border font-bold text-white py-4 px-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <PencilLine className="w-4 h-4"/>
+                            <span className="text-[10px] uppercase tracking-widest">Estado</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center border font-bold text-white py-4 px-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <CircleEllipsis className= "w-4 h-4" />
+                            <span className="text-[10px] uppercase tracking-widest">Opciones</span>
+                          </div>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedDistributions.map((dist) => {
+                        const [fecha, hora] = dist.fechaDistribucion.split(" ");
+                        const placaParts = dist.placaMedioTransporte.split("/");
+                        const placa = placaParts[0] || "";
+                        const conductor = placaParts[1] || "";
+
+                        return (
+                          <TableRow key={dist.id} className="hover:bg-gray-50/50">
+                            <TableCell className="font-bold text-center border-x text-sm text-blue-600">
+                              {dist.nroDistribucion}
+                            </TableCell>
+                            <TableCell className="text-[11px] text-center border-x py-3">
+                              <div className="flex flex-col font-bold text-gray-700">
+                                <span>{hora}</span>
+                                <span className="text-gray-400 font-medium">{fecha}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-[11px] text-center border-x font-bold text-gray-800 py-3 uppercase">
+                              {dist.nombreDestinatario}
+                            </TableCell>
+                            <TableCell className="text-[11px] text-center border-x py-3">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-gray-700">{dist.lugarDestino.split(".")[0]}</span>
+                                <span className="text-gray-400">
+                                  {dist.lugarDestino.split(".").slice(1).join(".")}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-[11px] text-center border-x py-3">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-teal-700">{placa}</span>
+                                <span className="text-gray-400 italic">{conductor}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs font-bold text-center border-x text-gray-600">
+                              {dist.idsIngresos}
+                            </TableCell>
+                            <TableCell className="text-center border-x">
+                              <Badge
+                                className={
+                                  dist.estado === "PENDIENTE"
+                                    ? "bg-white text-orange-600 border border-orange-600 hover:bg-orange-50 font-bold text-[10px]"
+                                    : dist.estado === "APROBADO"
+                                    ? "bg-green-600 text-white font-bold text-[10px]"
+                                    : dist.estado === "RECHAZADO"
+                                    ? "bg-white text-red-600 border border-red-600 hover:bg-red-50 font-bold text-[10px]"
+                                    : "bg-teal-600 text-white font-bold text-[10px]"
+                                }
+                              >
+                                {dist.estado}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center border-x">
+                              <DropdownMenu modal={false}>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="text-teal-600 hover:bg-teal-50">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 p-2">
+                                  <DropdownMenuLabel className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 mb-1">Acciones</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => {
+                                    setSelectedDistribution(dist);
+                                    const order = orders.find(o => o.id === dist.id);
+                                    setSelectedOrder(order || null);
+                                    setIsModalOpen(true);
+                                  }} className="flex items-center p-3 rounded-lg focus:bg-teal-50 cursor-pointer">
+                                    <Eye className="h-4 w-4 mr-3 text-teal-600" />
+                                    <span className="font-bold text-sm">Ver Certificado</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    const order = orders.find(o => o.id === dist.id);
+                                    setSelectedOrderForProducts(order || null);
+                                    setIsProductsModalOpen(true);
+                                  }} className="flex items-center p-3 rounded-lg focus:bg-blue-50 cursor-pointer">
+                                    <ShoppingBag className="h-4 w-4 mr-3 text-blue-600" />
+                                    <span className="font-bold text-sm">Productos</span>
+                                  </DropdownMenuItem>
+
+                                  {dist.estado === "PENDIENTE" && (
+                                    <>
+                                      <DropdownMenuSeparator className="my-2" />
+                                      <DropdownMenuLabel className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 mb-1">Decisión</DropdownMenuLabel>
+                                      <DropdownMenuItem onClick={() => handleApproveOrderClick(dist.id, dist.nroDistribucion)} className="flex items-center p-3 rounded-lg text-green-600 focus:bg-green-50 cursor-pointer font-bold">
+                                        <Check className="h-4 w-4 mr-3" />
+                                        Aprobar Orden
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleRejectOrderClick(dist.id, dist.nroDistribucion)} className="flex items-center p-3 rounded-lg text-red-600 focus:bg-red-50 cursor-pointer font-bold">
+                                        <X className="h-4 w-4 mr-3" />
+                                        Rechazar Orden
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Paginación */}
           {meta && meta.totalItems > 0 && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4">
-              <div className="flex items-center gap-3">
-                <div className="text-sm text-muted-foreground">
-                  Mostrando {((currentPage - 1) * itemsPerPage) + 1} a{" "}
-                  {Math.min(currentPage * itemsPerPage, meta.totalItems)} de{" "}
-                  {meta.totalItems} registros
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6 pt-8 pb-4 border-t border-gray-100">
+              {/* Info y Selector de Items por Página */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+                  Mostrando <span className="text-teal-700">{((currentPage - 1) * itemsPerPage) + 1}</span> a{" "}
+                  <span className="text-teal-700">{Math.min(currentPage * itemsPerPage, meta.totalItems)}</span> de{" "}
+                  <span className="text-teal-700">{meta.totalItems}</span> registros
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Mostrar:</span>
+                
+                <div className="flex items-center gap-3 bg-white px-4 py-1.5 rounded-full border-2 border-gray-100 shadow-sm">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Mostrar:</span>
                   <Select
                     value={itemsPerPage.toString()}
-                    onValueChange={(value) => setItemsPerPage(Number(value))}
+                    onValueChange={(value) => {
+                      setItemsPerPage(Number(value));
+                      setCurrentPage(1);
+                    }}
                   >
-                    <SelectTrigger className="w-20 h-8">
+                    <SelectTrigger className="w-16 h-7 border-none shadow-none font-bold text-teal-700 focus:ring-0 p-0">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[101]">
                       <SelectItem value="5">5</SelectItem>
                       <SelectItem value="10">10</SelectItem>
                       <SelectItem value="25">25</SelectItem>
@@ -1117,57 +1174,68 @@ export function AnimalDistributionManagement() {
                   </Select>
                 </div>
               </div>
+
+              {/* Controles de Navegación */}
               {totalPages > 1 && (
-                <div className="flex items-center gap-x-2">
-                <Button
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((prev) => prev - 1)}
-                  variant="outline"
-                  size="sm"
-                >
-                  Anterior
-                </Button>
-                {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
-                  const pageNumber = i + 1;
-                  const isCurrentPage = pageNumber === currentPage;
+                <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center bg-gray-50/50 p-1 rounded-2xl border border-gray-100">
+                  <Button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 sm:w-auto sm:px-4 rounded-xl font-bold text-gray-500 hover:bg-white hover:text-teal-700 transition-all disabled:opacity-30"
+                  >
+                    <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Anterior</span>
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => {
+                    const pageNumber = i + 1;
+                    const isCurrentPage = pageNumber === currentPage;
 
-                  // Mostrar primera página, última página, página actual y páginas alrededor
-                  const showPage =
-                    pageNumber === 1 ||
-                    pageNumber === totalPages ||
-                    Math.abs(pageNumber - currentPage) <= 2;
+                    // Lógica para mostrar páginas (similar a la anterior pero optimizada)
+                    const showPage =
+                      pageNumber === 1 ||
+                      pageNumber === totalPages ||
+                      Math.abs(pageNumber - currentPage) <= (window.innerWidth < 640 ? 1 : 2);
 
-                  if (!showPage) return null;
-
-                  return (
-                    <Button
-                      key={pageNumber}
-                      variant="outline"
-                      size="sm"
-                      className={
-                        isCurrentPage
-                          ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
-                          : ""
+                    if (!showPage) {
+                      // Mostrar el separador "..." una sola vez a cada lado
+                      if (pageNumber === 2 || pageNumber === totalPages - 1) {
+                        return <span key={`dots-${pageNumber}`} className="px-1 text-gray-300 font-bold">...</span>;
                       }
-                      onClick={() => setCurrentPage(pageNumber)}
-                    >
-                      {pageNumber}
-                    </Button>
-                  );
-                })}
-                {totalPages > 10 && (
-                  <span className="px-2 text-sm text-muted-foreground">
-                    ... {totalPages}
-                  </span>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((prev) => prev + 1)}
-                >
-                  Siguiente
-                </Button>
+                      return null;
+                    }
+
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={isCurrentPage ? "default" : "ghost"}
+                        size="sm"
+                        className={
+                          isCurrentPage
+                            ? "h-9 w-9 rounded-xl bg-teal-600 text-white font-black shadow-lg shadow-teal-100 hover:bg-teal-700"
+                            : "h-9 w-9 rounded-xl font-bold text-gray-500 hover:bg-white hover:text-teal-700"
+                        }
+                        onClick={() => setCurrentPage(pageNumber)}
+                      >
+                        {pageNumber}
+                      </Button>
+                    );
+                  })}
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    className="h-9 w-9 sm:w-auto sm:px-4 rounded-xl font-bold text-gray-500 hover:bg-white hover:text-teal-700 transition-all disabled:opacity-30"
+                  >
+                    <span className="hidden sm:inline">Siguiente</span>
+                    <ChevronRight className="h-4 w-4 sm:ml-1" />
+                  </Button>
                 </div>
               )}
             </div>

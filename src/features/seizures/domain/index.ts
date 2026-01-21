@@ -27,6 +27,16 @@ export interface AnimalSeizureItem {
         description: string | null;
         introducerId: number;
         status: boolean;
+        introducer?: {
+          id: number;
+          user: {
+            id: number;
+            person: {
+              identification: string;
+              fullName: string;
+            };
+          };
+        };
       };
     };
     productiveStage: {
