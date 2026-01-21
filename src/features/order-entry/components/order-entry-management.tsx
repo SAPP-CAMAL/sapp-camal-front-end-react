@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
 import {
   Table,
   TableBody,
@@ -266,6 +265,8 @@ export function OrderEntryManagement() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
 
+  const [isDefaultAddressSelected, setIsDefaultAddressSelected] = useState(false);
+
   const handleSelectOrder = (order: OrderEntry) => {
     setSelectedOrder(order);
     // Los productos se agregarán desde el modal
@@ -277,6 +278,11 @@ export function OrderEntryManagement() {
     setProducts([]);
     setStep(1);
     setSelectedAddressee(null);
+    setIsDefaultAddressSelected(false);
+    setBrandAddressee(undefined); // Limpiar el filtro de marca
+    setCheckedOrders(new Set()); // Limpiar las selecciones de animales
+    setSearchTerm(""); // Limpiar búsqueda
+    setSelectedIntroductor(""); // Limpiar filtro de introductor
   };
 
   const handleSearchChange = (value: string) => {
@@ -705,7 +711,7 @@ export function OrderEntryManagement() {
         toast.success("Pedido completado exitosamente");
 
         // Limpiar todo y volver al paso 1
-        setProducts([]);
+        // setProducts([]);
         setSelectedOrder(null);
         setStep(1);
         setSelectedAddressee(null);
@@ -716,10 +722,13 @@ export function OrderEntryManagement() {
         setSavedOrderId(null);
         setProductSelectionsCache(new Map());
         setSelectedProducts(new Set());
-        setSelectedEspecieId(null);
+        // setSelectedEspecieId(null);
         setSelectedIntroductor("");
         setIntroductorSearch("");
+        setBrandAddressee(undefined); // Limpiar el filtro de marca
+        setSearchTerm(""); // Limpiar búsqueda
         setShowFinalizeModal(false);
+        setIsDefaultAddressSelected(false);
       },
       onError: () => {
         toast.error("Error al guardar el pedido");
@@ -803,7 +812,15 @@ export function OrderEntryManagement() {
             initialBrandName={brandAddressee}
             initialBrandIds={undefined}
             onSelect={handleAddresseeSelect}
-            onBack={() => setStep(1)}
+            isDefaultAddressSelected={isDefaultAddressSelected}
+            setIsDefaultAddressSelected={setIsDefaultAddressSelected}
+            onBack={() => {
+              setStep(1);
+              setBrandAddressee(undefined); // Limpiar el filtro de marca
+              setCheckedOrders(new Set()); // Limpiar las selecciones de animales
+              setSearchTerm(""); // Limpiar búsqueda
+              setSelectedIntroductor(""); // Limpiar filtro de introductor
+            }}
           />
         );
       })()}
