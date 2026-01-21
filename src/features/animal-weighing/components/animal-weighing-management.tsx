@@ -96,11 +96,11 @@ const calculateDisplayWeight = (
   hookWeightKg: number = 0
 ): number => {
   if (savedWeightKg === 0) return 0;
-  
+
   // El peso guardado siempre está en kg
   // Convertir a lb solo si la unidad configurada es LB, de lo contrario mostrar en kg
   const weightInUnit = isLbUnit ? convertKgToLb(savedWeightKg) : savedWeightKg;
-  
+
   return weightInUnit;
 };
 
@@ -139,6 +139,7 @@ export function AnimalWeighingManagement() {
     animalCode: "",
   });
   const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null);
+  const [isDefaultAddressSelected, setIsDefaultAddressSelected] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -164,7 +165,7 @@ export function AnimalWeighingManagement() {
     useWeighingStages();
   const { data: channelTypesData, isLoading: isLoadingChannelTypes } =
     useChannelTypes();
-  
+
   const { data: channelSectionsData, isLoading: isLoadingChannelSections } =
     useChannelSectionsByType(selectedChannelTypeId);
 
@@ -251,7 +252,7 @@ export function AnimalWeighingManagement() {
   const handleDownloadPdf = async (idDetailAnimalWeighing: number) => {
     try {
       setDownloadingPdfId(idDetailAnimalWeighing);
-      
+
       const response = await http.get(
         `v1/1.0.0/detail-specie-cert/pdf-report-animal-tag-data-by-id?idDetailsAnimalWeighing=${idDetailAnimalWeighing}`,
         {
@@ -263,21 +264,21 @@ export function AnimalWeighingManagement() {
 
       // Convertir la respuesta a blob
       const blob = await response.blob();
-      
+
       // Crear un URL temporal para el blob
       const url = window.URL.createObjectURL(blob);
-      
+
       // Crear un elemento <a> temporal para descargar el archivo
       const link = document.createElement('a');
       link.href = url;
       link.download = `ticket-${idDetailAnimalWeighing}.pdf`;
       document.body.appendChild(link);
       link.click();
-      
+
       // Limpiar
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success("PDF descargado exitosamente");
     } catch (error) {
       toast.error("Error al descargar el PDF");
@@ -317,13 +318,13 @@ export function AnimalWeighingManagement() {
 
       // Convertir la respuesta a blob
       const blob = await response.blob();
-      
+
       // Crear un URL temporal para el blob
       const url = window.URL.createObjectURL(blob);
-      
+
       // Cargar el PDF en la ventana que ya abrimos
       newWindow.location.href = url;
-      
+
     } catch (error) {
       toast.error("Error al abrir el PDF");
       console.error('Error opening PDF:', error);
@@ -336,18 +337,18 @@ export function AnimalWeighingManagement() {
     if (!animal?.productPostmortem || animal.productPostmortem.length === 0) {
       return false;
     }
-    
+
     // Buscar si hay algún producto con decomiso parcial en esta sección
     const hasPartial = animal.productPostmortem.some(
       (product: any) => {
         const productSectionCode = product.sectionCode;
-        
+
         // Si el producto tiene sectionCode y coincide con el de la tabla
         // Y NO es decomiso total, entonces hay decomiso parcial
         return productSectionCode && productSectionCode === sectionCode && product.isTotalConfiscation === false;
       }
     );
-    
+
     return hasPartial;
   };
 
@@ -461,7 +462,7 @@ export function AnimalWeighingManagement() {
           if (!commentary) {
             commentary = animal.animalWeighing
               ?.flatMap((w: any) => w.detailAnimalWeighing || [])
-              .find((d: any) => d.commentary)?.commentary || 
+              .find((d: any) => d.commentary)?.commentary ||
               animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '';
           }
           // Extraer addressee si existe
@@ -486,7 +487,7 @@ export function AnimalWeighingManagement() {
         const brandData = animal.detailCertificateBrands?.detailsCertificateBrand?.brand;
         const brandName = brandData?.name;
         const brandId = brandData?.id;
-        
+
         newRows.push({
           id: `${animal.id}`,
           animalId: animal.id,
@@ -541,7 +542,7 @@ export function AnimalWeighingManagement() {
         if (!commentary) {
           commentary = animal.animalWeighing
             ?.flatMap((w: any) => w.detailAnimalWeighing || [])
-            .find((d: any) => d.commentary)?.commentary || 
+            .find((d: any) => d.commentary)?.commentary ||
             animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '';
         }
 
@@ -613,7 +614,7 @@ export function AnimalWeighingManagement() {
               carrier: carrierData,
               commentary: commentary || animal.animalWeighing
                 ?.flatMap((w: any) => w.detailAnimalWeighing || [])
-                .find((d: any) => d.commentary)?.commentary || 
+                .find((d: any) => d.commentary)?.commentary ||
                 animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '',
             });
           });
@@ -648,7 +649,7 @@ export function AnimalWeighingManagement() {
                 carrier: carrierData,
                 commentary: sectionData.commentary || animal.animalWeighing
                   ?.flatMap((w: any) => w.detailAnimalWeighing || [])
-                  .find((d: any) => d.commentary)?.commentary || 
+                  .find((d: any) => d.commentary)?.commentary ||
                   animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '',
               });
             }
@@ -679,7 +680,7 @@ export function AnimalWeighingManagement() {
               carrier: carrierData,
               commentary: animal.animalWeighing
                 ?.flatMap((w: any) => w.detailAnimalWeighing || [])
-                .find((d: any) => d.commentary)?.commentary || 
+                .find((d: any) => d.commentary)?.commentary ||
                 animal.detailCertificateBrands?.detailsCertificateBrand?.commentary || '',
             });
           });
@@ -796,15 +797,15 @@ export function AnimalWeighingManagement() {
     // Encontrar el código del animal de la fila seleccionada
     const selectedRow = rows.find(row => row.id === rowId);
     if (!selectedRow) return;
-    
+
     const animalCode = selectedRow.code;
-    
+
     // Asignar el destinatario y transportista a TODAS las filas del mismo animal
     // Marcar la fila seleccionada como principal (isPrimaryRow: true)
     setRows((prev) =>
-      prev.map((row) => 
-        row.code === animalCode ? { 
-          ...row, 
+      prev.map((row) =>
+        row.code === animalCode ? {
+          ...row,
           addressee: {
             id: addressee.id, // ID del destinatario para enviar al backend
             fullName: addressee.fullName,
@@ -828,12 +829,12 @@ export function AnimalWeighingManagement() {
     // Encontrar el código del animal de la fila seleccionada
     const selectedRow = rows.find(row => row.id === rowId);
     if (!selectedRow) return;
-    
+
     const animalCode = selectedRow.code;
-    
+
     // Remover el destinatario de TODAS las filas del mismo animal y limpiar isPrimaryRow
     setRows((prev) =>
-      prev.map((row) => 
+      prev.map((row) =>
         row.code === animalCode ? { ...row, addressee: undefined, carrier: undefined, isPrimaryRow: false } : row
       )
     );
@@ -883,11 +884,11 @@ export function AnimalWeighingManagement() {
     const unitCode = unitMeasureData?.data?.code || 'KG';
     const unitSymbol = unitMeasureData?.data?.symbol || 'kg';
     const isLbUnit = unitCode === 'LB';
-    
+
     // row.peso ya tiene el gancho restado desde la captura de la balanza
     // Por lo tanto, row.peso es el peso NETO (sin gancho)
     const netWeightDisplay = row.peso;
-    
+
     // Calcular el peso bruto sumando el gancho al peso neto
     let grossWeightDisplay = netWeightDisplay;
     let hookWeightDisplay = 0;
@@ -933,17 +934,17 @@ export function AnimalWeighingManagement() {
           idSpecie: selectedSpecieId,
           detailsAnimalWeighing: [detailsAnimalWeighing]
         };
-        
+
         // Agregar idAddressee si existe y NO es EN PIE
         if (weighingStageId !== 1 && row.addressee?.id) {
           updateData.idAddressee = row.addressee.id;
         }
-        
+
         // Agregar idShipping si existe y NO es EN PIE
         if (weighingStageId !== 1 && row.carrier?.id) {
           updateData.idShipping = row.carrier.id;
         }
-        
+
         response = await updateWeighingMutation.mutateAsync({
           idAnimalWeighing: row.idAnimalWeighing,
           data: updateData
@@ -957,17 +958,17 @@ export function AnimalWeighingManagement() {
           observation: "",
           detailsAnimalWeighing: [detailsAnimalWeighing]
         };
-        
+
         // Agregar idAddressee si existe y NO es EN PIE
         if (weighingStageId !== 1 && row.addressee?.id) {
           saveData.idAddressee = row.addressee.id;
         }
-        
+
         // Agregar idShipping si existe y NO es EN PIE
         if (weighingStageId !== 1 && row.carrier?.id) {
           saveData.idShipping = row.carrier.id;
         }
-        
+
         response = await saveWeighingMutation.mutateAsync(saveData);
       }
 
@@ -979,10 +980,10 @@ export function AnimalWeighingManagement() {
 
       // Abrir PDF automáticamente en nueva pestaña
       console.log('📄 Respuesta completa del API:', response);
-      
+
       // Intentar obtener el ID del detalle desde la respuesta de la API
       let detailId = row.idDetailAnimalWeighing; // Usar el existente como fallback
-      
+
       // Intentar extraer de diferentes posibles estructuras de respuesta
       if (response?.data) {
         if (Array.isArray(response.data)) {
@@ -991,12 +992,12 @@ export function AnimalWeighingManagement() {
         } else if (response.data.detailsAnimalWeighing) {
           // Si tiene detailsAnimalWeighing
           if (Array.isArray(response.data.detailsAnimalWeighing)) {
-            detailId = response.data.detailsAnimalWeighing[0]?.id || 
-                      response.data.detailsAnimalWeighing[0]?.idDetailAnimalWeighing || 
+            detailId = response.data.detailsAnimalWeighing[0]?.id ||
+                      response.data.detailsAnimalWeighing[0]?.idDetailAnimalWeighing ||
                       detailId;
           } else {
-            detailId = response.data.detailsAnimalWeighing.id || 
-                      response.data.detailsAnimalWeighing.idDetailAnimalWeighing || 
+            detailId = response.data.detailsAnimalWeighing.id ||
+                      response.data.detailsAnimalWeighing.idDetailAnimalWeighing ||
                       detailId;
           }
         } else if (response.data.id) {
@@ -1032,7 +1033,7 @@ export function AnimalWeighingManagement() {
 
       const unitCode = unitMeasureData?.data?.code || 'KG';
       const unitSymbol = unitMeasureData?.data?.symbol || 'kg';
-      
+
       // La balanza ya envía el valor en la unidad configurada (lb o kg)
       let weightToDisplay = currentWeight.value;
 
@@ -1065,7 +1066,7 @@ export function AnimalWeighingManagement() {
       const message = weighingStageId !== 1 && selectedHook
         ? `Peso neto capturado: ${roundedWeight.toFixed(2)} ${unitSymbol} (con gancho restado)`
         : `Peso capturado: ${roundedWeight.toFixed(2)} ${unitSymbol}`;
-      
+
       toast.success(message);
     }
   }, [currentWeight?.value, currentWeight?.unit, currentWeight?.stable, selectedRowId, unitMeasureData, weighingStageId, selectedHook, hookTypesData]);
@@ -1074,12 +1075,12 @@ export function AnimalWeighingManagement() {
   const rowsWithDisplayWeight = useMemo(() => {
     const unitCode = unitMeasureData?.data?.code || 'KG';
     const isLbUnit = unitCode === 'LB';
-    
+
     return rows.map(row => {
       // Si hay peso capturado (row.peso > 0), mostrarlo
       // Si no, mostrar el peso guardado convertido
       let displayWeight = 0;
-      
+
       if (row.peso > 0) {
         // Peso capturado ya está en la unidad configurada y con gancho restado si aplica
         displayWeight = row.peso;
@@ -1091,7 +1092,7 @@ export function AnimalWeighingManagement() {
           weighingStageId
         );
       }
-      
+
       return {
         ...row,
         displayWeight: displayWeight
@@ -1126,20 +1127,20 @@ export function AnimalWeighingManagement() {
   // Obtener lista de códigos de animales únicos y ordenarlos por prioridad
   const animalCodes = useMemo(() => {
     const codes = Object.keys(groupedByAnimal);
-    
+
     // Ordenar animales: primero los que tienen destinatario sin peso, luego los demás
     return codes.sort((codeA, codeB) => {
       const rowsA = groupedByAnimal[codeA];
       const rowsB = groupedByAnimal[codeB];
-      
+
       // Verificar si el animal tiene destinatario y alguna fila sin peso
       const aHasAddresseeAndNoPeso = rowsA.some(r => r.addressee && r.savedWeight === 0);
       const bHasAddresseeAndNoPeso = rowsB.some(r => r.addressee && r.savedWeight === 0);
-      
+
       // Prioridad 1: Animales con destinatario y sin peso van primero
       if (aHasAddresseeAndNoPeso && !bHasAddresseeAndNoPeso) return -1;
       if (!aHasAddresseeAndNoPeso && bHasAddresseeAndNoPeso) return 1;
-      
+
       // Prioridad 2: Si ambos tienen o no tienen destinatario, mantener orden original
       return 0;
     });
@@ -1630,31 +1631,31 @@ export function AnimalWeighingManagement() {
                   const bReadyToWeigh = !!b.addressee && b.savedWeight === 0;
                   if (aReadyToWeigh && !bReadyToWeigh) return -1;
                   if (!aReadyToWeigh && bReadyToWeigh) return 1;
-                  
+
                   // 2. Dentro de las listas para pesar, priorizar la marcada como principal
                   if (aReadyToWeigh && bReadyToWeigh) {
                     if (a.isPrimaryRow && !b.isPrimaryRow) return -1;
                     if (!a.isPrimaryRow && b.isPrimaryRow) return 1;
                   }
-                  
+
                   // 3. Luego filas sin destinatario y sin peso (en espera)
                   const aWaiting = !a.addressee && a.savedWeight === 0;
                   const bWaiting = !b.addressee && b.savedWeight === 0;
                   if (aWaiting && !bWaiting) return -1;
                   if (!aWaiting && bWaiting) return 1;
-                  
+
                   // 4. Al final filas con peso ya guardado (completadas)
                   // Estas se ordenan por idChannelSection
                   const idA = a.idChannelSection || 0;
                   const idB = b.idChannelSection || 0;
                   return idA - idB;
                 });
-                
+
                 // Log solo cuando hay destinatario asignado
                 if (sortedRows.some(r => r.addressee)) {
                   console.log(`👑 Animal ${animalCode}:`, sortedRows.map(r => ({
                     section: r.sectionCode,
-                    prioridad: r.addressee && r.savedWeight === 0 ? '1-LISTO PARA PESAR ⭐' : 
+                    prioridad: r.addressee && r.savedWeight === 0 ? '1-LISTO PARA PESAR ⭐' :
                                !r.addressee && r.savedWeight === 0 ? '2-ESPERANDO' :
                                '3-COMPLETADO',
                     isPrimary: r.isPrimaryRow,
@@ -1892,12 +1893,12 @@ export function AnimalWeighingManagement() {
           {(() => {
             // Verificar si hay algún animal con idAnimalWeighing
             const hasDeleteButton = paginatedRows.some(row => row.idAnimalWeighing);
-            
+
             // Calcular el número total de columnas para el colspan
-            const totalColumns = weighingStageId !== 1 
+            const totalColumns = weighingStageId !== 1
               ? (hasDeleteButton ? 9 : 8)  // CANAL/DISTRIBUCIÓN: 6 columnas + obs + acción (+ delete si aplica)
               : (hasDeleteButton ? 7 : 6); // EN PIE: 4 columnas + obs + acción (+ delete si aplica)
-            
+
             return (
           <Table className="min-w-full border [&_td]:!rounded-none [&_th]:!rounded-none [&_tr]:!rounded-none">
             <TableHeader>
@@ -1984,38 +1985,38 @@ export function AnimalWeighingManagement() {
                       const bReadyToWeigh = !!b.addressee && b.savedWeight === 0;
                       if (aReadyToWeigh && !bReadyToWeigh) return -1;
                       if (!aReadyToWeigh && bReadyToWeigh) return 1;
-                      
+
                       // 2. Dentro de las listas para pesar, priorizar la marcada como principal
                       if (aReadyToWeigh && bReadyToWeigh) {
                         if (a.isPrimaryRow && !b.isPrimaryRow) return -1;
                         if (!a.isPrimaryRow && b.isPrimaryRow) return 1;
                       }
-                      
+
                       // 3. Luego filas sin destinatario y sin peso (en espera)
                       const aWaiting = !a.addressee && a.savedWeight === 0;
                       const bWaiting = !b.addressee && b.savedWeight === 0;
                       if (aWaiting && !bWaiting) return -1;
                       if (!aWaiting && bWaiting) return 1;
-                      
+
                       // 4. Al final filas con peso ya guardado (completadas)
                       // Estas se ordenan por idChannelSection
                       const idA = a.idChannelSection || 0;
                       const idB = b.idChannelSection || 0;
                       return idA - idB;
                     });
-                    
+
                     // Log solo cuando hay destinatario asignado
                     if (sortedRows.some(r => r.addressee)) {
                       console.log(`👑 Animal ${animalCode} (DESKTOP):`, sortedRows.map(r => ({
                         section: r.sectionCode,
-                        prioridad: r.addressee && r.savedWeight === 0 ? '1-LISTO PARA PESAR ⭐' : 
+                        prioridad: r.addressee && r.savedWeight === 0 ? '1-LISTO PARA PESAR ⭐' :
                                    !r.addressee && r.savedWeight === 0 ? '2-ESPERANDO' :
                                    '3-COMPLETADO',
                         isPrimary: r.isPrimaryRow,
                         peso: r.savedWeight
                       })));
                     }
-                    
+
                     const rowSpan = sortedRows.length;
                     return sortedRows.map((row, index) => {
                       const isFirstRow = index === 0;
@@ -2236,7 +2237,7 @@ export function AnimalWeighingManagement() {
                               onClick={() => handleDeleteClick(row.idAnimalWeighing!, row.code)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
-                              
+
                             </Button>
                              </TooltipTrigger>
                                 <TooltipContent>
@@ -2244,7 +2245,7 @@ export function AnimalWeighingManagement() {
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                            
+
                           )}
                         </div>
                       </TableCell>
@@ -2320,7 +2321,7 @@ export function AnimalWeighingManagement() {
               {Array.from({ length: totalPages }, (_, i) => {
                 const pageNumber = i + 1;
                 const isCurrentPage = pageNumber === currentPage;
-                
+
                 // Mostrar página si está cerca de la actual o es primera/última
                 const shouldShow =
                   pageNumber === 1 ||
@@ -2377,8 +2378,8 @@ export function AnimalWeighingManagement() {
       </Card>
 
       {/* Dialog de Selección de Destinatario y Transportista - Optimizado para Tablet */}
-      <Dialog 
-        open={addresseeSelectionRowId !== null} 
+      <Dialog
+        open={addresseeSelectionRowId !== null}
         onOpenChange={(open) => {
           if (!open) {
             setAddresseeSelectionRowId(null);
@@ -2407,6 +2408,8 @@ export function AnimalWeighingManagement() {
                 onSelect={(addressee) => {
                   setTempAddressee(addressee);
                 }}
+                isDefaultAddressSelected={isDefaultAddressSelected}
+                setIsDefaultAddressSelected={setIsDefaultAddressSelected}
                 onBack={() => {
                   setAddresseeSelectionRowId(null);
                   setModalStep(1);
