@@ -1478,7 +1478,7 @@ export function OrderEntryManagement() {
 
       {/* Modal de Productos y Subproductos */}
       <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
-        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full sm:w-[95vw] h-[100dvh] sm:h-[90vh] max-w-none p-0 overflow-hidden flex flex-col border-none sm:border bg-white shadow-2xl z-50">
+        <DialogContent className="max-md:fixed max-md:inset-0 max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:h-[100dvh] max-md:max-w-none max-md:rounded-none max-md:border-none md:max-w-2xl md:w-[95vw] md:h-[90vh] p-0 overflow-hidden flex flex-col bg-white shadow-2xl z-50">
           <DialogHeader className="px-6 py-4 border-b shrink-0 bg-white z-20">
             <DialogTitle>
               <div className="flex flex-col gap-2">
@@ -1502,9 +1502,9 @@ export function OrderEntryManagement() {
           </DialogHeader>
 
           {/* Área Scroleable - Única en móvil, Dividida en Desktop */}
-          <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden bg-white flex flex-col lg:flex-row">
+          <div className="flex-1 min-h-0 bg-white flex flex-col overflow-y-auto">
             {/* Panel de Selección / Info */}
-            <div className="w-full lg:w-80 border-b lg:border-r p-4 bg-gray-50/50 shrink-0 lg:overflow-y-auto">
+            <div className="w-full border-b p-4 bg-gray-50/50 shrink-0">
               <div className="space-y-5">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
@@ -1574,7 +1574,7 @@ export function OrderEntryManagement() {
             </div>
 
             {/* Listado de Productos */}
-            <div className="flex-1 w-full bg-white lg:overflow-y-auto">
+            <div className="flex-1 w-full bg-white">
               <div className="p-4 lg:p-8 max-w-4xl mx-auto space-y-6">
                 {/* Selector Producto/Subproducto */}
                 <div className="flex bg-gray-100 p-1 rounded-xl w-full max-w-md mx-auto shadow-inner">
