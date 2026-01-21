@@ -25,7 +25,9 @@ interface AddresseeSelectionWeighingProps {
   initialBrandId?: number;
   initialBrandName?: string;
   initialBrandIds?: string; // Para order-entry: "4,3,5,67"
+  isDefaultAddressSelected: boolean;
   onSelect: (addressee: Addressees) => void;
+  setIsDefaultAddressSelected: (isDefault: boolean) => void;
   onBack: () => void;
 }
 
@@ -33,11 +35,13 @@ export function AddresseeSelectionWeighing({
   initialBrandId,
   initialBrandName,
   initialBrandIds,
+  isDefaultAddressSelected,
+  setIsDefaultAddressSelected,
   onSelect,
   onBack,
 }: AddresseeSelectionWeighingProps) {
   const [namesSearch, setNamesSearch] = useState("");
-  const [brandSearch, setBrandSearch] = useState(""); // Empezamos vacío para no disparar búsqueda por nombre inicialmente
+  const [brandSearch, setBrandSearch] = useState(initialBrandName); // Empezamos vacío para no disparar búsqueda por nombre inicialmente
   const [effectiveBrandId, setEffectiveBrandId] = useState<number | undefined>(initialBrandId);
   const [effectiveBrandIds, setEffectiveBrandIds] = useState<string | undefined>(initialBrandIds);
   const [page, setPage] = useState(1);
@@ -49,7 +53,7 @@ export function AddresseeSelectionWeighing({
       // Si el usuario ya está buscando activamente por nombre o marca, NO enviamos brandId ni brandIds
       const useBrandId = !namesSearch && !brandSearch ? effectiveBrandId : undefined;
       const useBrandIds = !namesSearch && !brandSearch ? effectiveBrandIds : undefined;
-      
+
       return getAddresseesByFiltersWeighingService({
         names: namesSearch,
         brand: brandSearch,
@@ -64,15 +68,16 @@ export function AddresseeSelectionWeighing({
     // La nueva API devuelve un array directamente en 'data'
     const items = Array.isArray(query.data?.data) ? query.data.data : [];
     const activeItems = items.filter((i: Addressees) => i.status === true);
-    
+
     if (!query.isLoading && query.data?.data) {
       // AUTO-SELECCIÓN: Si se encuentra un único destinatario por marca (sin búsqueda manual), seleccionar de una
-      if (activeItems.length === 1 && (effectiveBrandId || effectiveBrandIds) && !namesSearch && !brandSearch) {
+      if (activeItems.length === 1 && !isDefaultAddressSelected) {
         onSelect(activeItems[0]);
+        setIsDefaultAddressSelected(true);
         return;
       }
 
-      // Si ya hay filtros manuales, o si la búsqueda por ID no devolvió exactamente 1, 
+      // Si ya hay filtros manuales, o si la búsqueda por ID no devolvió exactamente 1,
       // y todavía tenemos un effectiveBrandId/effectiveBrandIds, lo limpiamos para búsquedas futuras
       if ((namesSearch || brandSearch || activeItems.length !== 1) && (effectiveBrandId || effectiveBrandIds)) {
         // Solo limpiamos si no se encontró el resultado único inicial
@@ -184,8 +189,8 @@ export function AddresseeSelectionWeighing({
               </TableRow>
             ) : (
               data.map((addressee) => (
-                <TableRow 
-                  key={addressee.id} 
+                <TableRow
+                  key={addressee.id}
                   className="cursor-pointer hover:bg-teal-50/50 transition-colors border-b border-teal-50"
                   onClick={() => handleSelect(addressee)}
                 >
@@ -254,8 +259,8 @@ export function AddresseeSelectionWeighing({
           </Card>
         ) : (
           data.map((addressee) => (
-            <Card 
-              key={addressee.id} 
+            <Card
+              key={addressee.id}
               className="p-4 cursor-pointer hover:shadow-lg hover:border-teal-300 transition-all border-2 border-teal-100"
               onClick={() => handleSelect(addressee)}
             >
@@ -295,8 +300,8 @@ export function AddresseeSelectionWeighing({
                   <Tag className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-gray-500 mb-2 uppercase">Marca</div>
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className="text-blue-700 border-blue-300 bg-blue-50 text-lg font-bold px-4 py-2 w-full justify-center"
                     >
                       {addressee.brand || "SIN MARCA"}
