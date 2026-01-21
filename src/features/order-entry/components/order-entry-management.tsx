@@ -1478,17 +1478,17 @@ export function OrderEntryManagement() {
 
       {/* Modal de Productos y Subproductos */}
       <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
-        <DialogContent className="!max-w-none w-[95vw] h-[90vh] max-h-[90vh] p-0 overflow-hidden flex flex-col">
-          <DialogHeader className="px-6 pt-5 pb-3 border-b">
+        <DialogContent className="fixed inset-0 translate-x-0 translate-y-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full sm:w-[95vw] h-[100dvh] sm:h-[90vh] max-w-none p-0 overflow-hidden flex flex-col border-none sm:border bg-white shadow-2xl z-50">
+          <DialogHeader className="px-6 py-4 border-b shrink-0 bg-white z-20">
             <DialogTitle>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-base font-semibold">
+                  <span className="text-base font-semibold leading-none">
                     Seleccionar Productos y Subproductos
                   </span>
                   <Badge
                     variant="outline"
-                    className="bg-blue-500 text-white border-blue-500"
+                    className="bg-blue-500 text-white border-blue-500 h-5"
                   >
                     {checkedOrders.size}{" "}
                     {checkedOrders.size === 1 ? "animal" : "animales"}
@@ -1501,136 +1501,125 @@ export function OrderEntryManagement() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-1 overflow-hidden">
-            {/* Animal actual - Lado izquierdo */}
-            <div className="w-64 border-r overflow-y-auto p-3 bg-muted/20">
-              <div className="text-neutral-950 mb-2 font-semibold">
-                Animal actual
-              </div>
-              <div className="text-xs text-muted-foreground mb-3">
-                {Array.from(checkedOrders).indexOf(currentAnimalId!) + 1} de{" "}
-                {checkedOrders.size}
-              </div>
-              {currentAnimalId &&
-                (() => {
-                  const animal = animalStock.find((a) => a.id === currentAnimalId);
-                  if (!animal) return null;
-                  const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
-                  return (
-                    <div className="p-4 rounded-lg border-2 bg-white border-teal-500">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-bold text-blue-600 text-lg">
-                          {animal.code}
-                        </span>
-                        <Badge className="bg-blue-500">
-                          {animal.netWeight.toFixed(2)} {unitMeasureData?.data?.symbol || 'kg'}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-gray-700 font-medium mb-2">
-                        {animal.introducer}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {selectedSpecieName}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-2">
-                        Marca: {animal.brandName}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-              {/* Lista de todos los animales */}
-              <div className="mt-4">
-                <div className="text-xs font-semibold text-gray-600 mb-2">
-                  Todos los animales:
+          {/* Área Scroleable - Única en móvil, Dividida en Desktop */}
+          <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden bg-white flex flex-col lg:flex-row">
+            {/* Panel de Selección / Info */}
+            <div className="w-full lg:w-80 border-b lg:border-r p-4 bg-gray-50/50 shrink-0 lg:overflow-y-auto">
+              <div className="space-y-5">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+                    Seleccionar Animal
+                  </label>
+                  <Select
+                    value={currentAnimalId?.toString() || ""}
+                    onValueChange={(value) => setCurrentAnimalId(Number(value))}
+                  >
+                    <SelectTrigger className="w-full bg-white h-11 border-teal-200 shadow-sm">
+                      <SelectValue placeholder="Seleccione un animal" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[100]">
+                      {Array.from(checkedOrders).map((animalId) => {
+                        const animal = animalStock.find((a) => a.id === animalId);
+                        if (!animal) return null;
+                        const hasProducts = products.some(
+                          (p) => p.nroIngreso === animal.id.toString()
+                        );
+                        return (
+                          <SelectItem key={animalId} value={animalId.toString()}>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-blue-600">{animal.code}</span>
+                              {hasProducts && <span className="text-green-600">✓</span>}
+                              <span className="text-gray-300">|</span>
+                              <span className="truncate">{animal.brandName}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-2 text-[10px] text-gray-400 font-medium">
+                    Animal {Array.from(checkedOrders).indexOf(currentAnimalId!) + 1} de {checkedOrders.size}
+                  </p>
                 </div>
-                <div className="space-y-1">
-                  {Array.from(checkedOrders).map((animalId) => {
-                    if (animalId === currentAnimalId) return null;
-                    const animal = animalStock.find((a) => a.id === animalId);
+
+                {currentAnimalId &&
+                  (() => {
+                    const animal = animalStock.find((a) => a.id === currentAnimalId);
                     if (!animal) return null;
-
-                    // Verificar si este animal ya tiene productos guardados
-                    const hasProducts = products.some(
-                      (p) => p.nroIngreso === animal.id.toString()
-                    );
-
                     const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
-
                     return (
-                      <div
-                        key={animalId}
-                        onClick={() => setCurrentAnimalId(animalId)}
-                        className="p-2 rounded bg-gray-100 hover:bg-teal-100 text-xs cursor-pointer transition-colors border-2 border-transparent hover:border-teal-500"
-                      >
+                      <div className="p-4 rounded-xl border-2 bg-white border-teal-500 shadow-sm space-y-3">
                         <div className="flex items-center justify-between">
-                          <div>
-                            <span className="font-bold text-blue-600">
-                              {animal.code}
-                            </span>
-                            <span className="text-gray-500 ml-1">
-                              - {selectedSpecieName}
-                            </span>
+                          <span className="font-black text-blue-600 text-xl tracking-tight">
+                            {animal.code}
+                          </span>
+                          <Badge className="bg-blue-600 font-bold px-2 py-1">
+                            {animal.netWeight.toFixed(2)} {unitMeasureData?.data?.symbol || 'kg'}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-gray-800 leading-tight">
+                            {animal.introducer}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>{selectedSpecieName}</span>
+                            <span>•</span>
+                            <span className="text-teal-600 font-semibold">{animal.brandName}</span>
                           </div>
-                          {hasProducts && (
-                            <Badge className="bg-green-500 text-xs">✓</Badge>
-                          )}
                         </div>
                       </div>
                     );
-                  })}
-                </div>
+                  })()}
               </div>
             </div>
 
-            {/* Opciones de productos/subproductos - Lado derecho */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="max-w-5xl mx-auto space-y-6">
-                {/* Filtro de Producto/Subproducto */}
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    variant={productType === "producto" ? "default" : "outline"}
+            {/* Listado de Productos */}
+            <div className="flex-1 w-full bg-white lg:overflow-y-auto">
+              <div className="p-4 lg:p-8 max-w-4xl mx-auto space-y-6">
+                {/* Selector Producto/Subproducto */}
+                <div className="flex bg-gray-100 p-1 rounded-xl w-full max-w-md mx-auto shadow-inner">
+                  <button
                     onClick={() => handleChangeProductType("producto")}
-                    className={
-                      productType === "producto"
-                        ? "bg-teal-600 hover:bg-teal-700"
-                        : ""
-                    }
+                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-bold transition-all ${
+                      productType === "producto" 
+                        ? "bg-white text-teal-700 shadow-md transform scale-[1.02]" 
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
                   >
-                    Producto
-                  </Button>
-                  <Button
-                    variant={
-                      productType === "subproducto" ? "default" : "outline"
-                    }
+                    PRODUCTOS
+                  </button>
+                  <button
                     onClick={() => handleChangeProductType("subproducto")}
-                    className={
-                      productType === "subproducto"
-                        ? "bg-teal-600 hover:bg-teal-700"
-                        : ""
-                    }
+                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-bold transition-all ${
+                      productType === "subproducto" 
+                        ? "bg-white text-teal-700 shadow-md transform scale-[1.02]" 
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
                   >
-                    Subproducto
-                  </Button>
+                    SUBPRODUCTOS
+                  </button>
                 </div>
 
-                {/* Lista de opciones con checkboxes */}
-                <div className="border-2 rounded-lg p-6 bg-white">
-                  <h3 className="font-semibold text-gray-700 mb-4 text-lg">
-                    Seleccione{" "}
-                    {productType === "producto" ? "productos" : "subproductos"}:
-                  </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h3 className="font-black text-gray-800 text-lg flex items-center gap-2">
+                      <Package className="w-5 h-5 text-teal-600" />
+                      {productType === "producto" ? "Lista de Productos" : "Lista de Subproductos"}
+                    </h3>
+                  </div>
+                  
                   {allProductsQuery.isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-12 gap-3">
-                      <Loader2 className="h-10 w-10 animate-spin text-teal-600" />
-                      <span className="text-sm text-gray-500">Cargando {productType === "producto" ? "productos" : "subproductos"}...</span>
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                      <Loader2 className="h-12 w-12 animate-spin text-teal-600" />
+                      <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">Cargando...</span>
                     </div>
                   ) : allConfiguredProducts.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      No hay {productType === "producto" ? "productos" : "subproductos"} configurados para esta especie
+                    <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center">
+                      <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                      <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Sin opciones configuradas</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
                       {allConfiguredProducts.map((configProduct) => {
                         const stockProduct = currentAnimalProducts.find(
                           (p) => p.speciesProduct.id === configProduct.id
@@ -1641,28 +1630,30 @@ export function OrderEntryManagement() {
                         const isInOrder = orderId && assignedProductCodes.has(configProduct.productCode);
                         const isAvailable = !!stockProduct || isInOrder;
                         const productStockId = stockProduct?.id || orderProduct?.animalProduct?.id;
+                        const isSelected = selectedProducts.has(productStockId!);
 
                         return (
                           <div
                             key={configProduct.id}
-                            className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
-                              isAvailable ? "hover:bg-gray-50" : "bg-gray-100 opacity-60 cursor-not-allowed"
+                            onClick={() => isAvailable && productStockId && handleToggleProduct(productStockId)}
+                            className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer select-none active:scale-[0.98] ${
+                              isAvailable 
+                                ? isSelected 
+                                  ? "border-teal-500 bg-teal-50 shadow-sm" 
+                                  : "border-gray-100 bg-white hover:border-teal-200"
+                                : "bg-gray-50 border-gray-50 opacity-40 grayscale cursor-not-allowed"
                             }`}
                           >
-                            <Checkbox
-                              id={`prod-${configProduct.id}`}
-                              checked={isAvailable && productStockId ? selectedProducts.has(productStockId) : false}
-                              onCheckedChange={() => isAvailable && productStockId && handleToggleProduct(productStockId)}
-                              disabled={!isAvailable}
-                            />
-                            <label
-                              htmlFor={`prod-${configProduct.id}`}
-                              className={`text-sm font-medium leading-none flex-1 text-center ${
-                                isAvailable ? "cursor-pointer" : "cursor-not-allowed text-gray-500"
-                              }`}
-                            >
+                            <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                              isSelected ? "bg-teal-600 border-teal-600" : "border-gray-300 bg-white"
+                            }`}>
+                              {isSelected && <CheckSquare className="w-4 h-4 text-white" />}
+                            </div>
+                            <span className={`text-sm font-bold flex-1 leading-tight ${
+                              isSelected ? "text-teal-900" : "text-gray-700"
+                            }`}>
                               {configProduct.productName}
-                            </label>
+                            </span>
                           </div>
                         );
                       })}
@@ -1670,126 +1661,117 @@ export function OrderEntryManagement() {
                   )}
                 </div>
 
-                {/* Información adicional */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Nota:</strong> Seleccione los productos/subproductos
-                    para este animal. Después de guardar, pasará automáticamente
-                    al siguiente animal.
+                <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 flex gap-4">
+                  <Info className="w-6 h-6 text-blue-400 shrink-0" />
+                  <p className="text-xs text-blue-800 leading-relaxed font-bold uppercase tracking-tight">
+                    Los cambios se envían automáticamente al pasar al siguiente animal o finalizar.
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Footer con botones */}
-          <div className="border-t px-6 py-4 bg-muted/20">
-            <div className="flex justify-between gap-2">
+          {/* Footer Fijo */}
+          <div className="border-t px-6 py-4 bg-gray-50 shrink-0 z-30 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between gap-4">
               <Button
-                variant="outline"
+                variant="ghost"
+                className="w-full sm:w-auto h-12 text-gray-400 hover:text-gray-600 font-black uppercase text-xs tracking-widest"
                 onClick={() => {
                   setIsProductModalOpen(false);
                   setSelectedProducts(new Set());
                   setCurrentAnimalId(null);
                 }}
               >
-                Cancelar
+                Cerrar sin guardar
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  // Guardar selecciones actuales antes de cerrar
-                  if (currentAnimalId) {
-                    const animal = animalStock.find((a) => a.id === currentAnimalId);
-                    if (animal) {
-                      const cachedSelections = productSelectionsCache.get(currentAnimalId) || {
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto h-12 border-teal-600 text-teal-700 hover:bg-teal-50 font-black px-8 shadow-sm text-xs tracking-widest uppercase"
+                  onClick={() => {
+                    if (currentAnimalId) {
+                      const animal = animalStock.find((a) => a.id === currentAnimalId);
+                      if (animal) {
+                        const cachedSelections = productSelectionsCache.get(currentAnimalId) || {
+                          productos: new Set<number>(),
+                          subproductos: new Set<number>()
+                        };
+
+                        if (productType === "producto") {
+                          cachedSelections.productos = new Set(selectedProducts);
+                        } else {
+                          cachedSelections.subproductos = new Set(selectedProducts);
+                        }
+
+                        const newCache = new Map(productSelectionsCache);
+                        newCache.set(currentAnimalId, cachedSelections);
+                        setProductSelectionsCache(newCache);
+
+                        const allSelectedIds = new Set([
+                          ...cachedSelections.productos,
+                          ...cachedSelections.subproductos
+                        ]);
+
+                        const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
+                        const productsWithoutCurrentAnimal = products.filter(p => p.nroIngreso !== animal.id.toString());
+
+                        if (allSelectedIds.size > 0) {
+                          const newProducts: ProductSubproduct[] = [];
+                          allSelectedIds.forEach((productStockId) => {
+                            const productStock = productStockCache.get(productStockId);
+                            if (productStock) {
+                              newProducts.push({
+                                id: productStock.id,
+                                idAnimalProduct: productStock.id,
+                                especie: selectedSpecieName,
+                                codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
+                                subproducto: productStock.speciesProduct.productName,
+                                nroIngreso: animal.id.toString(),
+                              });
+                            }
+                          });
+                          setProducts([...productsWithoutCurrentAnimal, ...newProducts]);
+                        } else {
+                          setProducts(productsWithoutCurrentAnimal);
+                        }
+                      }
+                    }
+                    setIsProductModalOpen(false);
+                    setSelectedProducts(new Set());
+                    setCurrentAnimalId(null);
+                  }}
+                >
+                  <CheckSquare className="w-5 h-5 mr-2" />
+                  Finalizar Selección
+                </Button>
+
+                <Button
+                  className="w-full sm:w-auto h-12 bg-teal-600 hover:bg-teal-700 text-white font-black px-10 shadow-lg shadow-teal-100 text-xs tracking-widest uppercase"
+                  onClick={handleSaveProductsForAnimal}
+                >
+                  <div className="flex items-center">
+                    <span>Siguiente</span>
+                    {(() => {
+                      const cachedSelections = productSelectionsCache.get(currentAnimalId!) || {
                         productos: new Set<number>(),
                         subproductos: new Set<number>()
                       };
-
-                      // Actualizar según el tipo actual
-                      if (productType === "producto") {
-                        cachedSelections.productos = new Set(selectedProducts);
-                      } else {
-                        cachedSelections.subproductos = new Set(selectedProducts);
-                      }
-
-                      const newCache = new Map(productSelectionsCache);
-                      newCache.set(currentAnimalId, cachedSelections);
-                      setProductSelectionsCache(newCache);
-
-                      // Combinar productos y subproductos
-                      const allSelectedIds = new Set([
-                        ...cachedSelections.productos,
-                        ...cachedSelections.subproductos
-                      ]);
-
-                      const selectedSpecieName = species.find((s) => s.id === selectedEspecieId)?.name || "";
-
-                      // Eliminar productos existentes de este animal
-                      const productsWithoutCurrentAnimal = products.filter(p => p.nroIngreso !== animal.id.toString());
-
-                      // Si hay selecciones, crear los productos
-                      if (allSelectedIds.size > 0) {
-                        const newProducts: ProductSubproduct[] = [];
-
-                        allSelectedIds.forEach((productStockId) => {
-                          // Buscar en el cache de productos en lugar de availableProducts
-                          const productStock = productStockCache.get(productStockId);
-                          if (productStock) {
-                            newProducts.push({
-                              id: productStock.id,
-                              idAnimalProduct: productStock.id,
-                              especie: selectedSpecieName,
-                              codigoAnimal: `[${animal.code}] - ${animal.brandName}`,
-                              subproducto: productStock.speciesProduct.productName,
-                              nroIngreso: animal.id.toString(),
-                            });
-                          }
-                        });
-
-                        const updatedProducts = [...productsWithoutCurrentAnimal, ...newProducts];
-                        setProducts(updatedProducts);
-                      } else {
-                        setProducts(productsWithoutCurrentAnimal);
-                      }
-                    }
-                  }
-
-                  setIsProductModalOpen(false);
-                  setSelectedProducts(new Set());
-                  setCurrentAnimalId(null);
-                }}
-              >
-                <CheckSquare className="h-4 w-4 mr-2" />
-                Finalizar Selección
-              </Button>
-              <Button
-                onClick={handleSaveProductsForAnimal}
-              >
-                <>
-                  <ChevronRight className="h-4 w-4 mr-2" />
-                  {(() => {
-                    const animalsArray = Array.from(checkedOrders);
-                    const isLastAnimal = animalsArray.indexOf(currentAnimalId!) === animalsArray.length - 1;
-
-                    // Obtener el total de productos + subproductos seleccionados para este animal
-                    const cachedSelections = productSelectionsCache.get(currentAnimalId!) || {
-                      productos: new Set<number>(),
-                      subproductos: new Set<number>()
-                    };
-
-                    // Actualizar con la selección actual según el tipo
-                    const currentProductos = productType === "producto" ? selectedProducts : cachedSelections.productos;
-                    const currentSubproductos = productType === "subproducto" ? selectedProducts : cachedSelections.subproductos;
-
-                    // Combinar ambos Sets para obtener el total
-                    const totalCount = new Set([...currentProductos, ...currentSubproductos]).size;
-
-                    return isLastAnimal ? (totalCount > 0 ? `Siguiente (${totalCount})` : 'Siguiente') : (totalCount > 0 ? `Siguiente (${totalCount})` : 'Siguiente');
-                  })()}
-                </>
-              </Button>
+                      const currentProductos = productType === "producto" ? selectedProducts : cachedSelections.productos;
+                      const currentSubproductos = productType === "subproducto" ? selectedProducts : cachedSelections.subproductos;
+                      const totalCount = new Set([...currentProductos, ...currentSubproductos]).size;
+                      
+                      return totalCount > 0 ? (
+                        <div className="ml-3 bg-teal-400 text-teal-900 h-6 min-w-[24px] rounded-md flex items-center justify-center px-1 font-black text-xs">
+                          {totalCount}
+                        </div>
+                      ) : null;
+                    })()}
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  </div>
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
