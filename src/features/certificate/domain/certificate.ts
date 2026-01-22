@@ -54,4 +54,10 @@ export interface Certificate {
 	detailsRegisterVehicle?: DetailRegisterVehicle;
 	/** Commentary or description for the certificate. */
 	commentary?: string;
+	/** The unique identifier of the operator associated with the certificate. */
+	idOperator?: number;
+	operator?: {
+		id: number;
+		fullName: string;
+	};
 }

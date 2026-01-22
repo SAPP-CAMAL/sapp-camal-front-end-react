@@ -1,6 +1,7 @@
 import { http } from '@/lib/ky';
 import { ListAnimalsFilters } from '../../domain/list-animals.interface';
 import { ConditionTransportListFilters } from '../../domain';
+import { CommonHttpResponsePagination } from '@/features/people/domain';
 
 // Servicio para obtener certificados de transporte por filtros
 export async function getListAnimalsByFiltersService(filters: ListAnimalsFilters): Promise<any[]> {
