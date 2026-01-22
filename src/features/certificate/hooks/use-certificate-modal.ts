@@ -4,7 +4,33 @@ import type { Certificate } from '../domain';
 import { useAllOrigins } from '@/features/origin/hooks';
 import { saveScannedCertificateService, updateCertificateService } from '../server/db/certificate.service';
 
-type CertificateFormValues = Partial<Omit<Certificate, 'idOrigin'> & { open: boolean; idOrigin: string }>;
+import { createPersonService } from '@/features/people/server/db/people.service';
+import { Person } from '@/features/people/domain';
+
+type CertificateFormValues = {
+	id?: string | number;
+	open: boolean;
+	code: string;
+	idOrigin: string;
+	issueDate: string;
+	quantity: number;
+	plateVehicle?: string;
+	authorizedTo: string;
+	originAreaCode?: string;
+	destinationAreaCode?: string;
+	commentary?: string;
+	status: string;
+	// Operator related fields
+	isNewPerson: boolean;
+	savedPerson: Person | null;
+	identificationType: string;
+	identification: string;
+	firstName: string;
+	lastName: string;
+	genderId: string;
+	mobileNumber: string;
+	address: string;
+};
 
 const defaultValues: CertificateFormValues = {
 	open: false,
@@ -16,6 +42,18 @@ const defaultValues: CertificateFormValues = {
 		const today = new Date();
 		return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`;
 	})(),
+	authorizedTo: '',
+	status: 'true',
+	// Operator defaults
+	isNewPerson: false,
+	savedPerson: null,
+	identificationType: '',
+	identification: '',
+	firstName: '',
+	lastName: '',
+	genderId: '',
+	mobileNumber: '',
+	address: '',
 };
 
 const btnValue = {
@@ -43,7 +81,14 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 		defaultValues: {
 			...defaultValues,
 			...certificate,
-			idOrigin: certificate.idOrigin?.toString(),
+			idOrigin: certificate.idOrigin?.toString() ?? '',
+			status: certificate.status?.toString() ?? 'true',
+			savedPerson: certificate.operator
+				? {
+					id: certificate.operator.id,
+					fullName: certificate.operator.fullName,
+				}
+				: null,
 		},
 	});
 
@@ -56,6 +101,31 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 
 			const placeOrigin = origins?.find(origin => origin.id === +baseCertificateData.idOrigin!);
 
+			let authorizedTo = baseCertificateData.authorizedTo ?? '';
+			let idOperator: number | null = null;
+
+			// Handle Person Creation/Selection
+			if (data.isNewPerson) {
+				const person = await createPersonService({
+					code: '',
+					identification: data.identification!,
+					identificationTypeId: Number(data.identificationType),
+					genderId: Number(data.genderId),
+					mobileNumber: data.mobileNumber!,
+					firstName: data.firstName!,
+					lastName: data.lastName!,
+					fullName: `${data.firstName ?? ''} ${data.lastName ?? ''}`,
+					address: data.address!,
+					affiliationDate: new Date(),
+					status: data.status === 'true',
+				});
+				authorizedTo = person.data.fullName!;
+				idOperator = person.data.id;
+			} else if (data.savedPerson) {
+				authorizedTo = data.savedPerson.fullName!;
+				idOperator = Number(data.savedPerson.id);
+			}
+
 			if (createOrUpdateType === 'create') {
 				const response = await saveScannedCertificateService({
 					idOrigin: placeOrigin ? +placeOrigin.id : 0,
@@ -64,10 +134,11 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 					issueDate: baseCertificateData.issueDate ?? '',
 					quantity: +(baseCertificateData.quantity ?? NaN),
 					plateVehicle: baseCertificateData.plateVehicle ?? '',
-					authorizedTo: baseCertificateData.authorizedTo ?? '',
+					authorizedTo: authorizedTo,
 					originAreaCode: baseCertificateData.originAreaCode ?? '',
 					destinationAreaCode: baseCertificateData.destinationAreaCode ?? '',
 					status: true,
+					idOperator: idOperator ?? 0,
 				});
 
 				const saveCertificate = { ...response.data, idOrigin: response.data.idOrigin ?? (placeOrigin ? +placeOrigin.id : 0) };
@@ -84,11 +155,12 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 					issueDate: baseCertificateData.issueDate ?? '',
 					quantity: +(baseCertificateData.quantity ?? NaN),
 					plateVehicle: baseCertificateData.plateVehicle ?? '',
-					authorizedTo: baseCertificateData.authorizedTo ?? '',
+					authorizedTo: authorizedTo,
 					originAreaCode: baseCertificateData.originAreaCode ?? '',
 					destinationAreaCode: baseCertificateData.destinationAreaCode ?? '',
 					commentary: baseCertificateData.commentary ?? '',
 					status: true,
+					idOperator: idOperator ?? 0,
 				});
 
 				const updatedCertificate = { ...response.data, idOrigin: response.data.idOrigin ?? (placeOrigin ? +placeOrigin.id : 0) };

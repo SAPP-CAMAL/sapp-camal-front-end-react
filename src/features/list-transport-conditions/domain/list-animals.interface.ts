@@ -5,4 +5,6 @@ export interface ListAnimalsFilters {
   fullName?: string | null; // Opcional - nombre completo del chofer
   identification?: string | null; // Opcional - identificación
   plate?: string | null; // Opcional - placa del vehículo
+  page?: number;
+  limit?: number;
 }

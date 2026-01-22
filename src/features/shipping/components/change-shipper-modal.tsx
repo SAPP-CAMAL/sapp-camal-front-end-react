@@ -85,7 +85,8 @@ export const ChangeShipperModal = ({ triggerButton, certificateId, certificateCo
 
 			await updateCertificateShipperService(certificateId, {
 				shippingsId: shippingId,
-				code: certificateCode
+				code: certificateCode,
+				idOperator: selectedRegisterVehicle.registerVehicle?.shipping?.personId
 			});
 			toast.success('Transportista actualizado correctamente');
 			onShipperChanged(selectedRegisterVehicle);
