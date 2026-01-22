@@ -41,26 +41,71 @@ import {
   ChevronDown,
   FileSpreadsheet,
   FileText,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { downloadConditionTransportByFilters } from "../utils/downloadConditionTransportByFilters";
+import { useQueryStates, parseAsInteger, parseAsString } from "nuqs";
+import { useQuery } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export function ListTransportManagement() {
-  // Estado inicial de los filtros
-  const initialFilters: ListAnimalsFilters = {
-    entryDate: getCurrentDate(),
-    code: null,
-    fullName: null,
-    identification: null,
-    plate: null,
-  };
+  const [filters, setFilters] = useQueryStates(
+    {
+      entryDate: parseAsString.withDefault(getCurrentDate()),
+      code: parseAsString.withDefault(""),
+      fullName: parseAsString.withDefault(""),
+      identification: parseAsString.withDefault(""),
+      plate: parseAsString.withDefault(""),
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
+    },
+    {
+      history: "push",
+    }
+  );
 
-  const [filters, setFilters] = useState<ListAnimalsFilters>(initialFilters);
-  const [apiData, setApiData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const query = useQuery({
+    queryKey: ["transport-conditions", {
+      entryDate: filters.entryDate,
+      code: filters.code,
+      fullName: filters.fullName,
+      identification: filters.identification,
+      plate: filters.plate,
+    }],
+    queryFn: () => getListAnimalsByFiltersService({
+      entryDate: filters.entryDate,
+      code: filters.code || null,
+      fullName: filters.fullName || null,
+      identification: filters.identification || null,
+      plate: filters.plate || null,
+    }),
+  });
+
+  const allData = query.data ?? [];
+  const isLoading = query.isLoading;
+
+  const apiData = useMemo(() => {
+    const startIdx = (filters.page - 1) * filters.limit;
+    return allData.slice(startIdx, startIdx + filters.limit);
+  }, [allData, filters.page, filters.limit]);
+
+  const meta = useMemo(() => {
+    const totalItems = allData.length;
+    return {
+      totalItems,
+      itemCount: apiData.length,
+      itemsPerPage: filters.limit,
+      totalPages: Math.ceil(totalItems / filters.limit),
+      currentPage: filters.page,
+    };
+  }, [allData.length, apiData.length, filters.limit, filters.page]);
+
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
     null
   );
@@ -68,10 +113,10 @@ export function ListTransportManagement() {
 
   // Estado local para los valores de los inputs (para escritura fluida)
   const [inputValues, setInputValues] = useState({
-    code: "",
-    fullName: "",
-    identification: "",
-    plate: "",
+    code: filters.code || "",
+    fullName: filters.fullName || "",
+    identification: filters.identification || "",
+    plate: filters.plate || "",
   });
 
   // Función para manejar cambios en los filtros
@@ -79,46 +124,18 @@ export function ListTransportManagement() {
     (name: keyof ListAnimalsFilters, value: string) => {
       setFilters((prev) => ({
         ...prev,
-        [name]: value || null,
+        [name]: value || "",
+        page: 1, // Reset to page 1 on filter change
       }));
     },
-    []
+    [setFilters]
   );
-
-  // Cargar los datos de la API
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-
-        const data = await getListAnimalsByFiltersService(filters);
-
-        setApiData(data);
-      } catch (error) {
-        console.error("Error cargando datos:", error);
-        toast.error("Error al cargar los datos");
-        setApiData([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [filters]);
 
   // Recargar datos cuando se actualiza un archivo
   const handleFileChange = useCallback(() => {
-    const loadData = async () => {
-      try {
-        const data = await getListAnimalsByFiltersService(filters);
-        setApiData(data);
-        toast.success("Datos actualizados");
-      } catch (error) {
-        console.error("Error recargando datos:", error);
-      }
-    };
-    loadData();
-  }, [filters]);
+    query.refetch();
+    toast.success("Datos actualizados");
+  }, [query]);
 
   // Función de búsqueda con debounce
   const handleSearch = useCallback(
@@ -155,24 +172,31 @@ export function ListTransportManagement() {
 
   // Función para limpiar los filtros
   const clearFilters = useCallback(() => {
-    setFilters(initialFilters);
+    setFilters({
+      entryDate: getCurrentDate(),
+      code: "",
+      fullName: "",
+      identification: "",
+      plate: "",
+      page: 1,
+    });
     setInputValues({
       code: "",
       fullName: "",
       identification: "",
       plate: "",
     });
-  }, [initialFilters]);
+  }, [setFilters]);
 
   const totals = useMemo(
     () => ({
-      registros: apiData.length,
-      totalCertificados: apiData.reduce(
+      registros: allData.length,
+      totalCertificados: allData.reduce(
         (acc, item) => acc + (item.quantity || 0),
         0
       ),
     }),
-    [apiData]
+    [allData]
   );
 
     const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
@@ -311,6 +335,32 @@ export function ListTransportManagement() {
     </Card>
   );
 
+  const start = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + 1;
+  const end = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + (meta?.itemCount ?? 0);
+
+  const getVisiblePages = () => {
+    const totalPages = meta?.totalPages ?? 1;
+    const currentPage = meta?.currentPage ?? 1;
+    const maxVisible = isMobile ? 3 : 5;
+
+    if (totalPages <= maxVisible) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const half = Math.floor(maxVisible / 2);
+    let startPage = Math.max(1, currentPage - half);
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    return Array.from(
+      { length: endPage - startPage + 1 },
+      (_, i) => startPage + i
+    );
+  };
+
   return (
     <div className="space-y-4">
       <section>
@@ -343,25 +393,6 @@ export function ListTransportManagement() {
               >
                 Fecha de Ingreso
               </label>
-              {/* <div className="relative">
-                <Calendar
-                  className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
-                  onClick={() => {
-                    const input = document.getElementById(
-                      "entryDate"
-                    ) as HTMLInputElement;
-                    if (input) input.showPicker();
-                  }}
-                />
-                <Input
-                  id="entryDate"
-                  type="date"
-                  className="w-full bg-muted transition-colors focus:bg-background pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                  value={filters.entryDate}
-                  onChange={(e) => handleFilterChange("entryDate", e.target.value)}
-                  title="Selecciona la fecha de ingreso de los animales"
-                />
-              </div> */}
 
               <DatePicker
                inputClassName='bg-secondary'
@@ -725,6 +756,81 @@ export function ListTransportManagement() {
           </div>
         </div>
       )}
+
+      {/* Paginación - Responsiva */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mt-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <p className="text-sm text-gray-600">
+            Mostrando {start > 0 && `${start} a`} {end} de {meta?.totalItems ?? 0} registros
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Mostrar:</span>
+            <Select
+              value={(meta?.itemsPerPage ?? 10).toString()}
+              onValueChange={(value) => setFilters({ limit: Number(value), page: 1 })}
+            >
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center sm:justify-end gap-x-2">
+          <Button
+            size="sm"
+            disabled={filters.page <= 1}
+            onClick={() => setFilters({ page: filters.page - 1 })}
+            variant={"outline"}
+            className="flex items-center gap-1"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Anterior</span>
+          </Button>
+          
+          <div className="flex items-center gap-1">
+            {meta && meta.totalPages && meta.totalPages > 1 && (
+              <div className="hidden sm:flex items-center gap-1">
+                {getVisiblePages().map((pageNum) => {
+                  const isCurrentPage = pageNum === (meta.currentPage || 1);
+                  return (
+                    <Button
+                      key={pageNum}
+                      size="sm"
+                      variant={"outline"}
+                      className={isCurrentPage ? "bg-primary text-primary-foreground" : "h-8 w-8 p-0"}
+                      onClick={() => setFilters({ page: pageNum })}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
+            <span className="sm:hidden text-sm font-medium">
+              Pág. {meta?.currentPage} de {meta?.totalPages}
+            </span>
+          </div>
+
+          <Button
+            size="sm"
+            variant={"outline"}
+            disabled={filters.page >= (meta?.totalPages ?? 0)}
+            onClick={() => setFilters({ page: filters.page + 1 })}
+            className="flex items-center gap-1"
+          >
+            <span className="hidden sm:inline">Siguiente</span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
