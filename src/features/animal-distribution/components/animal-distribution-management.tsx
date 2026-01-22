@@ -1358,13 +1358,13 @@ export function AnimalDistributionManagement() {
                     </p>
                     <p className="text-sm">
                       <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
-                      {camalName}
+                      {location.canton}
                     </p>
                     <p className="text-sm">
                       <span className="font-bold text-gray-600">
                         PARROQUIA:
                       </span>{" "}
-                      {camalName}
+                      {location.parish}
                     </p>
                   </div>
                 </div>

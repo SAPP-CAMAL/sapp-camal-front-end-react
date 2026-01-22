@@ -13,6 +13,7 @@ export interface SaveScannedCertificateRequest {
 	shippingsId?: number;
 	status: boolean;
 	idDetailsRegisterVehicles?: number;
+	idOperator?: number;
 }
 
 export interface SaveScannedCertificateResponse {
