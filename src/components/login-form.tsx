@@ -190,20 +190,20 @@ export function LoginForm({
       <div className="w-full lg:w-[30%] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 xl:p-10 bg-gradient-to-br from-[#0ea38d] via-[#0d9179] to-[#0b7f68] overflow-y-auto">
         <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6 sm:p-7 lg:p-8">
           {/* Header with logo */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="mb-4 bg-gradient-to-br bg-primary p-3 rounded-2xl shadow-lg">
+          <div className="flex flex-col items-center mb-4">
+            <div className="mb-3 bg-gradient-to-br bg-primary p-2.5 rounded-2xl shadow-lg">
               <Image
                 src="/images/sapp-b-vertical.svg"
                 alt="SAPP"
-                width={60}
-                height={60}
+                width={50}
+                height={50}
                 priority
-                className="w-[60px] h-[60px]"
+                className="w-[50px] h-[50px]"
                 style={{ filter: "brightness(0) invert(1)" }}
               />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-center mb-1 text-black-important">
-              CAMAL MUNICIPAL
+            <h1 className="text-sm sm:text-base font-bold text-center mb-1 text-black-important leading-tight">
+              EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO Y CÁRNICOS
             </h1>
             <p className="text-xs text-primary text-center font-bold">
               DE {location.canton}
