@@ -17,18 +17,20 @@ export function CarrierSummaryCard({
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="bg-teal-600 text-white p-3 rounded">
-            <Truck className="h-6 w-6" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-4">
+            <div className="bg-teal-600 text-white p-3 rounded">
+              <Truck className="h-6 w-6" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-700">
+              Transportista Seleccionado
+            </h2>
           </div>
-          <h2 className="text-xl font-semibold text-gray-700">
-            Transportista Seleccionado
-          </h2>
           <Button
             variant="outline"
             size="sm"
             onClick={onEdit}
-            className="ml-auto text-teal-600 hover:text-teal-700 hover:bg-teal-100"
+            className="text-teal-600 hover:text-teal-700 hover:bg-teal-100 w-full sm:w-auto"
           >
             <Edit className="h-4 w-4 mr-2" />
             Cambiar
