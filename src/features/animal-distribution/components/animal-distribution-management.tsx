@@ -923,7 +923,7 @@ export function AnimalDistributionManagement() {
                         <div className="flex gap-2 pt-2">
                           <Button 
                             variant="outline" 
-                            className="flex-1 h-11 border-teal-600 text-teal-700 font-black text-[10px] tracking-widest uppercase hover:bg-teal-50"
+                            className="flex-1 h-10 border-teal-600 text-teal-700 font-black text-[10px] tracking-wide uppercase hover:bg-teal-50 px-2"
                             onClick={() => {
                               setSelectedDistribution(dist);
                               const order = orders.find(o => o.id === dist.id);
@@ -931,19 +931,19 @@ export function AnimalDistributionManagement() {
                               setIsModalOpen(true);
                             }}
                           >
-                            <Eye className="w-4 h-4 mr-2" />
+                            <Eye className="w-3.5 h-3.5 mr-1.5" />
                             Certificado
                           </Button>
                           <Button 
                             variant="outline" 
-                            className="flex-1 h-11 border-blue-600 text-blue-700 font-black text-[10px] tracking-widest uppercase hover:bg-blue-50"
+                            className="flex-1 h-10 border-blue-600 text-blue-700 font-black text-[10px] tracking-wide uppercase hover:bg-blue-50 px-2"
                             onClick={() => {
                               const order = orders.find(o => o.id === dist.id);
                               setSelectedOrderForProducts(order || null);
                               setIsProductsModalOpen(true);
                             }}
                           >
-                            <ShoppingBag className="w-4 h-4 mr-2" />
+                            <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
                             Productos
                           </Button>
                           
@@ -1245,9 +1245,9 @@ export function AnimalDistributionManagement() {
 
       {/* Modal de Detalles */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-none! w-[90vw] sm:w-[85vw] md:w-[90vw] max-h-[95vh] overflow-y-auto scrollbar-hide p-3 sm:p-4 md:p-6">
+        <DialogContent className="max-w-none! w-[95vw] sm:w-[85vw] md:w-[90vw] max-h-[95vh] overflow-y-auto scrollbar-hide p-2 sm:p-4 md:p-6">
           <DialogHeader>
-            <DialogTitle className="text-center text-sm sm:text-base md:text-lg font-bold text-gray-700 uppercase px-2 sm:px-4">
+            <DialogTitle className="text-center text-xs sm:text-base md:text-lg font-bold text-gray-700 uppercase px-1 sm:px-4 leading-tight sm:leading-normal">
               CERTIFICACIÓN SANITARIA DE ORIGEN Y MOVILIZACIÓN DE CANALES Y
               SUBPRODUCTOS CÁRNICOS EN ESTADO PRIMARIO DESTINADOS A CONSUMO
               HUMANO
@@ -1257,41 +1257,41 @@ export function AnimalDistributionManagement() {
           {selectedDistribution && (
             <div ref={certificateRef} className="space-y-1 bg-white">
               {/* Información del Centro de Faenamiento */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 border border-gray-300 p-2 sm:p-3">
-                <div className="border-r border-gray-300 pr-4">
-                  <p className="text-sm font-bold text-gray-600 mb-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4 md:gap-6 border border-gray-300 p-2 sm:p-3">
+                <div className="border-b md:border-b-0 md:border-r border-gray-300 pb-2 md:pb-0 md:pr-4">
+                  <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">
                     NOMBRE DEL CENTRO DE FAENAMIENTO :
                   </p>
-                  <p className="text-sm font-semibold">
+                  <p className="text-xs sm:text-sm font-semibold">
                     {getFullCompanyName()}
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-gray-600">
+                <div className="space-y-1 sm:space-y-2 flex flex-col justify-center">
+                  <div className="md:text-right">
+                    <p className="text-xs sm:text-sm font-bold text-gray-600">
                       Nro. De CSOM: <span className="font-normal">001</span>
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-gray-600">
+                  <div className="md:text-right">
+                    <p className="text-xs sm:text-sm font-bold text-gray-600">
                       Código del Centro de Faenamiento:
                     </p>
-                    <p className="text-sm font-semibold">10-045</p>
+                    <p className="text-xs sm:text-sm font-semibold">10-045</p>
                   </div>
                 </div>
               </div>
 
               {/* Hora y Fecha */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 border border-gray-300 border-t-0 p-2 sm:p-3">
-                <div className="border-r border-gray-300 pr-4">
-                  <p className="text-sm font-bold text-gray-600">HORA:</p>
-                  <p className="text-sm font-semibold">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 border border-gray-300 border-t-0 p-2 sm:p-3">
+                <div className="border-b md:border-b-0 md:border-r border-gray-300 pb-2 md:pb-0 md:pr-4 flex items-center justify-between md:block">
+                  <p className="text-xs sm:text-sm font-bold text-gray-600">HORA:</p>
+                  <p className="text-xs sm:text-sm font-semibold">
                     {selectedDistribution.fechaDistribucion.split(" ")[1]}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4 border-r border-gray-300 pr-4">
+                <div className="grid grid-cols-2 gap-2 md:gap-4 border-b md:border-b-0 md:border-r border-gray-300 pb-2 md:pb-0 md:pr-4">
                   <div>
-                    <p className="text-sm font-bold text-gray-600">
+                    <p className="text-xs sm:text-sm font-bold text-gray-600">
                       DÍA:{" "}
                       <span className="font-normal">
                         {selectedDistribution.fechaDistribucion
@@ -1301,7 +1301,7 @@ export function AnimalDistributionManagement() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-600">
+                    <p className="text-xs sm:text-sm font-bold text-gray-600">
                       MES:{" "}
                       <span className="font-normal">
                         {
@@ -1330,8 +1330,8 @@ export function AnimalDistributionManagement() {
                     </p>
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-600">
+                <div className="flex items-center justify-between md:block">
+                  <p className="text-xs sm:text-sm font-bold text-gray-600">
                     AÑO:{" "}
                     <span className="font-normal">
                       {selectedDistribution.fechaDistribucion
@@ -1343,24 +1343,24 @@ export function AnimalDistributionManagement() {
               </div>
 
               {/* Origen y Destino */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 border border-gray-300 border-t-0 p-2 sm:p-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4 md:gap-6 border border-gray-300 border-t-0 p-2 sm:p-3">
                 {/* ORIGEN */}
-                <div className="space-y-2 border-r border-gray-300 pr-4">
+                <div className="space-y-2 border-b md:border-b-0 md:border-r border-gray-300 pb-2 md:pb-0 md:pr-4">
                   <div className="border-b border-gray-300 pb-2">
-                    <p className="text-sm font-bold text-gray-600">ORIGEN</p>
+                    <p className="text-xs sm:text-sm font-bold text-gray-600">ORIGEN</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm">
+                    <p className="text-xs sm:text-sm">
                       <span className="font-bold text-gray-600">
                         PROVINCIA:
                       </span>{" "}
                       {location.province}
                     </p>
-                    <p className="text-sm">
+                    <p className="text-xs sm:text-sm">
                       <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
                       {location.canton}
                     </p>
-                    <p className="text-sm">
+                    <p className="text-xs sm:text-sm">
                       <span className="font-bold text-gray-600">
                         PARROQUIA:
                       </span>{" "}
@@ -1371,59 +1371,42 @@ export function AnimalDistributionManagement() {
 
                 {/* Información del Destinatario */}
                 <div className="space-y-2">
+                  <div className="border-b border-gray-300 pb-2 mb-2">
+                    <p className="text-xs sm:text-sm font-bold text-gray-600">DESTINO</p>
+                  </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-600 mb-1">
+                    <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">
                       NOMBRE DEL DESTINATARIO
                     </p>
-                    <p className="text-sm font-semibold">
+                    <p className="text-xs sm:text-sm font-semibold">
                       {selectedDistribution.nombreDestinatario}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-600 mb-1">
+                    <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">
                       LUGAR DE DESTINO
                     </p>
-                    <p className="text-sm font-semibold">
+                    <p className="text-xs sm:text-sm font-semibold">
                       {selectedDistribution.lugarDestino}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-600 mb-1">
+                    <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">
                       PLACA DEL MEDIO DE TRANSPORTE
                     </p>
-                    <p className="text-sm font-semibold">
+                    <p className="text-xs sm:text-sm font-semibold">
                       {selectedDistribution.placaMedioTransporte}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* DESTINO */}
-              <div className="border border-gray-300 border-t-0 p-2 sm:p-3">
-                <div className="border-b border-gray-300 pb-2 mb-2">
-                  <p className="text-sm font-bold text-gray-600">DESTINO</p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
-                  <p className="text-sm">
-                    <span className="font-bold text-gray-600">PROVINCIA:</span>{" "}
-                    {location.province}
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-bold text-gray-600">CANTÓN:</span>{" "}
-                    {camalName}
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-bold text-gray-600">PARROQUIA:</span>{" "}
-                    LIZARZABURU
-                  </p>
-                </div>
-              </div>
 
               <div className="flex justify-center pt-4 pb-3">
                 <Button
                   onClick={handleDownloadCertificatePdf}
                   disabled={isDownloadingPdf}
-                  className="bg-teal-600 hover:bg-teal-700 px-6 sm:px-8 text-sm sm:text-base"
+                  className="bg-teal-600 hover:bg-teal-700 px-6 sm:px-8 text-xs sm:text-base h-9 sm:h-10"
                 >
                   {isDownloadingPdf ? (
                     <>
@@ -1439,8 +1422,8 @@ export function AnimalDistributionManagement() {
                 </Button>
               </div>
 
-              {/* Tabla de Productos/Subproductos */}
-              <div className="mt-2">
+              {/* Tabla de Productos/Subproductos - DESKTOP */}
+              <div className="mt-2 hidden md:block">
                 <Table className="text-xs sm:text-sm">
                   <TableHeader>
                     <TableRow className="bg-teal-600 hover:bg-teal-600">
@@ -1513,6 +1496,67 @@ export function AnimalDistributionManagement() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Cards de Productos/Subproductos - MOBILE */}
+              <div className="mt-2 block md:hidden space-y-2">
+                <div className="bg-teal-600 text-white font-bold text-xs p-2 text-center rounded-t-lg">
+                  DETALLE DE PRODUCTOS Y SUBPRODUCTOS
+                </div>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                {selectedOrder?.orderDetails && selectedOrder.orderDetails.length > 0 ? (
+                  selectedOrder.orderDetails.map((detail) => {
+                    const totalWeight = detail.animalProduct?.detailsSpeciesCertificate?.animalWeighing
+                      ?.reduce((sum, weighing) => sum + weighing.totalWeight, 0) || 0;
+                    
+                    return (
+                      <div key={detail.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                        <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                          <div className="flex items-center gap-1.5">
+                            <PiggyBank className="w-3.5 h-3.5 text-teal-600" />
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-gray-700">
+                                {selectedSpecie} [{detail.animalProduct?.detailsSpeciesCertificate?.animalCode || '-'}]
+                              </span>
+                              <span className="text-xs font-bold text-gray-400">
+                                {detail.animalProduct?.detailsSpeciesCertificate?.detailCertificateBrands?.productiveStage?.name || '-'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                             <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase">
+                                <Package className="w-3 h-3" /> Producto
+                             </div>
+                             <p className="text-xs font-bold text-gray-700">
+                                {detail.animalProduct?.speciesProduct?.productName || '-'}
+                             </p>
+                             <p className="text-[10px] text-gray-500">
+                                {detail.animalProduct?.speciesProduct?.productCode || '-'}
+                             </p>
+                          </div>
+                          
+                          <div className="space-y-1 text-right">
+                             <div className="flex items-center justify-end gap-1.5 text-[10px] font-bold text-gray-400 uppercase">
+                                <Hash className="w-3 h-3" /> Peso Canal
+                             </div>
+                             <p className="text-xs font-bold text-teal-700">
+                                {totalWeight > 0 ? `${totalWeight.toFixed(2)} LB` : '-'}
+                             </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-xs text-gray-500">
+                    No hay productos disponibles
+                  </div>
+                )}
+                </div>
+              </div>
+
             </div>
           )}
         </DialogContent>
