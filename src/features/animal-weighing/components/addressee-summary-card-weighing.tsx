@@ -20,18 +20,20 @@ export function AddresseeSummaryCardWeighing({
   return (
     <Card className="border-teal-200">
       <CardContent className="pt-6">
-        <div className="flex items-center gap-4 mb-4 border-b border-teal-100 pb-3">
-          <div className="bg-teal-600 text-white p-2.5 rounded shadow-sm">
-            <User className="h-5 w-5" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 border-b border-teal-100 pb-3">
+          <div className="flex items-center gap-4">
+            <div className="bg-teal-600 text-white p-2.5 rounded shadow-sm">
+              <User className="h-5 w-5" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-800 tracking-tight">
+              Destinatario Seleccionado
+            </h2>
           </div>
-          <h2 className="text-lg font-bold text-gray-800 tracking-tight">
-            Destinatario Seleccionado
-          </h2>
           <Button
             variant="outline"
             size="sm"
             onClick={onEdit}
-            className="ml-auto text-teal-600 border-teal-200 hover:text-teal-700 hover:bg-teal-50 shadow-sm"
+            className="text-teal-600 border-teal-200 hover:text-teal-700 hover:bg-teal-50 shadow-sm w-full sm:w-auto ml-0 sm:ml-auto"
           >
             <Edit className="h-4 w-4 mr-2" />
             Cambiar
