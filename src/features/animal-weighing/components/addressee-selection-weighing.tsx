@@ -110,12 +110,33 @@ export function AddresseeSelectionWeighing({
   const allData = Array.isArray(query.data?.data) ? query.data.data : [];
   const filteredData = allData.filter((addressee: Addressees) => addressee.status === true);
 
+  // Ordenamiento inteligente por marca
+  const sortedData = [...filteredData].sort((a, b) => {
+    const brandA = a.brand || "";
+    const brandB = b.brand || "";
+
+    // Si ambas marcas son números, ordenar numéricamente
+    const isNumericA = /^\d+$/.test(brandA);
+    const isNumericB = /^\d+$/.test(brandB);
+
+    if (isNumericA && isNumericB) {
+      return parseInt(brandA) - parseInt(brandB);
+    }
+
+    // Si solo una es numérica, la numérica va primero
+    if (isNumericA && !isNumericB) return -1;
+    if (!isNumericA && isNumericB) return 1;
+
+    // Si ninguna es numérica o ambas son texto, ordenar alfabéticamente
+    return brandA.localeCompare(brandB, 'es', { sensitivity: 'base' });
+  });
+
   // Paginación en el frontend
-  const totalItems = filteredData.length;
+  const totalItems = sortedData.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const data = filteredData.slice(startIndex, endIndex);
+  const data = sortedData.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-4 w-full">
