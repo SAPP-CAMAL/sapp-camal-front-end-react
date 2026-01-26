@@ -1,6 +1,6 @@
 import { http } from "@/lib/ky";
 import { VEHICLE_LIST_BY_FILTER_TAG } from "@/features/vehicles/constants";
-import { CreateVehicleRequest, FiltersVehicle, ResponseCreateVehicle, ResponseVehicleByFilter } from "@/features/vehicles/domain/vehicle-detail-service";
+import { CreateVehicleCatalogueRequest, CreateVehicleRequest, FiltersVehicle, ResponseCreateVehicle, ResponseVehicleByFilter } from "@/features/vehicles/domain/vehicle-detail-service";
 
 export function getVehicleByFilterService(filters: FiltersVehicle = {}): Promise<ResponseVehicleByFilter> {
     return http.post("v1/1.0.0/vehicle/vehicle-by-filter", {
@@ -19,6 +19,18 @@ export function createVehicleService(body: Omit<CreateVehicleRequest, "id" | "st
 
 export function updateVehicleService(vehicleId: number,body: Omit<CreateVehicleRequest, "id">): Promise<ResponseCreateVehicle> {
   return http.patch(`v1/1.0.0/vehicle/${vehicleId}`,
+        { json: body }
+    ).json()
+}
+
+export function createVehicleCatalogueService(body: Omit<CreateVehicleCatalogueRequest, "id" | "status">): Promise<ResponseCreateVehicle> {
+    return http.post("v1/1.0.0/vehicle/new", {
+        json: body
+    }).json<ResponseCreateVehicle>()
+}
+
+export function updateVehicleCatalogueService(vehicleId: number,body: Omit<CreateVehicleCatalogueRequest, "id">): Promise<ResponseCreateVehicle> {
+  return http.patch(`v1/1.0.0/vehicle/new/${vehicleId}`,
         { json: body }
     ).json()
 }
