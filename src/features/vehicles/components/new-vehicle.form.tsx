@@ -50,7 +50,7 @@ export interface VehicleData {
 }
 
 interface NewVehicleFormProps {
-  vehicleTypes: any[];
+  vehicleTypes?: any[];
   transportsTypes: any[];
   trigger: React.ReactNode;
   isUpdate?: boolean;
@@ -84,21 +84,50 @@ export default function NewVehicleForm({
     status: true,
   });
 
+    // Seleccionar automáticamente el primer tipo de vehículo si no hay vehicleTypeId
+    useEffect(() => {
+      if (
+        !vehicleData.vehicleTypeId &&
+        availableVehicleTypes.length > 0 &&
+        vehicleData.transportTypeId
+      ) {
+        setVehicleData((prev) => ({
+          ...prev,
+          vehicleTypeId: String(availableVehicleTypes[0].vehicleTypeId ?? availableVehicleTypes[0].id),
+        }));
+      }
+    }, [availableVehicleTypes, vehicleData.vehicleTypeId, vehicleData.transportTypeId]);
+
   useEffect(() => {
-    if (isUpdate && initialData && open) {
-      setVehicleData({
-        plate: initialData.plate ?? "",
-        vehicleTypeId: initialData.vehicleTypeId ?? "",
-        brand: initialData.brand ?? "",
-        model: initialData.model ?? "",
-        color: initialData.color ?? "",
-        year: initialData.year ?? new Date().getFullYear(),
-        transportTypeId: initialData.transportTypeId ?? "",
-        status: initialData.status ?? true,
-      });
-      setIsActive(initialData.status ?? true);
+    if (open) {
+      if (isUpdate && initialData) {
+        setVehicleData({
+          plate: initialData.plate ?? "",
+          vehicleTypeId: initialData.vehicleTypeId ?? "",
+          brand: initialData.brand ?? "",
+          model: initialData.model ?? "",
+          color: initialData.color ?? "",
+          year: initialData.year ?? new Date().getFullYear(),
+          transportTypeId: initialData.transportTypeId ?? "",
+          status: initialData.status ?? true,
+        });
+        setIsActive(initialData.status ?? true);
+      } else {
+        // Limpiar el formulario al abrir para nuevo registro
+        setVehicleData({
+          plate: "",
+          vehicleTypeId: "",
+          brand: "",
+          model: "",
+          color: "",
+          year: new Date().getFullYear(),
+          transportTypeId: "",
+          status: true,
+        });
+        setIsActive(true);
+      }
     }
-  }, [isUpdate, initialData, open]);
+  }, [open, isUpdate, initialData]);
 
   // Cargar tipos de vehículo cuando cambia el tipo de transporte
   useEffect(() => {
@@ -113,7 +142,7 @@ export default function NewVehicleForm({
         const response = await getDetailVehicleByTransportIdService(
           Number(vehicleData.transportTypeId)
         );
-        
+
         // Eliminar duplicados basándose en el nombre (case-insensitive)
         const uniqueTypes = Array.from(
           new Map(
@@ -123,7 +152,7 @@ export default function NewVehicleForm({
             ])
           ).values()
         );
-        
+
         setAvailableVehicleTypes(uniqueTypes);
 
         // Si estamos en modo edición y hay un vehicleTypeId, verificar que esté en la lista
@@ -191,7 +220,8 @@ export default function NewVehicleForm({
 
       if (isUpdate && initialData?.id) {
         await updateVehicleService(initialData.id, {
-          vehicleDetailId: Number(vehicleData.vehicleTypeId),
+          vehicleTypeId: Number(vehicleData.vehicleTypeId),
+          transportTypeId: Number(vehicleData.transportTypeId),
           plate: (vehicleData.plate ?? "").toUpperCase(),
           brand: vehicleData.brand.trim(),
           model: vehicleData.model.trim(),
@@ -202,7 +232,8 @@ export default function NewVehicleForm({
         toast.success("Vehículo actualizado correctamente");
       } else {
         await createVehicleService({
-          vehicleDetailId: Number(vehicleData.vehicleTypeId),
+          vehicleTypeId: Number(vehicleData.vehicleTypeId),
+          transportTypeId: Number(vehicleData.transportTypeId),
           plate: (vehicleData.plate ?? "").toUpperCase().replace(/-/g, ""),
           brand: vehicleData.brand.trim(),
           model: vehicleData.model.trim(),
@@ -213,7 +244,10 @@ export default function NewVehicleForm({
       }
 
       handleCancel();
-      onSuccess?.();
+      // Esperar a que el modal se cierre antes de refetch
+      setTimeout(() => {
+        onSuccess?.();
+      }, 200);
     } catch (error) {
       toast.error("Error al guardar el vehículo");
     } finally {
@@ -281,7 +315,7 @@ export default function NewVehicleForm({
                   <SelectTrigger className="h-9 w-full text-xs sm:text-sm">
                     <SelectValue placeholder="Seleccione el tipo de transporte" />
                   </SelectTrigger>
-                  <SelectContent 
+                  <SelectContent
                     position="popper"
                     sideOffset={5}
                     className="max-h-[200px] overflow-y-auto"
@@ -387,14 +421,14 @@ export default function NewVehicleForm({
                         }
                       />
                     </SelectTrigger>
-                    <SelectContent 
+                    <SelectContent
                       position="popper"
                       sideOffset={5}
                       className="max-h-[200px] overflow-y-auto"
                     >
                       {availableVehicleTypes?.length ? (
                         availableVehicleTypes.map((tipo) => (
-                          <SelectItem key={`vehicle-type-${tipo.id}`} value={String(tipo.id)}>
+                          <SelectItem key={`vehicle-type-${tipo.id}`} value={String(tipo.vehicleTypeId)}>
                             {tipo.name}
                           </SelectItem>
                         ))

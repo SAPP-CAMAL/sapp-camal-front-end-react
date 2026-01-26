@@ -251,7 +251,7 @@ export function VehiclesManagement({}) {
       </Card>
       <div className="flex justify-end ml-auto mb-3">
         <NewVehicleForm
-          vehicleTypes={catalogueVehiclesType.data?.data ?? []}
+          // vehicleTypes={catalogueVehiclesType.data?.data ?? []}
           transportsTypes={catalogueTransportsType.data?.data ?? []}
           onSuccess={() => query.refetch()}
           trigger={
@@ -341,17 +341,18 @@ export function VehiclesManagement({}) {
               return (
                 <div className="flex items-center space-x-2">
                   <NewVehicleForm
+                    key={row.id}
                     onSuccess={() => {
                       query.refetch();
                     }}
-                    vehicleTypes={catalogueVehiclesType.data?.data ?? []}
+                    // vehicleTypes={row.original?.vehicleDetail?.vehicleType ?? []}
                     transportsTypes={catalogueTransportsType.data?.data ?? []}
                     isUpdate={true}
                     initialData={{
                       id: row.original.id,
                       plate: row.original.plate,
                       vehicleTypeId: String(
-                        row.original.vehicleDetailId ?? ""
+                        row.original?.vehicleDetail?.vehicleType?.id ?? ""
                       ),
                       brand: row.original.brand ?? "",
                       model: row.original.model ?? "",
