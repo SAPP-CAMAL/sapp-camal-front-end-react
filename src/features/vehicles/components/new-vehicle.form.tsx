@@ -19,7 +19,9 @@ import {
 import { Car, Loader2, ToggleLeftIcon, ToggleRightIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
+  createVehicleCatalogueService,
   createVehicleService,
+  updateVehicleCatalogueService,
   updateVehicleService,
 } from "@/features/vehicles/server/db/vehicle.service";
 import { getDetailVehicleByTransportIdService } from "@/features/vehicles/server/db/vehicle-detail.service";
@@ -219,7 +221,7 @@ export default function NewVehicleForm({
       }
 
       if (isUpdate && initialData?.id) {
-        await updateVehicleService(initialData.id, {
+        await updateVehicleCatalogueService(initialData.id, {
           vehicleTypeId: Number(vehicleData.vehicleTypeId),
           transportTypeId: Number(vehicleData.transportTypeId),
           plate: (vehicleData.plate ?? "").toUpperCase(),
@@ -231,7 +233,7 @@ export default function NewVehicleForm({
         });
         toast.success("Vehículo actualizado correctamente");
       } else {
-        await createVehicleService({
+        await createVehicleCatalogueService({
           vehicleTypeId: Number(vehicleData.vehicleTypeId),
           transportTypeId: Number(vehicleData.transportTypeId),
           plate: (vehicleData.plate ?? "").toUpperCase().replace(/-/g, ""),
