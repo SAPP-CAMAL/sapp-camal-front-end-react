@@ -557,12 +557,13 @@ export function NewCarrier({
                             className="flex items-center gap-x-2 cursor-pointer"
                           >
                             <Checkbox
-                              onCheckedChange={(checked: boolean) =>
-                                handleCheckboxChange(
-                                  transport.catalogueId,
-                                  checked
-                                )
-                              }
+                              onCheckedChange={(checked: boolean) => {
+                                if (checked) {
+                                  setSelectedTransportIds([transport.catalogueId]);
+                                } else {
+                                  setSelectedTransportIds([]);
+                                }
+                              }}
                               checked={selectedTransportIds.includes(
                                 transport.catalogueId
                               )}
