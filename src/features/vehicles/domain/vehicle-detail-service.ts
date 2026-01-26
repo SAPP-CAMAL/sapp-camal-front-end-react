@@ -66,7 +66,9 @@ export interface  TransportType{
 }
 
 export interface CreateVehicleRequest {
-    vehicleDetailId: number;
+    // vehicleDetailId: number;
+    vehicleTypeId:   number;
+    transportTypeId: number;
     plate:           string;
     brand:           string;
     description?:     string;
