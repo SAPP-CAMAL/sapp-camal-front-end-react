@@ -57,12 +57,27 @@ export type ResponseVehicleDetailByTransport = {
     data: TransportType[];
 }
 
-export interface  TransportType{
-    id:            number;
-    vehicleTypeId: number;
-    name:          string;
+
+/**
+ * This data comes from administration.vehicle-detail table, so
+ * the data mapped looks like:
+ *    id: vehicleDetail.id,
+ *    vehicleTypeId: vehicleDetail.vehicleType?.id ?? null,
+ *    name: vehicleDetail.vehicleType?.name ?? null,
+ *    code: vehicleDetail.vehicleType?.code ?? null,
+ *    description: vehicleDetail.vehicleType?.description ?? null,
+ */
+export interface TransportType {
+	/** @property id - Unique identifier for the transport type. */
+	id: number;
+	/** @property vehicleTypeId - Identifier referencing the associated vehicle type. */
+	vehicleTypeId: number;
+	/** @property name - Name of the transport type. */
+	name: string;
+	/** @property code - Code representing the transport type. */
     code:          string;
-    description:   string;
+    /** @property description - Description of the transport type. */
+	description: string;
 }
 
 export interface CreateVehicleRequest {

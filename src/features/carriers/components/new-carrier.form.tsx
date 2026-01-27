@@ -29,19 +29,19 @@ import {
   Truck,
   XIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { CreateVehicleForm } from "./new-vehicle.form";
 import { getPeopleByFilterService } from "@/features/people/server/db/people.service";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Person, ResponsePeopleByFilter } from "@/features/people/domain";
 import {
   getVehicleByFilterService,
   getVehicleByIdService,
 } from "@/features/vehicles/server/db/vehicle.service";
-import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 import { capitalizeText } from "@/lib/utils";
 import { getDetailVehicleByTransportIdService } from "@/features/vehicles/server/db/vehicle-detail.service";
 import {
@@ -55,6 +55,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { toCapitalize } from "@/lib/toCapitalize";
 import { useDebouncedCallback } from "use-debounce";
+import { useCatalogue } from "@/features/catalogues/hooks/use-catalogue";
 
 interface NewCarrierProps {
   shipping?: any;
@@ -74,7 +75,6 @@ export function NewCarrier({
   onSuccess,
 }: NewCarrierProps) {
   const catalogueTransportsType = useCatalogue("TTR");
-  const catalogueVehiclesType = useCatalogue("TVH");
   const [selectedTransportIds, setSelectedTransportIds] = useState<number[]>(
     []
   );
@@ -93,16 +93,17 @@ export function NewCarrier({
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [showCreateVehicle, setShowCreateVehicle] = useState(false);
   const [vehiclesList, setVehiclesList] = useState<Vehicle[]>([]);
+  const [searchResults, setSearchResults] = useState<Vehicle[]>([]);
   const [personData, setPersonData] = useState<Person[]>([]);
   const [filterPlate, setFilterPlate] = useState("");
   const [isCreatingShipping, setIsCreatingShipping] = useState(false);
   const [isActive, setIsActive] = useState(shipping?.status);
-  const [vehicleTypes, setVehicleTypes] = useState<
-    Record<number, TransportType[]>
-  >({});
+  const [vehicleTypes, setVehicleTypes] = useState<Record<number, TransportType[]>>({});
   const [loadingVehicles, setLoadingVehicles] = useState<
     Record<number, boolean>
   >({});
+
+
 
   const updateDebouncedFullName = useDebouncedCallback((value: string) => {
     setDebouncedFullName(value);
@@ -136,15 +137,18 @@ export function NewCarrier({
   });
 
   const queryVehicle = useQuery({
-    queryKey: ["vehicle", debouncedPlate],
+    queryKey: ["vehicle", debouncedPlate, selectedTransportIds],
     queryFn: () =>
       getVehicleByFilterService({
         ...(debouncedPlate.trim().length >= 3 && {
           plate: debouncedPlate.trim(),
         }),
+        ...(selectedTransportIds.length > 0 && {
+          transportTypeId: selectedTransportIds[0],
+        }),
         status: true,
       }),
-    enabled: debouncedPlate.trim().length >= 3,
+    enabled: debouncedPlate.trim().length >= 3 && selectedTransportIds.length > 0 && !showCreateVehicle,
   });
 
   const onSubmit = async (vehicleId: number) => {
@@ -154,6 +158,17 @@ export function NewCarrier({
     } catch (error: any) {
       toast.error("Error al actualizar la lista");
     }
+  };
+
+  const handleAddVehicle = (vehicle: Vehicle) => {
+    // Check if vehicle is already in the list
+    const isAlreadyAdded = vehiclesList.some((v) => v.id === vehicle.id);
+    if (isAlreadyAdded) {
+      toast.warning("Este vehículo ya está agregado");
+      return;
+    }
+    setVehiclesList((prev) => [...prev, vehicle]);
+    toast.success("Vehículo agregado");
   };
 
   const handleShippingCreate = async () => {
@@ -172,7 +187,7 @@ export function NewCarrier({
 
       await createShippingService(shippingsToCreate);
 
-      toast.success(`Se crearon ${vehiclesList.length} envíos exitosamente`);
+      toast.success(`Se crearon ${vehiclesList.length} transportistas exitosamente`);
       setFilterPlate("");
       setSelectedPerson(null);
       setSelectedTransportIds([]);
@@ -248,9 +263,7 @@ export function NewCarrier({
               [transportId]: true,
             }));
 
-            const response = await getDetailVehicleByTransportIdService(
-              transportId
-            );
+            const response = await getDetailVehicleByTransportIdService(transportId);
             const data: TransportType[] = response.data;
 
             setVehicleTypes((prev) => ({
@@ -275,28 +288,20 @@ export function NewCarrier({
   }, [selectedTransportIds]);
 
   useEffect(() => {
-    if (queryVehicle?.data?.data?.items) {
-      setVehiclesList(queryVehicle.data.data.items);
+    if (queryVehicle?.isSuccess && queryVehicle?.data?.data?.items && debouncedPlate.trim().length >= 3) {
+      setSearchResults(queryVehicle.data.data.items);
+    } else if (debouncedPlate.trim().length < 3) {
+      setSearchResults([]);
     }
-  }, [queryVehicle?.data?.data?.items]);
+  }, [queryVehicle?.data?.data?.items, debouncedPlate, queryVehicle?.isSuccess, selectedTransportIds]);
 
   const handleCheckboxChange = (catalogueId: number, isChecked: boolean) => {
     if (isChecked) {
-      setSelectedTransportIds((prev) => [...prev, catalogueId]);
+      setSelectedTransportIds([catalogueId]);
+      setSearchResults([]);
     } else {
-      setSelectedTransportIds((prev) =>
-        prev.filter((id) => id !== catalogueId)
-      );
-      setVehicleTypes((prev) => {
-        const newState = { ...prev };
-        delete newState[catalogueId];
-        return newState;
-      });
-      setLoadingVehicles((prev) => {
-        const newState = { ...prev };
-        delete newState[catalogueId];
-        return newState;
-      });
+      setSelectedTransportIds([]);
+      setSearchResults([]);
     }
   };
 
@@ -311,7 +316,7 @@ export function NewCarrier({
     setFilterPlate(formatted);
     updateDebouncedPlate(formatted);
     if (formatted.trim().length < 3) {
-      setVehiclesList([]);
+      setSearchResults([]);
     }
   };
 
@@ -343,13 +348,16 @@ export function NewCarrier({
     }
   }, [query?.data?.data?.items, debouncedFullName, debouncedIdentification]);
 
+
+
+  // Clear search results on error
   useEffect(() => {
-    if (queryVehicle?.data?.data?.items && debouncedPlate.trim().length >= 3) {
-      setVehiclesList(queryVehicle.data.data.items);
-    } else if (debouncedPlate.trim().length < 3) {
-      setVehiclesList([]);
+    if (queryVehicle.isError) {
+      setSearchResults([]);
     }
-  }, [queryVehicle?.data?.data?.items, debouncedPlate]);
+  }, [queryVehicle.isError]);
+
+
 
   return (
     <Dialog
@@ -531,7 +539,7 @@ export function NewCarrier({
             </CardContent>
           </Card>
 
-          <Card>
+          <>
             <CardHeader>
               <CardTitle className="flex gap-2 items-center">
                 <Truck /> Configuración de Vehículo para Transporte
@@ -578,25 +586,29 @@ export function NewCarrier({
               )}
 
               {selectedTransportIds.length > 0 && (
-                <div className="space-y-4 pt-2 border-t border-gray-100">
+                <>
+                  <div className="space-y-4 pt-2 border-t border-gray-100">
                   <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <Label className="text-base font-medium">
-                        Buscar Vehículo Existente
-                      </Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowCreateVehicle(true)}
-                        className="flex items-center gap-2 w-full sm:w-auto"
-                        disabled={showCreateVehicle}
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                        Crear Nuevo Vehículo
-                      </Button>
-                    </div>
+                    {!showCreateVehicle && (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <Label className="text-base font-medium">
+                          Buscar Vehículo Existente
+                        </Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowCreateVehicle(true)}
+                          className="flex items-center gap-2 w-full sm:w-auto"
+                        >
+                          <PlusIcon className="h-4 w-4" />
+                          Crear Nuevo Vehículo
+                        </Button>
+                      </div>
+                    )}
+                  </div>
 
+                  {!showCreateVehicle && (
                     <div className="relative">
                       <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
                       <Input
@@ -607,12 +619,68 @@ export function NewCarrier({
                         onChange={(e) => handlePlateInput(e.target.value)}
                       />
                     </div>
-                  </div>
+                  )}
+
+                  {!showCreateVehicle && queryVehicle.isError && queryVehicle.error && (
+                    <Alert variant="destructive">
+                      <AlertDescription>
+                        No se encontró vehículos con los filtros especificados.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {!showCreateVehicle && queryVehicle.isFetching && !queryVehicle.isError && (
+                    <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                      <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                      <p className="text-sm text-blue-600 font-medium">
+                        Buscando vehículos...
+                      </p>
+                    </div>
+                  )}
+
+                  {searchResults && searchResults.length > 0 && !showCreateVehicle && (
+                    <div className="space-y-2">
+                      <Label className="text-base font-medium">
+                        Resultados de Búsqueda
+                      </Label>
+                      <div className="space-y-2">
+                        {searchResults.map((vehicle, index) => (
+                          <div
+                            key={index}
+                            className="bg-blue-50 p-3 rounded-md border border-blue-200"
+                          >
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                                <p className="font-medium whitespace-nowrap">
+                                  {vehicle.plate}{vehicle.brand?" - ":" "}
+                                  {(vehicle.brand?.length > 0 ? vehicle.brand : '') + (vehicle.model?.length > 0 ?'-': '') + (vehicle.model?.length > 0 ? vehicle.model : '')}
+                                </p>
+                                <p className="text-sm text-foreground truncate">
+                                  {vehicle.vehicleDetail?.vehicleType?.name?.length > 0 ? vehicle.vehicleDetail?.vehicleType?.name: ''}{vehicle.color ? ' • ' : ''}
+                                  {vehicle.color?.length > 0 ? vehicle.color : ''}{vehicle.manufactureYear ? ' • ' : ''}{vehicle.manufactureYear ? vehicle.manufactureYear : ''}{vehicle.vehicleDetail?.transportType?.name?.length > 0 ? ' • ' : ''}{vehicle.vehicleDetail?.transportType?.name?.length > 0 ? vehicle.vehicleDetail?.transportType?.name : ''}
+                                </p>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleAddVehicle(vehicle)}
+                                className="bg-black hover:bg-gray-800 self-end sm:self-auto"
+                              >
+                                <PlusIcon className="h-4 w-4 mr-1" />
+                                Agregar
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {vehiclesList && vehiclesList?.length > 0 && (
                     <div className="space-y-2">
                       <Label className="text-base font-medium">
-                        Vehículos Agregados
+                        Vehículos Seleccionados
                       </Label>
                       <div className="space-y-2">
                         {vehiclesList.map((vehicle, index) => (
@@ -622,14 +690,13 @@ export function NewCarrier({
                           >
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
-                                <p className="font-medium whitespace-nowrap">
-                                  {vehicle.plate} -{" "}
-                                  {vehicle.brand + "-" + vehicle.model}
+                               <p className="font-medium whitespace-nowrap">
+                                  {vehicle.plate}{vehicle.brand?" - ":" "}
+                                  {(vehicle.brand?.length > 0 ? vehicle.brand : '') + (vehicle.model?.length > 0 ?'-': '') + (vehicle.model?.length > 0 ? vehicle.model : '')}
                                 </p>
                                 <p className="text-sm text-foreground truncate">
-                                  {vehicle.vehicleDetail?.vehicleType?.name} •{" "}
-                                  {vehicle.color} • {vehicle.manufactureYear} •{" "}
-                                  {vehicle.vehicleDetail?.transportType?.name}
+                                  {vehicle.vehicleDetail?.vehicleType?.name?.length > 0 ? vehicle.vehicleDetail?.vehicleType?.name: ''}{vehicle.color ? ' • ' : ''}
+                                  {vehicle.color?.length > 0 ? vehicle.color : ''}{vehicle.manufactureYear ? ' • ' : ''}{vehicle.manufactureYear ? vehicle.manufactureYear : ''}{vehicle.vehicleDetail?.transportType?.name?.length > 0 ? ' • ' : ''}{vehicle.vehicleDetail?.transportType?.name?.length > 0 ? vehicle.vehicleDetail?.transportType?.name : ''}
                                 </p>
                                 <Badge variant="default" className="w-fit">Activo</Badge>
                               </div>
@@ -653,43 +720,17 @@ export function NewCarrier({
                     </div>
                   )}
 
-                  {selectedTransportIds.length > 0 && (
-                    <div className="space-y-2">
-                      {selectedTransportIds.map((transportId) => (
-                        <div key={transportId}>
-                          {loadingVehicles[transportId] ? (
-                            <Label className="text-sm text-gray-500">
-                              <span className="font-medium">
-                                Cargando vehículos...
-                              </span>
-                            </Label>
-                          ) : vehicleTypes[transportId] ? (
-                            <Label className="text-sm text-gray-500">
-                              <span className="font-medium">
-                                Vehículos disponibles para{" "}
-                                {getTransportName(transportId).toLowerCase()}:
-                              </span>{" "}
-                              {catalogueVehiclesType.data?.data
-                                .map((vehicle) =>
-                                  toCapitalize(vehicle.name ?? "", true)
-                                )
-                                .join(", ")}
-                            </Label>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
 
                   {showCreateVehicle && (
                     <CreateVehicleForm
                       onCancel={handleCancelVehicle}
-                      vehicleTypes={catalogueVehiclesType.data?.data ?? []}
+                      vehicleTypes={vehicleTypes[selectedTransportIds[0]] ?? []}
                       onGetVehicleById={onSubmit}
                     />
                   )}
                 </div>
-              )}
+              </>
+            )}
 
               {isUpdate && (
                 <>
@@ -777,7 +818,7 @@ export function NewCarrier({
                 </>
               )}
             </CardContent>
-          </Card>
+          </>
         </div>
 
         <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t border-gray-100 flex-shrink-0">
