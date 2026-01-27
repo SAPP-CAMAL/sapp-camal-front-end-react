@@ -224,7 +224,7 @@ export function RegisterDisinfectantDataForm() {
                             if (checked) field.onChange(option.id);
                           }}
                         />
-                        {toCapitalize(option.name)}
+                        {option.name.split('/').map((part) => toCapitalize(part)).join('/')}
                       </Label>
                     ))}
 
