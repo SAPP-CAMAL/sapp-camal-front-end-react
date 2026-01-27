@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Ring2 } from 'ldrs/react';
 import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
@@ -5,16 +6,34 @@ import { useCatalogue } from '@/features/catalogues/hooks/use-catalogue';
 import { validateDocumentTypeService } from '@/features/people/server/db/people.service';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getDetailVehicleByTransportIdService } from '@/features/vehicles/server/db/vehicle-detail.service';
+import { TransportType } from '@/features/vehicles/domain/vehicle-detail-service';
 import 'ldrs/react/Ring2.css';
 
 export const ShipperFields = () => {
 	const form = useFormContext();
 
-	const catalogueVehicleTypes = useCatalogue('TVH');
+	// const catalogue	VehicleTypes = useCatalogue('TVH');
+	const [vehicleTypes, setVehicleTypes] = useState<TransportType[]>([]);
 	const catalogueIdentityTypes = useCatalogue('TID');
 	const catalogueTransportTypes = useCatalogue('TTR');
 
 	const isRetrievingPersonData = form.watch('isRetrievingPersonData') as boolean;
+	const transportTypeId = form.watch('transportTypeId') as string;
+
+	useEffect(() => {
+		if (!transportTypeId) return;
+
+		const loadVehicleTypes = async () => {
+			const response = await getDetailVehicleByTransportIdService(+transportTypeId)
+				.then(res => res.data)
+				.catch(() => [] as TransportType[]);
+
+			setVehicleTypes(response);
+		};
+
+		loadVehicleTypes();
+	}, [transportTypeId, form]);
 
 	return (
 		<>
@@ -135,40 +154,16 @@ export const ShipperFields = () => {
 			<FormField
 				control={form.control}
 				name='plate'
-				rules={{ required: { value: true, message: 'La placa del vehículo es requerido' } }}
+				rules={{
+					required: { value: true, message: 'La placa del vehículo es requerido' },
+					maxLength: { value: 10, message: 'La placa no puede tener más de 10 caracteres' },
+				}}
 				render={({ field }) => (
 					<FormItem>
 						<FormLabel>Placa</FormLabel>
 						<FormControl>
-							<Input className='bg-secondary' placeholder='Ingrese la placa del vehículo' {...field} />
+							<Input className='bg-secondary' placeholder='Ingrese la placa del vehículo' maxLength={10} {...field} />
 						</FormControl>
-						<FormMessage />
-					</FormItem>
-				)}
-			/>
-
-			{/* vehicleTypeId */}
-			<FormField
-				control={form.control}
-				name='vehicleTypeId'
-				rules={{ required: { value: true, message: 'El tipo de vehículo es requerido' } }}
-				render={({ field }) => (
-					<FormItem>
-						<FormLabel>Tipo de Vehículo</FormLabel>
-						<Select name='vehicleTypeId' defaultValue={field.value} onValueChange={field.onChange}>
-							<FormControl>
-								<SelectTrigger className='w-full bg-secondary'>
-									<SelectValue placeholder='Seleccione un tipo de vehículo' />
-								</SelectTrigger>
-							</FormControl>
-							<SelectContent>
-								{catalogueVehicleTypes.data?.data.map((vehicleType, index) => (
-									<SelectItem key={index} value={String(vehicleType.catalogueId)}>
-										{vehicleType.name}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
 						<FormMessage />
 					</FormItem>
 				)}
@@ -192,6 +187,35 @@ export const ShipperFields = () => {
 								{catalogueTransportTypes.data?.data.map((transportType, index) => (
 									<SelectItem key={index} value={String(transportType.catalogueId)}>
 										{transportType.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<FormMessage />
+					</FormItem>
+				)}
+			/>
+
+			{/* vehicleTypeId */}
+			<FormField
+				control={form.control}
+				name='vehicleTypeId'
+				rules={{ required: { value: true, message: 'El tipo de vehículo es requerido' } }}
+				render={({ field }) => (
+					<FormItem>
+						<FormLabel>Tipo de Vehículo</FormLabel>
+						<Select name='vehicleTypeId' defaultValue={field.value} onValueChange={field.onChange}>
+							<FormControl>
+								<SelectTrigger className='w-full bg-secondary' disabled={vehicleTypes.length === 0}>
+									<SelectValue
+										placeholder={vehicleTypes.length === 0 ? 'Por favor, seleccione un tipo de transporte primero' : 'Seleccione un tipo de vehículo'}
+									/>
+								</SelectTrigger>
+							</FormControl>
+							<SelectContent>
+								{vehicleTypes.map(vehicleType => (
+									<SelectItem key={vehicleType.id} value={String(vehicleType.vehicleTypeId)}>
+										{vehicleType.name}
 									</SelectItem>
 								))}
 							</SelectContent>
