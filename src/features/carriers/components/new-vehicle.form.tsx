@@ -31,19 +31,29 @@ interface CreateVehicleFormProps {
   selectedTransportIds?: number[];
   onSubmit?: () => void;
 }
+
 export function CreateVehicleForm({
   onGetVehicleById,
   onCancel,
   vehicleTypes,
 }: CreateVehicleFormProps) {
-  const [vehicleData, setVehicleData] = useState({
+  const initialState = {
     plate: "",
     vehicleTypeId: "",
     brand: "",
     model: "",
     color: "",
     year: new Date().getFullYear(),
-  });
+  };
+  const [vehicleData, setVehicleData] = useState(initialState);
+
+  // Reinicia el formulario cada vez que cambian los tipos de vehículo
+  React.useEffect(() => {
+    setVehicleData((prev) => ({
+      ...initialState,
+      plate: prev.plate, // Mantén la placa si el usuario ya la escribió
+    }));
+  }, [vehicleTypes]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -127,10 +137,10 @@ export function CreateVehicleForm({
 
   const handleyearChange = (value: string) => {
     const year = parseInt(value);
-    const currentYear = new Date().getFullYear();
 
-    if (year < 1900 || year > currentYear + 1) {
-      toast.error(`El year debe estar entre 1900 y ${currentYear + 1}`);
+    // Allow empty or partial input while typing
+    if (value === "" || isNaN(year)) {
+      handleInputChange("year", new Date().getFullYear());
       return;
     }
 
@@ -192,14 +202,23 @@ export function CreateVehicleForm({
                 </SelectTrigger>
                 <SelectContent>
                   {vehicleTypes && vehicleTypes.length > 0 ? (
-                    vehicleTypes.map((tipo) => (
-                      <SelectItem
-                        key={tipo.catalogueId}
-                        value={String(tipo.catalogueId)}
-                      >
-                        {tipo.name}
-                      </SelectItem>
-                    ))
+                    vehicleTypes
+                      .filter(
+                        (tipo) =>
+                          tipo &&
+                          typeof tipo.id !== "undefined" &&
+                          tipo.id !== null &&
+                          tipo.name &&
+                          tipo.name !== ""
+                      )
+                      .map((tipo) => (
+                        <SelectItem
+                          key={String(tipo.id)}
+                          value={String(tipo.id)}
+                        >
+                          {tipo.name}
+                        </SelectItem>
+                      ))
                   ) : (
                     <SelectItem value="" disabled>
                       No hay tipos disponibles
