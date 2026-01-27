@@ -93,7 +93,7 @@ export function SeizuresManagement() {
     setDownloadingId(id);
     try {
       const { blob, filename } = await getAnimalConfiscationReportService(id);
-        
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -187,7 +187,7 @@ export function SeizuresManagement() {
                 <SelectContent>
                   {speciesData?.data?.map((specie) => (
                     <SelectItem key={specie.id} value={specie.id.toString()}>
-                      {specie.description || specie.name}
+                      {specie?.description || specie.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -295,14 +295,14 @@ export function SeizuresManagement() {
             cell: ({ row }) => {
               const products = row.original.postmortem.flatMap(pm => pm.productPostmortem);
               const subproducts = row.original.postmortem.flatMap(pm => pm.subProductPostmortem);
-              
+
               if (products.length === 0 && subproducts.length === 0) return "—";
-              
+
               return (
                 <div className="flex flex-wrap gap-1 max-w-[400px]">
                   {products.map((p, idx) => (
                     <span key={`p-${idx}`} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                      {p.bodyPart.description} ({p.weight}kg)
+                      {p.bodyPart?.description} ({p.weight}kg)
                     </span>
                   ))}
                   {subproducts.map((s, idx) => (
