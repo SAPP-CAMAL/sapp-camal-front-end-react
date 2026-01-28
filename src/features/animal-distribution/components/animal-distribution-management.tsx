@@ -768,11 +768,11 @@ export function AnimalDistributionManagement() {
                   className="pl-10"
                 />
               </div>
+            {distributions.length > 0 && (
              <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 title="Generar reporte de los registros actuales"
-                // disabled={isLoading || apiData.length === 0}
               >
                 <FileUp className="h-4 w-4" />
                 <span className="ml-2">Reporte</span>
@@ -801,6 +801,7 @@ export function AnimalDistributionManagement() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+            )}
             </div>
           </div>
 
@@ -918,7 +919,7 @@ export function AnimalDistributionManagement() {
                         <div className="flex gap-2 pt-2">
                           <Button 
                             variant="outline" 
-                            className="flex-1 h-10 border-teal-600 text-teal-700 font-black text-[10px] tracking-wide uppercase hover:bg-teal-50 px-2"
+                            className="flex-1 h-10 border-teal-600 text-teal-700 font-bold text-[9px] sm:text-[10px] hover:bg-teal-50 px-1.5 sm:px-2 whitespace-nowrap"
                             onClick={() => {
                               setSelectedDistribution(dist);
                               const order = orders.find(o => o.id === dist.id);
@@ -926,20 +927,20 @@ export function AnimalDistributionManagement() {
                               setIsModalOpen(true);
                             }}
                           >
-                            <Eye className="w-3.5 h-3.5 mr-1.5" />
-                            Certificado
+                            <Eye className="w-3.5 h-3.5 mr-1" />
+                            <span className="uppercase tracking-tight">Certificado</span>
                           </Button>
                           <Button 
                             variant="outline" 
-                            className="flex-1 h-10 border-blue-600 text-blue-700 font-black text-[10px] tracking-wide uppercase hover:bg-blue-50 px-2"
+                            className="flex-1 h-10 border-blue-600 text-blue-700 font-bold text-[9px] sm:text-[10px] hover:bg-blue-50 px-1.5 sm:px-2 whitespace-nowrap"
                             onClick={() => {
                               const order = orders.find(o => o.id === dist.id);
                               setSelectedOrderForProducts(order || null);
                               setIsProductsModalOpen(true);
                             }}
                           >
-                            <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
-                            Productos
+                            <ShoppingBag className="w-3.5 h-3.5 mr-1" />
+                            <span className="uppercase tracking-tight">Productos</span>
                           </Button>
                           
                           {dist.estado === "PENDIENTE" && (
