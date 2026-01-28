@@ -665,14 +665,6 @@ export function PostmortemManagement() {
                 </Command>
               </PopoverContent>
             </Popover>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-teal-600 border-teal-600 bg-white hover:bg-teal-50 hidden sm:flex"
-            >
-              <Settings className="h-4 w-4 mr-1" />
-              <span className="hidden lg:inline">Configuración</span>
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
