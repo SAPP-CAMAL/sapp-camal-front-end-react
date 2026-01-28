@@ -86,8 +86,9 @@ import { WeighingStageCodes } from "../constants/weighing-stage-codes";
 
 export function AnimalDistributionManagement() {
   const { camalName, location, getFullCompanyName } = useSlaughterhouseInfo(); // camalName = nombre completo del camal para certificados
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const today = new Date();
+  const [startDate, setStartDate] = useState<Date | undefined>(today);
+  const [endDate, setEndDate] = useState<Date | undefined>(today);
   const [selectedSpecie, setSelectedSpecie] = useState<string>("Bovino");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -102,7 +103,7 @@ export function AnimalDistributionManagement() {
   const [isLoadingLines, setIsLoadingLines] = useState(false);
 
   // Estado para controlar si el filtro de fecha está activo
-  const [isDateFilterActive, setIsDateFilterActive] = useState(false);
+  const [isDateFilterActive, setIsDateFilterActive] = useState(true);
 
   // Estados para los datos de distribuciones desde la API
   const [distributions, setDistributions] = useState<AnimalDistribution[]>([]);
@@ -619,7 +620,14 @@ export function AnimalDistributionManagement() {
                   <DatePicker
                     inputClassName="bg-secondary"
                     selected={startDate}
-                    onChange={(newDate) => newDate && setStartDate(newDate)}
+                    onChange={(newDate) => {
+                      if (newDate) {
+                        setStartDate(newDate);
+                        if (endDate) {
+                          setIsDateFilterActive(true);
+                        }
+                      }
+                    }}
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -627,45 +635,16 @@ export function AnimalDistributionManagement() {
                   <DatePicker
                     inputClassName="bg-secondary"
                     selected={endDate}
-                    onChange={(newDate) => newDate && setEndDate(newDate)}
+                    onChange={(newDate) => {
+                      if (newDate) {
+                        setEndDate(newDate);
+                        if (startDate) {
+                          setIsDateFilterActive(true);
+                        }
+                      }
+                    }}
                   />
                 </div>
-                {!isDateFilterActive && startDate && endDate && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleApplyDateFilter}
-                    className="bg-teal-600 hover:bg-teal-700 whitespace-nowrap animate-in fade-in zoom-in duration-300"
-                    title="Filtrar por este rango de fechas"
-                  >
-                    <CalendarIcon className="h-4 w-4 mr-1" />
-                    Filtrar
-                  </Button>
-                )}
-                {isDateFilterActive && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleTodayClick}
-                      className="whitespace-nowrap"
-                      title="Filtrar solo hoy"
-                    >
-                      <CalendarIcon className="h-4 w-4 mr-1" />
-                      Hoy
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleClearDateFilter}
-                      className="whitespace-nowrap text-gray-700"
-                      title="Mostrar todas las fechas"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Limpiar filtro
-                    </Button>
-                  </>
-                )}
               </div>
             </div>
 
@@ -863,16 +842,7 @@ export function AnimalDistributionManagement() {
 
                     return (
                       <div key={dist.id} className="bg-white rounded-2xl border-2 border-gray-100 p-5 shadow-sm space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="bg-teal-100 p-2 rounded-lg text-teal-700">
-                              <Hash className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-1">Nro. Distribución</p>
-                              <p className="text-sm font-black text-gray-800">{dist.nroDistribucion}</p>
-                            </div>
-                          </div>
+                        <div className="flex items-center justify-end">
                           <Badge
                             className={
                               dist.estado === "PENDIENTE"
@@ -917,6 +887,31 @@ export function AnimalDistributionManagement() {
                             <p className="text-[11px] text-gray-500 leading-none">
                               {dist.lugarDestino.replace(".", " - ")}
                             </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 py-3 border-y border-dashed border-gray-100">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase">
+                              <Hash className="w-3 h-3" /> Nro de Animales
+                            </div>
+                            <p className="text-sm font-bold text-teal-600">
+                              {(() => {
+                                const order = orders.find(o => o.id === dist.id);
+                                const uniqueAnimalIds = new Set(
+                                  order?.orderDetails
+                                    ?.map(detail => detail.animalProduct?.detailsSpeciesCertificate?.id)
+                                    .filter(id => id !== undefined) || []
+                                );
+                                return uniqueAnimalIds.size;
+                              })()}
+                            </p>
+                          </div>
+                          <div className="space-y-1 text-right">
+                            <div className="flex items-center justify-end gap-1.5 text-[10px] font-bold text-gray-400 uppercase">
+                              <Package className="w-3 h-3" /> Ingresos
+                            </div>
+                            <p className="text-sm font-bold text-gray-600">{dist.idsIngresos}</p>
                           </div>
                         </div>
 
@@ -986,12 +981,6 @@ export function AnimalDistributionManagement() {
                       <TableRow className="bg-teal-600 hover:bg-teal-600">
                         <TableHead className="text-center border font-bold text-white py-4 px-2">
                           <div className="flex flex-col items-center gap-1.5">
-                            <Hash className="w-4 h-4" />
-                            <span className="text-[10px] uppercase tracking-widest leading-tight">Nro.<br />Distribución</span>
-                          </div>
-                        </TableHead>
-                        <TableHead className="text-center border font-bold text-white py-4 px-2">
-                          <div className="flex flex-col items-center gap-1.5">
                             <Clock className="w-4 h-4" />
                             <span className="text-[10px] uppercase tracking-widest leading-tight">Fecha / Hora<br />PEDIDO</span>
                           </div>
@@ -1012,6 +1001,12 @@ export function AnimalDistributionManagement() {
                           <div className="flex flex-col items-center gap-1.5">
                             <Truck className="w-4 h-4" />
                             <span className="text-[10px] uppercase tracking-widest leading-tight">Placa /<br />Conductor</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center border font-bold text-white py-4 px-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <Hash className="w-4 h-4" />
+                            <span className="text-[10px] uppercase tracking-widest leading-tight">Nro de<br />Animales</span>
                           </div>
                         </TableHead>
                         <TableHead className="text-center border font-bold text-white py-4 px-2">
@@ -1040,12 +1035,18 @@ export function AnimalDistributionManagement() {
                         const placaParts = dist.placaMedioTransporte.split("/");
                         const placa = placaParts[0] || "";
                         const conductor = placaParts[1] || "";
+                        
+                        // Obtener el pedido completo para contar animales únicos
+                        const order = orders.find(o => o.id === dist.id);
+                        const uniqueAnimalIds = new Set(
+                          order?.orderDetails
+                            ?.map(detail => detail.animalProduct?.detailsSpeciesCertificate?.id)
+                            .filter(id => id !== undefined) || []
+                        );
+                        const animalCount = uniqueAnimalIds.size;
 
                         return (
                           <TableRow key={dist.id} className="hover:bg-gray-50/50">
-                            <TableCell className="font-bold text-center border-x text-sm text-blue-600">
-                              {dist.nroDistribucion}
-                            </TableCell>
                             <TableCell className="text-[11px] text-center border-x py-3">
                               <div className="flex flex-col font-bold text-gray-700">
                                 <span>{hora}</span>
@@ -1068,6 +1069,9 @@ export function AnimalDistributionManagement() {
                                 <span className="font-bold text-teal-700">{placa}</span>
                                 <span className="text-gray-400 italic">{conductor}</span>
                               </div>
+                            </TableCell>
+                            <TableCell className="text-xs font-bold text-center border-x text-teal-600">
+                              {animalCount}
                             </TableCell>
                             <TableCell className="text-xs font-bold text-center border-x text-gray-600">
                               {dist.idsIngresos}
