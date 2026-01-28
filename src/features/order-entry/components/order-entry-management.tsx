@@ -82,10 +82,12 @@ import { Specie } from "@/features/specie/domain";
 import { useStockBySpecie, useStockByIds, useSaveOrder, useSpecieProductsByCode, useOrderByIdAndDetail, useRemoveOrderDetail, useValidateTimeOrder } from "../hooks";
 import { useUnitMeasure } from "@/features/animal-weighing/hooks";
 import { toCapitalize } from "@/lib/toCapitalize";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function OrderEntryManagement() {
+  const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(isMobile ? 5 : 10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<OrderEntry | null>(null);
   const [products, setProducts] = useState<ProductSubproduct[]>([]);
@@ -1225,9 +1227,9 @@ export function OrderEntryManagement() {
                         <TableRow
                           key={animal.id}
                           className="cursor-pointer hover:bg-teal-50/30 transition-colors"
-                          onClick={() =>{
-                            handleCheckOrder(animal.id, !checkedOrders.has(animal.id))
-                            setBrandAddressee(animal?.brandName)
+                          onClick={() => {
+                            handleCheckOrder(animal.id, !checkedOrders.has(animal.id));
+                            setBrandAddressee(animal?.brandName);
                           }}
                         >
                           <TableCell className="text-center border">
@@ -1256,14 +1258,22 @@ export function OrderEntryManagement() {
                           </TableCell>
                           <TableCell className="text-center border">
                             <div className="flex justify-center">
-                              <Checkbox
-                                checked={checkedOrders.has(animal.id)}
-                                onCheckedChange={(checked) => {
-                                    handleCheckOrder(animal.id, checked as boolean)
-                                    setBrandAddressee(animal?.brandName)
-                                  }
-                                }
-                              />
+                              <div
+                                className={`w-5 h-5 rounded-full border-2 cursor-pointer transition-all ${
+                                  checkedOrders.has(animal.id)
+                                    ? "bg-teal-600 border-teal-600"
+                                    : "border-gray-300 hover:border-teal-400"
+                                } flex items-center justify-center`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCheckOrder(animal.id, !checkedOrders.has(animal.id));
+                                  setBrandAddressee(animal?.brandName);
+                                }}
+                              >
+                                {checkedOrders.has(animal.id) && (
+                                  <div className="w-2 h-2 bg-white rounded-full" />
+                                )}
+                              </div>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1300,13 +1310,13 @@ export function OrderEntryManagement() {
                   const hora = format(new Date(animal.createAt), "HH:mm:ss", { locale: es });
 
                   return (
-                    <Card
+                    <div
                       key={animal.id}
-                      className="p-4 cursor-pointer hover:shadow-lg hover:border-teal-300 transition-all border-2"
-                      style={{
-                        borderColor: checkedOrders.has(animal.id) ? '#0d9488' : undefined,
-                        backgroundColor: checkedOrders.has(animal.id) ? '#f0fdfa' : undefined,
-                      }}
+                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                        checkedOrders.has(animal.id)
+                          ? "border-teal-500 bg-teal-50"
+                          : "border-gray-200 hover:bg-gray-50 hover:border-teal-300"
+                      }`}
                       onClick={() => {
                         handleCheckOrder(animal.id, !checkedOrders.has(animal.id));
                         setBrandAddressee(animal?.brandName);
@@ -1314,9 +1324,24 @@ export function OrderEntryManagement() {
                     >
                       <div className="space-y-3">
                         {/* Marca y Código */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-start gap-2 flex-1">
-                            <Tag className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <div
+                              className={`w-5 h-5 rounded-full border-2 cursor-pointer transition-all mt-1 flex-shrink-0 ${
+                                checkedOrders.has(animal.id)
+                                  ? "bg-teal-600 border-teal-600"
+                                  : "border-gray-300"
+                              } flex items-center justify-center`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCheckOrder(animal.id, !checkedOrders.has(animal.id));
+                                setBrandAddressee(animal?.brandName);
+                              }}
+                            >
+                              {checkedOrders.has(animal.id) && (
+                                <div className="w-2 h-2 bg-white rounded-full" />
+                              )}
+                            </div>
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-semibold text-gray-500 mb-1 uppercase">Marca</div>
                               <div className="text-2xl font-bold text-blue-700 leading-tight">
@@ -1327,16 +1352,11 @@ export function OrderEntryManagement() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center justify-center w-10 h-10">
-                            <Checkbox
-                              checked={checkedOrders.has(animal.id)}
-                              onCheckedChange={(checked) => {
-                                handleCheckOrder(animal.id, checked as boolean);
-                                setBrandAddressee(animal?.brandName);
-                              }}
-                              className="w-5 h-5"
-                            />
-                          </div>
+                          {checkedOrders.has(animal.id) && (
+                            <Badge variant="outline" className="bg-teal-600 text-white text-xs shrink-0 h-fit">
+                              ✓
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Fecha de Ingreso */}
@@ -1369,7 +1389,7 @@ export function OrderEntryManagement() {
                           </div>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   );
                 })
               )}
@@ -1377,8 +1397,9 @@ export function OrderEntryManagement() {
 
             {/* Paginación */}
             {filteredOrders.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-4 pt-4">
+                {/* Información y selector de items */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="text-sm text-muted-foreground">
                     Mostrando {startIndex + 1} a{" "}
                     {Math.min(endIndex, filteredOrders.length)} de{" "}
@@ -1405,56 +1426,62 @@ export function OrderEntryManagement() {
                     </Select>
                   </div>
                 </div>
+                
+                {/* Paginación */}
                 {totalPages > 1 && (
-                  <div className="flex items-center gap-x-2">
+                  <div className="flex flex-wrap items-center justify-center gap-2">
                     <Button
                       disabled={currentPage === 1}
                       onClick={() => setCurrentPage((prev) => prev - 1)}
                       variant="outline"
                       size="sm"
+                      className="min-w-[80px]"
                     >
                       Anterior
                     </Button>
-                    {Array.from(
-                      { length: Math.min(totalPages, 10) },
-                      (_, i) => {
-                        const pageNumber = i + 1;
-                        const isCurrentPage = pageNumber === currentPage;
+                    <div className="flex flex-wrap items-center gap-1">
+                      {Array.from(
+                        { length: Math.min(totalPages, 5) },
+                        (_, i) => {
+                          const pageNumber = i + 1;
+                          const isCurrentPage = pageNumber === currentPage;
 
-                        const showPage =
-                          pageNumber === 1 ||
-                          pageNumber === totalPages ||
-                          Math.abs(pageNumber - currentPage) <= 2;
+                          const showPage =
+                            pageNumber === 1 ||
+                            pageNumber === totalPages ||
+                            Math.abs(pageNumber - currentPage) <= 1;
 
-                        if (!showPage) return null;
+                          if (!showPage) return null;
 
-                        return (
-                          <Button
-                            key={pageNumber}
-                            variant="outline"
-                            size="sm"
-                            className={
-                              isCurrentPage
-                                ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
-                                : ""
-                            }
-                            onClick={() => setCurrentPage(pageNumber)}
-                          >
-                            {pageNumber}
-                          </Button>
-                        );
-                      }
-                    )}
-                    {totalPages > 10 && (
-                      <span className="px-2 text-sm text-muted-foreground">
-                        ... {totalPages}
-                      </span>
-                    )}
+                          return (
+                            <Button
+                              key={pageNumber}
+                              variant="outline"
+                              size="sm"
+                              className={
+                                isCurrentPage
+                                  ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white min-w-[40px]"
+                                  : "min-w-[40px]"
+                              }
+                              onClick={() => setCurrentPage(pageNumber)}
+                            >
+                              {pageNumber}
+                            </Button>
+                          );
+                        }
+                      )}
+                      {totalPages > 5 && (
+                        <span className="px-2 text-sm text-muted-foreground">
+                          ... {totalPages}
+                        </span>
+                      )}
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={currentPage === totalPages}
                       onClick={() => setCurrentPage((prev) => prev + 1)}
+                      className="min-w-[80px]"
                     >
                       Siguiente
                     </Button>
