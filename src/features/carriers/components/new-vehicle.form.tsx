@@ -211,18 +211,18 @@ export function CreateVehicleForm({
                           tipo.name &&
                           tipo.name !== ""
                       )
-                      .map((tipo) => (
+                      .map((tipo, idx) => (
                         <SelectItem
-                          key={String(tipo.id)}
+                          key={idx}
                           value={String(tipo.id)}
                         >
                           {tipo.name}
                         </SelectItem>
                       ))
                   ) : (
-                    <SelectItem value="" disabled>
-                      No hay tipos disponibles
-                    </SelectItem>
+                      <SelectItem value="no-types" disabled>
+                        No hay tipos disponibles
+                      </SelectItem>
                   )}
                 </SelectContent>
               </Select>
