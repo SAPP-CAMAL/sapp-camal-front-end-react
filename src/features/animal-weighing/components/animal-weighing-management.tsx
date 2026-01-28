@@ -1473,7 +1473,7 @@ export function AnimalWeighingManagement() {
                 <SelectContent>
                   {hookTypesData?.data.map((hook) => (
                     <SelectItem key={hook.id} value={hook.id.toString()}>
-                      {hook.name} ({hook.weight} kg)
+                      {hook.name} ({hook.weight} {unitMeasureData?.data?.symbol || 'kg'})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1497,7 +1497,7 @@ export function AnimalWeighingManagement() {
                   className="flex-1 sm:flex-initial min-w-[80px]"
                 >
                   {hook.name}{" "}
-                  <span className="text-xs ml-1">({hook.weight} kg)</span>
+                  <span className="text-xs ml-1">({hook.weight} {unitMeasureData?.data?.symbol || 'kg'})</span>
                 </Button>
               ))
             )}
