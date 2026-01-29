@@ -329,7 +329,8 @@ export function SeizuresManagement() {
               </div>
             ),
             cell: ({ row }) => {
-              const date = row.original.createdAt;
+              const postmortem = row.original.postmortem?.[0];
+              const date = postmortem?.createdAt;
               if (!date) return "—";
               return format(parseISO(date), "dd/MM/yyyy");
             },
@@ -343,7 +344,8 @@ export function SeizuresManagement() {
               </div>
             ),
             cell: ({ row }) => {
-              const date = row.original.createdAt;
+              const postmortem = row.original.postmortem?.[0];
+              const date = postmortem?.createdAt;
               if (!date) return "—";
               return format(parseISO(date), "HH:mm");
             },
