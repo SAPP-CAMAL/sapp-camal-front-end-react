@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -20,6 +21,9 @@ import {
   Loader2,
   Clock,
   X,
+  FileUp,
+  ChevronDown,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
@@ -32,6 +36,12 @@ import {
   AnimalSeizureItem,
 } from "../domain";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -43,6 +53,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getAnimalSeizuresService,
   getAnimalConfiscationReportService,
+  downloadAnimalSeizuresReport,
 } from "../server/seizures.service";
 import { toast } from "sonner";
 import {
@@ -60,6 +71,7 @@ export function SeizuresManagement() {
       page: parseAsInteger.withDefault(1),
       limit: parseAsInteger.withDefault(10),
       startDate: parseAsString.withDefault(format(new Date(), "yyyy-MM-dd")),
+      endDate: parseAsString.withDefault(format(new Date(), "yyyy-MM-dd")),
       specieId: parseAsInteger.withDefault(0),
     },
     {
@@ -73,6 +85,7 @@ export function SeizuresManagement() {
       searchParams.page,
       searchParams.limit,
       searchParams.startDate,
+      searchParams.endDate,
       searchParams.specieId,
     ],
     queryFn: () =>
@@ -81,6 +94,7 @@ export function SeizuresManagement() {
         limit: searchParams.limit,
         idSpecie: searchParams.specieId,
         ...(searchParams.startDate && { startDate: searchParams.startDate }),
+        ...(searchParams.endDate && { endDate: searchParams.endDate }),
       }),
     enabled: searchParams.specieId > 0,
   });
@@ -110,26 +124,48 @@ export function SeizuresManagement() {
     }
   };
 
+  const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+    toast.promise(
+      downloadAnimalSeizuresReport({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        startDate: searchParams.startDate,
+        endDate: searchParams.endDate,
+        idSpecie: searchParams.specieId,
+        typeReport: type,
+      }),
+      {
+        loading: 'Generando reporte...',
+        success: `Reporte ${type} descargado correctamente`,
+        error: 'Error al descargar el reporte',
+      }
+    );
+  };
+
   return (
-    <div className="px-2 sm:px-0">
+    <div>
       <section className="mb-4">
-        <h2 className="font-semibold text-lg sm:text-xl text-primary">Decomisos Realizados</h2>
-        <p className="text-gray-600 text-xs sm:text-sm mt-1">
-          Gestión unificada de decomisos por animal
-        </p>
+        <div className="py-0 px-2">
+          <h2>Decomisos Realizados</h2>
+          <p className="text-gray-600 text-sm mt-1">
+            Gestión unificada de decomisos por animal
+          </p>
+        </div>
       </section>
 
-      <Card className="mb-4 border-none shadow-sm bg-muted/30">
-        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-2">
-          <CardTitle className="flex gap-2 items-center text-sm font-bold uppercase tracking-wider text-muted-foreground">
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle className="flex gap-2 items-center">
             Filtros de Búsqueda
           </CardTitle>
+          <CardDescription>
+            Filtre los decomisos por rango de fechas y especie
+          </CardDescription>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 sm:gap-4 w-full items-end">
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="flex flex-col w-full">
-              <label className="mb-1 text-xs font-semibold text-gray-500 uppercase tracking-tight flex items-center gap-1">
-                <CalendarDays className="h-3 w-3 text-primary" />
+              <label className="mb-1 text-sm font-medium text-gray-700">
                 Fecha Inicio
               </label>
               <BaseDatePicker
@@ -155,15 +191,47 @@ export function SeizuresManagement() {
                 }
                 placeholderText="Desde"
                 wrapperClassName="w-full"
-                className="border-input flex w-full min-w-0 rounded-md border bg-background px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none h-10"
+                className="flex w-full min-w-0 rounded-md border border-gray-300 bg-background px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none h-10 focus:ring-2"
                 popperClassName="z-50"
                 popperPlacement="bottom-start"
               />
             </div>
 
             <div className="flex flex-col w-full">
-              <label className="mb-1 text-xs font-semibold text-gray-500 uppercase tracking-tight flex items-center gap-1">
-                <PawPrint className="h-3 w-3 text-primary" />
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Fecha Fin
+              </label>
+              <BaseDatePicker
+                selected={
+                  searchParams.endDate ? parseISO(searchParams.endDate) : null
+                }
+                onChange={(date: Date | null) => {
+                  if (date) {
+                    setSearchParams({
+                      endDate: format(date, "yyyy-MM-dd"),
+                      page: 1,
+                    });
+                  } else {
+                    setSearchParams({ endDate: "", page: 1 });
+                  }
+                }}
+                dateFormat="dd/MM/yyyy"
+                locale={es}
+                showIcon
+                isClearable
+                icon={
+                  <CalendarDays className="text-muted-foreground h-4 w-4" />
+                }
+                placeholderText="Hasta"
+                wrapperClassName="w-full"
+                className="flex w-full min-w-0 rounded-md border border-gray-300 bg-background px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none h-10 focus:ring-2"
+                popperClassName="z-50"
+                popperPlacement="bottom-start"
+              />
+            </div>
+
+            <div className="flex flex-col w-full">
+              <label className="mb-1 text-sm font-medium text-gray-700">
                 Especie
               </label>
               <Select
@@ -181,7 +249,7 @@ export function SeizuresManagement() {
                   }
                 }}
               >
-                <SelectTrigger className="h-10 text-sm bg-background">
+                <SelectTrigger className="h-10 text-sm bg-background border-gray-300 focus:ring-2">
                   <SelectValue placeholder="Seleccione especie" />
                 </SelectTrigger>
                 <SelectContent>
@@ -193,27 +261,46 @@ export function SeizuresManagement() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="flex items-end h-full">
-              <Button
-                variant="outline"
-                className="h-10 text-xs sm:text-sm px-4 bg-background w-full sm:w-auto"
-                onClick={() => {
-                  setSearchParams({
-                    startDate: "",
-                    specieId: 0,
-                    page: 1,
-                  });
-                }}
-                disabled={!searchParams.startDate && searchParams.specieId === 0}
-              >
-                <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1 ml-[-4px]" />
-                Limpiar
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
+
+      {seizuresData.length > 0 && (
+        <div className="flex justify-end mb-4">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                title="Generar reporte de los registros actuales"
+              >
+                <FileUp className="h-4 w-4" />
+                <span className="ml-2">Reporte</span>
+                <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-56"
+              sideOffset={5}
+              alignOffset={0}
+            >
+              <DropdownMenuItem
+                onClick={() => handleDownloadReport('EXCEL')}
+                className="cursor-pointer"
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                <span>Descargar Excel</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDownloadReport('PDF')}
+                className="cursor-pointer"
+              >
+                <FileText className="h-4 w-4 mr-2 text-red-600" />
+                <span>Descargar PDF</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
 
       <SeizuresTable
         title="Lista de Decomisos por Animal"
