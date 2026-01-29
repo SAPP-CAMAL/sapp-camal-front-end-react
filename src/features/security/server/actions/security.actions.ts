@@ -5,12 +5,47 @@ import { ssrPostJson } from "@/lib/ky-ssr";
 import { ResponseLoginService, ResponseLogoutService, ResponseRefreshTokenService } from "../../domain";
 
 export async function loginAction(body: { identifier: string; password: string }) {
-    return await ssrPostJson<ResponseLoginService>("v1/1.0.0/security/login", {
+    const response = await ssrPostJson<ResponseLoginService>("v1/1.0.0/security/login", {
         json: {
             identifier: body.identifier?.trim(),
             password: body.password?.trim(),
         },
-    })
+    });
+
+    // Guardar las cookies en el servidor para que el middleware pueda acceder a ellas
+    if (response?.data?.accessToken) {
+        const cookieStore = await cookies();
+        
+        // Configurar las cookies con opciones adecuadas
+        const isProduction = process.env.NODE_ENV === 'production';
+        
+        cookieStore.set("accessToken", response.data.accessToken, {
+            httpOnly: false, // Permitir acceso desde el cliente también
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24 * 7, // 7 días
+        });
+        
+        cookieStore.set("refreshToken", response.data.refreshToken, {
+            httpOnly: false,
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24 * 30, // 30 días
+        });
+        
+        const userJson = JSON.stringify(response.data);
+        cookieStore.set("user", userJson, {
+            httpOnly: false,
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24 * 7, // 7 días
+        });
+    }
+
+    return response;
 }
 
 export async function logoutAction() {
