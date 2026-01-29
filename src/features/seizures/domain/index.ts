@@ -56,6 +56,7 @@ export interface PostmortemItem {
   idDetailsSpeciesCertificate: number;
   idVeterinarian: number;
   status: boolean;
+  createdAt: string;
   subProductPostmortem: SubProductPostmortem[];
   productPostmortem: ProductPostmortem[];
 }
