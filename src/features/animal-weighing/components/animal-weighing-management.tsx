@@ -981,28 +981,11 @@ export function AnimalWeighingManagement() {
       // Abrir PDF automáticamente en nueva pestaña
       console.log('📄 Respuesta completa del API:', response);
 
-      // Intentar obtener el ID del detalle desde la respuesta de la API
-      let detailId = row.idDetailAnimalWeighing; // Usar el existente como fallback
 
-      // Intentar extraer de diferentes posibles estructuras de respuesta
-      if (response?.data) {
-        if (Array.isArray(response.data)) {
-          // Si es un array, tomar el primer elemento
-          detailId = response.data[0]?.id || response.data[0]?.idDetailAnimalWeighing || detailId;
-        } else if (response.data.detailsAnimalWeighing) {
-          // Si tiene detailsAnimalWeighing
-          if (Array.isArray(response.data.detailsAnimalWeighing)) {
-            detailId = response.data.detailsAnimalWeighing[0]?.id ||
-                      response.data.detailsAnimalWeighing[0]?.idDetailAnimalWeighing ||
-                      detailId;
-          } else {
-            detailId = response.data.detailsAnimalWeighing.id ||
-                      response.data.detailsAnimalWeighing.idDetailAnimalWeighing ||
-                      detailId;
-          }
-        } else if (response.data.id) {
-          detailId = response.data.id;
-        }
+      // Obtener el ID del primer objeto en el array detailAnimalWeighing de la respuesta
+      let detailId = row.idDetailAnimalWeighing; // fallback
+      if (response?.data?.detailAnimalWeighing && Array.isArray(response.data.detailAnimalWeighing)) {
+        detailId = response.data.detailAnimalWeighing[0]?.id || detailId;
       }
 
       console.log('📄 ID del detalle para ticket:', detailId);
