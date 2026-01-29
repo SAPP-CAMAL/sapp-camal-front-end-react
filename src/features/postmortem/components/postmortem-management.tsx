@@ -757,7 +757,7 @@ export function PostmortemManagement() {
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
-                <DropdownMenuItem
+                {/* <DropdownMenuItem
                   onClick={() => {
                     if (!selectedSpecieId) {
                       toast.error("Selecciona una línea de producción");
@@ -780,7 +780,7 @@ export function PostmortemManagement() {
                 >
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   Reporte Mensual de Decomisos
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuItem
                   onClick={() => {
                     if (!selectedSpecieId) {
