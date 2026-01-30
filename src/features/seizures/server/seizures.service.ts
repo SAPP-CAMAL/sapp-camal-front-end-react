@@ -42,8 +42,8 @@ export async function downloadAnimalSeizuresReport(
     `v1/1.0.0/detail-specie-cert/animal-confiscation-report?typeReport=${filters.typeReport}`,
     {
       json: {
-        page: filters.page || 1,
-        limit: filters.limit || 10,
+        // page: filters.page || 1,
+        // limit: filters.limit || 10,
         startDate: filters.startDate,
         endDate: filters.endDate,
         idSpecie: filters.idSpecie,
@@ -55,10 +55,10 @@ export async function downloadAnimalSeizuresReport(
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  
+
   const extension = filters.typeReport === 'EXCEL' ? 'xlsx' : 'pdf';
   a.download = `reporte_decomisos_${filters.startDate}_${filters.endDate}.${extension}`;
-  
+
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);
