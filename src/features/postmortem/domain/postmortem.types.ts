@@ -37,10 +37,15 @@ export type ColumnConfig = {
 
 export type AnimalSelection = {
   animalId: string;
+  animalCode: string;
+  adverseSituation: string;
+  diseaseComment: string;
   selected: boolean;
   percentage: number;
   weight?: number; // Peso aproximado del órgano
   anatomicalPercentages?: Record<number, number>; // Porcentajes por ubicación anatómica (key: idLocation, value: percentage)
   anatomicalWeights?: Record<number, number>; // Pesos por ubicación anatómica (key: idLocation, value: weight)
   selectedAnatomicalLocations?: Record<number, boolean>; // Ubicaciones seleccionadas (key: idLocation, value: selected)
+  anatomicalAdverseSituations?: Record<number, string>; // Ubicaciones seleccionadas (key: idLocation, value: selected)
+  anatomicalDiseaseComment?: Record<number, string>; // Ubicaciones seleccionadas (key: idLocation, value: selected)
 };
