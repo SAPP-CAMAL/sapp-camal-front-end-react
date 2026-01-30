@@ -1285,16 +1285,15 @@ export function AnimalWeighingManagement() {
       // Intentar obtener el ID del detalle desde la respuesta de la API
       let detailId: number | null = null;
 
-      // Intentar extraer de diferentes posibles estructuras de respuesta
+
+      // Intentar extraer de diferentes posibles estructuras de respuesta SOLO de la respuesta del pesaje
       if (response?.data) {
         if (Array.isArray(response.data)) {
-          // Si es un array, tomar el primer elemento
           detailId =
             response.data[0]?.id ||
             response.data[0]?.idDetailAnimalWeighing ||
             null;
         } else if (response.data.detailsAnimalWeighing) {
-          // Si tiene detailsAnimalWeighing
           if (Array.isArray(response.data.detailsAnimalWeighing)) {
             detailId =
               response.data.detailsAnimalWeighing[0]?.id ||
@@ -1311,44 +1310,30 @@ export function AnimalWeighingManagement() {
         }
       }
 
-      // Si no se encontró en la respuesta y es una actualización, usar el existente
-      if (!detailId && row.idDetailAnimalWeighing) {
-        detailId = row.idDetailAnimalWeighing;
-      }
+      console.log("📄 ID del detalle para ticket (solo respuesta):", detailId);
 
-      console.log("📄 ID del detalle para ticket:", detailId);
-
-      // Invalidar y esperar a que se recarguen los datos antes de abrir el ticket
-      await queryClient.invalidateQueries({ queryKey: ["animal-weighing"] });
-
-      // Pequeña espera para asegurar que los datos se actualizaron
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Si aún no tenemos el ID del detalle, intentar buscarlo en los datos actualizados
       if (!detailId) {
+        // Si no hay ID, esperar más tiempo y buscar SOLO en los datos actualizados
+        await queryClient.invalidateQueries({ queryKey: ["animal-weighing"] });
+        await new Promise((resolve) => setTimeout(resolve, 3000)); // Espera aumentada a 3 segundos
         const updatedData = queryClient.getQueryData<any>([
           "animal-weighing",
           weighingRequest,
         ]);
-        console.log("📄 Datos actualizados después de invalidar:", updatedData);
-
-        // Buscar el animal recién pesado en los datos actualizados
+        console.log("📄 Datos actualizados después de invalidar (solo para buscar ID):", updatedData);
         if (updatedData?.data) {
           const animals = Array.isArray(updatedData.data)
             ? updatedData.data
             : [updatedData.data];
           const recentAnimal = animals.find((a: any) => a.code === row.code);
-
           if (recentAnimal?.detailsAnimalWeighing) {
             const details = Array.isArray(recentAnimal.detailsAnimalWeighing)
               ? recentAnimal.detailsAnimalWeighing
               : [recentAnimal.detailsAnimalWeighing];
-
-            // Tomar el último detalle (el más reciente)
             const latestDetail = details[details.length - 1];
             detailId =
               latestDetail?.id || latestDetail?.idDetailAnimalWeighing || null;
-            console.log("📄 ID encontrado en datos actualizados:", detailId);
+            console.log("📄 ID encontrado en datos actualizados tras espera extra:", detailId);
           }
         }
       }
