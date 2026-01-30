@@ -127,8 +127,8 @@ export function SeizuresManagement() {
   const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
     toast.promise(
       downloadAnimalSeizuresReport({
-        page: searchParams.page,
-        limit: searchParams.limit,
+        // page: searchParams.page,
+        // limit: searchParams.limit,
         startDate: searchParams.startDate,
         endDate: searchParams.endDate,
         idSpecie: searchParams.specieId,
