@@ -386,17 +386,62 @@ export async function closeCorralByStatusIdService(statusRecordId: number, close
   }
 }
 
-export async function generateSpecieCodesService(lineId: number): Promise<{ success: boolean; message: string }> {
+export async function generateSpecieCodesService(lineId: number, executionDate: string): Promise<{ success: boolean; message: string }> {
   try {
     const response = await http.post(
-      `v1/1.0.0/detail-specie-cert/execute?lineId=${lineId}`
+      `v1/1.0.0/detail-specie-cert/execute-by-date?lineId=${lineId}&executionDate=${executionDate}`,
+      { json: {} }
     ).json();
     return { success: true, message: 'Códigos generados exitosamente' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating specie codes:', error);
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : 'Error al generar códigos'
-    };
+    
+    // Intentar extraer el mensaje de error del backend
+    try {
+      const errorData = await error?.response?.json();
+      const errorMessage = errorData?.data || errorData?.message || 'Error al generar códigos';
+      return { success: false, message: errorMessage };
+    } catch {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error al generar códigos'
+      };
+    }
+  }
+}
+
+export async function generateSpecieCodesByCorralService(
+  lineId: number,
+  executionDate: string,
+  idStatusCorrals: number,
+  idCorrals: number
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const response = await http.post(
+      `v1/1.0.0/detail-specie-cert/execute-by-date-and-corrals`,
+      {
+        searchParams: {
+          lineId: lineId.toString(),
+          executionDate,
+          idStatusCorrals: idStatusCorrals.toString(),
+          idCorrals: idCorrals.toString()
+        }
+      }
+    ).json();
+    return { success: true, message: 'Códigos generados exitosamente para este corral' };
+  } catch (error: any) {
+    console.error('Error generating specie codes by corral:', error);
+    
+    // Intentar extraer el mensaje de error del backend
+    try {
+      const errorData = await error?.response?.json();
+      const errorMessage = errorData?.data || errorData?.message || 'Error al generar códigos para este corral';
+      return { success: false, message: errorMessage };
+    } catch {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error al generar códigos para este corral'
+      };
+    }
   }
 }
