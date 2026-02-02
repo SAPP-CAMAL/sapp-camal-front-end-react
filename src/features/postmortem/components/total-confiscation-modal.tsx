@@ -19,11 +19,13 @@ import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
 import type { ProductPostmortem } from "../domain/save-postmortem.types";
 import { toast } from "sonner";
 import { useUnitMeasure } from "@/features/animal-weighing/hooks/use-unit-measure";
+import { Textarea } from "@/components/ui/textarea";
 
 type AnimalWeight = {
   animalId: string;
   selected: boolean;
   weight: string;
+  bodyPartComment?: string;
 };
 
 type TotalConfiscationModalProps = {
@@ -74,6 +76,7 @@ export function TotalConfiscationModal({
           animalId: animal.id.toString(),
           selected: !!savedTotalConfiscation,
           weight: savedTotalConfiscation ? String(savedTotalConfiscation.weight) : "",
+          bodyPartComment: savedTotalConfiscation?.bodyPartComment
         };
       });
 
@@ -99,6 +102,14 @@ export function TotalConfiscationModal({
     );
   };
 
+  const handleWeightCommentChange = (animalId: string, weightComment: string) => {
+    setAnimalWeights((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId ? { ...animal, bodyPartComment: weightComment } : animal
+      )
+    );
+  };
+
   const handleSaveAnimal = (animalId: string) => {
     const animal = animalWeights.find((a) => a.animalId === animalId);
 
@@ -113,6 +124,7 @@ export function TotalConfiscationModal({
       return;
     }
 
+    const bodyPartComment = animal.bodyPartComment ?? '';
     // Para decomiso total, no se especifica idBodyPart, solo el peso total
     const productsPostmortem: ProductPostmortem[] = [
       {
@@ -120,6 +132,7 @@ export function TotalConfiscationModal({
         weight: weight,
         isTotalConfiscation: true,
         status: true,
+        bodyPartComment: bodyPartComment.length > 0 ? bodyPartComment : undefined,
       },
     ];
 
@@ -219,95 +232,85 @@ export function TotalConfiscationModal({
                 if (!animalWeight) return null;
 
                 return (
-                  <div
-                    key={animal.id}
-                    className="border rounded-lg p-4 space-y-3 bg-white"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={animalWeight.selected}
-                        onCheckedChange={() => handleAnimalToggle(animalId)}
-                        id={`animal-${animal.id}`}
-                        disabled={!canEdit}
-                      />
-                      <label
-                        htmlFor={`animal-${animal.id}`}
-                        className="flex items-center gap-3 cursor-pointer flex-1"
-                      >
-                        <div className="flex items-center justify-center w-16 h-12 bg-gray-100 rounded-lg">
-                          <span className="font-mono text-sm font-semibold">
-                            {animal.code}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-600">
-                          Animal #{animal.code}
-                        </span>
-                      </label>
-                    </div>
+									<div key={animal.id} className='border rounded-lg p-4 space-y-3 bg-white'>
+										<div className='flex items-center gap-3'>
+											<Checkbox
+												checked={animalWeight.selected}
+												onCheckedChange={() => handleAnimalToggle(animalId)}
+												id={`animal-${animal.id}`}
+												disabled={!canEdit}
+											/>
+											<label htmlFor={`animal-${animal.id}`} className='flex items-center gap-3 cursor-pointer flex-1'>
+												<div className='flex items-center justify-center w-16 h-12 bg-gray-100 rounded-lg'>
+													<span className='font-mono text-sm font-semibold'>{animal.code}</span>
+												</div>
+												<span className='text-sm text-gray-600'>Animal #{animal.code}</span>
+											</label>
+										</div>
 
-                    {animalWeight.selected && (
-                      <div className="ml-14 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-700">
-                            Peso de la Canal ({unitSymbol}) *
-                          </span>
-                          <Info className="h-3 w-3 text-gray-400" />
-                          <Badge
-                            variant="secondary"
-                            className="bg-green-100 text-green-700 hover:bg-green-100"
-                          >
-                            Manual
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder={`Peso de la canal en ${unitSymbol}`}
-                            value={animalWeight.weight}
-                            onChange={(e) =>
-                              handleWeightChange(animalId, e.target.value)
-                            }
-                            disabled={!canEdit}
-                            className="flex-1 h-10"
-                          />
-                          {canEdit && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleSaveAnimal(animalId)}
-                              disabled={!animalWeight.weight || isSaving}
-                              className="bg-teal-600 hover:bg-teal-700"
-                            >
-                              {isSaving ? (
-                                <>
-                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                  Guardando...
-                                </>
-                              ) : (
-                                // Verificar si ya existe data guardada para mostrar "Actualizar" o "Guardar"
-                                (() => {
-                                  const savedData = postmortemData?.data?.find(
-                                    (item) =>
-                                      item.idDetailsSpeciesCertificate ===
-                                      parseInt(animalId)
-                                  );
-                                  const hasTotalConfiscation =
-                                    savedData?.productPostmortem?.some(
-                                      (prod) => prod.isTotalConfiscation === true
-                                    );
-                                  return hasTotalConfiscation
-                                    ? "Actualizar"
-                                    : "Guardar";
-                                })()
-                              )}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
+										{animalWeight.selected && (
+											<div className='ml-14 space-y-2'>
+												<div className='flex items-center gap-2'>
+													<span className='text-xs font-medium text-gray-700'>Peso de la Canal ({unitSymbol}) *</span>
+													<Info className='h-3 w-3 text-gray-400' />
+													<Badge variant='secondary' className='bg-green-100 text-green-700 hover:bg-green-100'>
+														Manual
+													</Badge>
+												</div>
+												<Input
+													type='number'
+													min='0'
+													step='0.01'
+													placeholder={`Peso de la canal en ${unitSymbol}`}
+													value={animalWeight.weight}
+													onChange={e => handleWeightChange(animalId, e.target.value)}
+													disabled={!canEdit}
+													className='flex-1 h-10'
+												/>
+
+												<div className='flex flex-col md:flex-row items-end justify-center gap-2'>
+													<label className='text-xs font-medium text-gray-700 w-full'>
+														Observación (Opcional)
+														<Textarea
+															placeholder='Observación'
+															className='w-full bg-white text-xs'
+															value={animalWeight?.bodyPartComment ?? ''}
+															onChange={e => {
+																handleWeightCommentChange(animalId, e.target.value);
+																const textarea = e.target;
+																textarea.style.height = 'auto';
+																textarea.style.height = textarea.scrollHeight + 'px';
+															}}
+															style={{ minHeight: '20px', overflow: 'hidden' }}
+														/>
+													</label>
+													{canEdit && (
+														<Button
+															size='sm'
+															onClick={() => handleSaveAnimal(animalId)}
+															disabled={!animalWeight.weight || isSaving}
+															className='bg-teal-600 hover:bg-teal-700'
+														>
+															{isSaving ? (
+																<>
+																	<Loader2 className='h-3 w-3 mr-1 animate-spin' />
+																	Guardando...
+																</>
+															) : (
+																// Verificar si ya existe data guardada para mostrar "Actualizar" o "Guardar"
+																(() => {
+																	const savedData = postmortemData?.data?.find(item => item.idDetailsSpeciesCertificate === parseInt(animalId));
+																	const hasTotalConfiscation = savedData?.productPostmortem?.some(prod => prod.isTotalConfiscation === true);
+																	return hasTotalConfiscation ? 'Actualizar' : 'Guardar';
+																})()
+															)}
+														</Button>
+													)}
+												</div>
+											</div>
+										)}
+									</div>
+								);
               })}
             </div>
           )}

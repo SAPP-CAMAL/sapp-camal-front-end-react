@@ -7,6 +7,7 @@ export interface ProductPostmortem {
     weight: number;
     isTotalConfiscation: boolean;
     status: boolean;
+    bodyPartComment?: string;
 }
 
 export interface SubProductPostmortem {
@@ -52,6 +53,7 @@ export interface ProductPostmortemData {
   sectionCode?: string; // Código de la sección del canal (ej: "A2", "B1")
   status: boolean;
   bodyPart: BodyPartData;
+  bodyPartComment?: string;
 }
 
 export interface DiseaseData {
