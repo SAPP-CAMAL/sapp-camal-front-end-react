@@ -11,8 +11,13 @@ export function useDeleteAnimalWeighing() {
       toast.success("Pesaje eliminado correctamente");
       queryClient.invalidateQueries({ queryKey: ["animal-weighing"] });
     },
-    onError: (error: any) => {
-      toast.error("Error al eliminar el pesaje: " + (error.message || "Error desconocido"));
+    onError: async (error: any) => {
+      try {
+        const errorData = await error?.response?.json();
+        toast.error(errorData?.data || errorData?.message || "Error al eliminar el pesaje");
+      } catch {
+        toast.error("Error al eliminar el pesaje");
+      }
     },
   });
 }

@@ -27,7 +27,7 @@ export async function getListAnimalsByFiltersService(filters: ListAnimalsFilters
 			return response.data;
 		}
 
-		throw new Error(response.message || 'Error al obtener los certificados');
+		throw new Error(response.data || response.message || 'Error al obtener los certificados');
 	} catch (error) {
 		console.error('Error en getListAnimalsByFiltersService:', error);
 		throw error;
