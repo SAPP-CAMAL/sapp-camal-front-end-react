@@ -58,7 +58,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DatePicker } from "@/components/ui/date-picker";
 import { parseLocalDateString, getLocalDateString } from "@/lib/formatDate";
 import { downloadListVehicleReport } from "../utils/download-list-vehicle-report";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function ListAnimalsManagement() {
   const [fechaIngreso, setFechaIngreso] = useState<Date | null>(null);
@@ -67,7 +72,7 @@ export function ListAnimalsManagement() {
   const [availableSpecies, setAvailableSpecies] = useState<Specie[]>([]);
   const [selectedSpecies, setSelectedSpecies] = useState<Species[]>([]);
   const [selectedFinishType, setSelectedFinishType] = useState<number | null>(
-    null
+    null,
   );
   const [marca, setMarca] = useState("");
   const [allData, setAllData] = useState<any[]>([]); // Todos los datos del backend
@@ -75,7 +80,7 @@ export function ListAnimalsManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(true);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
-    null
+    null,
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -114,20 +119,20 @@ export function ListAnimalsManagement() {
           selectedSpecies.length > 0 && availableSpecies.length > 0
             ? availableSpecies
                 .filter((specie) =>
-                  selectedSpecies.includes(specie.name as Species)
+                  selectedSpecies.includes(specie.name as Species),
                 )
                 .map((specie) => specie.id)
             : null;
 
         const filters = {
           startDate: fechaIngreso
-            ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
+            ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, "0")}-${String(fechaIngreso.getDate()).padStart(2, "0")}`
             : getCurrentDate(),
           endDate: fechaIngresoFin
-            ? `${fechaIngresoFin.getFullYear()}-${String(fechaIngresoFin.getMonth() + 1).padStart(2, '0')}-${String(fechaIngresoFin.getDate()).padStart(2, '0')}`
+            ? `${fechaIngresoFin.getFullYear()}-${String(fechaIngresoFin.getMonth() + 1).padStart(2, "0")}-${String(fechaIngresoFin.getDate()).padStart(2, "0")}`
             : getCurrentDate(),
           slaughterDate: fechaFaenamiento
-            ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
+            ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, "0")}-${String(fechaFaenamiento.getDate()).padStart(2, "0")}`
             : null,
           idSpecie:
             selectedSpecieIds && selectedSpecieIds.length > 0
@@ -224,7 +229,7 @@ export function ListAnimalsManagement() {
 
       setSearchTimeout(timeout);
     },
-    [searchTimeout]
+    [searchTimeout],
   );
 
   // Cleanup del timeout
@@ -250,13 +255,15 @@ export function ListAnimalsManagement() {
     registros: totalRecords,
     totalEnGuia: allData.reduce(
       (acc, item) => acc + (item.males || 0) + (item.females || 0),
-      0
+      0,
     ),
     totalFaenamiento: allData.reduce((acc, item) => {
       const targetDateObj = fechaFaenamiento || new Date();
       const targetDate = getLocalDateString(targetDateObj);
 
-      const itemSlaughterDate = item.slaughterDate ? parseLocalDateString(item.slaughterDate.split('T')[0]) : null;
+      const itemSlaughterDate = item.slaughterDate
+        ? parseLocalDateString(item.slaughterDate.split("T")[0])
+        : null;
       const itemSlaughter = itemSlaughterDate
         ? getLocalDateString(itemSlaughterDate)
         : null;
@@ -269,36 +276,39 @@ export function ListAnimalsManagement() {
     }, 0),
   };
 
-  const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+  const handleDownloadReport = async (type: "EXCEL" | "PDF") => {
     const selectedSpecieIds =
       selectedSpecies.length > 0 && availableSpecies.length > 0
-        ? availableSpecies.filter(specie => selectedSpecies.includes(specie.name as Species)).map(specie => specie.id)
+        ? availableSpecies
+            .filter((specie) =>
+              selectedSpecies.includes(specie.name as Species),
+            )
+            .map((specie) => specie.id)
         : null;
     const filters = {
       startDate: fechaIngreso
-        ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}-${String(fechaIngreso.getDate()).padStart(2, '0')}`
+        ? `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, "0")}-${String(fechaIngreso.getDate()).padStart(2, "0")}`
         : getCurrentDate(),
       endDate: fechaIngresoFin
-        ? `${fechaIngresoFin.getFullYear()}-${String(fechaIngresoFin.getMonth() + 1).padStart(2, '0')}-${String(fechaIngresoFin.getDate()).padStart(2, '0')}`
+        ? `${fechaIngresoFin.getFullYear()}-${String(fechaIngresoFin.getMonth() + 1).padStart(2, "0")}-${String(fechaIngresoFin.getDate()).padStart(2, "0")}`
         : getCurrentDate(),
       slaughterDate: fechaFaenamiento
-        ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, '0')}-${String(fechaFaenamiento.getDate()).padStart(2, '0')}`
+        ? `${fechaFaenamiento.getFullYear()}-${String(fechaFaenamiento.getMonth() + 1).padStart(2, "0")}-${String(fechaFaenamiento.getDate()).padStart(2, "0")}`
         : null,
-      idSpecie: selectedSpecieIds && selectedSpecieIds.length > 0 ? selectedSpecieIds[0] : null,
+      idSpecie:
+        selectedSpecieIds && selectedSpecieIds.length > 0
+          ? selectedSpecieIds[0]
+          : null,
       idFinishType: selectedFinishType,
       brandName: marca.trim() || null,
     };
 
-    toast.promise(
-      downloadListVehicleReport(filters, type),
-      {
-        loading: 'Generando reporte...',
-        success: `Reporte ${type} descargado correctamente`,
-        error: 'Error al descargar el reporte',
-      }
-    );
+    toast.promise(downloadListVehicleReport(filters, type), {
+      loading: "Generando reporte...",
+      success: `Reporte ${type} descargado correctamente`,
+      error: "Error al descargar el reporte",
+    });
   };
-
 
   // Componente para mostrar los datos en formato de tarjeta (móvil)
   const MobileCard = ({ item }: { item: any }) => (
@@ -366,7 +376,10 @@ export function ListAnimalsManagement() {
                   Fecha de Faenamiento
                 </div>
                 <div className="text-sm font-medium">
-                  {format(parseLocalDateString(item.slaughterDate.split('T')[0]), "dd/LL/yyyy")}
+                  {format(
+                    parseLocalDateString(item.slaughterDate.split("T")[0]),
+                    "dd/LL/yyyy",
+                  )}
                 </div>
               </div>
             </div>
@@ -409,9 +422,7 @@ export function ListAnimalsManagement() {
             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
               {item.species?.name || "N/A"}
             </Badge>
-            <Badge className="bg-primary">
-              {item.brand?.name || "N/A"}
-            </Badge>
+            <Badge className="bg-primary">{item.brand?.name || "N/A"}</Badge>
           </div>
 
           {/* Corral */}
@@ -446,7 +457,9 @@ export function ListAnimalsManagement() {
     <div className="space-y-4">
       <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-semibold text-xl">Lista de Ingreso de Animales</h1>
+          <h1 className="font-semibold text-xl">
+            Lista de Ingreso de Animales
+          </h1>
           <p className="text-sm text-muted-foreground">
             Registro detallado de todos los ingresos de animales al camal
           </p>
@@ -472,14 +485,14 @@ export function ListAnimalsManagement() {
               alignOffset={0}
             >
               <DropdownMenuItem
-                onClick={() => handleDownloadReport('EXCEL')}
+                onClick={() => handleDownloadReport("EXCEL")}
                 className="cursor-pointer"
               >
                 <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
                 <span>Descargar Excel</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleDownloadReport('PDF')}
+                onClick={() => handleDownloadReport("PDF")}
                 className="cursor-pointer"
               >
                 <FileText className="h-4 w-4 mr-2 text-red-600" />
@@ -517,10 +530,10 @@ export function ListAnimalsManagement() {
                 Fecha Inicio
               </span>
               <DatePicker
-                inputClassName='bg-secondary'
+                inputClassName="bg-secondary"
                 iconClassName="text-muted-foreground"
                 selected={fechaIngreso || new Date()}
-                onChange={date => setFechaIngreso(date as Date)}
+                onChange={(date) => setFechaIngreso(date as Date)}
               />
             </div>
 
@@ -530,10 +543,10 @@ export function ListAnimalsManagement() {
                 Fecha Fin
               </span>
               <DatePicker
-                inputClassName='bg-secondary'
+                inputClassName="bg-secondary"
                 iconClassName="text-muted-foreground"
                 selected={fechaIngresoFin || new Date()}
-                onChange={date => setFechaIngresoFin(date as Date)}
+                onChange={(date) => setFechaIngresoFin(date as Date)}
               />
             </div>
 
@@ -543,9 +556,9 @@ export function ListAnimalsManagement() {
                 Fecha de Faenamiento
               </span>
               <DatePicker
-                inputClassName='bg-secondary'
+                inputClassName="bg-secondary"
                 selected={fechaFaenamiento}
-                onChange={date => setFechaFaenamiento(date as Date)}
+                onChange={(date) => setFechaFaenamiento(date as Date)}
                 icon={<CalendarDays className="text-muted-foreground" />}
               />
             </div>
@@ -711,7 +724,7 @@ export function ListAnimalsManagement() {
                         N° de animales
                       </span>
                       <span className="block text-xs font-semibold">
-                        registrados
+                        REGISTRADOS
                       </span>
                       <div className="mt-2 grid grid-cols-3 gap-1 place-items-center text-[10px] border-t pt-1">
                         <span className="font-bold">H</span>
@@ -732,7 +745,7 @@ export function ListAnimalsManagement() {
                     </TableHead>
                     <TableHead className="w-40 whitespace-normal leading-tight text-center">
                       <span className="block text-xs font-semibold">
-                        Identificación del
+                        Identificación
                       </span>
                       <span className="block text-xs font-semibold">
                         Usuario al Camal
@@ -797,7 +810,12 @@ export function ListAnimalsManagement() {
                         </TableCell>
                         <TableCell className="whitespace-normal text-center text-sm">
                           {item.slaughterDate
-                            ? format(parseLocalDateString(item.slaughterDate.split('T')[0]), "dd/LL")
+                            ? format(
+                                parseLocalDateString(
+                                  item.slaughterDate.split("T")[0],
+                                ),
+                                "dd/LL",
+                              )
                             : "-"}
                         </TableCell>
                         <TableCell className="whitespace-normal text-center border-x">
@@ -865,7 +883,7 @@ export function ListAnimalsManagement() {
               {/* Información de registros y selector de tamaño */}
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 <div className="text-sm text-muted-foreground">
-                  Mostrando {((currentPage - 1) * pageSize) + 1} a{" "}
+                  Mostrando {(currentPage - 1) * pageSize + 1} a{" "}
                   {Math.min(currentPage * pageSize, totalRecords)} de{" "}
                   {totalRecords} registros
                 </div>
@@ -909,7 +927,9 @@ export function ListAnimalsManagement() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={currentPage === 1}
                   title="Página anterior"
                 >
@@ -927,7 +947,9 @@ export function ListAnimalsManagement() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
                   disabled={currentPage === totalPages}
                   title="Página siguiente"
                 >
