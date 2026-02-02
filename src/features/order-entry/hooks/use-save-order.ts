@@ -11,8 +11,13 @@ export function useSaveOrder() {
 			toast.success('Orden guardada exitosamente');
 			queryClient.invalidateQueries({ queryKey: ['orders'] });
 		},
-		onError: (error: any) => {
-			toast.error(error?.message || 'Error al guardar la orden');
+		onError: async (error: any) => {
+			try {
+				const errorData = await error?.response?.json();
+				toast.error(errorData?.data || errorData?.message || 'Error al guardar la orden');
+			} catch {
+				toast.error('Error al guardar la orden');
+			}
 		},
 	});
 }

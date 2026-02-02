@@ -164,9 +164,17 @@ export const useStep1Certificate = () => {
 
 			setSearchState(initialState);
 			handleSelectedCertificate(updatedCertificate);
-		} catch (error) {
+		} catch (error: any) {
 			handleSetAccordionState({ name: 'step1Accordion', accordionState: { btnState: 'enabled', isOpen: true } });
-			return toast.error('Error al guardar los datos. Por favor, inténtalo de nuevo.');
+			
+			// Extraer el mensaje de error del backend
+			try {
+				const errorData = await error?.response?.json();
+				const errorMessage = errorData?.data || errorData?.message || 'Error al guardar los datos. Por favor, inténtalo de nuevo.';
+				return toast.error(errorMessage);
+			} catch {
+				return toast.error('Error al guardar los datos. Por favor, inténtalo de nuevo.');
+			}
 		}
 
 		// 1. Retrieve animal admission data for step 2

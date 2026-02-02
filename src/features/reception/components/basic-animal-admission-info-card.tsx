@@ -1,6 +1,11 @@
 import { Check, Edit, FileText, Trash2, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { AnimalAdmissionItem } from "../context/reception-provider";
 import { useStep2Animals } from "../hooks/use-step-2-animals";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
@@ -25,6 +30,9 @@ export const BasicAnimalAdmissionInfoCard = ({
     ?.toLowerCase()
     ?.startsWith(corralTypesCode.EMERGENCIA.toLowerCase());
 
+  // Verificar si ya se generaron códigos - si codes no es null, no se puede editar
+  const hasGeneratedCodes = animalAdmissionItem?.animalAdmission?.codes != null;
+
   return (
     <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 p-3 sm:p-4 pb-2">
@@ -32,20 +40,31 @@ export const BasicAnimalAdmissionInfoCard = ({
           Registro #{animalAdmissionItem.animalAdmission.id}
         </CardTitle>
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs sm:text-sm"
-            onClick={() =>
-              handleReconstructAnimalAdmissionData(animalAdmissionItem)
-            }
-            disabled={isEmergency || animalAdmissionItem.isRetrieveFormData}
-          >
-            <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="ml-1">
-              {animalAdmissionItem.isRetrieveFormData ? "..." : "Editar"}
-            </span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs sm:text-sm"
+                  onClick={() =>
+                    handleReconstructAnimalAdmissionData(animalAdmissionItem)
+                  }
+                  disabled={isEmergency || animalAdmissionItem.isRetrieveFormData || hasGeneratedCodes}
+                >
+                  <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="ml-1">
+                    {animalAdmissionItem.isRetrieveFormData ? "..." : "Editar"}
+                  </span>
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {hasGeneratedCodes && (
+              <TooltipContent side="top" align="center">
+                No se puede editar porque ya se generaron los códigos para este ingreso
+              </TooltipContent>
+            )}
+          </Tooltip>
           <Button
             variant="outline"
             size="sm"
@@ -70,7 +89,7 @@ export const BasicAnimalAdmissionInfoCard = ({
                 size="sm"
                 className="h-8 text-xs sm:text-sm"
                 disabled={
-                  isEmergency || animalAdmissionItem.state === "deleting"
+                  isEmergency || animalAdmissionItem.state === "deleting" || hasGeneratedCodes
                 }
               >
                 <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -143,6 +162,14 @@ export const BasicAnimalAdmissionInfoCard = ({
             </div>
             <div className="flex flex-col">
               <span className="font-medium text-muted-foreground">
+                Marca:
+              </span>
+              <span className="truncate">
+                {animalAdmissionItem?.animalAdmission?.brand?.name || "N/A"}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-medium text-muted-foreground">
                 Corral:
               </span>
               <span>
@@ -150,14 +177,6 @@ export const BasicAnimalAdmissionInfoCard = ({
                   animalAdmissionItem.retrievedFromApi?.statusCorrals.corral
                     .name ||
                   ""}
-              </span>
-            </div>
-            <div className="flex flex-col col-span-2">
-              <span className="font-medium text-muted-foreground">
-                Observación:
-              </span>
-              <span className="truncate">
-                {animalAdmissionItem?.animalAdmission?.observations || "N/A"}
               </span>
             </div>
             {animalAdmissionItem?.animalAdmission?.finishType?.name && (
@@ -174,6 +193,14 @@ export const BasicAnimalAdmissionInfoCard = ({
                 </span>
               </div>
             )}
+            <div className="flex flex-col col-span-2">
+              <span className="font-medium text-muted-foreground">
+                Observación:
+              </span>
+              <span className="truncate">
+                {animalAdmissionItem?.animalAdmission?.observations || "N/A"}
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>
