@@ -466,7 +466,7 @@ export function AntemortemManagement() {
                   alignOffset={0}>
 
                     {/* Antemortem - Interno */}
-                     <DropdownMenuSub>
+                     {/* <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="flex items-center">
                         <FileText className="h-4 w-4 mr-2" />
                         <span>Antemortem Interno</span>
@@ -485,7 +485,7 @@ export function AntemortemManagement() {
                           Descargar PDF
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
-                    </DropdownMenuSub>
+                    </DropdownMenuSub> */}
 
                     {/* Antemortem - Agrocalidad*/}
                      <DropdownMenuSub>

@@ -560,79 +560,22 @@ export function AnimalSelectionModal({
               seleccionados
             </p>
 
-            <div className="flex flex-col gap-3">
-              <div className="flex gap-2">
-                <Button
-                  variant={generalPercentage === "20" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setGeneralPercentage("20");
-                    handleApplyGeneralPercentage(20);
-                  }}
-                  className={
-                    generalPercentage === "20"
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : ""
-                  }
-                >
-                  20%
-                </Button>
-                <Button
-                  variant={generalPercentage === "40" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setGeneralPercentage("40");
-                    handleApplyGeneralPercentage(40);
-                  }}
-                  className={
-                    generalPercentage === "40"
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : ""
-                  }
-                >
-                  40%
-                </Button>
-                <Button
-                  variant={generalPercentage === "60" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setGeneralPercentage("60");
-                    handleApplyGeneralPercentage(60);
-                  }}
-                  className={
-                    generalPercentage === "60"
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : ""
-                  }
-                >
-                  60%
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 min-w-fit">
-                  Porcentaje personalizado (%)
-                </span>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="Ingrese porcentaje"
-                  className="w-40 h-9"
-                  value={generalPercentage || ""}
-                  onChange={(e) => setGeneralPercentage(e.target.value)}
-                />
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    const val = parseInt(generalPercentage);
-                    if (!isNaN(val)) handleApplyGeneralPercentage(val);
-                  }}
-                  className="bg-teal-600 hover:bg-teal-700"
-                >
-                  Aplicar a Seleccionados
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Button
+                variant={generalPercentage === "100" ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setGeneralPercentage("100");
+                  handleApplyGeneralPercentage(100);
+                }}
+                className={
+                  generalPercentage === "100"
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : ""
+                }
+              >
+                100%
+              </Button>
             </div>
           </div>
         )}
@@ -747,7 +690,7 @@ export function AnimalSelectionModal({
                                           variant={
                                             selection.anatomicalPercentages?.[
                                               location.id
-                                            ] === 20
+                                            ] === 100
                                               ? "default"
                                               : "outline"
                                           }
@@ -756,93 +699,20 @@ export function AnimalSelectionModal({
                                             handleAnatomicalPercentage(
                                               animalId,
                                               location.id,
-                                              20
+                                              100
                                             )
                                           }
                                           disabled={!canEdit}
                                           className={`h-7 px-2 text-xs ${
                                             selection.anatomicalPercentages?.[
                                               location.id
-                                            ] === 20
+                                            ] === 100
                                               ? "bg-blue-600 hover:bg-blue-700"
                                               : ""
                                           }`}
                                         >
-                                          20%
+                                          100%
                                         </Button>
-                                        <Button
-                                          variant={
-                                            selection.anatomicalPercentages?.[
-                                              location.id
-                                            ] === 40
-                                              ? "default"
-                                              : "outline"
-                                          }
-                                          size="sm"
-                                          onClick={() =>
-                                            handleAnatomicalPercentage(
-                                              animalId,
-                                              location.id,
-                                              40
-                                            )
-                                          }
-                                          disabled={!canEdit}
-                                          className={`h-7 px-2 text-xs ${
-                                            selection.anatomicalPercentages?.[
-                                              location.id
-                                            ] === 40
-                                              ? "bg-blue-600 hover:bg-blue-700"
-                                              : ""
-                                          }`}
-                                        >
-                                          40%
-                                        </Button>
-                                        <Button
-                                          variant={
-                                            selection.anatomicalPercentages?.[
-                                              location.id
-                                            ] === 60
-                                              ? "default"
-                                              : "outline"
-                                          }
-                                          size="sm"
-                                          onClick={() =>
-                                            handleAnatomicalPercentage(
-                                              animalId,
-                                              location.id,
-                                              60
-                                            )
-                                          }
-                                          disabled={!canEdit}
-                                          className={`h-7 px-2 text-xs ${
-                                            selection.anatomicalPercentages?.[
-                                              location.id
-                                            ] === 60
-                                              ? "bg-blue-600 hover:bg-blue-700"
-                                              : ""
-                                          }`}
-                                        >
-                                          60%
-                                        </Button>
-                                        <Input
-                                          type="number"
-                                          min="0"
-                                          max="100"
-                                          value={
-                                            selection.anatomicalPercentages?.[
-                                              location.id
-                                            ] ?? 0
-                                          }
-                                          onChange={(e) =>
-                                            handleAnatomicalPercentage(
-                                              animalId,
-                                              location.id,
-                                              parseInt(e.target.value) || 0
-                                            )
-                                          }
-                                          disabled={!canEdit}
-                                          className="w-14 h-7 text-center bg-white text-xs"
-                                        />
                                       </div>
                                       
                                       {/* Peso por ubicación anatómica */}
@@ -894,75 +764,23 @@ export function AnimalSelectionModal({
                                 <div className="flex items-center gap-2">
                                   <Button
                                     variant={
-                                      selection.percentage === 20
+                                      selection.percentage === 100
                                         ? "default"
                                         : "outline"
                                     }
                                     size="sm"
                                     onClick={() =>
-                                      handleAnimalPercentage(animalId, 20)
+                                      handleAnimalPercentage(animalId, 100)
                                     }
                                     disabled={!canEdit}
                                     className={
-                                      selection.percentage === 20
+                                      selection.percentage === 100
                                         ? "bg-blue-600 hover:bg-blue-700"
                                         : ""
                                     }
                                   >
-                                    20%
+                                    100%
                                   </Button>
-                                  <Button
-                                    variant={
-                                      selection.percentage === 40
-                                        ? "default"
-                                        : "outline"
-                                    }
-                                    size="sm"
-                                    onClick={() =>
-                                      handleAnimalPercentage(animalId, 40)
-                                    }
-                                    disabled={!canEdit}
-                                    className={
-                                      selection.percentage === 40
-                                        ? "bg-blue-600 hover:bg-blue-700"
-                                        : ""
-                                    }
-                                  >
-                                    40%
-                                  </Button>
-                                  <Button
-                                    variant={
-                                      selection.percentage === 60
-                                        ? "default"
-                                        : "outline"
-                                    }
-                                    size="sm"
-                                    onClick={() =>
-                                      handleAnimalPercentage(animalId, 60)
-                                    }
-                                    disabled={!canEdit}
-                                    className={
-                                      selection.percentage === 60
-                                        ? "bg-blue-600 hover:bg-blue-700"
-                                        : ""
-                                    }
-                                  >
-                                    60%
-                                  </Button>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    value={selection.percentage ?? 0}
-                                    onChange={(e) =>
-                                      handleAnimalPercentage(
-                                        animalId,
-                                        parseInt(e.target.value) || 0
-                                      )
-                                    }
-                                    disabled={!canEdit}
-                                    className="w-20 h-8 text-center bg-gray-50"
-                                  />
                                 </div>
                               </div>
 

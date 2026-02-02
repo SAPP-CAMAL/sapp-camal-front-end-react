@@ -708,14 +708,14 @@ export function ListAnimalsManagement() {
                     </TableHead>
                     <TableHead className="w-48 text-center whitespace-normal leading-tight align-top border-x">
                       <span className="block text-xs font-semibold">
-                        Nro de animales dejado
+                        N° de animales
                       </span>
                       <span className="block text-xs font-semibold">
-                        en faenamiento
+                        registrados
                       </span>
                       <div className="mt-2 grid grid-cols-3 gap-1 place-items-center text-[10px] border-t pt-1">
                         <span className="font-bold">H</span>
-                        <span className="font-bold border-l pl-2">M</span>
+                        <span className="font-bold border-l pl-2 pr-3">M</span>
                         <span className="font-bold border-l pl-2">TOTAL</span>
                       </div>
                     </TableHead>
