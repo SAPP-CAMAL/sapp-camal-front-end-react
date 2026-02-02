@@ -540,9 +540,6 @@ export function AnimalSelectionModal({
                 onClose();
               }
             },
-            onError: () => {
-              toast.error(`Error al actualizar animal`);
-            },
           }
         );
       } else {
@@ -567,9 +564,6 @@ export function AnimalSelectionModal({
                 onSave(totalAnimals);
                 onClose();
               }
-            },
-            onError: () => {
-              toast.error(`Error al guardar animal`);
             },
           }
         );
@@ -809,7 +803,7 @@ export function AnimalSelectionModal({
 																					{/* Mostrar solo si la patología es 'OTROS' */}
 																					{patologia?.toUpperCase() === 'OTROS' && (
 																						<label className='text-xs font-medium text-gray-700'>
-																							Ingrese la situación adversa *
+																							Situación adversa *
 																							<Textarea
 																								className='w-full bg-white text-xs'
 																								placeholder='Situación adversa'
@@ -834,9 +828,9 @@ export function AnimalSelectionModal({
 																					)}
 
 																					<label className='text-xs font-medium text-gray-700'>
-																						Ingrese el comentario de enfermedad (Opcional)
+																						Observación (Opcional)
 																						<Textarea
-																							placeholder='Comentario de enfermedad'
+																							placeholder='Observación'
 																							className='w-full bg-white text-xs'
 																							value={selection.anatomicalDiseaseComment?.[location.id] ?? ''}
 																							onChange={e => {
@@ -932,7 +926,7 @@ export function AnimalSelectionModal({
 															<div key={selection.animalId} className='space-y-2'>
 																{patologia?.toUpperCase() === 'OTROS' && (
 																	<label className='text-xs font-medium text-gray-700'>
-																		Ingrese la situación adversa *
+																		Situación adversa *
 																		<Textarea
 																			placeholder='Situación adversa'
 																			className='w-full bg-white text-xs'
@@ -960,9 +954,9 @@ export function AnimalSelectionModal({
 																)}
 
 																<label className='text-xs font-medium text-gray-700'>
-																	Ingrese el comentario de enfermedad (Opcional)
+																	Observación (Opcional)
 																	<Textarea
-																		placeholder='Comentario de enfermedad'
+																		placeholder='Observación'
 																		className='w-full bg-white text-xs'
 																		value={selection.diseaseComment ?? ''}
 																		onChange={e => {
