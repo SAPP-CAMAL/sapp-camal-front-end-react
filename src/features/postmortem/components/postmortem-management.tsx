@@ -483,7 +483,7 @@ export function PostmortemManagement() {
     <div className="space-y-4 p-4">
       <div className="text-center">
         <h1 className="text-xl font-semibold">
-          Inspección Postmortem Agrocalidad (Decomisos)
+          INSPECCIÓN POSTMORTEM
         </h1>
         <p className="text-muted-foreground text-sm">
           Sistema de registro de decomisos por patologías
