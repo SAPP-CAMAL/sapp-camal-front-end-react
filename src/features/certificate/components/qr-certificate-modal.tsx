@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { Ring } from 'ldrs/react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { CircleCheckBig, Edit, MoveRight, QrCode, RotateCcw, TriangleAlert, XIcon } from 'lucide-react';
@@ -5,9 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Certificate } from '../domain';
 import { useQrCertificateModal } from '@/features/certificate/hooks';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { CreateSearchPerson } from './create-search-person';
+import { useOperator } from '../hooks/use-operator';
+import { useMemo } from 'react';
 
 import 'ldrs/react/Ring.css';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 interface RenderSuccessButtonProps {
 	closeModal: () => void;
@@ -22,7 +27,7 @@ interface Props {
 	renderSuccessButton?: (props: RenderSuccessButtonProps) => React.ReactNode;
 }
 
-export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText = 'Escanear QR', onSetQrData, renderSuccessButton }: Props) => {
+export const QrCertificateModal = ({ extraSuccessInfoCard, btnText = 'Escanear QR', onSetQrData, renderSuccessButton }: Omit<Props, 'btnVariant'>) => {
 	const {
 		isModalOpen,
 		currentTab,
@@ -42,6 +47,36 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 		setIsModalOpen,
 		handleScanQrData,
 	} = useQrCertificateModal({ onSetQrData });
+
+	// Operator state - Initialize and update with certificate operator if available
+	const operatorInitialPerson = useMemo(() => {
+		return qrData?.operator ? {
+			id: qrData.operator.id,
+			fullName: qrData.operator.fullName,
+		} : null;
+	}, [qrData?.operator]);
+
+	// Create a reset key based on certificate code to force operator reset when QR changes
+	const operatorResetKey = useMemo(() => {
+		return qrData?.code || 'no-certificate';
+	}, [qrData?.code]);
+
+	const operatorHook = useOperator({
+		initialPerson: operatorInitialPerson,
+		resetKey: operatorResetKey
+	});
+	const { selectedPerson: selectedOperator } = operatorHook;
+
+	// Handle save QR data with operator
+	const handleSaveWithOperator = async () => {
+		if (!selectedOperator) {
+			toast.error('Debe seleccionar un operador antes de guardar el certificado');
+			return;
+		}
+
+		const operatorId = selectedOperator.id;
+		return await handleSaveQrData(operatorId);
+	};
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={open => setIsModalOpen(open)}>
@@ -85,8 +120,8 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 														className='flex items-center gap-3 p-2 hover:bg-background rounded-md cursor-pointer transition-colors'
 													>
 														<input
-															type="radio"
-															name="origin"
+															type='radio'
+															name='origin'
 															value={originOption.id}
 															checked={origin?.id === originOption.id}
 															onChange={() => setOrigin(String(originOption.id))}
@@ -96,11 +131,19 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 													</label>
 												))
 											) : (
-												<p className='text-sm text-muted-foreground text-center py-2'>
-													No hay procedencias disponibles
-												</p>
+												<p className='text-sm text-muted-foreground text-center py-2'>No hay procedencias disponibles</p>
 											)}
 										</div>
+
+										<Separator className='my-2' />
+
+										{/* Operador Section */}
+										<CreateSearchPerson
+											title='Asignar Operador'
+											description='Seleccione el operador responsable de este certificado.'
+											className='mt-4'
+											{...operatorHook}
+										/>
 									</div>
 								</>
 							) : (
@@ -141,7 +184,7 @@ export const QrCertificateModal = ({ btnVariant, extraSuccessInfoCard, btnText =
 										<RotateCcw />
 									</Button>
 
-									<Button className=' hover:bg-primary' onClick={handleSaveQrData}>
+									<Button className=' hover:bg-primary' onClick={handleSaveWithOperator}>
 										{isSaving ? 'Guardando...' : 'Guardar y Continuar'}
 										<MoveRight />
 									</Button>
