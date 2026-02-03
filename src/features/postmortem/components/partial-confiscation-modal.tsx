@@ -19,6 +19,7 @@ import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
 import type { ProductPostmortem } from "../domain/save-postmortem.types";
 import { toast } from "sonner";
 import { useUnitMeasure } from "@/features/animal-weighing/hooks/use-unit-measure";
+import { Textarea } from "@/components/ui/textarea";
 
 type BodyPartSelection = {
   id: number;
@@ -26,6 +27,7 @@ type BodyPartSelection = {
   description: string;
   selected: boolean;
   weight: string;
+  bodyPartComment?: string;
 };
 
 type AnimalPartSelection = {
@@ -121,6 +123,7 @@ export function PartialConfiscationModal({
             code: part.code,
             description: part.description,
             selected: !!savedPart,
+            bodyPartComment: savedPart?.bodyPartComment || "",
             weight: savedPart ? String(savedPart.weight) : "",
           };
         });
@@ -185,6 +188,25 @@ export function PartialConfiscationModal({
     );
   };
 
+  const handleBodyPartComment = (
+    animalId: string,
+    partId: number,
+    bodyPartComment: string
+  ) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? {
+              ...animal,
+              bodyParts: animal.bodyParts.map((part) =>
+                part.id === partId ? { ...part, bodyPartComment } : part
+              ),
+            }
+          : animal
+      )
+    );
+  };
+
   const handleCancel = () => {
     if (animalsData?.data && sortedBodyParts.length > 0) {
       setAnimalSelections(
@@ -242,31 +264,46 @@ export function PartialConfiscationModal({
           weight: parseFloat(part.weight),
           isTotalConfiscation: false, // Decomiso parcial
           status: true,
+          bodyPartComment: ((part?.bodyPartComment ?? '').length) > 0 ? part.bodyPartComment : undefined,
         })
       );
 
-      savePostmortem(
-        {
-          idDetailsSpeciesCertificate: parseInt(animal.animalId),
-          status: true,
-          productsPostmortem,
-        },
-        {
-          onSuccess: () => {
-            savedCount++;
-            if (savedCount === totalAnimals) {
-              toast.success(
-                `Se guardaron ${totalAnimals} animales correctamente`
-              );
-              onSave(totalAnimals);
-              onClose();
-            }
+      try {
+
+
+        savePostmortem(
+          {
+            idDetailsSpeciesCertificate: parseInt(animal.animalId),
+            status: true,
+            productsPostmortem,
           },
-          onError: () => {
-            toast.error(`Error al guardar animal ${animal.animalId}`);
-          },
-        }
-      );
+          {
+            onSuccess: () => {
+              savedCount++;
+              if (savedCount === totalAnimals) {
+                toast.success(
+                  `Se guardaron ${totalAnimals} animales correctamente`
+                );
+                onSave(totalAnimals);
+                onClose();
+              }
+            },
+            onError: (error) => {
+              // const a = error
+              console.log(error.message)
+              if (error instanceof Error && error.message) {
+                toast.error(`Error al guardar animal ${animal.animalId}: ${error.message}`);
+              } else {
+                toast.error(`Error al guardar animal ${animal.animalId}`);
+              }
+              //
+              // toast.error(`Error al guardar animal ${animal.animalId}`);
+            },
+          }
+        )
+      } catch (error) {
+        console.log({error})
+      }
     });
   };
 
@@ -345,117 +382,102 @@ export function PartialConfiscationModal({
                 if (!animalSelection) return null;
 
                 return (
-                  <div
-                    key={animal.id}
-                    className={`border rounded-lg p-4 space-y-3 ${
-                      animalSelection.hasTotalConfiscation
-                        ? "bg-red-50 border-red-200 opacity-60"
-                        : "bg-white"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={animalSelection.selected}
-                        onCheckedChange={() => handleAnimalToggle(animalId)}
-                        id={`animal-${animal.id}`}
-                        disabled={animalSelection.hasTotalConfiscation || !canEdit}
-                      />
-                      <label
-                        htmlFor={`animal-${animal.id}`}
-                        className={`flex items-center gap-3 flex-1 ${
-                          animalSelection.hasTotalConfiscation
-                            ? "cursor-not-allowed"
-                            : "cursor-pointer"
-                        }`}
-                      >
-                        <div className="flex items-center justify-center w-16 h-12 bg-gray-100 rounded-lg">
-                          <span className="font-mono text-sm font-semibold">
-                            {animal.code}
-                          </span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm text-gray-600">
-                            Animal #{animal.code}
-                          </span>
-                          {animalSelection.hasTotalConfiscation && (
-                            <span className="text-xs text-red-600 font-medium">
-                              ⚠️ Decomiso Total - No disponible
-                            </span>
-                          )}
-                        </div>
-                      </label>
-                    </div>
+									<div
+										key={animal.id}
+										className={`border rounded-lg p-4 space-y-3 ${
+											animalSelection.hasTotalConfiscation ? 'bg-red-50 border-red-200 opacity-60' : 'bg-white'
+										}`}
+									>
+										<div className='flex items-center gap-3'>
+											<Checkbox
+												checked={animalSelection.selected}
+												onCheckedChange={() => handleAnimalToggle(animalId)}
+												id={`animal-${animal.id}`}
+												disabled={animalSelection.hasTotalConfiscation || !canEdit}
+											/>
+											<label
+												htmlFor={`animal-${animal.id}`}
+												className={`flex items-center gap-3 flex-1 ${animalSelection.hasTotalConfiscation ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+											>
+												<div className='flex items-center justify-center w-16 h-12 bg-gray-100 rounded-lg'>
+													<span className='font-mono text-sm font-semibold'>{animal.code}</span>
+												</div>
+												<div className='flex flex-col'>
+													<span className='text-sm text-gray-600'>Animal #{animal.code}</span>
+													{animalSelection.hasTotalConfiscation && (
+														<span className='text-xs text-red-600 font-medium'>⚠️ Decomiso Total - No disponible</span>
+													)}
+												</div>
+											</label>
+										</div>
 
-                    {animalSelection.selected && (
-                      <div className="ml-14 space-y-3">
-                        <div className="text-xs font-medium text-gray-700">
-                          Partes Afectadas y Peso ({unitSymbol}) *
-                        </div>
+										{animalSelection.selected && (
+											<div className='ml-14 space-y-3'>
+												<div className='text-xs font-medium text-gray-700'>Partes Afectadas y Peso ({unitSymbol}) *</div>
 
-                        {/* Grid de partes del cuerpo */}
-                        <div className="grid grid-cols-2 gap-3">
-                          {animalSelection.bodyParts.map((part) => (
-                            <div
-                              key={part.id}
-                              className="flex items-center gap-2 p-2 border rounded-lg bg-gray-50"
-                            >
-                              <Checkbox
-                                checked={part.selected}
-                                onCheckedChange={() =>
-                                  handleBodyPartToggle(animalId, part.id)
-                                }
-                                id={`${animalId}-${part.id}`}
-                                disabled={!canEdit}
-                              />
-                              <label
-                                htmlFor={`${animalId}-${part.id}`}
-                                className="text-sm font-medium cursor-pointer flex-shrink-0 min-w-[70px]"
-                              >
-                                {part.code}
-                              </label>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                placeholder={unitSymbol}
-                                value={part.weight}
-                                onChange={(e) =>
-                                  handleBodyPartWeight(
-                                    animalId,
-                                    part.id,
-                                    e.target.value
-                                  )
-                                }
-                                disabled={!part.selected || !canEdit}
-                                className="h-8 text-sm flex-1"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+												{/* Grid de partes del cuerpo */}
+												<div className='grid grid-cols-2 gap-3'>
+													{animalSelection.bodyParts.map(part => (
+														<div key={part.id} className="border rounded-lg bg-gray-50 p-2">
+															<div className='flex items-center gap-2'>
+																<Checkbox
+																	checked={part.selected}
+																	onCheckedChange={() => handleBodyPartToggle(animalId, part.id)}
+																	id={`${animalId}-${part.id}`}
+																	disabled={!canEdit}
+																/>
+																<label htmlFor={`${animalId}-${part.id}`} className='text-sm font-medium cursor-pointer flex-shrink-0 min-w-[70px]'>
+																	{part.code}
+																</label>
+																<Input
+																	type='number'
+																	min='0'
+																	step='0.01'
+																	placeholder={unitSymbol}
+																	value={part.weight}
+																	onChange={e => handleBodyPartWeight(animalId, part.id, e.target.value)}
+																	disabled={!part.selected || !canEdit}
+																	className='h-8 text-sm flex-1'
+																/>
+															</div>
 
-                    {/* Resumen de partes seleccionadas - fuera de ml-14 */}
-                    {animalSelection.selected &&
-                      getSelectedPartsInfo(animalId) && (
-                        <div className="p-3 bg-gray-100 rounded text-sm text-gray-700 border-t">
-                          <div className="font-medium text-gray-600 mb-2">
-                            Partes seleccionadas:
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            {getSelectedPartsInfo(animalId)?.map((part) => (
-                              <div
-                                key={part.id}
-                                className="font-semibold text-gray-800"
-                              >
-                                {part.code}: {part.weight}{unitSymbol}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                );
+															<label className='text-xs font-medium text-gray-700 w-full'>
+																Observación (Opcional)
+																<Textarea
+																	placeholder='Observación'
+																	className='w-full bg-white text-xs'
+																	value={part.bodyPartComment}
+																	onChange={e => {
+																		handleBodyPartComment(animalId, part.id, e.target.value);
+                                    const textarea = e.target;
+																		textarea.style.height = 'auto';
+																		textarea.style.height = textarea.scrollHeight + 'px';
+																	}}
+																	style={{ minHeight: '20px', overflow: 'hidden' }}
+																/>
+															</label>
+														</div>
+													))}
+												</div>
+											</div>
+										)}
+
+										{/* Resumen de partes seleccionadas - fuera de ml-14 */}
+										{animalSelection.selected && getSelectedPartsInfo(animalId) && (
+											<div className='p-3 bg-gray-100 rounded text-sm text-gray-700 border-t'>
+												<div className='font-medium text-gray-600 mb-2'>Partes seleccionadas:</div>
+												<div className='flex flex-col gap-1'>
+													{getSelectedPartsInfo(animalId)?.map(part => (
+														<div key={part.id} className='font-semibold text-gray-800'>
+															{part.code}: {part.weight}
+															{unitSymbol}
+														</div>
+													))}
+												</div>
+											</div>
+										)}
+									</div>
+								);
               })}
             </div>
           )}

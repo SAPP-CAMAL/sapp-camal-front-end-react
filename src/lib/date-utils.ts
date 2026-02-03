@@ -19,6 +19,24 @@ export function isToday(date: Date | string): boolean {
 }
 
 /**
+ * Verifica si una fecha es hoy o mañana
+ * @param date - Fecha a verificar (puede ser Date o string en formato YYYY-MM-DD)
+ * @returns true si la fecha es hoy o mañana, false en caso contrario
+ */
+export function isTodayOrTomorrow(date: Date | string): boolean {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  const compareDate = typeof date === 'string' ? new Date(date + 'T00:00:00') : new Date(date);
+  compareDate.setHours(0, 0, 0, 0);
+  
+  return compareDate.getTime() === today.getTime() || compareDate.getTime() === tomorrow.getTime();
+}
+
+/**
  * Obtiene la fecha actual en formato YYYY-MM-DD (zona horaria local)
  * @returns Fecha actual en formato string
  */
