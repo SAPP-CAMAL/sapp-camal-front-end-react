@@ -7,15 +7,18 @@ export interface ProductPostmortem {
     weight: number;
     isTotalConfiscation: boolean;
     status: boolean;
+    bodyPartComment?: string;
 }
 
 export interface SubProductPostmortem {
-    idSpeciesDisease: number;
-    presence: number;
-    percentageAffection: number;
-    weight: number;
-    status: boolean;
-    idProductAnatomicalLocation?: number; // ID de la ubicación anatómica (opcional)
+	idSpeciesDisease: number;
+	presence: number;
+	percentageAffection: number;
+	weight: number;
+	status: boolean;
+	adverseSituation?: string;
+	diseaseComment?: string;
+	idProductAnatomicalLocation?: number; // ID de la ubicación anatómica (opcional)
 }
 
 export interface SavePostmortemRequest {
@@ -50,6 +53,7 @@ export interface ProductPostmortemData {
   sectionCode?: string; // Código de la sección del canal (ej: "A2", "B1")
   status: boolean;
   bodyPart: BodyPartData;
+  bodyPartComment?: string;
 }
 
 export interface DiseaseData {
@@ -79,6 +83,8 @@ export interface SubProductPostmortemData {
   idSpeciesDisease: number;
   presence: number;
   weight: string;
+  adverseSituation?: string;
+  diseaseComment?: string;
   percentageAffection: string;
   status: boolean;
   idProductAnatomicalLocation?: number; // ID de la ubicación anatómica

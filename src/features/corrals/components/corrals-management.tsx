@@ -19,6 +19,8 @@ import {
   LockOpen,
   Loader2,
   MousePointerClick,
+  Hash,
+  X,
 } from "lucide-react";
 import {
   LineaType,
@@ -39,6 +41,8 @@ import {
   getStatusCorralsByAdmissionDateService,
   getBrandDetailsByLineService,
   closeCorralByStatusIdService,
+  generateSpecieCodesService,
+  generateSpecieCodesByCorralService,
 } from "../server/db/corrals.service";
 import {
   saveCertBrand,
@@ -122,6 +126,11 @@ export function CorralsManagement() {
     "cerrar"
   );
   const [targetScope, setTargetScope] = useState<"linea" | "especial">("linea");
+  
+  // State for generating codes
+  const [generatingCodes, setGeneratingCodes] = useState<string | null>(null);
+  const [showGenerateCodesDialog, setShowGenerateCodesDialog] = useState(false);
+  const [selectedCorralForCodes, setSelectedCorralForCodes] = useState<{ id: string; name: string } | null>(null);
 
   // State for line data from API
   const [currentLineData, setCurrentLineData] = useState<Line | null>(null);
@@ -1624,6 +1633,71 @@ export function CorralsManagement() {
     );
   };
 
+  // Handle generate codes for corral
+  const handleGenerateCodesForCorral = (corralId: string, corralName: string) => {
+    // Verificar que el corral tenga animales antes de permitir generar códigos
+    const corralBrands = brandDetailsMap[corralId] || [];
+    const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+    
+    if (totalAnimalsInCorral === 0) {
+      toast.error('No se pueden generar códigos para un corral sin animales');
+      return;
+    }
+    
+    setSelectedCorralForCodes({ id: corralId, name: corralName });
+    setShowGenerateCodesDialog(true);
+  };
+
+  const confirmGenerateCodesForCorral = async () => {
+    if (!selectedCorralForCodes || !currentLineData?.id) {
+      toast.error('No se pudo determinar la línea o el corral');
+      return;
+    }
+
+    const corralId = selectedCorralForCodes.id;
+
+    // Get the status corral ID from the statusByDateMap
+    const statusCorral = statusByDateMap[corralId];
+    if (!statusCorral?.statusRecordId) {
+      toast.error('No se pudo determinar el estado del corral');
+      return;
+    }
+
+    setShowGenerateCodesDialog(false);
+    setGeneratingCodes(corralId);
+    try {
+      // Format date as YYYY-MM-DD
+      const executionDate = selectedDate.toISOString().split('T')[0];
+      // Use corralId directly as it's already the numeric ID (as string)
+      const result = await generateSpecieCodesByCorralService(
+        currentLineData.id,
+        executionDate,
+        statusCorral.statusRecordId,
+        parseInt(corralId)
+      );
+      
+      if (result.success) {
+        toast.success(result.message);
+        // Reload data without full page reload
+        await reloadBrandDetails();
+      } else {
+        toast.error(result.message);
+      }
+      setGeneratingCodes(null);
+      setSelectedCorralForCodes(null);
+    } catch (error) {
+      console.error('Error generating codes:', error);
+      toast.error('Error al generar los códigos. Por favor, intente nuevamente.');
+      setGeneratingCodes(null);
+      setSelectedCorralForCodes(null);
+    }
+  };
+
+  const cancelGenerateCodesForCorral = () => {
+    setShowGenerateCodesDialog(false);
+    setSelectedCorralForCodes(null);
+  };
+
   const handleModalOpenCloseState = useCallback(
     (isOpen: boolean) => {
       setVideoDialogOpen(isOpen);
@@ -1802,14 +1876,20 @@ export function CorralsManagement() {
   const toggleSort = (field: "disponibles" | "ocupacion") => {
     setSortBy((prev) => {
       if (prev === field) {
-        // toggle direction when clicking same field
-        setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+        // Si ya está activo, alternar dirección
+        const newDir = sortDir === "asc" ? "desc" : "asc";
+        setSortDir(newDir);
         return prev;
       }
-      // switch field, reset direction to desc by default
+      // Cambiar a un nuevo campo, establecer dirección descendente por defecto
       setSortDir("desc");
       return field;
     });
+  };
+
+  const clearSort = () => {
+    setSortBy(null);
+    setSortDir("desc");
   };
 
   const sortedCorrales = useMemo(() => {
@@ -1954,6 +2034,9 @@ export function CorralsManagement() {
         ? brand.codes.trim()
         : null;
 
+    // Validar si ya se generaron códigos - si codes no es null, no se puede transferir
+    const hasGeneratedCodes = brand.codes != null;
+
     return (
       <div
         onClick={(e) => {
@@ -1963,6 +2046,10 @@ export function CorralsManagement() {
             toast.error("No se pueden transferir animales de fechas anteriores. Solo se permite transferir animales del día de hoy.");
             return;
           }
+          if (hasGeneratedCodes) {
+            toast.error("No se pueden transferir animales que ya tienen códigos generados.");
+            return;
+          }
           if (isBlocked) {
             return;
           }
@@ -1970,10 +2057,14 @@ export function CorralsManagement() {
             handleMobileBrandClick(brand, corralId);
           }
         }}
-        className={`group relative flex flex-col h-full overflow-hidden rounded-xl border-2 transform transition-all duration-200 shadow-md hover:shadow-lg border-gray-200 bg-white hover:border-blue-200 active:border-blue-400 active:shadow-xl ${
-          isBlocked || isBlockedByDate ? "cursor-not-allowed" : "cursor-pointer"
+        className={`group relative flex flex-col h-full overflow-hidden rounded-xl border-2 transform transition-all duration-200 shadow-md hover:shadow-lg ${
+          hasGeneratedCodes 
+            ? "border-gray-300 bg-gray-50 opacity-70 cursor-not-allowed" 
+            : isBlocked || isBlockedByDate 
+            ? "border-gray-200 bg-white cursor-not-allowed" 
+            : "border-gray-200 bg-white hover:border-blue-200 active:border-blue-400 active:shadow-xl cursor-pointer"
         }`}
-        aria-disabled={isBlocked || isBlockedByDate}
+        aria-disabled={isBlocked || isBlockedByDate || hasGeneratedCodes}
       >
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-5">
@@ -2115,6 +2206,7 @@ export function CorralsManagement() {
           totals={{ corrales: totalCorrales, disponibles, ocupados, animales }}
           admissionDate={selectedDate}
           idLine={currentLineData?.id}
+          brandDetailsMap={brandDetailsMap}
         />
 
         {/* Legend */}
@@ -2150,6 +2242,17 @@ export function CorralsManagement() {
               )} */}
               <div></div>
               <div className="flex gap-2">
+                {sortBy && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearSort}
+                    className="h-8 w-8 p-0 flex items-center justify-center text-red-600 border-red-300 bg-red-50 hover:bg-red-100 hover:border-red-400 transition-all duration-300 shadow-sm hover:shadow-md rounded-lg"
+                    title="Limpiar filtro"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -2223,47 +2326,48 @@ export function CorralsManagement() {
                           return (
                             <Card
                               key={uniqueKey}
-                              className={`relative border-3 border-gray-800 rounded-lg ${
+                              className={`relative border-3 border-gray-800 rounded-lg flex flex-col ${
                                 isClosed
                                   ? "bg-gray-50 border-gray-800/60"
                                   : "bg-white"
                               }`}
                             >
-                              <CardHeader className="pb-3 pt-2 px-4">
+                              <CardHeader className="pb-0 pt-1 px-4">
                                 {/* Badge CERRADO y punto verde arriba a la derecha */}
-                                <div className="flex justify-end items-center gap-2 mb-1 min-h-[18px]">
-                                  {isClosed && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span className="text-[11px] uppercase tracking-wide text-gray-500 inline-flex items-center gap-1 cursor-help">
-                                            <Lock className="h-3 w-3" /> CERRADO
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <span>Corral cerrado</span>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-                                  <div
-                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${getOccupationColor(
-                                      corral.ocupacion
-                                    )}`}
-                                  />
+                                <div className="flex justify-between items-center gap-2 min-h-[18px]">
+                                  <span className="text-xs text-gray-600 font-medium">
+                                    Total {corral.total}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    {isClosed && (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="text-[11px] uppercase tracking-wide text-gray-500 inline-flex items-center gap-1 cursor-help">
+                                              <Lock className="h-3 w-3" /> CERRADO
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <span>Corral cerrado</span>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                    <div
+                                      className={`w-2 h-2 rounded-full flex-shrink-0 ${getOccupationColor(
+                                        corral.ocupacion
+                                      )}`}
+                                    />
+                                  </div>
                                 </div>
-                                <h3 className="font-semibold">
+                                <h3 className="font-semibold mt-1">
                                   {corral.name}
                                 </h3>
-                                <div className="text-sm text-muted-foreground mt-1">
-                                  <span>Límite {corral.limite} · Total {corral.total}</span>
-                                  <span className="block">Disponibles {corral.disponibles}</span>
-                                </div>
-                                <div className="mt-1 h-[2px] bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
+                                <div className="h-[2px] bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
                               </CardHeader>
 
-                              <CardContent className="pt-0 px-4 pb-0">
-                                <div className="relative border-2 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner p-5 -mt-6 min-h-[280px] overflow-hidden transition-all duration-300 border-gray-200">
+                              <CardContent className="pt-0 px-4 pb-0 flex flex-col flex-1">
+                                <div className="relative border-2 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner p-5 -mt-4 flex-1 flex flex-col overflow-hidden transition-all duration-300 border-gray-200">
                                   <div className="h-[6px] w-full bg-gray-100 border-b border-gray-200 rounded-t-sm mb-2" />
                                   {(() => {
                                     const brands = getBrandDetailsForCorral(
@@ -2302,60 +2406,121 @@ export function CorralsManagement() {
                                   })()}
                                 </div>
 
-                                <div className="flex gap-3 mt-2 h-12 items-center">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={`text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 flex items-center justify-center ${
-                                      !statusByDateMap[corral.id]
-                                        ? "opacity-80 cursor-not-allowed"
-                                        : "shadow-sm hover:shadow-md hover:from-teal-50 hover:to-teal-100 hover:border-teal-300"
-                                    }`}
-                                    onClick={() =>
-                                      openVideoDialogForLinea(corral.id)
-                                    }
-                                    disabled={
-                                      !canUploadVideoForCorral(corral.id)
-                                    }
-                                  >
-                                    <Video className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    <span className="truncate font-medium">
-                                      Video
-                                    </span>
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={`flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 flex items-center justify-center ${
-                                      corral.dbStatus === true
-                                        ? "text-red-600 border-red-200 bg-gradient-to-r from-white to-red-50"
-                                        : "text-green-600 border-green-200 bg-gradient-to-r from-white to-green-50"
-                                    } ${
-                                      isClosed
-                                        ? "opacity-80 cursor-not-allowed"
-                                        : "shadow-sm hover:shadow-md hover:from-red-50 hover:to-red-100 hover:border-red-300"
-                                    }`}
-                                    onClick={() => {
-                                      if (isClosed) return;
-                                      if (corral && corral.id) {
-                                        openCorralDialog(corral.id);
+                                <div className="flex flex-col gap-2 mt-2">
+                                  <div className="flex gap-2 h-10 items-center">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className={`text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 flex-1 rounded-lg h-10 text-xs sm:text-sm min-w-0 transition-all duration-300 flex items-center justify-center ${
+                                        !statusByDateMap[corral.id]
+                                          ? "opacity-80 cursor-not-allowed"
+                                          : "shadow-sm hover:shadow-md hover:from-teal-50 hover:to-teal-100 hover:border-teal-300"
+                                      }`}
+                                      onClick={() =>
+                                        openVideoDialogForLinea(corral.id)
                                       }
-                                    }}
-                                    disabled={isClosed}
-                                  >
-                                    {corral.dbStatus === true ? (
-                                      <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    ) : (
-                                      <LockOpen className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    )}
-                                    <span className="truncate font-medium">
-                                      {isClosed
-                                        ? "Cerrado"
-                                        : corral.dbStatus === true
-                                        ? "Cerrar"
-                                        : "Abrir"}
-                                    </span>
-                                  </Button>
+                                      disabled={
+                                        !canUploadVideoForCorral(corral.id)
+                                      }
+                                    >
+                                      <Video className="h-4 w-4 mr-1 flex-shrink-0" />
+                                      <span className="truncate font-medium">
+                                        Video
+                                      </span>
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className={`flex-1 rounded-lg h-10 text-xs sm:text-sm min-w-0 transition-all duration-300 flex items-center justify-center ${
+                                        corral.dbStatus === true
+                                          ? "text-red-600 border-red-200 bg-gradient-to-r from-white to-red-50"
+                                          : "text-green-600 border-green-200 bg-gradient-to-r from-white to-green-50"
+                                      } ${
+                                        isClosed
+                                          ? "opacity-80 cursor-not-allowed"
+                                          : "shadow-sm hover:shadow-md hover:from-red-50 hover:to-red-100 hover:border-red-300"
+                                      }`}
+                                      onClick={() => {
+                                        if (isClosed) return;
+                                        if (corral && corral.id) {
+                                          openCorralDialog(corral.id);
+                                        }
+                                      }}
+                                      disabled={isClosed}
+                                    >
+                                      {corral.dbStatus === true ? (
+                                        <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
+                                      ) : (
+                                        <LockOpen className="h-4 w-4 mr-1 flex-shrink-0" />
+                                      )}
+                                      <span className="truncate font-medium">
+                                        {isClosed
+                                          ? "Cerrado"
+                                          : corral.dbStatus === true
+                                          ? "Cerrar"
+                                          : "Abrir"}
+                                      </span>
+                                    </Button>
+                                  </div>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="w-full">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full rounded-lg h-10 text-xs sm:text-sm transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow-md disabled:opacity-75 disabled:cursor-not-allowed"
+                                            style={{
+                                              color: '#353a41',
+                                              borderColor: '#353a41',
+                                              backgroundColor: 'white',
+                                            }}
+                                            onClick={() =>
+                                              handleGenerateCodesForCorral(corral.id, corral.name)
+                                            }
+                                            disabled={(() => {
+                                              const corralBrands = brandDetailsMap[corral.id] || [];
+                                              const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                              const allHaveCodes = corralBrands.length > 0 && corralBrands.every((brand) => brand.codes !== null && brand.codes !== '');
+                                              return generatingCodes === corral.id || totalAnimalsInCorral === 0 || allHaveCodes;
+                                            })()}
+                                            onMouseEnter={(e) => {
+                                              const corralBrands = brandDetailsMap[corral.id] || [];
+                                              const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                              if (generatingCodes !== corral.id && totalAnimalsInCorral > 0) {
+                                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                              }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.currentTarget.style.backgroundColor = 'white';
+                                            }}
+                                          >
+                                            {generatingCodes === corral.id ? (
+                                              <Loader2 className="h-4 w-4 mr-1 flex-shrink-0 animate-spin" />
+                                            ) : (
+                                              <Hash className="h-4 w-4 mr-1 flex-shrink-0" />
+                                            )}
+                                            <span className="truncate font-medium">
+                                              {generatingCodes === corral.id ? "Generando..." : "Generar Códigos"}
+                                            </span>
+                                          </Button>
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>
+                                          {(() => {
+                                            const corralBrands = brandDetailsMap[corral.id] || [];
+                                            const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                            const allHaveCodes = corralBrands.length > 0 && corralBrands.every((brand) => brand.codes !== null && brand.codes !== '');
+                                            if (totalAnimalsInCorral === 0) return 'No hay animales en este corral';
+                                            if (allHaveCodes) return 'Todos los animales ya tienen códigos asignados';
+                                            if (generatingCodes === corral.id) return 'Generando códigos...';
+                                            return 'Generar códigos para este corral';
+                                          })()}
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               </CardContent>
                             </Card>
@@ -2387,48 +2552,49 @@ export function CorralsManagement() {
                           return (
                             <Card
                               key={uniqueKey}
-                              className={`relative border-3 border-gray-800 rounded-lg ${
+                              className={`relative border-3 border-gray-800 rounded-lg flex flex-col ${
                                 isClosed
                                   ? "bg-gray-50 border-gray-800/60"
                                   : "bg-white"
                               }`}
                             >
-                              <CardHeader className="pb-3 pt-2 px-4">
+                              <CardHeader className="pb-0 pt-1 px-4">
                                 {/* Badge CERRADO y punto verde arriba a la derecha */}
-                                <div className="flex justify-end items-center gap-2 mb-1 min-h-[18px]">
-                                  {isClosed && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span className="text-[11px] uppercase tracking-wide text-gray-500 inline-flex items-center gap-1 cursor-help">
-                                            <Lock className="h-3 w-3" /> CERRADO
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <span>Corral cerrado</span>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-                                  <div
-                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${getOccupationColor(
-                                      corral.ocupacion
-                                    )}`}
-                                  />
+                                <div className="flex justify-between items-center gap-2 min-h-[18px]">
+                                  <span className="text-xs text-gray-600 font-medium">
+                                    Total {corral.total}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    {isClosed && (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="text-[11px] uppercase tracking-wide text-gray-500 inline-flex items-center gap-1 cursor-help">
+                                              <Lock className="h-3 w-3" /> CERRADO
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <span>Corral cerrado</span>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                    <div
+                                      className={`w-2 h-2 rounded-full flex-shrink-0 ${getOccupationColor(
+                                        corral.ocupacion
+                                      )}`}
+                                    />
+                                  </div>
                                 </div>
-                                <h3 className="font-semibold">
+                                <h3 className="font-semibold mt-1">
                                   {corral.name}
                                 </h3>
-                                <div className="text-sm text-muted-foreground mt-1">
-                                  <span>Límite {corral.limite} · Total {corral.total}</span>
-                                  <span className="block">Disponibles {corral.disponibles}</span>
-                                </div>
                                 {/* subtle divider like screenshot */}
-                                <div className="mt-1 h-[2px] bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
+                                <div className="h-[2px] bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
                               </CardHeader>
 
-                              <CardContent className="pt-0 px-4 pb-0">
-                                <div className="relative border-2 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner p-3 -mt-6 min-h-[280px] overflow-hidden transition-all duration-300 border-gray-200 w-full max-w-full">
+                              <CardContent className="pt-0 px-4 pb-0 flex flex-col flex-1">
+                                <div className="relative border-2 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner p-3 -mt-4 flex-1 flex flex-col overflow-hidden transition-all duration-300 border-gray-200 w-full max-w-full">
                                   <div className="h-[6px] w-full bg-gray-100 border-b border-gray-200 rounded-t-sm mb-2" />
                                   {(() => {
                                     const brands = getBrandDetailsForCorral(
@@ -2470,82 +2636,143 @@ export function CorralsManagement() {
                                     );
                                   })()}
                                 </div>
-                                <div className="flex gap-3 mt-2 h-12 items-center">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 hover:border-teal-300 flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 shadow-sm hover:shadow-md"
-                                    onClick={() =>
-                                      openVideoDialogForLinea(corral.id)
-                                    }
-                                    disabled={
-                                      !canUploadVideoForCorral(corral.id)
-                                    }
-                                  >
-                                    <Video className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    <span className="truncate font-medium">
-                                      Video
-                                    </span>
-                                  </Button>
-
-                                  {isClosed ? (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div className="flex-1">
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              className={`w-full flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 opacity-80 cursor-not-allowed ${
-                                                corral.dbStatus === true
-                                                  ? "text-red-600 border-red-200 bg-gradient-to-r from-white to-red-50"
-                                                  : "text-green-600 border-green-200 bg-gradient-to-r from-white to-green-50"
-                                              }`}
-                                              disabled
-                                            >
-                                              {corral.dbStatus === true ? (
-                                                <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
-                                              ) : (
-                                                <LockOpen className="h-4 w-4 mr-1 flex-shrink-0" />
-                                              )}
-                                              <span className="truncate font-medium">
-                                                Cerrado
-                                              </span>
-                                            </Button>
-                                          </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <span>Corral cerrado</span>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  ) : (
+                                <div className="flex flex-col gap-2 mt-2">
+                                  <div className="flex gap-2 h-10 items-center">
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className={`flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 shadow-sm hover:shadow-md ${
-                                        corral.dbStatus === true
-                                          ? "text-red-600 border-red-200 bg-gradient-to-r from-white to-red-50 hover:from-red-50 hover:to-red-100 hover:border-red-300"
-                                          : "text-green-600 border-green-200 bg-gradient-to-r from-white to-green-50 hover:from-green-50 hover:to-green-100 hover:border-green-300"
-                                      }`}
-                                      onClick={() => {
-                                        if (corral && corral.id) {
-                                          openCorralDialog(corral.id);
-                                        }
-                                      }}
+                                      className="text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 hover:border-teal-300 flex-1 rounded-lg h-10 text-xs sm:text-sm min-w-0 transition-all duration-300 shadow-sm hover:shadow-md"
+                                      onClick={() =>
+                                        openVideoDialogForLinea(corral.id)
+                                      }
+                                      disabled={
+                                        !canUploadVideoForCorral(corral.id)
+                                      }
                                     >
-                                      {corral.dbStatus === true ? (
-                                        <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
-                                      ) : (
-                                        <LockOpen className="h-4 w-4 mr-1 flex-shrink-0" />
-                                      )}
+                                      <Video className="h-4 w-4 mr-1 flex-shrink-0" />
                                       <span className="truncate font-medium">
-                                        {corral.dbStatus === true
-                                          ? "Cerrar"
-                                          : "Abrir"}
+                                        Video
                                       </span>
                                     </Button>
-                                  )}
+
+                                    {isClosed ? (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <div className="flex-1">
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className={`w-full flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 opacity-80 cursor-not-allowed ${
+                                                  corral.dbStatus === true
+                                                    ? "text-red-600 border-red-200 bg-gradient-to-r from-white to-red-50"
+                                                    : "text-green-600 border-green-200 bg-gradient-to-r from-white to-green-50"
+                                                }`}
+                                                disabled
+                                              >
+                                                {corral.dbStatus === true ? (
+                                                  <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
+                                                ) : (
+                                                  <LockOpen className="h-4 w-4 mr-1 flex-shrink-0" />
+                                                )}
+                                                <span className="truncate font-medium">
+                                                  Cerrado
+                                                </span>
+                                              </Button>
+                                            </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <span>Corral cerrado</span>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    ) : (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className={`flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 shadow-sm hover:shadow-md ${
+                                          corral.dbStatus === true
+                                            ? "text-red-600 border-red-200 bg-gradient-to-r from-white to-red-50 hover:from-red-50 hover:to-red-100 hover:border-red-300"
+                                            : "text-green-600 border-green-200 bg-gradient-to-r from-white to-green-50 hover:from-green-50 hover:to-green-100 hover:border-green-300"
+                                        }`}
+                                        onClick={() => {
+                                          if (corral && corral.id) {
+                                            openCorralDialog(corral.id);
+                                          }
+                                        }}
+                                      >
+                                        {corral.dbStatus === true ? (
+                                          <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
+                                        ) : (
+                                          <LockOpen className="h-4 w-4 mr-1 flex-shrink-0" />
+                                        )}
+                                        <span className="truncate font-medium">
+                                          {corral.dbStatus === true
+                                            ? "Cerrar"
+                                            : "Abrir"}
+                                        </span>
+                                      </Button>
+                                    )}
+                                  </div>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="w-full">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full rounded-lg h-10 text-xs sm:text-sm transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow-md disabled:opacity-75 disabled:cursor-not-allowed"
+                                            style={{
+                                              color: '#353a41',
+                                              borderColor: '#353a41',
+                                              backgroundColor: 'white',
+                                            }}
+                                            onClick={() =>
+                                              handleGenerateCodesForCorral(corral.id, corral.name)
+                                            }
+                                            disabled={(() => {
+                                              const corralBrands = brandDetailsMap[corral.id] || [];
+                                              const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                              const allHaveCodes = corralBrands.length > 0 && corralBrands.every((brand) => brand.codes !== null && brand.codes !== '');
+                                              return generatingCodes === corral.id || totalAnimalsInCorral === 0 || allHaveCodes;
+                                            })()}
+                                            onMouseEnter={(e) => {
+                                              const corralBrands = brandDetailsMap[corral.id] || [];
+                                              const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                              if (generatingCodes !== corral.id && totalAnimalsInCorral > 0) {
+                                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                              }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.currentTarget.style.backgroundColor = 'white';
+                                            }}
+                                          >
+                                            {generatingCodes === corral.id ? (
+                                              <Loader2 className="h-4 w-4 mr-1 flex-shrink-0 animate-spin" />
+                                            ) : (
+                                              <Hash className="h-4 w-4 mr-1 flex-shrink-0" />
+                                            )}
+                                            <span className="truncate font-medium">
+                                              {generatingCodes === corral.id ? "Generando..." : "Generar Códigos"}
+                                            </span>
+                                          </Button>
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>
+                                          {(() => {
+                                            const corralBrands = brandDetailsMap[corral.id] || [];
+                                            const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                            const allHaveCodes = corralBrands.length > 0 && corralBrands.every((brand) => brand.codes !== null && brand.codes !== '');
+                                            if (totalAnimalsInCorral === 0) return 'No hay animales en este corral';
+                                            if (allHaveCodes) return 'Todos los animales ya tienen códigos asignados';
+                                            if (generatingCodes === corral.id) return 'Generando códigos...';
+                                            return 'Generar códigos para este corral';
+                                          })()}
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               </CardContent>
                             </Card>
@@ -2593,6 +2820,19 @@ export function CorralsManagement() {
           })()}
           onConfirm={confirmCorralToggle}
         />
+        
+        {/* Confirm Dialog for Generate Codes per Corral */}
+        <ConfirmToggleDialog
+          open={showGenerateCodesDialog}
+          onOpenChange={setShowGenerateCodesDialog}
+          action="cerrar"
+          name={selectedCorralForCodes?.name || ""}
+          onConfirm={confirmGenerateCodesForCorral}
+          customTitle="Generar Códigos y Cerrar Corral"
+          customMessage={`¿Está seguro que desea generar códigos para el corral ${selectedCorralForCodes?.name}? Una vez generados, no podra mover o editar los animales en este corral.`}
+          customConfirmText="Generar Códigos"
+        />
+        
         {/* Video Upload Dialog */}
         <VideoUploadDialog
           open={videoDialogOpen}

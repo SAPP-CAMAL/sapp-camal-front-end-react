@@ -165,10 +165,13 @@ export function AnimalWeighingManagement() {
 
   const queryClient = useQueryClient();
 
-  // Verificar si la fecha seleccionada es hoy
+  // Verificar si la fecha seleccionada es hoy o mañana
   const isToday = useMemo(() => {
     const today = getLocalDateString();
-    return slaughterDate === today;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = getLocalDateString(tomorrow);
+    return slaughterDate === today || slaughterDate === tomorrowStr;
   }, [slaughterDate]);
 
   // Hook de balanza serial
@@ -1511,7 +1514,7 @@ export function AnimalWeighingManagement() {
     <div className="space-y-3 p-3 sm:p-4 md:p-6 pb-16 max-w-full overflow-x-hidden min-h-full">
       <div className="text-center">
         <h1 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2">
-          PESAJE DE ANIMALES
+          FAENAMIENTO Y PESAJE
         </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
           Fecha de Faenamiento:{" "}

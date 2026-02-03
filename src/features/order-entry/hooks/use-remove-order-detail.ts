@@ -12,8 +12,13 @@ export function useRemoveOrderDetail() {
 			queryClient.invalidateQueries({ queryKey: ['orders'] });
 			queryClient.invalidateQueries({ queryKey: ['order-by-id-and-detail'] });
 		},
-		onError: (error: any) => {
-			toast.error(error?.message || 'Error al eliminar el producto');
+		onError: async (error: any) => {
+			try {
+				const errorData = await error?.response?.json();
+				toast.error(errorData?.data || errorData?.message || 'Error al eliminar el producto');
+			} catch {
+				toast.error('Error al eliminar el producto');
+			}
 		},
 	});
 }

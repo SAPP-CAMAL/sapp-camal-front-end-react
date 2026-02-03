@@ -25,6 +25,7 @@ import { BrandByFilterMapped } from '@/features/brand/domain/get-brand-by-filter
 export type AnimalAdmissionForm = {
 	/** setting cert brand id */
 	id?: number;
+	codes?: string | null;
 	corralGroup?: CorralGroupBySpecieResponse;
 	brand?: BrandByFilterMapped;
 	corralGroups?: CorralGroupBySpecieResponse[];
