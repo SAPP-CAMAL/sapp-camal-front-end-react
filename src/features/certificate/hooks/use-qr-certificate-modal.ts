@@ -149,7 +149,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 		}
 	};
 
-	const handleSaveQrData = async () => {
+	const handleSaveQrData = async (idOperator?: number) => {
 		setOriginState(!qrModalState.selectedOrigin);
 		if (!qrModalState.qrData) return toast.error('Por favor escanee un código QR válido');
 		if (!qrModalState.selectedOrigin) return toast.error('Por favor seleccione una procedencia');
@@ -183,6 +183,7 @@ export const useQrCertificateModal = ({ onSetQrData }: Props) => {
 				destinationAreaCode: qrModalState.qrData.destinationAreaCode,
 				idOrigin: qrModalState.selectedOrigin?.id,
 				status: true,
+				...(idOperator && { idOperator }), // Incluir operador solo si se proporciona
 			};
 
 			let response;

@@ -420,4 +420,3 @@ export const CertificateFields = () => {
 		</>
 	);
 };
-
