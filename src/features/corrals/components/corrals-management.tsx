@@ -2481,7 +2481,8 @@ export function CorralsManagement() {
                                             disabled={(() => {
                                               const corralBrands = brandDetailsMap[corral.id] || [];
                                               const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
-                                              return generatingCodes === corral.id || totalAnimalsInCorral === 0;
+                                              const allHaveCodes = corralBrands.length > 0 && corralBrands.every((brand) => brand.codes !== null && brand.codes !== '');
+                                              return generatingCodes === corral.id || totalAnimalsInCorral === 0 || allHaveCodes;
                                             })()}
                                             onMouseEnter={(e) => {
                                               const corralBrands = brandDetailsMap[corral.id] || [];
@@ -2510,7 +2511,9 @@ export function CorralsManagement() {
                                           {(() => {
                                             const corralBrands = brandDetailsMap[corral.id] || [];
                                             const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                            const allHaveCodes = corralBrands.length > 0 && corralBrands.every((brand) => brand.codes !== null && brand.codes !== '');
                                             if (totalAnimalsInCorral === 0) return 'No hay animales en este corral';
+                                            if (allHaveCodes) return 'Todos los animales ya tienen códigos asignados';
                                             if (generatingCodes === corral.id) return 'Generando códigos...';
                                             return 'Generar códigos para este corral';
                                           })()}
@@ -2730,7 +2733,8 @@ export function CorralsManagement() {
                                             disabled={(() => {
                                               const corralBrands = brandDetailsMap[corral.id] || [];
                                               const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
-                                              return generatingCodes === corral.id || totalAnimalsInCorral === 0;
+                                              const allHaveCodes = corralBrands.length > 0 && corralBrands.every((brand) => brand.codes !== null && brand.codes !== '');
+                                              return generatingCodes === corral.id || totalAnimalsInCorral === 0 || allHaveCodes;
                                             })()}
                                             onMouseEnter={(e) => {
                                               const corralBrands = brandDetailsMap[corral.id] || [];
@@ -2759,7 +2763,9 @@ export function CorralsManagement() {
                                           {(() => {
                                             const corralBrands = brandDetailsMap[corral.id] || [];
                                             const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                            const allHaveCodes = corralBrands.length > 0 && corralBrands.every((brand) => brand.codes !== null && brand.codes !== '');
                                             if (totalAnimalsInCorral === 0) return 'No hay animales en este corral';
+                                            if (allHaveCodes) return 'Todos los animales ya tienen códigos asignados';
                                             if (generatingCodes === corral.id) return 'Generando códigos...';
                                             return 'Generar códigos para este corral';
                                           })()}
