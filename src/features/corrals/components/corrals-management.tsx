@@ -1635,6 +1635,15 @@ export function CorralsManagement() {
 
   // Handle generate codes for corral
   const handleGenerateCodesForCorral = (corralId: string, corralName: string) => {
+    // Verificar que el corral tenga animales antes de permitir generar códigos
+    const corralBrands = brandDetailsMap[corralId] || [];
+    const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+    
+    if (totalAnimalsInCorral === 0) {
+      toast.error('No se pueden generar códigos para un corral sin animales');
+      return;
+    }
+    
     setSelectedCorralForCodes({ id: corralId, name: corralName });
     setShowGenerateCodesDialog(true);
   };
@@ -2197,6 +2206,7 @@ export function CorralsManagement() {
           totals={{ corrales: totalCorrales, disponibles, ocupados, animales }}
           admissionDate={selectedDate}
           idLine={currentLineData?.id}
+          brandDetailsMap={brandDetailsMap}
         />
 
         {/* Legend */}
@@ -2452,37 +2462,62 @@ export function CorralsManagement() {
                                       </span>
                                     </Button>
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full rounded-lg h-10 text-xs sm:text-sm transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow-md disabled:opacity-75 disabled:cursor-not-allowed"
-                                    style={{
-                                      color: '#353a41',
-                                      borderColor: '#353a41',
-                                      backgroundColor: 'white',
-                                    }}
-                                    onClick={() =>
-                                      handleGenerateCodesForCorral(corral.id, corral.name)
-                                    }
-                                    disabled={generatingCodes === corral.id}
-                                    onMouseEnter={(e) => {
-                                      if (generatingCodes !== corral.id) {
-                                        e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                      }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = 'white';
-                                    }}
-                                  >
-                                    {generatingCodes === corral.id ? (
-                                      <Loader2 className="h-4 w-4 mr-1 flex-shrink-0 animate-spin" />
-                                    ) : (
-                                      <Hash className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    )}
-                                    <span className="truncate font-medium">
-                                      {generatingCodes === corral.id ? "Generando..." : "Generar Códigos"}
-                                    </span>
-                                  </Button>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="w-full">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full rounded-lg h-10 text-xs sm:text-sm transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow-md disabled:opacity-75 disabled:cursor-not-allowed"
+                                            style={{
+                                              color: '#353a41',
+                                              borderColor: '#353a41',
+                                              backgroundColor: 'white',
+                                            }}
+                                            onClick={() =>
+                                              handleGenerateCodesForCorral(corral.id, corral.name)
+                                            }
+                                            disabled={(() => {
+                                              const corralBrands = brandDetailsMap[corral.id] || [];
+                                              const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                              return generatingCodes === corral.id || totalAnimalsInCorral === 0;
+                                            })()}
+                                            onMouseEnter={(e) => {
+                                              const corralBrands = brandDetailsMap[corral.id] || [];
+                                              const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                              if (generatingCodes !== corral.id && totalAnimalsInCorral > 0) {
+                                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                              }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.currentTarget.style.backgroundColor = 'white';
+                                            }}
+                                          >
+                                            {generatingCodes === corral.id ? (
+                                              <Loader2 className="h-4 w-4 mr-1 flex-shrink-0 animate-spin" />
+                                            ) : (
+                                              <Hash className="h-4 w-4 mr-1 flex-shrink-0" />
+                                            )}
+                                            <span className="truncate font-medium">
+                                              {generatingCodes === corral.id ? "Generando..." : "Generar Códigos"}
+                                            </span>
+                                          </Button>
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>
+                                          {(() => {
+                                            const corralBrands = brandDetailsMap[corral.id] || [];
+                                            const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                            if (totalAnimalsInCorral === 0) return 'No hay animales en este corral';
+                                            if (generatingCodes === corral.id) return 'Generando códigos...';
+                                            return 'Generar códigos para este corral';
+                                          })()}
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               </CardContent>
                             </Card>
@@ -2676,37 +2711,62 @@ export function CorralsManagement() {
                                       </Button>
                                     )}
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full rounded-lg h-10 text-xs sm:text-sm transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow-md disabled:opacity-75 disabled:cursor-not-allowed"
-                                    style={{
-                                      color: '#353a41',
-                                      borderColor: '#353a41',
-                                      backgroundColor: 'white',
-                                    }}
-                                    onClick={() =>
-                                      handleGenerateCodesForCorral(corral.id, corral.name)
-                                    }
-                                    disabled={generatingCodes === corral.id}
-                                    onMouseEnter={(e) => {
-                                      if (generatingCodes !== corral.id) {
-                                        e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                      }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = 'white';
-                                    }}
-                                  >
-                                    {generatingCodes === corral.id ? (
-                                      <Loader2 className="h-4 w-4 mr-1 flex-shrink-0 animate-spin" />
-                                    ) : (
-                                      <Hash className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    )}
-                                    <span className="truncate font-medium">
-                                      {generatingCodes === corral.id ? "Generando..." : "Generar Códigos"}
-                                    </span>
-                                  </Button>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="w-full">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full rounded-lg h-10 text-xs sm:text-sm transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow-md disabled:opacity-75 disabled:cursor-not-allowed"
+                                            style={{
+                                              color: '#353a41',
+                                              borderColor: '#353a41',
+                                              backgroundColor: 'white',
+                                            }}
+                                            onClick={() =>
+                                              handleGenerateCodesForCorral(corral.id, corral.name)
+                                            }
+                                            disabled={(() => {
+                                              const corralBrands = brandDetailsMap[corral.id] || [];
+                                              const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                              return generatingCodes === corral.id || totalAnimalsInCorral === 0;
+                                            })()}
+                                            onMouseEnter={(e) => {
+                                              const corralBrands = brandDetailsMap[corral.id] || [];
+                                              const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                              if (generatingCodes !== corral.id && totalAnimalsInCorral > 0) {
+                                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                              }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.currentTarget.style.backgroundColor = 'white';
+                                            }}
+                                          >
+                                            {generatingCodes === corral.id ? (
+                                              <Loader2 className="h-4 w-4 mr-1 flex-shrink-0 animate-spin" />
+                                            ) : (
+                                              <Hash className="h-4 w-4 mr-1 flex-shrink-0" />
+                                            )}
+                                            <span className="truncate font-medium">
+                                              {generatingCodes === corral.id ? "Generando..." : "Generar Códigos"}
+                                            </span>
+                                          </Button>
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>
+                                          {(() => {
+                                            const corralBrands = brandDetailsMap[corral.id] || [];
+                                            const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
+                                            if (totalAnimalsInCorral === 0) return 'No hay animales en este corral';
+                                            if (generatingCodes === corral.id) return 'Generando códigos...';
+                                            return 'Generar códigos para este corral';
+                                          })()}
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               </CardContent>
                             </Card>
