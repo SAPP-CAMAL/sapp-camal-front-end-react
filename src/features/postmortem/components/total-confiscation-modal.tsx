@@ -277,11 +277,18 @@ export function TotalConfiscationModal({
 															value={animalWeight?.bodyPartComment ?? ''}
 															onChange={e => {
 																handleWeightCommentChange(animalId, e.target.value);
-																const textarea = e.target;
+																const textarea = e.target as HTMLTextAreaElement;
 																textarea.style.height = 'auto';
-																textarea.style.height = textarea.scrollHeight + 'px';
+																textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
 															}}
-															style={{ minHeight: '20px', overflow: 'hidden' }}
+															style={{
+																minHeight: '60px',
+																maxHeight: '120px',
+																overflow: 'auto',
+																wordWrap: 'break-word',
+																whiteSpace: 'pre-wrap',
+																wordBreak: 'break-word',
+															}}
 														/>
 													</label>
 													{canEdit && (
