@@ -595,7 +595,7 @@ export function SignosClinicosModal({
               setCurrentId(nextAnimal.code);
             }
           } else {
-            const errorMessage = response?.message || 'Error desconocido al actualizar';
+            const errorMessage = response?.data || response?.message || 'Error desconocido al actualizar';
             console.error('❌ Error en respuesta:', response);
             throw new Error(errorMessage);
           }
@@ -667,7 +667,7 @@ export function SignosClinicosModal({
               setCurrentId(nextAnimal.code);
             }
           } else {
-            const errorMessage = response?.message || 'Error desconocido al guardar';
+            const errorMessage = response?.data || response?.message || 'Error desconocido al guardar';
             console.error('❌ Error en respuesta de guardado:', response);
             throw new Error(errorMessage);
           }

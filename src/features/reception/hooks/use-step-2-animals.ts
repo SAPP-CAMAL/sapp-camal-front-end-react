@@ -28,14 +28,6 @@ export const useStep2Animals = () => {
 		handleRemoveSelectedSpecie,
 	} = useReceptionContext();
 
-	const [canCreateAdmissions, setCanCreateAdmissions] = useState(true);
-
-	useEffect(() => {
-		if (!selectedSpecie?.id) return;
-
-		validateSettingCertBrandCodesGeneration(selectedSpecie.id, currentDate).then(response => setCanCreateAdmissions(!response.data));
-	}, [selectedSpecie?.id]);
-
 	const totalAnimals = animalAdmissionList.reduce(
 		(sum, admission) => sum + (+(admission.animalAdmission.males || 0) + +(admission.animalAdmission.females || 0)),
 		0
@@ -184,7 +176,6 @@ export const useStep2Animals = () => {
 		animalAdmissionList,
 		totalAnimals,
 		isCompleted,
-		canCreateAdmissions,
 		// species,
 		// speciesQuery,
 
