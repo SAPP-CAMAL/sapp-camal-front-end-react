@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Hash, Loader2 } from "lucide-react";
 import { getTotalAnimalsByLineService, generateSpecieCodesService } from "@/features/corrals/server/db/corrals.service";
 import { toast } from "sonner";
+import type { BrandDetail } from "@/features/corrals/domain";
 // No skeleton: we'll use a custom animated three-dots loader inside the badge
 
 interface Props {
@@ -13,15 +14,35 @@ interface Props {
   totals: { corrales: number; disponibles: number; ocupados: number; animales: number };
   admissionDate?: Date;
   idLine?: number;
+  brandDetailsMap?: Record<string, BrandDetail[]>;
 }
 
-export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
+export function TitleStats({ title, totals, admissionDate, idLine, brandDetailsMap }: Props) {
   const [remoteAnimals, setRemoteAnimals] = useState<number | null>(null);
   const [loadingAnimals, setLoadingAnimals] = useState(false);
   const [generatingCodes, setGeneratingCodes] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const handleGenerateCodes = async () => {
+    // Verificar que haya animales en la línea antes de permitir generar códigos
+    const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
+    
+    if (totalAnimals === 0) {
+      toast.error('No se pueden generar códigos cuando no hay animales en la línea');
+      return;
+    }
+
+    // Verificar si todos los animales ya tienen códigos asignados
+    if (brandDetailsMap) {
+      const allBrands = Object.values(brandDetailsMap).flat();
+      const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
+      
+      if (!hasAnimalsWithoutCodes && allBrands.length > 0) {
+        toast.error('Todos los animales ya tienen códigos asignados');
+        return;
+      }
+    }
+    
     setShowConfirmDialog(true);
   };
 
@@ -128,8 +149,33 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
               size="sm"
               className="w-full text-teal-600 border-teal-600 bg-white hover:bg-teal-50 hover:text-teal-600 disabled:opacity-75 disabled:cursor-not-allowed"
               onClick={handleGenerateCodes}
-              disabled={generatingCodes}
-              title="Generar códigos para animales de corral"
+              disabled={(() => {
+                const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
+                if (generatingCodes || totalAnimals === 0) return true;
+                
+                // Verificar si todos los animales ya tienen códigos
+                if (brandDetailsMap) {
+                  const allBrands = Object.values(brandDetailsMap).flat();
+                  const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
+                  if (!hasAnimalsWithoutCodes && allBrands.length > 0) return true;
+                }
+                
+                return false;
+              })()}
+              title={(() => {
+                const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
+                if (totalAnimals === 0) return 'No hay animales en la línea';
+                
+                // Verificar si todos los animales ya tienen códigos
+                if (brandDetailsMap) {
+                  const allBrands = Object.values(brandDetailsMap).flat();
+                  const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
+                  if (!hasAnimalsWithoutCodes && allBrands.length > 0) return 'Todos los animales ya tienen códigos asignados';
+                }
+                
+                if (generatingCodes) return 'Generando códigos...';
+                return 'Generar códigos para animales de corral';
+              })()}
             >
               {generatingCodes ? (
                 <>
@@ -144,7 +190,20 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
               )}
             </Button>
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white rounded whitespace-nowrap bg-teal-600 opacity-0 group-hover:opacity-100 transition-opacity">
-              Genera códigos para animales de corral
+              {(() => {
+                const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
+                if (totalAnimals === 0) return 'No hay animales en la línea';
+                
+                // Verificar si todos los animales ya tienen códigos
+                if (brandDetailsMap) {
+                  const allBrands = Object.values(brandDetailsMap).flat();
+                  const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
+                  if (!hasAnimalsWithoutCodes && allBrands.length > 0) return 'Todos los animales ya tienen códigos asignados';
+                }
+                
+                if (generatingCodes) return 'Generando códigos...';
+                return 'Genera códigos para animales de corral';
+              })()}
             </div>
           </div>
         </div>
@@ -204,8 +263,33 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
                 size="sm"
                 className="text-teal-600 border-teal-600 bg-white hover:text-teal-50 hover:bg-teal-600 whitespace-nowrap disabled:opacity-75 disabled:cursor-not-allowed"
                 onClick={handleGenerateCodes}
-                disabled={generatingCodes}
-                title="Generar códigos para animales de corral"
+                disabled={(() => {
+                  const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
+                  if (generatingCodes || totalAnimals === 0) return true;
+                  
+                  // Verificar si todos los animales ya tienen códigos
+                  if (brandDetailsMap) {
+                    const allBrands = Object.values(brandDetailsMap).flat();
+                    const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
+                    if (!hasAnimalsWithoutCodes && allBrands.length > 0) return true;
+                  }
+                  
+                  return false;
+                })()}
+                title={(() => {
+                  const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
+                  if (totalAnimals === 0) return 'No hay animales en la línea';
+                  
+                  // Verificar si todos los animales ya tienen códigos
+                  if (brandDetailsMap) {
+                    const allBrands = Object.values(brandDetailsMap).flat();
+                    const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
+                    if (!hasAnimalsWithoutCodes && allBrands.length > 0) return 'Todos los animales ya tienen códigos asignados';
+                  }
+                  
+                  if (generatingCodes) return 'Generando códigos...';
+                  return 'Generar códigos para animales de corral';
+                })()}
               >
                 {generatingCodes ? (
                   <>
@@ -220,7 +304,20 @@ export function TitleStats({ title, totals, admissionDate, idLine }: Props) {
                 )}
               </Button>
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 bg-teal-600 text-white">
-                Genera códigos para animales de corral
+                {(() => {
+                  const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
+                  if (totalAnimals === 0) return 'No hay animales en la línea';
+                  
+                  // Verificar si todos los animales ya tienen códigos
+                  if (brandDetailsMap) {
+                    const allBrands = Object.values(brandDetailsMap).flat();
+                    const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
+                    if (!hasAnimalsWithoutCodes && allBrands.length > 0) return 'Todos los animales ya tienen códigos asignados';
+                  }
+                  
+                  if (generatingCodes) return 'Generando códigos...';
+                  return 'Genera códigos para animales de corral';
+                })()}
               </div>
             </div>
 
