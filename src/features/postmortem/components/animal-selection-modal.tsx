@@ -80,7 +80,7 @@ export function AnimalSelectionModal({
     []
   );
 
-  const [generalPercentage, setGeneralPercentage] = useState<string>("40");
+  const [generalPercentage, setGeneralPercentage] = useState<string>("100");
 
   // Trackear los valores iniciales para detectar cambios
   const [initialSelections, setInitialSelections] = useState<AnimalSelection[]>(
@@ -146,7 +146,7 @@ export function AnimalSelectionModal({
               anatomicalDiseaseComment[location.id] = savedForLocation.diseaseComment || "";
             } else {
               // Valores por defecto
-              anatomicalPercentages[location.id] = 40;
+              anatomicalPercentages[location.id] = 100;
               anatomicalWeights[location.id] = avgOrgansData?.data?.avgWeight
                 ? parseFloat(String(avgOrgansData.data.avgWeight))
                 : 0;
@@ -173,7 +173,7 @@ export function AnimalSelectionModal({
           selected: savedSubProducts.length > 0, // Seleccionado si hay al menos un subproducto guardado
           percentage: savedSubProduct
             ? parseFloat(savedSubProduct.percentageAffection)
-            : 40,
+            : 100,
           weight,
           anatomicalPercentages,
           anatomicalWeights,
@@ -645,11 +645,6 @@ export function AnimalSelectionModal({
                   setGeneralPercentage("100");
                   handleApplyGeneralPercentage(100);
                 }}
-                className={
-                  generalPercentage === "100"
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : ""
-                }
               >
                 100%
               </Button>
@@ -739,7 +734,6 @@ export function AnimalSelectionModal({
 																						size='sm'
 																						onClick={() => handleAnimalPercentage(animalId, 100)}
 																						disabled={!canEdit}
-																						className={selection.percentage === 100 ? 'bg-blue-600 hover:bg-blue-700' : ''}
 																					>
 																						100%
 																					</Button>
@@ -828,7 +822,6 @@ export function AnimalSelectionModal({
 																			size='sm'
 																			onClick={() => handleAnimalPercentage(animalId, 100)}
 																			disabled={!canEdit}
-																			className={selection.percentage === 100 ? 'bg-blue-600 hover:bg-blue-700' : ''}
 																		>
 																			100%
 																		</Button>
