@@ -735,47 +735,14 @@ export function AnimalSelectionModal({
 																			<div className='ml-6 space-y-2'>
 																				<div className='flex items-center gap-1 flex-wrap'>
 																					<Button
-																						variant={selection.anatomicalPercentages?.[location.id] === 20 ? 'default' : 'outline'}
+																						variant={selection.percentage === 100 ? 'default' : 'outline'}
 																						size='sm'
-																						onClick={() => handleAnatomicalPercentage(animalId, location.id, 20)}
+																						onClick={() => handleAnimalPercentage(animalId, 100)}
 																						disabled={!canEdit}
-																						className={`h-7 px-2 text-xs ${
-																							selection.anatomicalPercentages?.[location.id] === 20 ? 'bg-blue-600 hover:bg-blue-700' : ''
-																						}`}
+																						className={selection.percentage === 100 ? 'bg-blue-600 hover:bg-blue-700' : ''}
 																					>
-																						20%
+																						100%
 																					</Button>
-																					<Button
-																						variant={selection.anatomicalPercentages?.[location.id] === 40 ? 'default' : 'outline'}
-																						size='sm'
-																						onClick={() => handleAnatomicalPercentage(animalId, location.id, 40)}
-																						disabled={!canEdit}
-																						className={`h-7 px-2 text-xs ${
-																							selection.anatomicalPercentages?.[location.id] === 40 ? 'bg-blue-600 hover:bg-blue-700' : ''
-																						}`}
-																					>
-																						40%
-																					</Button>
-																					<Button
-																						variant={selection.anatomicalPercentages?.[location.id] === 60 ? 'default' : 'outline'}
-																						size='sm'
-																						onClick={() => handleAnatomicalPercentage(animalId, location.id, 60)}
-																						disabled={!canEdit}
-																						className={`h-7 px-2 text-xs ${
-																							selection.anatomicalPercentages?.[location.id] === 60 ? 'bg-blue-600 hover:bg-blue-700' : ''
-																						}`}
-																					>
-																						60%
-																					</Button>
-																					<Input
-																						type='number'
-																						min='0'
-																						max='100'
-																						value={selection.anatomicalPercentages?.[location.id] ?? 0}
-																						onChange={e => handleAnatomicalPercentage(animalId, location.id, parseInt(e.target.value) || 0)}
-																						disabled={!canEdit}
-																						className='w-14 h-7 text-center bg-white text-xs'
-																					/>
 																				</div>
 
 																				{/* Peso por ubicación anatómica */}
@@ -857,42 +824,15 @@ export function AnimalSelectionModal({
 																	<div className='text-xs font-medium text-gray-700'>Porcentaje de Afectación (%) *</div>
 																	<div className='flex items-center gap-2'>
 																		<Button
-																			variant={selection.percentage === 20 ? 'default' : 'outline'}
+																			variant={selection.percentage === 100 ? 'default' : 'outline'}
 																			size='sm'
-																			onClick={() => handleAnimalPercentage(animalId, 20)}
+																			onClick={() => handleAnimalPercentage(animalId, 100)}
 																			disabled={!canEdit}
-																			className={selection.percentage === 20 ? 'bg-blue-600 hover:bg-blue-700' : ''}
+																			className={selection.percentage === 100 ? 'bg-blue-600 hover:bg-blue-700' : ''}
 																		>
-																			20%
+																			100%
 																		</Button>
-																		<Button
-																			variant={selection.percentage === 40 ? 'default' : 'outline'}
-																			size='sm'
-																			onClick={() => handleAnimalPercentage(animalId, 40)}
-																			disabled={!canEdit}
-																			className={selection.percentage === 40 ? 'bg-blue-600 hover:bg-blue-700' : ''}
-																		>
-																			40%
-																		</Button>
-																		<Button
-																			variant={selection.percentage === 60 ? 'default' : 'outline'}
-																			size='sm'
-																			onClick={() => handleAnimalPercentage(animalId, 60)}
-																			disabled={!canEdit}
-																			className={selection.percentage === 60 ? 'bg-blue-600 hover:bg-blue-700' : ''}
-																		>
-																			60%
-																		</Button>
-																		<Input
-																			type='number'
-																			min='0'
-																			max='100'
-																			value={selection.percentage ?? 0}
-																			onChange={e => handleAnimalPercentage(animalId, parseInt(e.target.value) || 0)}
-																			disabled={!canEdit}
-																			className='w-20 h-8 text-center bg-gray-50'
-																		/>
-																	</div>{' '}
+																	</div>
 																</div>
 
 																{/* Peso Aproximado - Solo si hay datos de avgOrgans y NO hay ubicaciones anatómicas */}
@@ -923,13 +863,13 @@ export function AnimalSelectionModal({
 															</div>
 
 															{/* Inputs de observaciones para cada animal seleccionado */}
-															<div key={selection.animalId} className='space-y-2'>
+															<div key={selection.animalId} className='space-y-2 w-full'>
 																{patologia?.toUpperCase() === 'OTROS' && (
-																	<label className='text-xs font-medium text-gray-700'>
+																	<label className='text-xs font-medium text-gray-700 max-w-md'>
 																		Situación adversa *
 																		<Textarea
 																			placeholder='Situación adversa'
-																			className='w-full bg-white text-xs'
+																			className='w-full bg-white text-xs resize-none break-words'
 																			required
 																			value={selection.adverseSituation ?? ''}
 																			onChange={e => {
@@ -944,11 +884,19 @@ export function AnimalSelectionModal({
 																							: sel,
 																					),
 																				);
-																				const textarea = e.target;
+																				const textarea = e.target as HTMLTextAreaElement;
 																				textarea.style.height = 'auto';
-																				textarea.style.height = textarea.scrollHeight + 'px';
+																				textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
 																			}}
-																			style={{ minHeight: '20px', overflow: 'hidden' }}
+																			style={{
+																				minHeight: '60px',
+																				maxHeight: '120px',
+																				overflow: 'auto',
+																				wordWrap: 'break-word',
+																				whiteSpace: 'pre-wrap',
+																				wordBreak: 'break-word'
+																			}}
+																			disabled={!canEdit}
 																		/>
 																	</label>
 																)}
@@ -957,7 +905,7 @@ export function AnimalSelectionModal({
 																	Observación (Opcional)
 																	<Textarea
 																		placeholder='Observación'
-																		className='w-full bg-white text-xs'
+																		className='w-full bg-white text-xs resize-none break-words'
 																		value={selection.diseaseComment ?? ''}
 																		onChange={e => {
 																			if (!canEdit) return;
@@ -971,11 +919,19 @@ export function AnimalSelectionModal({
 																						: sel,
 																				),
 																			);
-																			const textarea = e.target;
+																			const textarea = e.target as HTMLTextAreaElement;
 																			textarea.style.height = 'auto';
-																			textarea.style.height = textarea.scrollHeight + 'px';
+																			textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
 																		}}
-																		style={{ minHeight: '20px', overflow: 'hidden' }}
+																		style={{
+																			minHeight: '60px',
+																			maxHeight: '120px',
+																			overflow: 'auto',
+																			wordWrap: 'break-word',
+																			whiteSpace: 'pre-wrap',
+																			wordBreak: 'break-word'
+																		}}
+																		disabled={!canEdit}
 																	/>
 																</label>
 															</div>
