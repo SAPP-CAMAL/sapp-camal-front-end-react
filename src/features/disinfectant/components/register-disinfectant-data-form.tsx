@@ -257,7 +257,7 @@ export function RegisterDisinfectantDataForm() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre del Desinfectante</FormLabel>
+                <FormLabel>Tipo Desinfectante</FormLabel>
                 <Select
                   name="disinfectant"
                   value={field.value}
