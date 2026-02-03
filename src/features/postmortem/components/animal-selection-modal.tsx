@@ -1001,11 +1001,18 @@ export function AnimalSelectionModal({
 																							: sel,
 																					),
 																				);
-																				const textarea = e.target;
+																				const textarea = e.target as HTMLTextAreaElement;
 																				textarea.style.height = 'auto';
-																				textarea.style.height = textarea.scrollHeight + 'px';
+																				textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
 																			}}
-																			style={{ minHeight: '20px', overflow: 'hidden' }}
+																			style={{
+																				minHeight: '60px',
+																				maxHeight: '120px',
+																				overflow: 'auto',
+																				wordWrap: 'break-word',
+																				whiteSpace: 'pre-wrap',
+																				wordBreak: 'break-word',
+																			}}
 																		/>
 																	</label>
 																)}
@@ -1028,11 +1035,18 @@ export function AnimalSelectionModal({
 																						: sel,
 																				),
 																			);
-																			const textarea = e.target;
-																			textarea.style.height = 'auto';
-																			textarea.style.height = textarea.scrollHeight + 'px';
-																		}}
-																		style={{ minHeight: '20px', overflow: 'hidden' }}
+																			const textarea = e.target as HTMLTextAreaElement;
+																				textarea.style.height = 'auto';
+																				textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+																			}}
+																			style={{
+																				minHeight: '60px',
+																				maxHeight: '120px',
+																				overflow: 'auto',
+																				wordWrap: 'break-word',
+																				whiteSpace: 'pre-wrap',
+																				wordBreak: 'break-word',
+																			}}
 																	/>
 																</label>
 															</div>
