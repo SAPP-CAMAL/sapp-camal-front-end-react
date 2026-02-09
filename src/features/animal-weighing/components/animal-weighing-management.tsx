@@ -1002,8 +1002,28 @@ export function AnimalWeighingManagement() {
     cuartaSections,
   ]);
 
+  // Efecto para validar que selectedRowId aún existe en las filas actuales
+  // Esto previene que la balanza capture pesos en filas en caché que ya no existen
+  useEffect(() => {
+    if (selectedRowId && rows.length > 0) {
+      const rowExists = rows.some((row) => row.id === selectedRowId);
+      if (!rowExists) {
+        // La fila ya no existe, limpiar la selección
+        setSelectedRowId(null);
+        setCapturedWeight(null);
+        lastCapturedWeightRef.current = null;
+      }
+    }
+  }, [rows]);
+
   const handleHookSelect = (hookId: number) => {
     setSelectedHook(hookId);
+    // CRÍTICO: Limpiar peso capturado al cambiar gancho
+    // Si no se limpia, el cálculo de peso bruto será incorrecto
+    // ya que el peso capturado tiene el gancho anterior restado
+    setSelectedRowId(null);
+    setCapturedWeight(null);
+    lastCapturedWeightRef.current = null;
   };
 
   const handleWeightChange = (rowId: string, weight: number) => {
@@ -1074,6 +1094,11 @@ export function AnimalWeighingManagement() {
           : row,
       ),
     );
+  };
+
+  const openAddresseeSelection = (rowId: string) => {
+    setIsDefaultAddressSelected(false);
+    setAddresseeSelectionRowId(rowId);
   };
 
   const handleSaveWeight = async (row: AnimalWeighingRow) => {
@@ -1340,13 +1365,15 @@ export function AnimalWeighingManagement() {
           "Peso guardado, pero no se pudo abrir el ticket automáticamente",
         );
       }
-
-      setSelectedRowId(null);
-      setCapturedWeight(null);
-      lastCapturedWeightRef.current = null;
     } catch (error) {
       toast.error("Error al guardar el peso");
       if (ticketWindow) ticketWindow.close();
+    } finally {
+      // SIEMPRE limpiar el estado de selección y peso capturado, incluso si hay error
+      // Esto evita que la balanza vuelva a captar en la fila anterior (bug de caché)
+      setSelectedRowId(null);
+      setCapturedWeight(null);
+      lastCapturedWeightRef.current = null;
     }
   };
 
@@ -1504,8 +1531,12 @@ export function AnimalWeighingManagement() {
   }, [paginatedAnimalCodes, groupedByAnimal]);
 
   // Resetear a página 1 cuando cambie el filtro de búsqueda o el tamaño de página
+  // También limpiar la selección de fila para evitar conflictos de caché
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedRowId(null);
+    setCapturedWeight(null);
+    lastCapturedWeightRef.current = null;
   }, [searchTerm, itemsPerPage]);
 
   const totalRecords = filteredRows.length;
@@ -1665,6 +1696,10 @@ export function AnimalWeighingManagement() {
                 if (!date) return;
                 const formattedDate = format(date, "yyyy-MM-dd");
                 setSlaughterDate(formattedDate);
+                // Limpiar peso capturado al cambiar fecha (los datos se recargarán)
+                setSelectedRowId(null);
+                setCapturedWeight(null);
+                lastCapturedWeightRef.current = null;
               }}
             />
           </div>
@@ -1692,6 +1727,10 @@ export function AnimalWeighingManagement() {
                     if (stage) {
                       setWeighingStage(stage.code as WeighingStage);
                       setWeighingStageId(stage.id);
+                      // CRÍTICO: Limpiar peso capturado al cambiar etapa de pesaje
+                      setSelectedRowId(null);
+                      setCapturedWeight(null);
+                      lastCapturedWeightRef.current = null;
                     }
                   }}
                 >
@@ -1728,6 +1767,10 @@ export function AnimalWeighingManagement() {
                           onClick={() => {
                             setWeighingStage(stage.code as WeighingStage);
                             setWeighingStageId(stage.id);
+                            // CRÍTICO: Limpiar peso capturado al cambiar etapa de pesaje
+                            setSelectedRowId(null);
+                            setCapturedWeight(null);
+                            lastCapturedWeightRef.current = null;
                           }}
                           className="flex-1 sm:flex-initial"
                         >
@@ -1768,6 +1811,10 @@ export function AnimalWeighingManagement() {
                   if (line) {
                     setSelectedLineId(value);
                     setSelectedSpecieId(line.idSpecie);
+                    // CRÍTICO: Limpiar peso capturado al cambiar especie
+                    setSelectedRowId(null);
+                    setCapturedWeight(null);
+                    lastCapturedWeightRef.current = null;
                   }
                 }}
               >
@@ -1806,6 +1853,10 @@ export function AnimalWeighingManagement() {
                   onClick={() => {
                     setSelectedLineId(line.id.toString());
                     setSelectedSpecieId(line.idSpecie);
+                    // CRÍTICO: Limpiar peso capturado al cambiar especie
+                    setSelectedRowId(null);
+                    setCapturedWeight(null);
+                    lastCapturedWeightRef.current = null;
                   }}
                   className="flex-1 sm:flex-initial"
                 >
@@ -1895,9 +1946,13 @@ export function AnimalWeighingManagement() {
                 ) : (
                   <Select
                     value={selectedChannelTypeId?.toString() || ""}
-                    onValueChange={(value) =>
-                      setSelectedChannelTypeId(parseInt(value))
-                    }
+                    onValueChange={(value) => {
+                      setSelectedChannelTypeId(parseInt(value));
+                      // Limpiar peso capturado al cambiar tipo de canal para evitar confusiones
+                      setSelectedRowId(null);
+                      setCapturedWeight(null);
+                      lastCapturedWeightRef.current = null;
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccione tipo de canal" />
@@ -1934,7 +1989,13 @@ export function AnimalWeighingManagement() {
                                 : "outline"
                             }
                             size="sm"
-                            onClick={() => setSelectedChannelTypeId(channel.id)}
+                            onClick={() => {
+                              setSelectedChannelTypeId(channel.id);
+                              // Limpiar peso capturado al cambiar tipo de canal para evitar confusiones
+                              setSelectedRowId(null);
+                              setCapturedWeight(null);
+                              lastCapturedWeightRef.current = null;
+                            }}
                             className="flex-1 sm:flex-initial"
                           >
                             {channel.name}
@@ -2173,9 +2234,7 @@ export function AnimalWeighingManagement() {
                                     variant="ghost"
                                     className="text-teal-700 hover:text-teal-800 hover:bg-teal-50 h-6 px-1.5 shrink-0"
                                     onClick={() =>
-                                      setAddresseeSelectionRowId(
-                                        sortedRows[0].id,
-                                      )
+                                      openAddresseeSelection(sortedRows[0].id)
                                     }
                                   >
                                     <Edit className="h-2.5 w-2.5 mr-0.5" />
@@ -2191,7 +2250,7 @@ export function AnimalWeighingManagement() {
                                   size="sm"
                                   className="bg-teal-600 hover:bg-teal-700 h-8 text-sm w-full"
                                   onClick={() =>
-                                    setAddresseeSelectionRowId(sortedRows[0].id)
+                                    openAddresseeSelection(sortedRows[0].id)
                                   }
                                 >
                                   <User className="h-3 w-3 mr-1" />
@@ -2655,7 +2714,7 @@ export function AnimalWeighingManagement() {
                                             variant="ghost"
                                             className="text-teal-600 hover:text-teal-700 h-5 px-1.5 text-[10px]"
                                             onClick={() =>
-                                              setAddresseeSelectionRowId(
+                                              openAddresseeSelection(
                                                 sortedRows[0].id,
                                               )
                                             }
@@ -2672,7 +2731,7 @@ export function AnimalWeighingManagement() {
                                             size="sm"
                                             className="bg-teal-600 hover:bg-teal-700 h-6 text-xs px-2"
                                             onClick={() =>
-                                              setAddresseeSelectionRowId(
+                                              openAddresseeSelection(
                                                 sortedRows[0].id,
                                               )
                                             }
