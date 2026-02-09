@@ -35,6 +35,8 @@ export function Step2AddresseeSelection({
   const [page, setPage] = useState(1);
   const [itemsPerPage] = useState(5); // Show 5 items per page to fit in the wizard
 
+  const hasFilters = !!searchTerm || !!brand;
+
   // Pedir más datos del backend para compensar el filtrado
   const query = useQuery({
     queryKey: ["addressees", "wizard", searchTerm, brand],
@@ -43,6 +45,8 @@ export function Step2AddresseeSelection({
         brand,
         names: searchTerm,
       }),
+    // Evitar llamadas sin filtros para no disparar error en el backend
+    enabled: hasFilters,
   });
 
   const debouncedSearch = useDebouncedCallback((value) => {

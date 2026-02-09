@@ -41,11 +41,17 @@ export function AddresseeSelectionWeighing({
   onBack,
 }: AddresseeSelectionWeighingProps) {
   const [namesSearch, setNamesSearch] = useState("");
-  const [brandSearch, setBrandSearch] = useState(initialBrandName); // Empezamos vacío para no disparar búsqueda por nombre inicialmente
+  const [brandSearch, setBrandSearch] = useState(initialBrandName ?? ""); // Empezamos vacío para no disparar búsqueda por nombre inicialmente
   const [effectiveBrandId, setEffectiveBrandId] = useState<number | undefined>(initialBrandId);
   const [effectiveBrandIds, setEffectiveBrandIds] = useState<string | undefined>(initialBrandIds);
   const [page, setPage] = useState(1);
   const itemsPerPage = 5;
+
+  const hasFilters =
+    !!namesSearch ||
+    !!brandSearch ||
+    typeof effectiveBrandId === "number" ||
+    !!effectiveBrandIds;
 
   const query = useQuery({
     queryKey: ["addressees", "weighing", namesSearch, brandSearch, effectiveBrandId, effectiveBrandIds],
@@ -61,6 +67,8 @@ export function AddresseeSelectionWeighing({
         brandIds: useBrandIds,
       });
     },
+    // Evitar llamadas sin filtros para no disparar error en el backend
+    enabled: hasFilters,
   });
 
   // Efecto para limpiar el effectiveBrandId/effectiveBrandIds si no se encuentra un resultado único
@@ -87,7 +95,17 @@ export function AddresseeSelectionWeighing({
         }
       }
     }
-  }, [query.isLoading, query.data, namesSearch, brandSearch, effectiveBrandId, effectiveBrandIds, onSelect]);
+  }, [
+    query.isLoading,
+    query.data,
+    namesSearch,
+    brandSearch,
+    effectiveBrandId,
+    effectiveBrandIds,
+    onSelect,
+    isDefaultAddressSelected,
+    setIsDefaultAddressSelected,
+  ]);
 
   const debouncedNamesSearch = useDebouncedCallback((value) => {
     setNamesSearch(value);
