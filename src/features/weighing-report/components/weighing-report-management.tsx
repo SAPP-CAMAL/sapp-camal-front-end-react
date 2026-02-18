@@ -26,6 +26,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Search,
@@ -34,6 +40,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   FileText,
   Calendar,
   PawPrint,
@@ -43,6 +50,7 @@ import {
   User,
   Tag,
   Layers,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,6 +65,7 @@ import {
 } from "@/features/postmortem/utils/postmortem-helpers";
 import { useDebouncedCallback } from "use-debounce";
 import { Badge } from "@/components/ui/badge";
+import { PerformanceReportModal } from "./performance-report-modal";
 
 export function WeighingReportManagement() {
   // Estados de filtros
@@ -76,6 +85,8 @@ export function WeighingReportManagement() {
 
   // Estados de UI
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
+  const [expandedBrands, setExpandedBrands] = useState<Set<string>>(new Set());
 
   // Datos de la API
   const { data: lines, isLoading: isLoadingLines } = useLines();
@@ -185,6 +196,19 @@ export function WeighingReportManagement() {
   // Verificar si faltan filtros requeridos
   const missingFilters = !selectedSpecieId || !weighingStageId;
 
+  // Función para alternar expansión de marca
+  const toggleBrandExpansion = (brandKey: string) => {
+    setExpandedBrands((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(brandKey)) {
+        newSet.delete(brandKey);
+      } else {
+        newSet.add(brandKey);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div>
       {/* Header */}
@@ -199,23 +223,50 @@ export function WeighingReportManagement() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            onClick={handleDownloadPdf}
-            disabled={isDownloading || !reportFilters}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
-          >
-            {isDownloading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Descargando...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Descargar PDF
-              </>
-            )}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={isDownloading || !reportFilters}
+                className="bg-teal-600 hover:bg-teal-700 text-white"
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Descargando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Descargar Reporte
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem
+                onClick={handleDownloadPdf}
+                disabled={isDownloading || !reportFilters}
+                className="cursor-pointer"
+              >
+                <FileText className="mr-2 h-4 w-4 text-red-600" />
+                <div className="flex flex-col">
+                  <span className="font-medium">Reporte Pesaje</span>
+                  <span className="text-xs text-gray-500">Descargar en PDF</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setIsPerformanceModalOpen(true)}
+                disabled={!reportFilters}
+                className="cursor-pointer"
+              >
+                <TrendingUp className="mr-2 h-4 w-4 text-teal-600" />
+                <div className="flex flex-col">
+                  <span className="font-medium">Reporte Rendimiento</span>
+                  <span className="text-xs text-gray-500">Configurar parámetros</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </section>
 
@@ -355,8 +406,8 @@ export function WeighingReportManagement() {
         </Card>
       )}
 
-      {/* Tabla de Resultados */}
-      <Card>
+      {/* Tabla de Resultados - Desktop */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -612,6 +663,245 @@ export function WeighingReportManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Vista de Cards - Mobile/Tablet */}
+      <div className="md:hidden space-y-4">
+        {isLoadingReport ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                <span className="text-gray-500">Cargando datos...</span>
+              </div>
+            </CardContent>
+          </Card>
+        ) : missingFilters ? (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="py-8">
+              <div className="flex flex-col items-center gap-3 text-amber-700">
+                <Scale className="h-12 w-12" />
+                <span className="text-sm text-center">
+                  Configure los filtros para ver el reporte
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        ) : paginatedData.length === 0 ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center gap-3">
+                <Scale className="h-12 w-12 text-gray-300" />
+                <span className="text-gray-500">No se encontraron registros</span>
+                <span className="text-xs text-gray-400 text-center">
+                  Ajuste los filtros o el rango de fechas
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {paginatedData.map((row, introducerIndex) => (
+              <Card key={row.id} className="overflow-hidden">
+                <CardHeader className="bg-teal-600 text-white p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Hash className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          NRO. {(currentPage - 1) * itemsPerPage + introducerIndex + 1}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-base uppercase">
+                        {row.introducer.fullName}
+                      </h3>
+                      <div className="flex items-center gap-1 mt-1 text-xs opacity-90">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          Faena: {new Date(row.introducer.slaughterDate).toLocaleDateString("es-EC")}
+                        </span>
+                      </div>
+                    </div>
+                    <User className="h-5 w-5 opacity-80" />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {row.brands.map((brandGroup) => {
+                    const brandKey = `${row.id}-${brandGroup.brandId}`;
+                    const isExpanded = expandedBrands.has(brandKey);
+                    const totalAnimals = brandGroup.animals.length;
+                    const showExpandButton = totalAnimals > 4;
+                    const animalsToShow = isExpanded ? brandGroup.animals : brandGroup.animals.slice(0, 4);
+
+                    return (
+                      <div key={brandGroup.brandId} className="border-b last:border-b-0">
+                        <div className="bg-blue-50 px-4 py-2 border-b">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Tag className="h-4 w-4 text-blue-600" />
+                              <span className="font-semibold text-blue-700">
+                                {brandGroup.brandName}
+                              </span>
+                            </div>
+                            {showExpandButton && (
+                              <span className="text-xs text-blue-600 font-medium">
+                                {totalAnimals} animales
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {animalsToShow.map((animal) => (
+                          <div
+                            key={animal.id}
+                            className="p-4 border-b last:border-b-0 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-amber-50 text-amber-700 border-amber-200 mb-2"
+                                  >
+                                    {animal.productiveStage}
+                                  </Badge>
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Layers className="h-3 w-3" />
+                                    <span>Código: {animal.code}</span>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                                    <Scale className="h-3 w-3" />
+                                    <span>Peso Neto</span>
+                                  </div>
+                                  <div className="font-bold text-emerald-600 text-xl">
+                                    {animal.netWeight.toFixed(2)}
+                                    <span className="text-sm text-gray-500 ml-1">LB</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {showExpandButton && (
+                          <button
+                            onClick={() => toggleBrandExpansion(brandKey)}
+                            className="w-full py-3 px-4 bg-blue-50 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 text-blue-700 font-medium text-sm"
+                          >
+                            {isExpanded ? (
+                              <>
+                                <ChevronDown className="h-4 w-4 rotate-180 transition-transform" />
+                                Mostrar menos
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="h-4 w-4 transition-transform" />
+                                Ver {totalAnimals - 4} más
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            ))}
+
+            {/* Paginación Mobile */}
+            {displayData.length > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600 text-center">
+                      Mostrando{" "}
+                      <span className="font-medium">
+                        {Math.min((currentPage - 1) * itemsPerPage + 1, displayData.length)}
+                      </span>{" "}
+                      a{" "}
+                      <span className="font-medium">
+                        {Math.min(currentPage * itemsPerPage, displayData.length)}
+                      </span>{" "}
+                      de <span className="font-medium">{displayData.length}</span>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="flex-1 max-w-[120px]"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Anterior
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 2) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 1) {
+                            pageNum = totalPages - 2 + i;
+                          } else {
+                            pageNum = currentPage - 1 + i;
+                          }
+
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`w-10 h-10 p-0 ${
+                                currentPage === pageNum
+                                  ? "bg-teal-600 text-white hover:bg-teal-700"
+                                  : ""
+                              }`}
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="flex-1 max-w-[120px]"
+                      >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Modal de Reporte de Rendimiento */}
+      <PerformanceReportModal
+        open={isPerformanceModalOpen}
+        onOpenChange={setIsPerformanceModalOpen}
+        filters={
+          reportFilters
+            ? {
+                idWeighingStage: reportFilters.idWeighingStage,
+                idSpecie: reportFilters.idSpecie,
+                startDate: reportFilters.startDate,
+                endDate: reportFilters.endDate,
+                brandName: debouncedBrandSearch || undefined,
+              }
+            : null
+        }
+      />
     </div>
   );
 }
