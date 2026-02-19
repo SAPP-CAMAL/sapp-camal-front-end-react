@@ -35,10 +35,6 @@ export function DashboardLayoutClient({
     timeoutMinutes: 120,
     onInactivity: handleInactivity
   });
-
-  // Log para confirmar carga correcta en el cliente
-  console.log("[Dashboard] Initializing activity monitor with 120m timeout");
-
   const handleReload = useCallback(() => {
     window.location.reload();
   }, []);

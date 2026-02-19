@@ -29,9 +29,7 @@ export function useInactivityMonitor({
     const timeoutMs = effectiveTimeoutSeconds * 1000;
 
     // Log para depuración en consola del cliente
-    useEffect(() => {
-        console.log(`[Auth] Inactivity monitor initialized with ${effectiveTimeoutSeconds} seconds (${effectiveTimeoutSeconds / 60} minutes)`);
-    }, [effectiveTimeoutSeconds]);
+    useEffect(() => {}, [effectiveTimeoutSeconds]);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastActivityRef = useRef<number>(Date.now());
 

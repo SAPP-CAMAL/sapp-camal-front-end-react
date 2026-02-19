@@ -44,15 +44,11 @@ export function LoginForm({
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      const identifier = data.identifier?.trim();
-      console.log("Attempting login with:", identifier);
-
+      const identifier = data.identifier?.trim(); 
       const resp = await loginAction({
         identifier,
         password: data.password,
       });
-
-      console.log("Login response received");
 
       // Manejar la persistencia del identificador si "Recuérdame" está marcado
       if (data.remember) {
@@ -115,8 +111,6 @@ export function LoginForm({
         // Limpiar el rol activo para que siempre muestre el primer rol del listado al iniciar sesión
         window.localStorage.removeItem("activeRoleId");
       } catch { /* ignore */ }
-
-      console.log("Tokens stored, redirecting...");
 
       toast.success("Bienvenido");
 

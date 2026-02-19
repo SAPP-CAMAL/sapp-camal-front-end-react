@@ -13,8 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Slider } from "@/components/ui/slider";
-import { Loader2, FileText, Scale, Ruler, Tag } from "lucide-react";
+import { Loader2, FileText, Scale, Ruler } from "lucide-react";
 import { toast } from "sonner";
 import { useUnitMeasures } from "../hooks";
 import { generateProductivityReport } from "../server";
@@ -39,7 +38,6 @@ export function PerformanceReportModal({
 }: PerformanceReportModalProps) {
   const [selectedUnitMeasure, setSelectedUnitMeasure] = useState<number | null>(null);
   const [initialWeight, setInitialWeight] = useState<number>(100);
-  const [brandName, setBrandName] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: unitMeasuresData, isLoading: isLoadingUnits } = useUnitMeasures();
@@ -51,23 +49,19 @@ export function PerformanceReportModal({
     }
   }, [unitMeasuresData, selectedUnitMeasure]);
 
-  // Inicializar brandName con el valor de los filtros si existe
-  useEffect(() => {
-    if (open && filters?.brandName) {
-      setBrandName(filters.brandName);
-    } else if (open && !filters?.brandName) {
-      setBrandName("");
-    }
-  }, [open, filters?.brandName]);
-
   const handleGenerate = async () => {
     if (!filters || !selectedUnitMeasure) {
       toast.error("Faltan parámetros requeridos");
       return;
     }
 
-    if (!brandName || brandName.trim().length === 0) {
-      toast.error("El nombre de la marca es obligatorio");
+    if (!filters.brandName || filters.brandName.trim().length === 0) {
+      toast.error("Debe buscar por marca en los filtros principales");
+      return;
+    }
+
+    if (initialWeight <= 0) {
+      toast.error("El peso total debe ser mayor a 0");
       return;
     }
 
@@ -88,7 +82,7 @@ export function PerformanceReportModal({
         idSpecie: filters.idSpecie,
         startDate: filters.startDate,
         endDate: filters.endDate,
-        brandName: brandName.trim(),
+        brandName: filters.brandName.trim(),
         totalAnimalsWeight: initialWeight,
         measureUnit: selectedUnit.code,
         typeReport: "PDF",
@@ -130,30 +124,16 @@ export function PerformanceReportModal({
             Reporte de Rendimiento
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Configure los parámetros para generar el reporte de rendimiento
+            Configure los parámetros para generar el reporte de rendimiento.
+            {!filters?.brandName && (
+              <span className="block mt-2 text-amber-600 font-medium">
+                ⚠️ Debe buscar por marca en los filtros principales
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
-          {/* Nombre de Marca */}
-          <div className="space-y-2 sm:space-y-3">
-            <Label className="text-sm sm:text-base font-semibold flex items-center gap-2">
-              <Tag className="h-4 w-4 text-primary" />
-              Nombre de Marca
-              <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              type="text"
-              placeholder="Ingrese el nombre de la marca"
-              value={brandName}
-              onChange={(e) => setBrandName(e.target.value)}
-              className="w-full h-10 sm:h-11"
-            />
-            <p className="text-xs text-gray-500">
-              Campo obligatorio para generar el reporte
-            </p>
-          </div>
-
           {/* Unidad de Medida */}
           <div className="space-y-2 sm:space-y-3">
             <Label className="text-sm sm:text-base font-semibold flex items-center gap-2">
@@ -195,32 +175,36 @@ export function PerformanceReportModal({
             )}
           </div>
 
-          {/* Peso Inicial */}
+          {/* Peso Total de Animales */}
           <div className="space-y-2 sm:space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                <Scale className="h-4 w-4 text-primary" />
-                Peso Total de Animales
-              </Label>
-              <span className="text-base sm:text-lg font-bold text-teal-600">
-                {initialWeight} {selectedUnit?.code || ""}
+            <Label className="text-sm sm:text-base font-semibold flex items-center gap-2">
+              <Scale className="h-4 w-4 text-primary" />
+              Peso Total de Animales
+            </Label>
+            <div className="relative">
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Ingrese el peso total"
+                value={initialWeight}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value) && value >= 0) {
+                    setInitialWeight(value);
+                  } else if (e.target.value === "") {
+                    setInitialWeight(0);
+                  }
+                }}
+                className="w-full h-10 sm:h-11 pr-16"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
+                {selectedUnit?.code || ""}
               </span>
             </div>
-            <div className="py-2 sm:py-3">
-              <Slider
-                value={[initialWeight]}
-                onValueChange={(values: number[]) => setInitialWeight(values[0])}
-                min={0}
-                max={1000}
-                step={10}
-                className="w-full cursor-pointer"
-              />
-            </div>
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>0 {selectedUnit?.code || ""}</span>
-              <span>500 {selectedUnit?.code || ""}</span>
-              <span>1000 {selectedUnit?.code || ""}</span>
-            </div>
+            <p className="text-xs text-gray-500">
+              Ingrese el peso total de los animales (puede usar decimales)
+            </p>
           </div>
         </div>
 
@@ -235,7 +219,7 @@ export function PerformanceReportModal({
           </Button>
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || !selectedUnitMeasure || !brandName.trim()}
+            disabled={isGenerating || !selectedUnitMeasure || !filters?.brandName || initialWeight <= 0}
             className="bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto"
           >
             {isGenerating ? (
