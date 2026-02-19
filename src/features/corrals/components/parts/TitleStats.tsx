@@ -7,6 +7,7 @@ import { Hash, Loader2 } from "lucide-react";
 import { getTotalAnimalsByLineService, generateSpecieCodesService } from "@/features/corrals/server/db/corrals.service";
 import { toast } from "sonner";
 import type { BrandDetail } from "@/features/corrals/domain";
+import { format } from "date-fns";
 // No skeleton: we'll use a custom animated three-dots loader inside the badge
 
 interface Props {
@@ -26,7 +27,7 @@ export function TitleStats({ title, totals, admissionDate, idLine, brandDetailsM
   const handleGenerateCodes = async () => {
     // Verificar que haya animales en la línea antes de permitir generar códigos
     const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
-    
+
     if (totalAnimals === 0) {
       toast.error('No se pueden generar códigos cuando no hay animales en la línea');
       return;
@@ -36,13 +37,13 @@ export function TitleStats({ title, totals, admissionDate, idLine, brandDetailsM
     if (brandDetailsMap) {
       const allBrands = Object.values(brandDetailsMap).flat();
       const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
-      
+
       if (!hasAnimalsWithoutCodes && allBrands.length > 0) {
         toast.error('Todos los animales ya tienen códigos asignados');
         return;
       }
     }
-    
+
     setShowConfirmDialog(true);
   };
 
@@ -57,7 +58,8 @@ export function TitleStats({ title, totals, admissionDate, idLine, brandDetailsM
 
     try {
       // Format date as YYYY-MM-DD
-      const executionDate = admissionDate.toISOString().split('T')[0];
+      const executionDate = format(admissionDate, "yyyy-MM-dd");
+
       const result = await generateSpecieCodesService(idLine, executionDate);
       if (result.success) {
         toast.success(result.message);
@@ -152,27 +154,27 @@ export function TitleStats({ title, totals, admissionDate, idLine, brandDetailsM
               disabled={(() => {
                 const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
                 if (generatingCodes || totalAnimals === 0) return true;
-                
+
                 // Verificar si todos los animales ya tienen códigos
                 if (brandDetailsMap) {
                   const allBrands = Object.values(brandDetailsMap).flat();
                   const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
                   if (!hasAnimalsWithoutCodes && allBrands.length > 0) return true;
                 }
-                
+
                 return false;
               })()}
               title={(() => {
                 const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
                 if (totalAnimals === 0) return 'No hay animales en la línea';
-                
+
                 // Verificar si todos los animales ya tienen códigos
                 if (brandDetailsMap) {
                   const allBrands = Object.values(brandDetailsMap).flat();
                   const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
                   if (!hasAnimalsWithoutCodes && allBrands.length > 0) return 'Todos los animales ya tienen códigos asignados';
                 }
-                
+
                 if (generatingCodes) return 'Generando códigos...';
                 return 'Generar códigos para animales de corral';
               })()}
@@ -193,14 +195,14 @@ export function TitleStats({ title, totals, admissionDate, idLine, brandDetailsM
               {(() => {
                 const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
                 if (totalAnimals === 0) return 'No hay animales en la línea';
-                
+
                 // Verificar si todos los animales ya tienen códigos
                 if (brandDetailsMap) {
                   const allBrands = Object.values(brandDetailsMap).flat();
                   const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
                   if (!hasAnimalsWithoutCodes && allBrands.length > 0) return 'Todos los animales ya tienen códigos asignados';
                 }
-                
+
                 if (generatingCodes) return 'Generando códigos...';
                 return 'Genera códigos para animales de corral';
               })()}
@@ -266,27 +268,27 @@ export function TitleStats({ title, totals, admissionDate, idLine, brandDetailsM
                 disabled={(() => {
                   const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
                   if (generatingCodes || totalAnimals === 0) return true;
-                  
+
                   // Verificar si todos los animales ya tienen códigos
                   if (brandDetailsMap) {
                     const allBrands = Object.values(brandDetailsMap).flat();
                     const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
                     if (!hasAnimalsWithoutCodes && allBrands.length > 0) return true;
                   }
-                  
+
                   return false;
                 })()}
                 title={(() => {
                   const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
                   if (totalAnimals === 0) return 'No hay animales en la línea';
-                  
+
                   // Verificar si todos los animales ya tienen códigos
                   if (brandDetailsMap) {
                     const allBrands = Object.values(brandDetailsMap).flat();
                     const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
                     if (!hasAnimalsWithoutCodes && allBrands.length > 0) return 'Todos los animales ya tienen códigos asignados';
                   }
-                  
+
                   if (generatingCodes) return 'Generando códigos...';
                   return 'Generar códigos para animales de corral';
                 })()}
@@ -307,14 +309,14 @@ export function TitleStats({ title, totals, admissionDate, idLine, brandDetailsM
                 {(() => {
                   const totalAnimals = typeof remoteAnimals === "number" ? remoteAnimals : totals.animales;
                   if (totalAnimals === 0) return 'No hay animales en la línea';
-                  
+
                   // Verificar si todos los animales ya tienen códigos
                   if (brandDetailsMap) {
                     const allBrands = Object.values(brandDetailsMap).flat();
                     const hasAnimalsWithoutCodes = allBrands.some(brand => brand.codes === null || brand.codes === '');
                     if (!hasAnimalsWithoutCodes && allBrands.length > 0) return 'Todos los animales ya tienen códigos asignados';
                   }
-                  
+
                   if (generatingCodes) return 'Generando códigos...';
                   return 'Genera códigos para animales de corral';
                 })()}
