@@ -126,7 +126,7 @@ export function CorralsManagement() {
     "cerrar"
   );
   const [targetScope, setTargetScope] = useState<"linea" | "especial">("linea");
-  
+
   // State for generating codes
   const [generatingCodes, setGeneratingCodes] = useState<string | null>(null);
   const [showGenerateCodesDialog, setShowGenerateCodesDialog] = useState(false);
@@ -1638,12 +1638,12 @@ export function CorralsManagement() {
     // Verificar que el corral tenga animales antes de permitir generar códigos
     const corralBrands = brandDetailsMap[corralId] || [];
     const totalAnimalsInCorral = corralBrands.reduce((sum, brand) => sum + brand.males + brand.females, 0);
-    
+
     if (totalAnimalsInCorral === 0) {
       toast.error('No se pueden generar códigos para un corral sin animales');
       return;
     }
-    
+
     setSelectedCorralForCodes({ id: corralId, name: corralName });
     setShowGenerateCodesDialog(true);
   };
@@ -1667,7 +1667,9 @@ export function CorralsManagement() {
     setGeneratingCodes(corralId);
     try {
       // Format date as YYYY-MM-DD
-      const executionDate = selectedDate.toISOString().split('T')[0];
+      // const executionDate = selectedDate.toISOString().split('T')[0];
+      const executionDate = format(selectedDate, "yyyy-MM-dd");
+
       // Use corralId directly as it's already the numeric ID (as string)
       const result = await generateSpecieCodesByCorralService(
         currentLineData.id,
@@ -1675,7 +1677,7 @@ export function CorralsManagement() {
         statusCorral.statusRecordId,
         parseInt(corralId)
       );
-      
+
       if (result.success) {
         toast.success(result.message);
         // Reload data without full page reload
@@ -2058,10 +2060,10 @@ export function CorralsManagement() {
           }
         }}
         className={`group relative flex flex-col h-full overflow-hidden rounded-xl border-2 transform transition-all duration-200 shadow-md hover:shadow-lg ${
-          hasGeneratedCodes 
-            ? "border-gray-300 bg-gray-50 opacity-70 cursor-not-allowed" 
-            : isBlocked || isBlockedByDate 
-            ? "border-gray-200 bg-white cursor-not-allowed" 
+          hasGeneratedCodes
+            ? "border-gray-300 bg-gray-50 opacity-70 cursor-not-allowed"
+            : isBlocked || isBlockedByDate
+            ? "border-gray-200 bg-white cursor-not-allowed"
             : "border-gray-200 bg-white hover:border-blue-200 active:border-blue-400 active:shadow-xl cursor-pointer"
         }`}
         aria-disabled={isBlocked || isBlockedByDate || hasGeneratedCodes}
@@ -2820,7 +2822,7 @@ export function CorralsManagement() {
           })()}
           onConfirm={confirmCorralToggle}
         />
-        
+
         {/* Confirm Dialog for Generate Codes per Corral */}
         <ConfirmToggleDialog
           open={showGenerateCodesDialog}
@@ -2832,7 +2834,7 @@ export function CorralsManagement() {
           customMessage={`¿Está seguro que desea generar códigos para el corral ${selectedCorralForCodes?.name}? Una vez generados, no podra mover o editar los animales en este corral.`}
           customConfirmText="Generar Códigos"
         />
-        
+
         {/* Video Upload Dialog */}
         <VideoUploadDialog
           open={videoDialogOpen}
