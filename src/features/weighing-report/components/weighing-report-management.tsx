@@ -86,7 +86,8 @@ export function WeighingReportManagement() {
   // Estados de UI
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
-  const [expandedBrands, setExpandedBrands] = useState<Set<string>>(new Set());
+  const [expandedBrands, setExpandedBrands] = useState<Map<string, number>>(new Map());
+  const [expandedBrandsDesktop, setExpandedBrandsDesktop] = useState<Map<string, number>>(new Map());
 
   // Datos de la API
   const { data: lines, isLoading: isLoadingLines } = useLines();
@@ -196,16 +197,43 @@ export function WeighingReportManagement() {
   // Verificar si faltan filtros requeridos
   const missingFilters = !selectedSpecieId || !weighingStageId;
 
-  // Función para alternar expansión de marca
-  const toggleBrandExpansion = (brandKey: string) => {
+  // Función para expandir marca (mostrar 10 más)
+  const expandBrand = (brandKey: string, totalAnimals: number) => {
     setExpandedBrands((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(brandKey)) {
-        newSet.delete(brandKey);
-      } else {
-        newSet.add(brandKey);
-      }
-      return newSet;
+      const newMap = new Map(prev);
+      const currentShown = newMap.get(brandKey) || 4;
+      const newShown = Math.min(currentShown + 10, totalAnimals);
+      newMap.set(brandKey, newShown);
+      return newMap;
+    });
+  };
+
+  // Función para colapsar marca (volver a 4)
+  const collapseBrand = (brandKey: string) => {
+    setExpandedBrands((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(brandKey);
+      return newMap;
+    });
+  };
+
+  // Función para expandir marca en desktop (mostrar 10 más)
+  const expandBrandDesktop = (brandKey: string, totalAnimals: number) => {
+    setExpandedBrandsDesktop((prev) => {
+      const newMap = new Map(prev);
+      const currentShown = newMap.get(brandKey) || 10;
+      const newShown = Math.min(currentShown + 10, totalAnimals);
+      newMap.set(brandKey, newShown);
+      return newMap;
+    });
+  };
+
+  // Función para colapsar marca en desktop (volver a 10)
+  const collapseBrandDesktop = (brandKey: string) => {
+    setExpandedBrandsDesktop((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(brandKey);
+      return newMap;
     });
   };
 
@@ -255,7 +283,13 @@ export function WeighingReportManagement() {
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => setIsPerformanceModalOpen(true)}
+                onClick={() => {
+                  if (!debouncedBrandSearch || debouncedBrandSearch.trim().length === 0) {
+                    toast.error("Debe buscar por marca antes de generar el reporte de rendimiento");
+                    return;
+                  }
+                  setIsPerformanceModalOpen(true);
+                }}
                 disabled={!reportFilters}
                 className="cursor-pointer"
               >
@@ -425,6 +459,12 @@ export function WeighingReportManagement() {
                       INTRODUCTOR
                     </div>
                   </TableHead>
+                  <TableHead className="w-[120px] font-semibold text-center text-white border-r border-teal-500/30">
+                    <div className="flex items-center justify-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      FECHA FAENA
+                    </div>
+                  </TableHead>
                   <TableHead className="w-[150px] font-semibold text-center text-white border-r border-teal-500/30">
                     <div className="flex items-center justify-center gap-2">
                       <Tag className="h-4 w-4" />
@@ -448,7 +488,7 @@ export function WeighingReportManagement() {
               <TableBody>
                 {isLoadingReport ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-40 text-center">
+                    <TableCell colSpan={6} className="h-40 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
                         <span className="text-gray-500">Cargando datos...</span>
@@ -457,7 +497,7 @@ export function WeighingReportManagement() {
                   </TableRow>
                 ) : missingFilters ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-40 text-center">
+                    <TableCell colSpan={6} className="h-40 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <Scale className="h-12 w-12 text-gray-300" />
                         <span className="text-gray-500">
@@ -468,7 +508,7 @@ export function WeighingReportManagement() {
                   </TableRow>
                 ) : paginatedData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-40 text-center">
+                    <TableCell colSpan={6} className="h-40 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <Scale className="h-12 w-12 text-gray-300" />
                         <span className="text-gray-500">
@@ -482,17 +522,35 @@ export function WeighingReportManagement() {
                   </TableRow>
                 ) : (
                   paginatedData.map((row, introducerIndex) => {
-                    // Calcular el total de animales para este introductor (para rowSpan)
-                    const totalAnimalsForIntroducer = row.brands.reduce(
-                      (sum, brand) => sum + brand.animals.length,
-                      0
-                    );
-
                     let isFirstRowOfIntroducer = true;
                     const rows: React.ReactNode[] = [];
 
+                    // Calcular el total de filas visibles para este introductor
+                    let totalVisibleRows = 0;
+                    row.brands.forEach((brandGroup) => {
+                      const brandKey = `${row.id}-${brandGroup.brandId}`;
+                      const shownCount = expandedBrandsDesktop.get(brandKey) || 10;
+                      const totalAnimals = brandGroup.animals.length;
+                      const showExpandButton = totalAnimals > 10;
+                      const visibleAnimals = Math.min(shownCount, totalAnimals);
+                      
+                      totalVisibleRows += visibleAnimals;
+                      if (showExpandButton && visibleAnimals < totalAnimals) {
+                        totalVisibleRows += 1; // Fila del botón de expansión
+                      } else if (showExpandButton && visibleAnimals === totalAnimals) {
+                        totalVisibleRows += 1; // Fila del botón de colapsar
+                      }
+                    });
+
                     row.brands.forEach((brandGroup, brandIndex) => {
-                      brandGroup.animals.forEach((animal, animalIndex) => {
+                      const brandKey = `${row.id}-${brandGroup.brandId}`;
+                      const shownCount = expandedBrandsDesktop.get(brandKey) || 10;
+                      const totalAnimals = brandGroup.animals.length;
+                      const showExpandButton = totalAnimals > 10;
+                      const animalsToShow = brandGroup.animals.slice(0, shownCount);
+                      const hasMore = shownCount < totalAnimals;
+
+                      animalsToShow.forEach((animal, animalIndex) => {
                         const isFirstAnimalOfBrand = animalIndex === 0;
 
                         rows.push(
@@ -504,7 +562,7 @@ export function WeighingReportManagement() {
                             {isFirstRowOfIntroducer && (
                               <TableCell
                                 className="text-center font-medium text-gray-600 align-middle bg-gray-50/50 border-r"
-                                rowSpan={totalAnimalsForIntroducer}
+                                rowSpan={totalVisibleRows}
                               >
                                 {(currentPage - 1) * itemsPerPage +
                                   introducerIndex +
@@ -516,14 +574,25 @@ export function WeighingReportManagement() {
                             {isFirstRowOfIntroducer && (
                               <TableCell
                                 className="align-middle bg-gray-50/50 border-r"
-                                rowSpan={totalAnimalsForIntroducer}
+                                rowSpan={totalVisibleRows}
                               >
                                 <div className="flex flex-col gap-1 pl-2">
                                   <span className="font-semibold text-gray-900 uppercase">
                                     {row.introducer.fullName}
                                   </span>
-                                  <span className="text-xs text-gray-500">
-                                    Faena: {new Date(row.introducer.slaughterDate).toLocaleDateString("es-EC")}
+                                </div>
+                              </TableCell>
+                            )}
+
+                            {/* FECHA FAENA - Solo en la primera fila del introductor */}
+                            {isFirstRowOfIntroducer && (
+                              <TableCell
+                                className="align-middle text-center bg-gray-50/50 border-r"
+                                rowSpan={totalVisibleRows}
+                              >
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {new Date(row.introducer.slaughterDate).toLocaleDateString("es-EC")}
                                   </span>
                                 </div>
                               </TableCell>
@@ -533,7 +602,7 @@ export function WeighingReportManagement() {
                             {isFirstAnimalOfBrand && (
                               <TableCell
                                 className="align-middle text-center border-r"
-                                rowSpan={brandGroup.animals.length}
+                                rowSpan={animalsToShow.length}
                               >
                                 <Badge
                                   variant="outline"
@@ -573,6 +642,39 @@ export function WeighingReportManagement() {
 
                         isFirstRowOfIntroducer = false;
                       });
+
+                      // Agregar fila de expansión si hay más de 10 animales
+                      if (showExpandButton) {
+                        rows.push(
+                          <TableRow
+                            key={`${brandKey}-expand`}
+                            className="bg-blue-50 hover:bg-blue-100 transition-colors"
+                          >
+                            <TableCell colSpan={6} className="text-center py-3">
+                              <div className="flex items-center justify-center gap-3">
+                                {hasMore && (
+                                  <button
+                                    onClick={() => expandBrandDesktop(brandKey, totalAnimals)}
+                                    className="inline-flex items-center gap-2 text-blue-700 font-medium text-sm hover:text-blue-800 transition-colors"
+                                  >
+                                    <ChevronDown className="h-4 w-4 transition-transform" />
+                                    Ver 10 más ({totalAnimals - shownCount} restantes)
+                                  </button>
+                                )}
+                                {!hasMore && (
+                                  <button
+                                    onClick={() => collapseBrandDesktop(brandKey)}
+                                    className="inline-flex items-center gap-2 text-blue-700 font-medium text-sm hover:text-blue-800 transition-colors"
+                                  >
+                                    <ChevronDown className="h-4 w-4 rotate-180 transition-transform" />
+                                    Mostrar menos
+                                  </button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
                     });
 
                     return rows;
@@ -727,10 +829,11 @@ export function WeighingReportManagement() {
                 <CardContent className="p-0">
                   {row.brands.map((brandGroup) => {
                     const brandKey = `${row.id}-${brandGroup.brandId}`;
-                    const isExpanded = expandedBrands.has(brandKey);
+                    const shownCount = expandedBrands.get(brandKey) || 4;
                     const totalAnimals = brandGroup.animals.length;
                     const showExpandButton = totalAnimals > 4;
-                    const animalsToShow = isExpanded ? brandGroup.animals : brandGroup.animals.slice(0, 4);
+                    const animalsToShow = brandGroup.animals.slice(0, shownCount);
+                    const hasMore = shownCount < totalAnimals;
 
                     return (
                       <div key={brandGroup.brandId} className="border-b last:border-b-0">
@@ -784,18 +887,24 @@ export function WeighingReportManagement() {
                         ))}
                         {showExpandButton && (
                           <button
-                            onClick={() => toggleBrandExpansion(brandKey)}
+                            onClick={() => {
+                              if (hasMore) {
+                                expandBrand(brandKey, totalAnimals);
+                              } else {
+                                collapseBrand(brandKey);
+                              }
+                            }}
                             className="w-full py-3 px-4 bg-blue-50 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 text-blue-700 font-medium text-sm"
                           >
-                            {isExpanded ? (
+                            {hasMore ? (
                               <>
-                                <ChevronDown className="h-4 w-4 rotate-180 transition-transform" />
-                                Mostrar menos
+                                <ChevronDown className="h-4 w-4 transition-transform" />
+                                Ver 10 más ({totalAnimals - shownCount} restantes)
                               </>
                             ) : (
                               <>
-                                <ChevronDown className="h-4 w-4 transition-transform" />
-                                Ver {totalAnimals - 4} más
+                                <ChevronDown className="h-4 w-4 rotate-180 transition-transform" />
+                                Mostrar menos
                               </>
                             )}
                           </button>
