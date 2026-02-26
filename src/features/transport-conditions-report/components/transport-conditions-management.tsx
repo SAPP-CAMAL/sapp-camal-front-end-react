@@ -245,10 +245,14 @@ export function TransportConditionsManagement() {
           )}
 
           <div className="bg-muted/50 rounded-lg p-2 sm:p-3 sm:col-span-2">
-            <div className="grid grid-cols-2 gap-2 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center">
               <div>
                 <div className="text-xs text-muted-foreground">Cantidad</div>
                 <div className="text-lg font-bold text-emerald-600">{item.quantity || 0}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Provincia</div>
+                <div className="text-sm font-medium">{item.province?.name || "N/A"}</div>
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">Origen</div>
@@ -469,7 +473,7 @@ export function TransportConditionsManagement() {
                 </div>
               </div>
             ) : (
-              <Table className="min-w-[900px]">
+              <Table className="min-w-250">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center whitespace-nowrap">
@@ -491,6 +495,9 @@ export function TransportConditionsManagement() {
                       <span className="text-xs font-semibold">Cantidad</span>
                     </TableHead>
                     <TableHead className="text-center whitespace-nowrap">
+                      <span className="text-xs font-semibold">Provincia</span>
+                    </TableHead>
+                    <TableHead className="text-center whitespace-nowrap">
                       <span className="text-xs font-semibold">Origen</span>
                     </TableHead>
                     <TableHead className="text-center whitespace-nowrap">
@@ -501,7 +508,7 @@ export function TransportConditionsManagement() {
                 <TableBody>
                   {!Array.isArray(apiData) || apiData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-12">
+                      <TableCell colSpan={9} className="text-center py-12">
                         <div className="flex flex-col items-center gap-3">
                           <div className="rounded-full bg-muted p-3">
                             <Search className="h-6 w-6 text-muted-foreground" />
@@ -524,6 +531,11 @@ export function TransportConditionsManagement() {
                         <TableCell className="text-center text-sm">{item.shipping?.person?.identification || "N/A"}</TableCell>
                         <TableCell className="text-center text-sm font-medium">{item.shipping?.vehicle?.plate || item.plateVehicle || "N/A"}</TableCell>
                         <TableCell className="text-center font-semibold text-emerald-600">{item.quantity || 0}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-0 font-normal text-xs">
+                            {item.province?.name || "N/A"}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-center">
                           <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-0 font-normal text-xs">
                             {item.origin?.description || item.placeOrigin || "N/A"}

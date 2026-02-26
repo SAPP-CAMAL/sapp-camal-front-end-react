@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, Image as ImageIcon, Upload, X, ZoomIn } from "lucide-react";
 import type { AnimalSelection } from "../domain/postmortem.types";
 import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
 import {
@@ -22,6 +22,7 @@ import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
 import { useProductAnatomicalLocations } from "../hooks/use-product-anatomical-locations";
 import { useAvgOrgansSpecies } from "../hooks/use-avg-organs-species";
 import type { SubProductPostmortem } from "../domain/save-postmortem.types";
+import { uploadPostmortemImageService } from "../server/db/postmortem.service";
 import { toast } from "sonner";
 import { useMemo } from "react";
 import { useUnitMeasure } from "@/features/animal-weighing/hooks/use-unit-measure";
@@ -76,6 +77,9 @@ export function AnimalSelectionModal({
 
   const isSavingOrUpdating = isSaving || isUpdating;
 
+  const imageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
   const [animalSelections, setAnimalSelections] = useState<AnimalSelection[]>(
     []
   );
@@ -125,6 +129,7 @@ export function AnimalSelectionModal({
         const anatomicalAdverseSituations: Record<number, string> = {};
         const anatomicalDiseaseComment: Record<number, string> = {};
         const selectedAnatomicalLocations: Record<number, boolean> = {};
+        const anatomicalImagePreviews: Record<number, string | null> = {};
 
         if (anatomicalLocationsData?.data) {
           anatomicalLocationsData.data.forEach((location) => {
@@ -144,6 +149,7 @@ export function AnimalSelectionModal({
               selectedAnatomicalLocations[location.id] = true; // Marcar como seleccionado
               anatomicalAdverseSituations[location.id] = savedForLocation.adverseSituation || "";
               anatomicalDiseaseComment[location.id] = savedForLocation.diseaseComment || "";
+              anatomicalImagePreviews[location.id] = savedForLocation.urlImage || null;
             } else {
               // Valores por defecto
               anatomicalPercentages[location.id] = 40;
@@ -153,6 +159,7 @@ export function AnimalSelectionModal({
               selectedAnatomicalLocations[location.id] = false;
               anatomicalAdverseSituations[location.id] = "";
               anatomicalDiseaseComment[location.id] = "";
+              anatomicalImagePreviews[location.id] = null;
             }
           });
         }
@@ -182,6 +189,11 @@ export function AnimalSelectionModal({
           adverseSituation: savedSubProduct?.adverseSituation || "",
           diseaseComment: savedSubProduct?.diseaseComment || "",
           selectedAnatomicalLocations,
+          anatomicalImageFiles: {},
+          anatomicalImagePreviews,
+          existingImageUrl: savedSubProduct?.urlImage || savedData?.urlImage || null,
+          imageFile: null,
+          imagePreview: null,
         };
       });
 
@@ -330,6 +342,69 @@ export function AnimalSelectionModal({
     );
   };
 
+  const handleAnimalImage = (animalId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAnimalSelections((prev) =>
+        prev.map((animal) =>
+          animal.animalId === animalId
+            ? { ...animal, imageFile: file, imagePreview: reader.result as string }
+            : animal
+        )
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearImage = (animalId: string) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? { ...animal, imageFile: null, imagePreview: null }
+          : animal
+      )
+    );
+    if (imageInputRefs.current[animalId]) {
+      imageInputRefs.current[animalId]!.value = "";
+    }
+  };
+
+  const handleAnatomicalImage = (animalId: string, locationId: number, file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAnimalSelections((prev) =>
+        prev.map((animal) =>
+          animal.animalId === animalId
+            ? {
+                ...animal,
+                anatomicalImageFiles: { ...animal.anatomicalImageFiles, [locationId]: file },
+                anatomicalImagePreviews: { ...animal.anatomicalImagePreviews, [locationId]: reader.result as string },
+              }
+            : animal
+        )
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearAnatomicalImage = (animalId: string, locationId: number) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? {
+              ...animal,
+              anatomicalImageFiles: { ...animal.anatomicalImageFiles, [locationId]: null },
+              anatomicalImagePreviews: { ...animal.anatomicalImagePreviews, [locationId]: null },
+            }
+          : animal
+      )
+    );
+    const key = `${animalId}-loc-${locationId}`;
+    if (imageInputRefs.current[key]) {
+      imageInputRefs.current[key]!.value = "";
+    }
+  };
+
   const handleSave = () => {
     // Detectar solo los animales que fueron MODIFICADOS
     const modifiedAnimals = animalSelections.filter((current) => {
@@ -347,7 +422,8 @@ export function AnimalSelectionModal({
           initial.percentage !== current.percentage ||
           initial.weight !== current.weight ||
           initial.adverseSituation !== current.adverseSituation ||
-          initial.diseaseComment !== current.diseaseComment)
+          initial.diseaseComment !== current.diseaseComment ||
+          initial.imagePreview !== current.imagePreview)
       ) {
         return true;
       }
@@ -393,6 +469,14 @@ export function AnimalSelectionModal({
           if (
             initial.anatomicalDiseaseComment?.[locationId] !==
             current.anatomicalDiseaseComment?.[locationId]
+          ) {
+            return true;
+          }
+
+          // Verificar si cambió la imagen de la ubicación
+          if (
+            initial.anatomicalImagePreviews?.[locationId] !==
+            current.anatomicalImagePreviews?.[locationId]
           ) {
             return true;
           }
@@ -450,7 +534,8 @@ export function AnimalSelectionModal({
               initialAnimal?.anatomicalPercentages?.[location.id] !== animal.anatomicalPercentages?.[location.id] || // Cambió porcentaje
               initialAnimal?.anatomicalWeights?.[location.id] !== animal.anatomicalWeights?.[location.id] || // Cambió peso
               initialAnimal?.anatomicalAdverseSituations?.[location.id] !== animal.anatomicalAdverseSituations?.[location.id] || // Cambió situación adversa
-              initialAnimal?.anatomicalDiseaseComment?.[location.id] !== animal.anatomicalDiseaseComment?.[location.id]; // Cambió comentario enfermedad
+              initialAnimal?.anatomicalDiseaseComment?.[location.id] !== animal.anatomicalDiseaseComment?.[location.id] || // Cambió comentario enfermedad
+              initialAnimal?.anatomicalImagePreviews?.[location.id] !== animal.anatomicalImagePreviews?.[location.id]; // Cambió imagen
 
             if (hasChanged) {
               const adverseSituation = animal?.anatomicalAdverseSituations?.[location.id] ?? '';
@@ -471,6 +556,7 @@ export function AnimalSelectionModal({
                 diseaseComment: diseaseComment.length > 0 ? diseaseComment : undefined,
                 status: true,
                 idProductAnatomicalLocation: location.id,
+                image: animal.anatomicalImagePreviews?.[location.id] ?? undefined,
               });
             }
           }
@@ -511,6 +597,7 @@ export function AnimalSelectionModal({
 						adverseSituation: animal.adverseSituation?.length > 0 ? animal.adverseSituation : undefined,
 						diseaseComment: animal.diseaseComment?.length > 0 ? animal.diseaseComment : undefined,
 						status: true,
+						image: animal.imagePreview ?? animal.existingImageUrl ?? undefined,
 					},
 				];
 			}
@@ -527,6 +614,9 @@ export function AnimalSelectionModal({
           },
           {
             onSuccess: () => {
+              if (animal.imageFile && existingPostmortem?.id) {
+                uploadPostmortemImageService(existingPostmortem.id, animal.imageFile).catch(() => {});
+              }
               processedCount++;
               if (processedCount === totalAnimals) {
                 toast.success(
@@ -551,7 +641,11 @@ export function AnimalSelectionModal({
             subProductsPostmortem,
           },
           {
-            onSuccess: () => {
+            onSuccess: (response: any) => {
+              const newId = response?.data?.id;
+              if (animal.imageFile && newId) {
+                uploadPostmortemImageService(newId, animal.imageFile).catch(() => {});
+              }
               processedCount++;
               if (processedCount === totalAnimals) {
                 toast.success(
@@ -592,6 +686,7 @@ export function AnimalSelectionModal({
   const selectedCount = animalSelections.filter((a) => a.selected).length;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
@@ -732,7 +827,7 @@ export function AnimalSelectionModal({
               No hay animales disponibles para esta marca
             </div>
           ) : (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-hide">
+            <div className="space-y-2 max-h-100 overflow-y-auto scrollbar-hide">
               {animalsData.data.map((animal) => {
                 const animalId = animal.id.toString();
                 const selection = animalSelections.find(
@@ -790,115 +885,165 @@ export function AnimalSelectionModal({
 
 																		{selection.selectedAnatomicalLocations?.[location.id] && (
 																			<div className='ml-6 space-y-2'>
-																				<div className='flex items-center gap-1 flex-wrap'>
-																					<Button
-																						variant={selection.anatomicalPercentages?.[location.id] === 20 ? 'default' : 'outline'}
-																						size='sm'
-																						onClick={() => handleAnatomicalPercentage(animalId, location.id, 20)}
-																						disabled={!canEdit}
-																						className={`h-7 px-2 text-xs ${
-																							selection.anatomicalPercentages?.[location.id] === 20 ? 'bg-blue-600 hover:bg-blue-700' : ''
-																						}`}
-																					>
-																						20%
-																					</Button>
-																					<Button
-																						variant={selection.anatomicalPercentages?.[location.id] === 40 ? 'default' : 'outline'}
-																						size='sm'
-																						onClick={() => handleAnatomicalPercentage(animalId, location.id, 40)}
-																						disabled={!canEdit}
-																						className={`h-7 px-2 text-xs ${
-																							selection.anatomicalPercentages?.[location.id] === 40 ? 'bg-blue-600 hover:bg-blue-700' : ''
-																						}`}
-																					>
-																						40%
-																					</Button>
-																					<Button
-																						variant={selection.anatomicalPercentages?.[location.id] === 60 ? 'default' : 'outline'}
-																						size='sm'
-																						onClick={() => handleAnatomicalPercentage(animalId, location.id, 60)}
-																						disabled={!canEdit}
-																						className={`h-7 px-2 text-xs ${
-																							selection.anatomicalPercentages?.[location.id] === 60 ? 'bg-blue-600 hover:bg-blue-700' : ''
-																						}`}
-																					>
-																						60%
-																					</Button>
-																					<Input
-																						type='number'
-																						min='0'
-																						max='100'
-																						value={selection.anatomicalPercentages?.[location.id] ?? 0}
-																						onChange={e => handleAnatomicalPercentage(animalId, location.id, parseInt(e.target.value) || 0)}
-																						disabled={!canEdit}
-																						className='w-14 h-7 text-center bg-white text-xs'
-																					/>
-																				</div>
-
-																				{/* Peso por ubicación anatómica */}
-																				{avgOrgansData?.data && (
-																					<div className='flex items-center gap-2'>
-																						<div className='text-xs font-medium text-gray-700 whitespace-nowrap'>Peso ({unitSymbol}):</div>
-																						{avgOrgansData.data.avgWeight && (
-																							<div className='text-xs text-gray-500 whitespace-nowrap'>Sug: {avgOrgansData.data.avgWeight}</div>
-																						)}
-																						<Input
-																							type='number'
-																							step='0.01'
-																							min='0'
-																							placeholder='Peso'
-																							className='w-20 h-7 bg-white text-xs'
-																							value={selection.anatomicalWeights?.[location.id] ?? ''}
-																							onChange={e => handleAnatomicalWeight(animalId, location.id, parseFloat(e.target.value) || 0)}
-																							disabled={!canEdit}
-																						/>
-																					</div>
-																				)}
-
-																				{/* NUEVO: Inputs para adverseSituation y diseaseComment */}
-																				<div className='flex flex-col gap-2 mt-2'>
-																					{/* Mostrar solo si la patología es 'OTROS' */}
-																					{patologia?.toUpperCase() === 'OTROS' && (
-																						<label className='text-xs font-medium text-gray-700'>
-																							Situación adversa *
-																							<Textarea
-																								className='w-full bg-white text-xs'
-																								placeholder='Situación adversa'
-																								value={selection.anatomicalAdverseSituations?.[location.id] ?? ''}
-																								onChange={e => {
-																									handleAnatomicalAdverseSituations(animalId, location.id, e.target.value);
-																									const textarea = e.target;
-																									textarea.style.height = 'auto';
-																									textarea.style.height = textarea.scrollHeight + 'px';
-																								}}
-																								style={{ minHeight: '20px', overflow: 'hidden' }}
-																								required
+																				<div className='flex gap-3 items-start'>
+																					<div className='flex-1 min-w-0 space-y-2'>
+																						<div className='flex items-center gap-1 flex-wrap'>
+																							<Button
+																								variant={selection.anatomicalPercentages?.[location.id] === 20 ? 'default' : 'outline'}
+																								size='sm'
+																								onClick={() => handleAnatomicalPercentage(animalId, location.id, 20)}
+																								disabled={!canEdit}
+																								className={`h-7 px-2 text-xs ${
+																									selection.anatomicalPercentages?.[location.id] === 20 ? 'bg-blue-600 hover:bg-blue-700' : ''
+																								}`}
+																							>
+																								20%
+																							</Button>
+																							<Button
+																								variant={selection.anatomicalPercentages?.[location.id] === 40 ? 'default' : 'outline'}
+																								size='sm'
+																								onClick={() => handleAnatomicalPercentage(animalId, location.id, 40)}
+																								disabled={!canEdit}
+																								className={`h-7 px-2 text-xs ${
+																									selection.anatomicalPercentages?.[location.id] === 40 ? 'bg-blue-600 hover:bg-blue-700' : ''
+																								}`}
+																							>
+																								40%
+																							</Button>
+																							<Button
+																								variant={selection.anatomicalPercentages?.[location.id] === 60 ? 'default' : 'outline'}
+																								size='sm'
+																								onClick={() => handleAnatomicalPercentage(animalId, location.id, 60)}
+																								disabled={!canEdit}
+																								className={`h-7 px-2 text-xs ${
+																									selection.anatomicalPercentages?.[location.id] === 60 ? 'bg-blue-600 hover:bg-blue-700' : ''
+																								}`}
+																							>
+																								60%
+																							</Button>
+																							<Input
+																								type='number'
+																								min='0'
+																								max='100'
+																								value={selection.anatomicalPercentages?.[location.id] ?? 0}
+																								onChange={e => handleAnatomicalPercentage(animalId, location.id, parseInt(e.target.value) || 0)}
+																								disabled={!canEdit}
+																								className='w-14 h-7 text-center bg-white text-xs'
 																							/>
-																							{/* <Input
-																								type='text'
-																								placeholder='Situación adversa'
-																								className='w-full h-7 bg-white text-xs'
-																								required
-
-																							/> */}
-																						</label>
-																					)}
-
-																					<label className='text-xs font-medium text-gray-700'>
-																						Observación (Opcional)
-																						<Textarea
-																							placeholder='Observación'
-																							className='w-full bg-white text-xs'
-																							value={selection.anatomicalDiseaseComment?.[location.id] ?? ''}
-																							onChange={e => {
-																								handleAnatomicalDiseaseComment(animalId, location.id, e.target.value);
-																								const textarea = e.target;
-																								textarea.style.height = 'auto';
-																								textarea.style.height = textarea.scrollHeight + 'px';
+																						</div>
+																						{avgOrgansData?.data && (
+																							<div className='flex items-center gap-2'>
+																								<div className='text-xs font-medium text-gray-700 whitespace-nowrap'>Peso ({unitSymbol}):</div>
+																								{avgOrgansData.data.avgWeight && (
+																									<div className='text-xs text-gray-500 whitespace-nowrap'>Sug: {avgOrgansData.data.avgWeight}</div>
+																								)}
+																								<Input
+																									type='number'
+																									step='0.01'
+																									min='0'
+																									placeholder='Peso'
+																									className='w-20 h-7 bg-white text-xs'
+																									value={selection.anatomicalWeights?.[location.id] ?? ''}
+																									onChange={e => handleAnatomicalWeight(animalId, location.id, parseFloat(e.target.value) || 0)}
+																									disabled={!canEdit}
+																								/>
+																							</div>
+																						)}
+																						<div className='flex flex-col gap-2 mt-2'>
+																							{patologia?.toUpperCase() === 'OTROS' && (
+																								<label className='text-xs font-medium text-gray-700'>
+																									Situación adversa *
+																									<Textarea
+																										className='w-full bg-white text-xs'
+																										placeholder='Situación adversa'
+																										value={selection.anatomicalAdverseSituations?.[location.id] ?? ''}
+																										onChange={e => {
+																											handleAnatomicalAdverseSituations(animalId, location.id, e.target.value);
+																											const textarea = e.target;
+																											textarea.style.height = 'auto';
+																											textarea.style.height = textarea.scrollHeight + 'px';
+																										}}
+																										style={{ minHeight: '20px', overflow: 'hidden' }}
+																										required
+																									/>
+																								</label>
+																							)}
+																							<label className='text-xs font-medium text-gray-700'>
+																								Observación (Opcional)
+																								<Textarea
+																									placeholder='Observación'
+																									className='w-full bg-white text-xs'
+																									value={selection.anatomicalDiseaseComment?.[location.id] ?? ''}
+																									onChange={e => {
+																										handleAnatomicalDiseaseComment(animalId, location.id, e.target.value);
+																										const textarea = e.target;
+																										textarea.style.height = 'auto';
+																										textarea.style.height = textarea.scrollHeight + 'px';
+																									}}
+																									style={{ minHeight: '20px', overflow: 'hidden' }}
+																								/>
+																							</label>
+																						</div>
+																					</div>
+																					<div className="shrink-0 flex flex-col items-center gap-1">
+																						<div className="flex items-center gap-1 text-xs font-medium text-gray-500">
+																							<ImageIcon className="h-3 w-3 text-teal-600" />
+																							<span>Imagen</span>
+																						</div>
+																						<input
+																							ref={(el) => { imageInputRefs.current[`${animalId}-loc-${location.id}`] = el; }}
+																							type="file"
+																							accept="image/*"
+																							className="hidden"
+																							onChange={(e) => {
+																								const file = e.target.files?.[0];
+																								if (file) handleAnatomicalImage(animalId, location.id, file);
 																							}}
-																							style={{ minHeight: '20px', overflow: 'hidden' }}
 																						/>
-																					</label>
+																						{selection.anatomicalImagePreviews?.[location.id] ? (
+																							<div className="flex flex-col items-center gap-1">
+																								<div
+																									className="w-16 h-16 rounded-lg overflow-hidden border bg-gray-50 cursor-pointer relative"
+																									onClick={() => {
+																										const url = selection.anatomicalImagePreviews?.[location.id];
+																										if (url) setPreviewImageUrl(url);
+																									}}
+																									onMouseEnter={e => {
+																										const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+																										if (overlay) overlay.style.opacity = '1';
+																									}}
+																									onMouseLeave={e => {
+																										const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+																										if (overlay) overlay.style.opacity = '0';
+																									}}
+																									title="Ver imagen completa"
+																								>
+																									<img src={selection.anatomicalImagePreviews?.[location.id] || ""} alt="Vista previa" className="w-full h-full object-cover" />
+																									<div data-overlay="true" className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-lg transition-opacity" style={{ opacity: 0 }}>
+																										<ZoomIn className="h-4 w-4 text-white" />
+																									</div>
+																								</div>
+																								<div className="flex gap-1">
+																									<Button type="button" variant="outline" size="sm" className="h-6 px-2" onClick={() => imageInputRefs.current[`${animalId}-loc-${location.id}`]?.click()} disabled={!canEdit}>
+																										<Upload className="h-3 w-3" />
+																									</Button>
+																									<Button type="button" variant="outline" size="sm" className="h-6 px-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleClearAnatomicalImage(animalId, location.id)} disabled={!canEdit}>
+																										<X className="h-3 w-3" />
+																									</Button>
+																								</div>
+																							</div>
+																						) : (
+																							<button
+																								type="button"
+																								onClick={() => canEdit && imageInputRefs.current[`${animalId}-loc-${location.id}`]?.click()}
+																								disabled={!canEdit}
+																								className="w-16 h-16 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:border-teal-400 hover:text-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+																							>
+																								<Upload className="h-4 w-4" />
+																								<span>Imagen</span>
+																							</button>
+																						)}
+																					</div>
 																				</div>
 																			</div>
 																		)}
@@ -1050,9 +1195,72 @@ export function AnimalSelectionModal({
 																	/>
 																</label>
 															</div>
+
+															{/* Imagen (No anatómica) */}
+															<div className="shrink-0 flex flex-col items-center gap-1 self-start">
+																<div className="flex items-center gap-1 text-xs font-medium text-gray-500">
+																	<ImageIcon className="h-3 w-3 text-teal-600" />
+																	<span>Imagen</span>
+																</div>
+																<input
+																	ref={(el) => { imageInputRefs.current[animalId] = el; }}
+																	type="file"
+																	accept="image/*"
+																	className="hidden"
+																	onChange={(e) => {
+																		const file = e.target.files?.[0];
+																		if (file) handleAnimalImage(animalId, file);
+																	}}
+																/>
+																{(selection.imagePreview || selection.existingImageUrl) ? (
+																	<div className="flex flex-col items-center gap-1">
+																		<div
+																			className="w-16 h-16 rounded-lg overflow-hidden border bg-gray-50 cursor-pointer relative"
+																			onClick={() => {
+																				const url = selection.imagePreview || selection.existingImageUrl;
+																				if (url) setPreviewImageUrl(url);
+																			}}
+																			onMouseEnter={e => {
+																				const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+																				if (overlay) overlay.style.opacity = '1';
+																			}}
+																			onMouseLeave={e => {
+																				const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+																				if (overlay) overlay.style.opacity = '0';
+																			}}
+																			title="Ver imagen completa"
+																		>
+																			<img src={selection.imagePreview || selection.existingImageUrl || ""} alt="Vista previa" className="w-full h-full object-cover" />
+																			<div data-overlay="true" className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-lg transition-opacity" style={{ opacity: 0 }}>
+																				<ZoomIn className="h-4 w-4 text-white" />
+																			</div>
+																		</div>
+																		<div className="flex gap-1">
+																			<Button type="button" variant="outline" size="sm" className="h-6 px-2" onClick={() => imageInputRefs.current[animalId]?.click()} disabled={!canEdit}>
+																				<Upload className="h-3 w-3" />
+																			</Button>
+																			<Button type="button" variant="outline" size="sm" className="h-6 px-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleClearImage(animalId)} disabled={!canEdit}>
+																				<X className="h-3 w-3" />
+																			</Button>
+																		</div>
+																	</div>
+																) : (
+																	<button
+																		type="button"
+																		onClick={() => canEdit && imageInputRefs.current[animalId]?.click()}
+																		disabled={!canEdit}
+																		className="w-16 h-16 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:border-teal-400 hover:text-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+																	>
+																		<Upload className="h-4 w-4" />
+																		<span>Imagen</span>
+																	</button>
+																)}
+															</div>
 														</div>
 													)}
 												</div>
+
+
 											</div>
 										)}
 									</div>
@@ -1061,6 +1269,8 @@ export function AnimalSelectionModal({
             </div>
           )}
         </div>
+
+
 
         <DialogFooter>
           <Button
@@ -1093,5 +1303,27 @@ export function AnimalSelectionModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Lightbox - visor de imagen completa */}
+    <Dialog open={!!previewImageUrl} onOpenChange={() => setPreviewImageUrl(null)}>
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl p-2">
+        <DialogHeader className="pb-1">
+          <DialogTitle className="flex items-center gap-2 text-sm">
+            <ImageIcon className="h-4 w-4 text-teal-600" />
+            Imagen del animal
+          </DialogTitle>
+        </DialogHeader>
+        {previewImageUrl && (
+          <div className="flex items-center justify-center bg-gray-900 rounded-lg overflow-hidden">
+            <img
+              src={previewImageUrl}
+              alt="Imagen completa"
+              className="max-h-[75vh] max-w-full object-contain"
+            />
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
