@@ -60,4 +60,6 @@ export interface Certificate {
 		id: number;
 		fullName: string;
 	};
+	/** The province id associated with the certificate. */
+	provinceId?: number;
 }

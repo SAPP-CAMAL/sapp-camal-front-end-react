@@ -14,6 +14,7 @@ export interface SaveScannedCertificateRequest {
 	status: boolean;
 	idDetailsRegisterVehicles?: number;
 	idOperator?: number;
+	provinceId?: number;
 }
 
 export interface SaveScannedCertificateResponse {

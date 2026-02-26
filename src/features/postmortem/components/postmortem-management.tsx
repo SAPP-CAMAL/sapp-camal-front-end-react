@@ -54,6 +54,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuPortal,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { AnimalSelectionModal } from "./animal-selection-modal";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -91,6 +92,7 @@ import {
   downloadPostmortemGeneralReport,
   downloadDailyConfiscationReport,
   downloadMonthlyConfiscationReport,
+  downloadConsolidatedPostmortemReport,
 } from "../server/db/postmortem-report.service";
 import { toast } from "sonner";
 import { downloadMonthlySummaryAgrocalidadReport } from "../utils/download-monthly-summary-agrocalidad.report";
@@ -781,6 +783,34 @@ export function PostmortemManagement() {
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   Reporte Mensual de Decomisos
                 </DropdownMenuItem> */}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (!selectedSpecieId) {
+                      toast.error("Selecciona una línea de producción");
+                      return;
+                    }
+                    const startDate = slaughterDate;
+                    const tomorrow = new Date(slaughterDate);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const endDate = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+                    toast.promise(
+                      downloadConsolidatedPostmortemReport({
+                        startDate,
+                        endDate,
+                        idSpecies: selectedSpecieId,
+                      }),
+                      {
+                        loading: "Generando reporte consolidado...",
+                        success: "Reporte consolidado descargado correctamente",
+                        error: "Error al descargar el reporte consolidado",
+                      }
+                    );
+                  }}
+                >
+                  <FileBarChart className="h-4 w-4 mr-2" />
+                  Reporte Consolidado
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     if (!selectedSpecieId) {

@@ -12,6 +12,7 @@ type CertificateFormValues = {
 	open: boolean;
 	code: string;
 	idOrigin: string;
+	provinceId: string;
 	issueDate: string;
 	quantity: number;
 	plateVehicle?: string;
@@ -36,6 +37,7 @@ const defaultValues: CertificateFormValues = {
 	open: false,
 	code: '',
 	idOrigin: '',
+	provinceId: '',
 	quantity: 0,
 	commentary: '',
 	issueDate: (() => {
@@ -82,6 +84,7 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 			...defaultValues,
 			...certificate,
 			idOrigin: certificate.idOrigin?.toString() ?? '',
+			provinceId: certificate.provinceId?.toString() ?? '',
 			status: certificate.status?.toString() ?? 'true',
 			savedPerson: certificate.operator
 				? {
@@ -137,6 +140,7 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 					authorizedTo: authorizedTo,
 					originAreaCode: baseCertificateData.originAreaCode ?? '',
 					destinationAreaCode: baseCertificateData.destinationAreaCode ?? '',
+					provinceId: baseCertificateData.provinceId ? +baseCertificateData.provinceId : undefined,
 					status: true,
 					idOperator: idOperator ?? 0,
 				});
@@ -158,6 +162,7 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 					authorizedTo: authorizedTo,
 					originAreaCode: baseCertificateData.originAreaCode ?? '',
 					destinationAreaCode: baseCertificateData.destinationAreaCode ?? '',
+					provinceId: baseCertificateData.provinceId ? +baseCertificateData.provinceId : undefined,
 					commentary: baseCertificateData.commentary ?? '',
 					status: true,
 					idOperator: idOperator ?? 0,
