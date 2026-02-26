@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, Fragment } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,10 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Loader2, Info, Save } from "lucide-react";
+import { Loader2, Info, Save, ImageIcon, Upload, X, ZoomIn } from "lucide-react";
 import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
 import { useBodyParts } from "../hooks/use-body-parts";
-import { useSavePostmortem } from "../hooks/use-save-postmortem";
+import { useSavePostmortem, useUpdatePostmortem } from "../hooks/use-save-postmortem";
 import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
 import type { ProductPostmortem } from "../domain/save-postmortem.types";
 import { toast } from "sonner";
@@ -28,6 +28,8 @@ type BodyPartSelection = {
   selected: boolean;
   weight: string;
   bodyPartComment?: string;
+  imagePreview?: string | null;
+  existingImageUrl?: string | null;
 };
 
 type AnimalPartSelection = {
@@ -60,6 +62,7 @@ export function PartialConfiscationModal({
     useAnimalsByBrand(certId);
   const { data: bodyPartsData, isLoading: isLoadingBodyParts } = useBodyParts();
   const { mutate: savePostmortem, isPending: isSaving } = useSavePostmortem();
+  const { mutate: updatePostmortem, isPending: isUpdating } = useUpdatePostmortem();
 
   // Obtener datos guardados de postmortem
   const { data: postmortemData } = usePostmortemByBrand(certId);
@@ -80,6 +83,8 @@ export function PartialConfiscationModal({
   const [animalSelections, setAnimalSelections] = useState<
     AnimalPartSelection[]
   >([]);
+  const imageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   // Ordenar partes del cuerpo: primero Miembros, luego Áreas
   const sortedBodyParts = useMemo(() => {
@@ -125,6 +130,8 @@ export function PartialConfiscationModal({
             selected: !!savedPart,
             bodyPartComment: savedPart?.bodyPartComment || "",
             weight: savedPart ? String(savedPart.weight) : "",
+            existingImageUrl: savedPart?.urlImage || null,
+            imagePreview: null,
           };
         });
 
@@ -207,6 +214,46 @@ export function PartialConfiscationModal({
     );
   };
 
+  const handlePartImage = (animalId: string, partId: number, file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAnimalSelections((prev) =>
+        prev.map((animal) =>
+          animal.animalId === animalId
+            ? {
+                ...animal,
+                bodyParts: animal.bodyParts.map((part) =>
+                  part.id === partId
+                    ? { ...part, imagePreview: reader.result as string }
+                    : part
+                ),
+              }
+            : animal
+        )
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearPartImage = (animalId: string, partId: number) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? {
+              ...animal,
+              bodyParts: animal.bodyParts.map((part) =>
+                part.id === partId
+                  ? { ...part, imagePreview: null, existingImageUrl: null }
+                  : part
+              ),
+            }
+          : animal
+      )
+    );
+    const key = `${animalId}-${partId}`;
+    if (imageInputRefs.current[key]) imageInputRefs.current[key]!.value = "";
+  };
+
   const handleCancel = () => {
     if (animalsData?.data && sortedBodyParts.length > 0) {
       setAnimalSelections(
@@ -219,6 +266,8 @@ export function PartialConfiscationModal({
             description: part.description,
             selected: false,
             weight: "",
+            imagePreview: null,
+            existingImageUrl: null,
           })),
         }))
       );
@@ -265,42 +314,80 @@ export function PartialConfiscationModal({
           isTotalConfiscation: false, // Decomiso parcial
           status: true,
           bodyPartComment: ((part?.bodyPartComment ?? '').length) > 0 ? part.bodyPartComment : undefined,
+          image: part.imagePreview ?? undefined,
         })
       );
 
+      // Verificar si ya existe un registro de postmortem para este animal
+      const existingPostmortem = postmortemData?.data?.find(
+        (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
+      );
+      const hasSavedPartialConfiscation = existingPostmortem?.productPostmortem?.some(
+        (prod) => prod.isTotalConfiscation === false
+      );
+
       try {
-
-
-        savePostmortem(
-          {
-            idDetailsSpeciesCertificate: parseInt(animal.animalId),
-            status: true,
-            productsPostmortem,
-          },
-          {
-            onSuccess: () => {
-              savedCount++;
-              if (savedCount === totalAnimals) {
-                toast.success(
-                  `Se guardaron ${totalAnimals} animales correctamente`
-                );
-                onSave(totalAnimals);
-                onClose();
-              }
+        if (existingPostmortem && hasSavedPartialConfiscation) {
+          // Actualizar (PATCH)
+          updatePostmortem(
+            {
+              id: existingPostmortem.id,
+              request: {
+                status: true,
+                productsPostmortem,
+              },
             },
-            onError: (error) => {
-              // const a = error
-              console.log(error.message)
-              if (error instanceof Error && error.message) {
-                toast.error(`Error al guardar animal ${animal.animalId}: ${error.message}`);
-              } else {
-                toast.error(`Error al guardar animal ${animal.animalId}`);
-              }
-              //
-              // toast.error(`Error al guardar animal ${animal.animalId}`);
+            {
+              onSuccess: () => {
+                savedCount++;
+                if (savedCount === totalAnimals) {
+                  toast.success(
+                    `Se ${totalAnimals === 1 ? "actualizó" : "actualizaron"} ${totalAnimals} ${totalAnimals === 1 ? "animal" : "animales"} correctamente`
+                  );
+                  onSave(totalAnimals);
+                  onClose();
+                }
+              },
+              onError: (error) => {
+                console.log(error.message)
+                if (error instanceof Error && error.message) {
+                  toast.error(`Error al actualizar animal ${animal.animalId}: ${error.message}`);
+                } else {
+                  toast.error(`Error al actualizar animal ${animal.animalId}`);
+                }
+              },
+            }
+          );
+        } else {
+          // Crear (POST)
+          savePostmortem(
+            {
+              idDetailsSpeciesCertificate: parseInt(animal.animalId),
+              status: true,
+              productsPostmortem,
             },
-          }
-        )
+            {
+              onSuccess: () => {
+                savedCount++;
+                if (savedCount === totalAnimals) {
+                  toast.success(
+                    `Se guardaron ${totalAnimals} animales correctamente`
+                  );
+                  onSave(totalAnimals);
+                  onClose();
+                }
+              },
+              onError: (error) => {
+                console.log(error.message)
+                if (error instanceof Error && error.message) {
+                  toast.error(`Error al guardar animal ${animal.animalId}: ${error.message}`);
+                } else {
+                  toast.error(`Error al guardar animal ${animal.animalId}`);
+                }
+              },
+            }
+          );
+        }
       } catch (error) {
         console.log({error})
       }
@@ -322,6 +409,7 @@ export function PartialConfiscationModal({
   };
 
   return (
+    <Fragment>
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
@@ -412,6 +500,7 @@ export function PartialConfiscationModal({
 										</div>
 
 										{animalSelection.selected && (
+											<>
 											<div className='ml-14 space-y-3'>
 												<div className='text-xs font-medium text-gray-700'>Partes Afectadas y Peso ({unitSymbol}) *</div>
 
@@ -456,10 +545,72 @@ export function PartialConfiscationModal({
 																	style={{ minHeight: '20px', overflow: 'hidden' }}
 																/>
 															</label>
+
+															{/* Imagen por parte */}
+															<div className="flex flex-col items-start gap-1 mt-2">
+																<div className="flex items-center gap-1 text-xs font-medium text-gray-500">
+																	<ImageIcon className="h-3 w-3 text-teal-600" />
+																	<span>Imagen</span>
+																</div>
+																<input
+																	ref={(el) => { imageInputRefs.current[`${animalId}-${part.id}`] = el; }}
+																	type="file"
+																	accept="image/*"
+																	className="hidden"
+																	onChange={(e) => {
+																		const file = e.target.files?.[0];
+																		if (file) handlePartImage(animalId, part.id, file);
+																	}}
+																/>
+																{(part.imagePreview || part.existingImageUrl) ? (
+																	<div className="flex items-center gap-2">
+																		<div
+																			className="w-16 h-16 rounded-lg overflow-hidden border bg-white cursor-pointer relative"
+																			onClick={() => {
+																				const url = part.imagePreview || part.existingImageUrl;
+																				if (url) setPreviewImageUrl(url);
+																			}}
+																			onMouseEnter={e => {
+																				const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+																				if (overlay) overlay.style.opacity = '1';
+																			}}
+																			onMouseLeave={e => {
+																				const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+																				if (overlay) overlay.style.opacity = '0';
+																			}}
+																			title="Ver imagen completa"
+																		>
+																			<img src={part.imagePreview || part.existingImageUrl || ""} alt="Vista previa" className="w-full h-full object-cover" />
+																			<div data-overlay="true" className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-lg transition-opacity" style={{ opacity: 0 }}>
+																				<ZoomIn className="h-4 w-4 text-white" />
+																			</div>
+																		</div>
+																		<div className="flex flex-col gap-1">
+																			<Button type="button" variant="outline" size="sm" className="h-6 px-2" onClick={() => imageInputRefs.current[`${animalId}-${part.id}`]?.click()} disabled={!canEdit}>
+																				<Upload className="h-3 w-3" />
+																			</Button>
+																			<Button type="button" variant="outline" size="sm" className="h-6 px-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleClearPartImage(animalId, part.id)} disabled={!canEdit}>
+																				<X className="h-3 w-3" />
+																			</Button>
+																		</div>
+																	</div>
+																) : (
+																	<button
+																		type="button"
+																		onClick={() => canEdit && imageInputRefs.current[`${animalId}-${part.id}`]?.click()}
+																		disabled={!canEdit}
+																		className="w-16 h-16 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:border-teal-400 hover:text-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+																	>
+																		<Upload className="h-4 w-4" />
+																		<span>Imagen</span>
+																	</button>
+																)}
+															</div>
 														</div>
 													))}
 												</div>
 											</div>
+										</>
 										)}
 
 										{/* Resumen de partes seleccionadas - fuera de ml-14 */}
@@ -484,16 +635,16 @@ export function PartialConfiscationModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+          <Button variant="outline" onClick={handleCancel} disabled={isSaving || isUpdating}>
             {canEdit ? "Cancelar" : "Cerrar"}
           </Button>
           {canEdit && (
             <Button
               onClick={handleSaveAll}
-              disabled={selectedCount === 0 || isSaving}
+              disabled={selectedCount === 0 || isSaving || isUpdating}
               className="bg-teal-600 hover:bg-teal-700"
             >
-              {isSaving ? (
+              {(isSaving || isUpdating) ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   {hasExistingData ? "Actualizando..." : "Guardando..."}
@@ -510,5 +661,18 @@ export function PartialConfiscationModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Lightbox */}
+    <Dialog open={!!previewImageUrl} onOpenChange={() => setPreviewImageUrl(null)}>
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl p-2">
+        <DialogHeader><DialogTitle>Vista previa</DialogTitle></DialogHeader>
+        {previewImageUrl && (
+          <div className="flex items-center justify-center">
+            <img src={previewImageUrl} alt="Imagen completa" className="max-h-[75vh] max-w-full object-contain rounded-lg" />
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  </Fragment>
   );
 }

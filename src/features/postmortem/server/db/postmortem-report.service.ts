@@ -134,3 +134,41 @@ export const downloadMonthlyConfiscationReport = async (
     throw error;
   }
 };
+
+/**
+ * Descarga el reporte consolidado de inspección postmortem por provincia
+ */
+export const downloadConsolidatedPostmortemReport = async (
+  filters: PostmortemReportFilters
+): Promise<void> => {
+  try {
+    const response = await http.get(
+      "v1/1.0.0/setting-cert-brand/postmortem-inspection-consolidated-report/by-filters",
+      {
+        searchParams: {
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+          idSpecies: filters.idSpecies.toString(),
+        },
+      }
+    );
+
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get("content-disposition") || "";
+
+    const filenameMatch2 = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    const defaultFilename2 = `Reporte-Consolidado-Postmortem-${filters.startDate}.xlsx`;
+    const filename2 = filenameMatch2?.[1]?.replace(/['"]/g, "") || defaultFilename2;
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename2;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    throw error;
+  }
+};

@@ -48,4 +48,7 @@ export type AnimalSelection = {
   selectedAnatomicalLocations?: Record<number, boolean>; // Ubicaciones seleccionadas (key: idLocation, value: selected)
   anatomicalAdverseSituations?: Record<number, string>; // Ubicaciones seleccionadas (key: idLocation, value: selected)
   anatomicalDiseaseComment?: Record<number, string>; // Ubicaciones seleccionadas (key: idLocation, value: selected)
+  imageFile?: File | null;
+  imagePreview?: string | null;
+  existingImageUrl?: string | null;
 };

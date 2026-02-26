@@ -43,6 +43,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  MapPin,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -262,13 +263,19 @@ export function ListTransportManagement() {
             </div>
           )}
 
-          {/* Cantidad y Origen */}
+          {/* Cantidad, Provincia y Origen */}
           <div className="bg-muted/50 rounded-lg p-3">
-            <div className="grid grid-cols-2 gap-2 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center">
               <div>
                 <div className="text-xs text-muted-foreground">Cantidad</div>
                 <div className="text-lg font-bold text-emerald-600">
                   {item.quantity || 0}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Provincia</div>
+                <div className="text-sm font-medium">
+                  {item.province?.name || "N/A"}
                 </div>
               </div>
               <div>
@@ -606,7 +613,7 @@ export function ListTransportManagement() {
                 </div>
               </div>
             ) : (
-              <Table className="min-w-[1000px]">
+              <Table className="min-w-275">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-32 whitespace-normal leading-tight text-center">
@@ -634,6 +641,9 @@ export function ListTransportManagement() {
                       </span>
                     </TableHead>
                     <TableHead className="w-28 whitespace-normal text-center">
+                      <span className="text-xs font-semibold">Provincia</span>
+                    </TableHead>
+                    <TableHead className="w-28 whitespace-normal text-center">
                       <span className="text-xs font-semibold">Origen</span>
                     </TableHead>
                     <TableHead className="w-48 whitespace-normal text-center">
@@ -649,7 +659,7 @@ export function ListTransportManagement() {
                 <TableBody>
                   {apiData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-12">
+                      <TableCell colSpan={10} className="text-center py-12">
                         <div className="flex flex-col items-center gap-3">
                           <div className="rounded-full bg-muted p-3">
                             <Search className="h-6 w-6 text-muted-foreground" />
@@ -693,6 +703,14 @@ export function ListTransportManagement() {
                         </TableCell>
                         <TableCell className="text-center whitespace-normal font-semibold text-emerald-600">
                           {item.quantity || 0}
+                        </TableCell>
+                        <TableCell className="text-center whitespace-normal">
+                          <Badge
+                            variant="secondary"
+                            className="bg-purple-100 text-purple-800 border-0 font-normal text-xs"
+                          >
+                            {item.province?.name || "N/A"}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-center whitespace-normal">
                           <Badge
