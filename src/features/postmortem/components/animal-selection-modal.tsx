@@ -92,18 +92,20 @@ export function AnimalSelectionModal({
   );
 
   // Verificar si ya existen datos guardados para ESTA enfermedad específica
+  // Determinar si todos los animales seleccionados ya tienen esta PATOLOGÍA guardada
   const hasExistingData = useMemo(() => {
     if (!postmortemData?.data || !idSpeciesDisease) return false;
 
-    // Verificar si algún animal seleccionado ya tiene datos para esta enfermedad
     const selectedAnimals = animalSelections.filter((a) => a.selected);
+    if (selectedAnimals.length === 0) return false;
 
-    return selectedAnimals.some((animal) => {
+    // Si TODOS los animales seleccionados tienen la patología específica → Actualizar
+    return selectedAnimals.every((animal) => {
       const existingPostmortem = postmortemData.data.find(
         (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
       );
-
-      return existingPostmortem?.subProductPostmortem.some(
+      // Verificar si tiene subproductos con esta enfermedad específica
+      return existingPostmortem?.subProductPostmortem?.some(
         (sub) => sub.idSpeciesDisease === idSpeciesDisease
       );
     });
@@ -507,10 +509,6 @@ export function AnimalSelectionModal({
         (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
       );
 
-      const existingSubProduct = existingPostmortem?.subProductPostmortem.find(
-        (sub) => sub.idSpeciesDisease === idSpeciesDisease
-      );
-
       // Construir subProductsPostmortem según si hay ubicaciones anatómicas o no
       let subProductsPostmortem: SubProductPostmortem[] = [];
 
@@ -597,13 +595,18 @@ export function AnimalSelectionModal({
 						adverseSituation: animal.adverseSituation?.length > 0 ? animal.adverseSituation : undefined,
 						diseaseComment: animal.diseaseComment?.length > 0 ? animal.diseaseComment : undefined,
 						status: true,
-						image: animal.imagePreview ?? animal.existingImageUrl ?? undefined,
+						image: animal.imagePreview || undefined, // Incluir imagen en base64 si existe
 					},
 				];
 			}
 
-      if (existingPostmortem && existingSubProduct) {
-        // Actualizar
+      // Verificar si tiene esta patología específicamente
+      const hasThisDisease = existingPostmortem?.subProductPostmortem?.some(
+        (sub) => sub.idSpeciesDisease === idSpeciesDisease
+      );
+
+      if (existingPostmortem && hasThisDisease) {
+        // Actualizar (PATCH) - solo si ya tiene esta patología específica
         updatePostmortem(
           {
             id: existingPostmortem.id,
@@ -614,9 +617,6 @@ export function AnimalSelectionModal({
           },
           {
             onSuccess: () => {
-              if (animal.imageFile && existingPostmortem?.id) {
-                uploadPostmortemImageService(existingPostmortem.id, animal.imageFile).catch(() => {});
-              }
               processedCount++;
               if (processedCount === totalAnimals) {
                 toast.success(
@@ -642,10 +642,6 @@ export function AnimalSelectionModal({
           },
           {
             onSuccess: (response: any) => {
-              const newId = response?.data?.id;
-              if (animal.imageFile && newId) {
-                uploadPostmortemImageService(newId, animal.imageFile).catch(() => {});
-              }
               processedCount++;
               if (processedCount === totalAnimals) {
                 toast.success(
@@ -688,8 +684,8 @@ export function AnimalSelectionModal({
   return (
     <>
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto scrollbar-hide">
-        <DialogHeader>
+      <DialogContent className="max-w-[95vw] sm:max-w-5xl flex flex-col max-h-[90vh]">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center">
               <span className="text-teal-600 text-sm">ℹ</span>
@@ -698,6 +694,7 @@ export function AnimalSelectionModal({
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto scrollbar-hide px-1">
         {/* Header Info */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
           <div>
@@ -1181,10 +1178,9 @@ export function AnimalSelectionModal({
             </div>
           )}
         </div>
+        </div>
 
-
-
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 border-t pt-4 mt-0">
           <Button
             variant="outline"
             onClick={handleCancel}
@@ -1218,20 +1214,32 @@ export function AnimalSelectionModal({
 
     {/* Lightbox - visor de imagen completa */}
     <Dialog open={!!previewImageUrl} onOpenChange={() => setPreviewImageUrl(null)}>
-      <DialogContent className="max-w-[95vw] sm:max-w-3xl p-2">
-        <DialogHeader className="pb-1">
-          <DialogTitle className="flex items-center gap-2 text-sm">
-            <ImageIcon className="h-4 w-4 text-teal-600" />
-            Imagen del animal
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-7xl w-full sm:w-[95vw] max-h-[95vh] sm:max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-2.5 border-b bg-white shrink-0">
+          <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+          <DialogTitle className="text-xs sm:text-sm font-semibold m-0 truncate">Imagen del animal</DialogTitle>
+        </div>
         {previewImageUrl && (
-          <div className="flex items-center justify-center bg-gray-900 rounded-lg overflow-hidden">
-            <img
-              src={previewImageUrl}
-              alt="Imagen completa"
-              className="max-h-[75vh] max-w-full object-contain"
-            />
+          <div 
+            className="flex-1 min-h-0 overflow-auto p-3 sm:p-6 bg-gray-50/50 scrollbar-hide"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            <style jsx>{`
+              .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+            <div className="w-full h-full flex items-center justify-center">
+              <img
+                src={previewImageUrl}
+                alt="Imagen completa"
+                className="max-w-full h-auto object-contain shadow-lg rounded-lg"
+                style={{ maxHeight: 'calc(95vh - 80px)', minHeight: '200px' }}
+              />
+            </div>
           </div>
         )}
       </DialogContent>

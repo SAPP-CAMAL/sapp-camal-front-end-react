@@ -29,6 +29,7 @@ type BodyPartSelection = {
   weight: string;
   bodyPartComment?: string;
   imagePreview?: string | null;
+  imageFile?: File | null;
   existingImageUrl?: string | null;
 };
 
@@ -71,20 +72,30 @@ export function PartialConfiscationModal({
   const { data: unitMeasureData } = useUnitMeasure();
   const unitSymbol = unitMeasureData?.data?.symbol || "kg";
 
-  // Verificar si ya existen datos guardados de decomiso parcial
-  const hasExistingData = useMemo(() => {
-    if (!postmortemData?.data) return false;
-
-    return postmortemData.data.some((item) =>
-      item.productPostmortem.some((prod) => prod.isTotalConfiscation === false)
-    );
-  }, [postmortemData]);
-
   const [animalSelections, setAnimalSelections] = useState<
     AnimalPartSelection[]
   >([]);
   const imageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
+  // Determinar si todos los animales seleccionados ya tienen DECOMISO PARCIAL guardado
+  const hasExistingData = useMemo(() => {
+    if (!postmortemData?.data) return false;
+
+    const selectedAnimals = animalSelections.filter((a) => a.selected);
+    if (selectedAnimals.length === 0) return false;
+
+    // Si TODOS los animales seleccionados tienen decomiso parcial → Actualizar
+    return selectedAnimals.every((animal) => {
+      const savedData = postmortemData.data.find(
+        (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
+      );
+      // Verificar si tiene al menos un producto con decomiso parcial
+      return savedData?.productPostmortem?.some(
+        (prod) => prod.isTotalConfiscation === false
+      );
+    });
+  }, [postmortemData, animalSelections]);
 
   // Ordenar partes del cuerpo: primero Miembros, luego Áreas
   const sortedBodyParts = useMemo(() => {
@@ -224,7 +235,7 @@ export function PartialConfiscationModal({
                 ...animal,
                 bodyParts: animal.bodyParts.map((part) =>
                   part.id === partId
-                    ? { ...part, imagePreview: reader.result as string }
+                    ? { ...part, imagePreview: reader.result as string, imageFile: file }
                     : part
                 ),
               }
@@ -243,7 +254,7 @@ export function PartialConfiscationModal({
               ...animal,
               bodyParts: animal.bodyParts.map((part) =>
                 part.id === partId
-                  ? { ...part, imagePreview: null, existingImageUrl: null }
+                  ? { ...part, imagePreview: null, imageFile: null, existingImageUrl: null }
                   : part
               ),
             }
@@ -314,21 +325,23 @@ export function PartialConfiscationModal({
           isTotalConfiscation: false, // Decomiso parcial
           status: true,
           bodyPartComment: ((part?.bodyPartComment ?? '').length) > 0 ? part.bodyPartComment : undefined,
-          image: part.imagePreview ?? undefined,
+          image: part.imagePreview || undefined, // Incluir imagen en base64 si existe
         })
       );
 
-      // Verificar si ya existe un registro de postmortem para este animal
+      // Verificar si ya existe decomiso parcial para este animal
       const existingPostmortem = postmortemData?.data?.find(
         (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
       );
-      const hasSavedPartialConfiscation = existingPostmortem?.productPostmortem?.some(
+
+      // Verificar si tiene decomiso parcial específicamente
+      const hasPartialConfiscation = existingPostmortem?.productPostmortem?.some(
         (prod) => prod.isTotalConfiscation === false
       );
 
       try {
-        if (existingPostmortem && hasSavedPartialConfiscation) {
-          // Actualizar (PATCH)
+        if (existingPostmortem && hasPartialConfiscation) {
+          // Actualizar (PATCH) - solo si ya tiene decomiso parcial
           updatePostmortem(
             {
               id: existingPostmortem.id,
@@ -338,7 +351,7 @@ export function PartialConfiscationModal({
               },
             },
             {
-              onSuccess: () => {
+              onSuccess: async () => {
                 savedCount++;
                 if (savedCount === totalAnimals) {
                   toast.success(
@@ -367,7 +380,7 @@ export function PartialConfiscationModal({
               productsPostmortem,
             },
             {
-              onSuccess: () => {
+              onSuccess: async (response: any) => {
                 savedCount++;
                 if (savedCount === totalAnimals) {
                   toast.success(
@@ -411,8 +424,8 @@ export function PartialConfiscationModal({
   return (
     <Fragment>
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
-        <DialogHeader>
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl flex flex-col max-h-[90vh]">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center">
               <Info className="h-4 w-4 text-teal-600" />
@@ -421,6 +434,7 @@ export function PartialConfiscationModal({
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto scrollbar-hide px-1">
         {/* Header Info */}
         <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
           <div>
@@ -633,8 +647,9 @@ export function PartialConfiscationModal({
             </div>
           )}
         </div>
+        </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 border-t pt-4 mt-0">
           <Button variant="outline" onClick={handleCancel} disabled={isSaving || isUpdating}>
             {canEdit ? "Cancelar" : "Cerrar"}
           </Button>
@@ -664,11 +679,27 @@ export function PartialConfiscationModal({
 
     {/* Lightbox */}
     <Dialog open={!!previewImageUrl} onOpenChange={() => setPreviewImageUrl(null)}>
-      <DialogContent className="max-w-[95vw] sm:max-w-3xl p-2">
-        <DialogHeader><DialogTitle>Vista previa</DialogTitle></DialogHeader>
+      <DialogContent className="max-w-7xl w-full sm:w-[95vw] max-h-[95vh] sm:max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-2.5 border-b bg-white shrink-0">
+          <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+          <DialogTitle className="text-xs sm:text-sm font-semibold m-0 truncate">Vista previa</DialogTitle>
+        </div>
         {previewImageUrl && (
-          <div className="flex items-center justify-center">
-            <img src={previewImageUrl} alt="Imagen completa" className="max-h-[75vh] max-w-full object-contain rounded-lg" />
+          <div 
+            className="flex-1 min-h-0 overflow-auto p-3 sm:p-6 bg-gray-50/50 scrollbar-hide"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            <style jsx>{`
+              .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+            <div className="w-full h-full flex items-center justify-center">
+              <img src={previewImageUrl} alt="Imagen completa" className="max-w-full h-auto object-contain shadow-lg rounded-lg" style={{ maxHeight: 'calc(95vh - 80px)', minHeight: '200px' }} />
+            </div>
           </div>
         )}
       </DialogContent>
