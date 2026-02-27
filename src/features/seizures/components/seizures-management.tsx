@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SeizuresTable } from "./table-seizures";
+import { ObservationImageModal } from "./observation-image-modal";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import {
   CalendarDays,
@@ -64,6 +65,12 @@ import {
 
 export function SeizuresManagement() {
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{
+    url: string | null | undefined;
+    title: string;
+  }>({ url: null, title: "" });
+  
   const { data: speciesData } = useAllSpecies();
 
   const [searchParams, setSearchParams] = useQueryStates(
@@ -387,17 +394,35 @@ export function SeizuresManagement() {
 
               if (products.length === 0 && subproducts.length === 0) return "—";
 
+              const handleObservationClick = (urlImage: string | null | undefined, description: string) => {
+                setSelectedImage({
+                  url: urlImage,
+                  title: description,
+                });
+                setImageModalOpen(true);
+              };
+
               return (
                 <div className="flex flex-wrap gap-1 max-w-[400px]">
                   {products.map((p, idx) => (
-                    <span key={`p-${idx}`} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                    <button
+                      key={`p-${idx}`}
+                      onClick={() => handleObservationClick(p.urlImage, p.bodyPart?.description || "Parte del cuerpo")}
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 transition-colors cursor-pointer"
+                      title="Click para ver imagen"
+                    >
                       {p.bodyPart?.description} ({p.weight}kg)
-                    </span>
+                    </button>
                   ))}
                   {subproducts.map((s, idx) => (
-                    <span key={`s-${idx}`} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                    <button
+                      key={`s-${idx}`}
+                      onClick={() => handleObservationClick(s.urlImage, s.speciesDisease?.productDisease?.product?.description || "Subproducto")}
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
+                      title="Click para ver imagen"
+                    >
                       {s.speciesDisease?.productDisease?.product?.description || "Subproducto"} ({s.weight}kg)
-                    </span>
+                    </button>
                   ))}
                 </div>
               );
@@ -478,6 +503,13 @@ export function SeizuresManagement() {
           setSearchParams,
         }}
         isLoading={isLoading}
+      />
+
+      <ObservationImageModal
+        open={imageModalOpen}
+        onOpenChange={setImageModalOpen}
+        urlImage={selectedImage.url}
+        title={selectedImage.title}
       />
     </div>
   );
