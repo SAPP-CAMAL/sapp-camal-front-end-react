@@ -77,6 +77,7 @@ export interface ProductPostmortem {
   isTotalConfiscation: boolean;
   status: boolean;
   bodyPart: BodyPart;
+  urlImage?: string | null;
 }
 
 export interface SubProductPostmortem {
@@ -85,6 +86,7 @@ export interface SubProductPostmortem {
   weight: string;
   status: boolean;
   percentageAffection: string;
+  urlImage?: string | null;
   speciesDisease: {
     id: number;
     productDisease: {
