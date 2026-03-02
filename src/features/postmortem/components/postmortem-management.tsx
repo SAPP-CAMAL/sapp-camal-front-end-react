@@ -782,7 +782,7 @@ export function PostmortemManagement() {
                 >
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   Reporte Mensual de Decomisos
-                </DropdownMenuItem> */}
+                </DropdownMenuItem> 
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
