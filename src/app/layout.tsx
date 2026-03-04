@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { DynamicMetadata } from "@/components/dynamic-metadata";
+import { ChunkErrorHandler } from "@/components/chunk-error-handler";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -63,6 +64,7 @@ export default function RootLayout({
             <body
               className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
+              <ChunkErrorHandler />
               <DynamicMetadata />
               {children}
               <Toaster />
