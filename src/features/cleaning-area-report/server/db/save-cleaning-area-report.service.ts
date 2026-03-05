@@ -83,3 +83,24 @@ export async function generateCleaningDisinfectionReportService(
     throw error;
   }
 }
+
+export interface ReportCodeResponse {
+  code: number;
+  message: string;
+  data: {
+    id: number;
+    code: string;
+    status: boolean;
+    version: string | null;
+    reportTemplates: any[];
+  };
+}
+
+export async function getReportCodeByCodeService(code: string): Promise<ReportCodeResponse> {
+  const response = await http
+    .get("v1/1.0.0/report-codes/find-by-code", {
+      searchParams: { code },
+    })
+    .json<ReportCodeResponse>();
+  return response;
+}
