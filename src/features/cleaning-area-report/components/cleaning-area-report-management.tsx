@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -25,6 +25,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Calendar,
   FilterIcon,
@@ -36,6 +38,9 @@ import {
   User,
   Save,
   FileText,
+  Clock,
+  ClipboardList,
+  AlertCircle,
 } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query";
@@ -57,6 +62,7 @@ import {
   saveCleaningDisinfectionRecordService,
   updateCleaningDisinfectionRecordService,
   generateCleaningDisinfectionReportService,
+  getReportCodeByCodeService,
   type CleaningDisinfectionDetail,
 } from "../server/db/save-cleaning-area-report.service";
 import {
@@ -167,15 +173,58 @@ export function CleaningAreaReportManagement() {
   const today = useMemo(() => getLocalDateString(), []);
 
   const [selectedDate, setSelectedDate] = useState<string>(today);
-  const [selectedLineId, setSelectedLineId] = useState<string>("");
+  const [selectedLineId, setSelectedLineId] = useState<string>(() => {
+    try {
+      return window.localStorage.getItem("cleaning-area-lineId") ?? "1";
+    } catch {
+      return "1";
+    }
+  });
   const [editedSections, setEditedSections] = useState<CleaningAreaSection[]>([]);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const [observation, setObservation] = useState<string>("");
+  const [correctiveAction, setCorrectiveAction] = useState<string>("");
+  const [responsibleId, setResponsibleId] = useState<number>(1);
+  const [responsibleName, setResponsibleName] = useState<string>("");
+
+  // Hora fija de entrada a la página — nunca cambia
+  const entryTimeRef = useRef<string>("");
+
+  useEffect(() => {
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    entryTimeRef.current = timeStr;
+    setStartTime(timeStr);
+    setEndTime(timeStr);
+    try {
+      const userStr = window.localStorage.getItem("user");
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        setResponsibleId(userData.user?.id ?? 1);
+        setResponsibleName(userData.user?.fullName ?? "");
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const { data: lines, isLoading: isLoadingLines } = useLines();
 
   const handleDateChange = (date: Date | null) => {
     if (!date) return;
     setSelectedDate(getLocalDateString(date));
+  };
+
+  const handleLineChange = (value: string) => {
+    setSelectedLineId(value);
+    try {
+      window.localStorage.setItem("cleaning-area-lineId", value);
+    } catch {
+      // ignore
+    }
   };
 
   const lineId = selectedLineId ? parseInt(selectedLineId) : undefined;
@@ -200,6 +249,25 @@ export function CleaningAreaReportManagement() {
   useEffect(() => {
     setEditedSections(sections);
   }, [sections]);
+
+  // Poblar campos del registro cuando la API retorna datos existentes
+  useEffect(() => {
+    if (recordData?.data) {
+      const rec = recordData.data;
+      setStartTime((rec.startTime ?? "").slice(0, 5));
+      setEndTime((rec.endTime ?? "").slice(0, 5));
+      setObservation(rec.observation ?? "");
+      setCorrectiveAction(rec.correctiveAction ?? "");
+    } else if (recordData !== undefined) {
+      // Query ejecutada pero sin registro — restaurar hora de entrada y limpiar campos opcionales
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      setStartTime(entryTimeRef.current || currentTime);
+      setEndTime(currentTime);
+      setObservation("");
+      setCorrectiveAction("");
+    }
+  }, [recordData]);
 
   const handleToggleCheck = (
     sectionId: number,
@@ -315,17 +383,26 @@ export function CleaningAreaReportManagement() {
         return;
       }
 
-      const currentTime = new Date().toTimeString().slice(0, 5);
-      
+      const LINE_CODE_MAP: Record<number, string> = {
+        1: "FOR-CCP-14-02",
+        2: "FOR-CCP-14-03",
+      };
+      const reportCodeStr = LINE_CODE_MAP[lineId];
+      let idCode: number = 1;
+      if (reportCodeStr) {
+        const reportCodeRes = await getReportCodeByCodeService(reportCodeStr);
+        idCode = reportCodeRes.data.id;
+      }
+
       const payload = {
         idLine: lineId,
-        idCode: 1,
+        idCode,
         date: selectedDate,
-        startTime: "06:00",
-        endTime: currentTime,
-        observation: "Registro desde sistema",
-        correctiveAction: "",
-        idResponsible: 1,
+        startTime: startTime || new Date().toTimeString().slice(0, 5),
+        endTime: endTime || new Date().toTimeString().slice(0, 5),
+        observation: observation.trim() || undefined,
+        correctiveAction: correctiveAction.trim() || undefined,
+        idResponsible: responsibleId,
         status: true,
         details,
       };
@@ -440,7 +517,7 @@ export function CleaningAreaReportManagement() {
               </label>
               <Select
                 value={selectedLineId}
-                onValueChange={setSelectedLineId}
+                onValueChange={handleLineChange}
                 disabled={isLoadingLines}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm">
@@ -487,6 +564,107 @@ export function CleaningAreaReportManagement() {
                 )}
                 Reporte
               </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ClipboardList className="h-4 w-4 text-primary" />
+            Datos del registro
+          </CardTitle>
+          <CardDescription>
+            Información general del registro de limpieza y desinfección.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Fila 1: campos de tiempo y responsable */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                <Clock className="h-4 w-4 text-primary" />
+                Hora de inicio
+              </label>
+              <div className="relative">
+                <Input
+                  type="time"
+                  value={startTime}
+                  readOnly
+                  className="h-10 bg-gray-50 text-gray-500 cursor-not-allowed pr-8"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 font-medium select-none">
+                  fijo
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                <Clock className="h-4 w-4 text-primary" />
+                Hora de finalización
+              </label>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="h-10"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                <User className="h-4 w-4 text-primary" />
+                Responsable
+              </label>
+              <div className="relative">
+                <Input
+                  value={responsibleName}
+                  readOnly
+                  className="h-10 bg-gray-50 text-gray-500 cursor-not-allowed pr-16"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-emerald-600 font-semibold select-none bg-emerald-50 px-1.5 py-0.5 rounded">
+                  usuario
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Fila 2: campos de texto opcionales */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <ClipboardList className="h-4 w-4 text-primary" />
+                Observación
+                <span className="text-[11px] text-gray-400 font-normal bg-gray-100 px-1.5 py-0.5 rounded">
+                  opcional
+                </span>
+              </label>
+              <Textarea
+                value={observation}
+                onChange={(e) => setObservation(e.target.value)}
+                placeholder="Sin observaciones…"
+                className="resize-none min-h-10"
+                rows={2}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <AlertCircle className="h-4 w-4 text-primary" />
+                Acción correctiva
+                <span className="text-[11px] text-gray-400 font-normal bg-gray-100 px-1.5 py-0.5 rounded">
+                  opcional
+                </span>
+              </label>
+              <Textarea
+                value={correctiveAction}
+                onChange={(e) => setCorrectiveAction(e.target.value)}
+                placeholder="Sin acción correctiva…"
+                className="resize-none min-h-10"
+                rows={2}
+              />
             </div>
           </div>
         </CardContent>
