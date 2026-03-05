@@ -670,7 +670,7 @@ export function CleaningAreaReportManagement() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="overflow-hidden py-0">
         <CardContent className="p-0">
           {isLoadingStructure ? (
             <div className="flex items-center justify-center py-12">
@@ -720,7 +720,7 @@ export function CleaningAreaReportManagement() {
                     </TableHead>
                     <TableHead
                       colSpan={CLEAN_TYPES_VIDRIO.length}
-                      className="border border-slate-500 text-center font-bold text-[10px] bg-purple-600 text-white py-2"
+                      className="border border-slate-500 text-center font-bold text-[10px] bg-teal-600 text-white py-2"
                     >
                       <div className="flex items-center justify-center gap-1">
                         <Wine className="h-3 w-3" />
@@ -728,7 +728,7 @@ export function CleaningAreaReportManagement() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="border border-slate-500 text-center font-bold text-[9px] bg-emerald-600 text-white py-2 w-12 align-middle"
+                      className="border border-slate-500 text-center font-bold text-[9px] bg-teal-600 text-white py-2 w-12 align-middle"
                     >
                       <div className="flex items-center justify-center gap-1">
                         <User className="h-3 w-3" />
@@ -750,14 +750,14 @@ export function CleaningAreaReportManagement() {
                     {CLEAN_TYPES_VIDRIO.map((key) => (
                       <TableHead
                         key={`vidrio-${key}`}
-                        className="border border-slate-400 text-center font-bold text-[11px] bg-purple-200 px-0.5 py-1.5"
+                        className="border border-slate-400 text-center font-bold text-[11px] bg-teal-200 px-0.5 py-1.5"
                         style={{ color: '#000000', fontWeight: 'bold' }}
                       >
                         {key}
                       </TableHead>
                     ))}
                     <TableHead
-                      className="border border-slate-400 text-center font-bold text-[11px] bg-emerald-200 px-0.5 py-1.5"
+                      className="border border-slate-400 text-center font-bold text-[11px] bg-teal-200 px-0.5 py-1.5"
                       style={{ color: '#000000', fontWeight: 'bold' }}
                     >
                       URL
@@ -808,7 +808,7 @@ export function CleaningAreaReportManagement() {
                             {CLEAN_TYPES_VIDRIO.map((key) => (
                               <TableCell
                                 key={`vidrio-${key}`}
-                                className="border border-slate-200 text-center p-0 bg-purple-50/30"
+                                className="border border-slate-200 text-center p-0 bg-teal-50/30"
                               >
                                 <EditableCheckCell
                                   checked={record.glassPlastic[key]}
@@ -818,7 +818,7 @@ export function CleaningAreaReportManagement() {
                             ))}
 
                             <TableCell
-                              className="border border-slate-200 text-center py-0.5 px-0.5 bg-emerald-50/30"
+                              className="border border-slate-200 text-center py-0.5 px-0.5 bg-teal-50/30"
                             >
                               <input
                                 type="text"
