@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 const RELOAD_KEY = "__camal_reload_attempt";
 const MAX_ATTEMPTS = 2;
@@ -44,12 +45,16 @@ function attemptReload() {
  * - `error`: Errores síncronos de carga de scripts
  */
 export function ChunkErrorHandler() {
-  useEffect(() => {
-    // Limpiar el contador si la app cargó correctamente
-    const clearAttempts = () => sessionStorage.removeItem(RELOAD_KEY);
+  const pathname = usePathname();
 
-    // Esperar 5 segundos: si no hay error, la app cargó bien
-    const timer = setTimeout(clearAttempts, 5000);
+  // Resetear el contador de intentos en cada navegación exitosa
+  useEffect(() => {
+    sessionStorage.removeItem(RELOAD_KEY);
+  }, [pathname]);
+
+  useEffect(() => {
+    // Limpiar el contador si la app cargó correctamente tras 5 segundos
+    const timer = setTimeout(() => sessionStorage.removeItem(RELOAD_KEY), 5000);
 
     // Handler para promesas rechazadas (ChunkLoadError, dynamic import)
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
