@@ -19,15 +19,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  CalendarIcon,
   Download,
-  Settings,
   ChevronDown,
   BookText,
   FileSpreadsheet,
   FileText,
   FileBarChart,
-  Calendar,
   CalendarRange,
   Calendar1,
 } from "lucide-react";
@@ -90,7 +87,6 @@ import { useMemo, useEffect } from "react";
 import {
   downloadPostmortemGeneralReport,
   downloadDailyConfiscationReport,
-  downloadMonthlyConfiscationReport,
 } from "../server/db/postmortem-report.service";
 import { toast } from "sonner";
 import { downloadMonthlySummaryAgrocalidadReport } from "../utils/download-monthly-summary-agrocalidad.report";
@@ -757,30 +753,6 @@ export function PostmortemManagement() {
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
-                {/* <DropdownMenuItem
-                  onClick={() => {
-                    if (!selectedSpecieId) {
-                      toast.error("Selecciona una línea de producción");
-                      return;
-                    }
-                    // Extraer año y mes de la fecha seleccionada (YYYY-MM)
-                    const yearMonth = slaughterDate.substring(0, 7);
-                    toast.promise(
-                      downloadMonthlyConfiscationReport({
-                        date: yearMonth,
-                        idSpecies: selectedSpecieId,
-                      }),
-                      {
-                        loading: "Generando reporte mensual...",
-                        success: "Reporte mensual descargado correctamente",
-                        error: "Error al descargar el reporte mensual",
-                      }
-                    );
-                  }}
-                >
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  Reporte Mensual de Decomisos
-                </DropdownMenuItem> */}
                 <DropdownMenuItem
                   onClick={() => {
                     if (!selectedSpecieId) {
