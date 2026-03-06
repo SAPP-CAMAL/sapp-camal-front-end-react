@@ -832,7 +832,6 @@ export function PostmortemManagement() {
                   <CalendarRange className="h-4 w-4 mr-2" />
                   Reporte Mensual de Agrocalidad
                 </DropdownMenuItem>
-              */}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
