@@ -70,6 +70,7 @@ export interface WeighingReportAnimal {
     netWeight: number;
     productiveStage: string;
     specieName: string;
+    slaughterDate: string; // Fecha de faenamiento específica de cada animal
 }
 
 // Grupo de animales por marca
