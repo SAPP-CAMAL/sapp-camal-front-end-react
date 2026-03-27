@@ -69,6 +69,7 @@ function transformApiResponse(
             netWeight: parseFloat(item.netWeight),
             productiveStage: productiveStage.name,
             specieName: item.animalWeighing.specie.name,
+            slaughterDate: slaughterDate, // Fecha específica de cada animal
         });
     }
 
