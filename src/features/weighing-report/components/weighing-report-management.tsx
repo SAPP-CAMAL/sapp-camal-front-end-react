@@ -67,6 +67,20 @@ import { useDebouncedCallback } from "use-debounce";
 import { Badge } from "@/components/ui/badge";
 import { PerformanceReportModal } from "./performance-report-modal";
 
+// Función helper para formatear fecha sin problemas de zona horaria
+const formatDateSafe = (dateString: string): string => {
+  // Crear fecha en UTC para evitar problemas de zona horaria
+  const date = new Date(dateString);
+  
+  // Obtener los componentes de la fecha en UTC
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  
+  // Retornar en formato DD/MM/YYYY
+  return `${day}/${month}/${year}`;
+};
+
 export function WeighingReportManagement() {
   // Estados de filtros
   const [startDate, setStartDate] = useState<string>(
@@ -459,16 +473,16 @@ export function WeighingReportManagement() {
                       INTRODUCTOR
                     </div>
                   </TableHead>
-                  <TableHead className="w-[120px] font-semibold text-center text-white border-r border-teal-500/30">
-                    <div className="flex items-center justify-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      FECHA FAENA
-                    </div>
-                  </TableHead>
                   <TableHead className="w-[150px] font-semibold text-center text-white border-r border-teal-500/30">
                     <div className="flex items-center justify-center gap-2">
                       <Tag className="h-4 w-4" />
                       MARCA
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[120px] font-semibold text-center text-white border-r border-teal-500/30">
+                    <div className="flex items-center justify-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      FECHA FAENA
                     </div>
                   </TableHead>
                   <TableHead className="w-[180px] font-semibold text-center text-white border-r border-teal-500/30">
@@ -584,20 +598,6 @@ export function WeighingReportManagement() {
                               </TableCell>
                             )}
 
-                            {/* FECHA FAENA - Solo en la primera fila del introductor */}
-                            {isFirstRowOfIntroducer && (
-                              <TableCell
-                                className="align-middle text-center bg-gray-50/50 border-r"
-                                rowSpan={totalVisibleRows}
-                              >
-                                <div className="flex flex-col items-center gap-1">
-                                  <span className="text-sm font-medium text-gray-700">
-                                    {new Date(row.introducer.slaughterDate).toLocaleDateString("es-EC")}
-                                  </span>
-                                </div>
-                              </TableCell>
-                            )}
-
                             {/* MARCA - Solo en la primera fila de cada marca */}
                             {isFirstAnimalOfBrand && (
                               <TableCell
@@ -612,6 +612,15 @@ export function WeighingReportManagement() {
                                 </Badge>
                               </TableCell>
                             )}
+
+                            {/* FECHA FAENA - Cada animal */}
+                            <TableCell className="align-middle text-center border-r">
+                              <div className="flex flex-col items-center gap-1">
+                                <span className="text-sm font-medium text-gray-700">
+                                  {formatDateSafe(animal.slaughterDate)}
+                                </span>
+                              </div>
+                            </TableCell>
 
                             {/* ETAPA PRODUCTIVA + CÓDIGO - Cada animal */}
                             <TableCell className="align-middle text-center border-r">
@@ -816,12 +825,6 @@ export function WeighingReportManagement() {
                       <h3 className="font-bold text-base uppercase">
                         {row.introducer.fullName}
                       </h3>
-                      <div className="flex items-center gap-1 mt-1 text-xs opacity-90">
-                        <Calendar className="h-3 w-3" />
-                        <span>
-                          Faena: {new Date(row.introducer.slaughterDate).toLocaleDateString("es-EC")}
-                        </span>
-                      </div>
                     </div>
                     <User className="h-5 w-5 opacity-80" />
                   </div>
@@ -866,9 +869,13 @@ export function WeighingReportManagement() {
                                   >
                                     {animal.productiveStage}
                                   </Badge>
-                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                                     <Layers className="h-3 w-3" />
                                     <span>Código: {animal.code}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Calendar className="h-3 w-3" />
+                                    <span>Faena: {formatDateSafe(animal.slaughterDate)}</span>
                                   </div>
                                 </div>
                                 <div className="text-right">
