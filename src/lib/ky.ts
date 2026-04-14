@@ -7,6 +7,25 @@ function normalizeApiBase(raw: string | undefined) {
     return withoutTrailingSlash
 }
 
+function readConfiguredApiBase(): string | undefined {
+    if (typeof window !== "undefined") {
+        const runtime = normalizeApiBase((window as any).__NEXT_PUBLIC_API_URL__)
+        if (runtime) return runtime
+    }
+
+    const fromEnv = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
+    if (fromEnv) return fromEnv
+
+    return undefined
+}
+
+function getRequiredApiBase(): string {
+    const configured = readConfiguredApiBase()
+    if (configured) return configured
+
+    throw new Error("NEXT_PUBLIC_API_URL no esta configurado. Define esta variable en .env.local.")
+}
+
 function readCookie(name: string): string | undefined {
     if (typeof document === "undefined") return undefined
     const cookies = document.cookie ? document.cookie.split(";") : []
@@ -85,34 +104,7 @@ function isNetworkFailure(error: unknown): boolean {
 }
 
 function getClientApiBases(): string[] {
-    // EN EL CLIENTE: Detectar automáticamente basándose en el hostname
-    // Esta es la forma más confiable porque no depende de variables de entorno
-    if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname
-
-        // Si estamos en localhost, usar localhost para desarrollo
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            // En desarrollo, intentar usar la variable de entorno o localhost
-            const devUrl = process.env.NEXT_PUBLIC_API_URL
-            if (devUrl) {
-                return [normalizeApiBase(devUrl)]
-            }
-            return ["http://localhost:3000"]
-        }
-
-        // EN PRODUCCIÓN: SIEMPRE usar la URL de producción
-        // No importa qué diga la variable de entorno
-        return ["https://sapp-riobamba.com"]
-    }
-
-    // EN EL SERVIDOR (SSR): Usar variable de entorno o fallback a producción
-    const serverUrl = process.env.NEXT_PUBLIC_API_URL
-    if (serverUrl) {
-        return [normalizeApiBase(serverUrl)]
-    }
-
-    // Fallback para SSR: usar producción
-    return ["https://sapp-riobamba.com"]
+    return [getRequiredApiBase()]
 }
 
 // IMPORTANTE: No evaluamos API_BASES al cargar el módulo porque la variable global
@@ -253,14 +245,7 @@ export const http = {
 
 // Función para obtener las URLs base de la API (útil para fetch directo con fallback)
 export function getApiBases(): string[] {
-    const bases = getClientApiBases()
-    return bases.map((base: string) => {
-        // Si es el proxy de desarrollo, devolver la URL real para fetch directo
-        if (base === '/api/proxy') {
-            return normalizeApiBase(process.env.NEXT_PUBLIC_API_URL) || "http://localhost:3000"
-        }
-        return base
-    })
+    return getClientApiBases()
 }
 
 // Fetch con fallback automático (para descargas de archivos, etc.)
