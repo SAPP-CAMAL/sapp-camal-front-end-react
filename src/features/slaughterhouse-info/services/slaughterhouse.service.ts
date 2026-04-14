@@ -4,23 +4,10 @@ import type { SlaughterhouseInfo, SlaughterhouseInfoApiResponse } from "../types
  * Obtiene la URL base de la API según el entorno
  */
 function getApiBaseUrl(): string {
-  // En el servidor (SSR), no hay window
-  if (typeof window === 'undefined') {
-    // Usar variable de entorno o fallback a producción
-    return process.env.NEXT_PUBLIC_API_URL || 'https://sapp-emfi.com';
-  }
+  const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (configured) return configured;
 
-  // En el cliente, detectar según el hostname
-  const hostname = window.location.hostname;
-  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-
-  if (isLocalhost) {
-    // En desarrollo local, usar localhost
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-  }
-
-  // En producción, SIEMPRE usar la URL de producción
-  return 'https://sapp-emfi.com';
+  throw new Error("NEXT_PUBLIC_API_URL no esta configurado. Define esta variable en .env.local.");
 }
 
 /**

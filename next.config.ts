@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 import path from "path";
 
-const apiUrl: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+if (!apiUrl) {
+  throw new Error("NEXT_PUBLIC_API_URL no esta configurado. Define esta variable en .env.local.");
+}
 
 const nextConfig: NextConfig = {
   /* config options here */
