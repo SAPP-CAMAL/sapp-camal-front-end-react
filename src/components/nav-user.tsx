@@ -115,6 +115,8 @@ export function NavUser({ user }: { user: LoginResponse }) {
                     window.localStorage.removeItem("refreshToken");
                     window.localStorage.removeItem("user");
                     window.localStorage.removeItem("activeRoleId");
+                    window.localStorage.removeItem("activeRoleName");
+                    window.dispatchEvent(new CustomEvent("active-role-changed", { detail: { id: null, name: null } }));
                     
                     // Borrar cookies del navegador
                     document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";

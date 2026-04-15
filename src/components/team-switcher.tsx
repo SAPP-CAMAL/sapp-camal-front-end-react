@@ -29,6 +29,17 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 
+function persistActiveRole(role: { id: number; name: string }) {
+  localStorage.setItem('activeRoleId', role.id.toString());
+  localStorage.setItem('activeRoleName', role.name);
+
+  window.dispatchEvent(
+    new CustomEvent('active-role-changed', {
+      detail: { id: role.id, name: role.name },
+    })
+  );
+}
+
 export function RoleSwitcher() {
   const { isMobile } = useSidebar();
   const [open, setOpen] = React.useState(false);
@@ -63,6 +74,10 @@ export function RoleSwitcher() {
       const roleExists = query.data.data.some((role: any) => role.id === roleId);
       if (roleExists) {
         setActiveRoleId(roleId);
+        const matchedRole = query.data.data.find((role: any) => role.id === roleId);
+        if (matchedRole?.name) {
+          persistActiveRole({ id: matchedRole.id, name: matchedRole.name });
+        }
         return;
       }
     }
@@ -70,7 +85,7 @@ export function RoleSwitcher() {
     // Si no hay rol guardado en localStorage, SIEMPRE usar el primer rol del listado
     // Esto asegura que al iniciar sesión siempre se muestre el primer rol
     setActiveRoleId(query.data.data[0].id);
-    localStorage.setItem('activeRoleId', query.data.data[0].id.toString());
+    persistActiveRole({ id: query.data.data[0].id, name: query.data.data[0].name });
   }, [query.data, activeRoleId, isMounted]);
 
   // No renderizar hasta que esté montado en el cliente
@@ -150,7 +165,7 @@ export function RoleSwitcher() {
                   isActive={role.id === activeRoleId}
                   onSelect={() => {
                     setActiveRoleId(role.id);
-                    localStorage.setItem('activeRoleId', role.id.toString());
+                    persistActiveRole({ id: role.id, name: role.name });
                     setOpen(false);
                   }}
                 />
