@@ -110,6 +110,8 @@ export function LoginForm({
         window.localStorage.setItem("user", userJson);
         // Limpiar el rol activo para que siempre muestre el primer rol del listado al iniciar sesión
         window.localStorage.removeItem("activeRoleId");
+        window.localStorage.removeItem("activeRoleName");
+        window.dispatchEvent(new CustomEvent("active-role-changed", { detail: { id: null, name: null } }));
       } catch { /* ignore */ }
 
       toast.success("Bienvenido");
