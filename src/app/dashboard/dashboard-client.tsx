@@ -20,25 +20,29 @@ export function DashboardClient({
   const [displayRole, setDisplayRole] = useState(fixUtf8(serverUserRole));
 
   useEffect(() => {
-    // Leer el rol activo desde la cookie user del cliente
-    // Esto asegura que se muestre el rol correcto después de un cambio de rol
-    try {
-      const userCookie = document.cookie
-        .split(";")
-        .find((c) => c.trim().startsWith("user="));
-
-      if (userCookie) {
-        const userValue = decodeURIComponent(userCookie.split("=")[1]);
-        const userData = JSON.parse(userValue);
-        // La cookie user contiene LoginResponse con activeRole
-        const activeRoleName = userData?.activeRole?.name;
-        if (activeRoleName) {
-          setDisplayRole(fixUtf8(activeRoleName));
-        }
+    const readRoleFromStorage = () => {
+      const savedRoleName = window.localStorage.getItem("activeRoleName");
+      if (savedRoleName) {
+        setDisplayRole(fixUtf8(savedRoleName));
       }
-    } catch {
-      // Si hay algún error, mantener el rol del servidor como fallback
-    }
+    };
+
+    const onActiveRoleChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{ id?: number; name?: string }>;
+      const roleName = customEvent.detail?.name;
+      if (roleName) {
+        setDisplayRole(fixUtf8(roleName));
+      } else {
+        readRoleFromStorage();
+      }
+    };
+
+    readRoleFromStorage();
+    window.addEventListener("active-role-changed", onActiveRoleChanged);
+
+    return () => {
+      window.removeEventListener("active-role-changed", onActiveRoleChanged);
+    };
   }, []);
 
   return (

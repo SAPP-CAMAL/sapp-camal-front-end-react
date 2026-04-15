@@ -70,6 +70,8 @@ function clearAuthData() {
         window.localStorage.removeItem("accessToken")
         window.localStorage.removeItem("refreshToken")
         window.localStorage.removeItem("user")
+        window.localStorage.removeItem("activeRoleId")
+        window.localStorage.removeItem("activeRoleName")
 
         // Borrar cookies (intento con múltiples paths por seguridad)
         const cookiesToClear = ["accessToken", "refreshToken", "user"]
