@@ -696,17 +696,17 @@ export function CleaningAreaReportManagement() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table className="text-xs border-collapse w-full table-fixed">
+              <Table className="text-xs border-collapse w-full table-auto" style={{ minWidth: "980px" }}>
                 <TableHeader>
                   <TableRow className="bg-slate-700">
                     <TableHead
                       rowSpan={2}
-                      className="border border-slate-500 text-center font-bold text-[8px] align-middle bg-slate-700 text-white w-24 sticky left-0 z-10 px-0.5 leading-tight"
+                      className="border border-slate-500 text-center font-bold text-[9px] align-middle bg-slate-700 text-white w-44 min-w-44 sticky left-0 z-10 px-2 py-2 leading-tight whitespace-normal break-normal h-auto!"
                     >
-                      <div>
-                        ESTRUCTURA /<br />
-                        MATERIALES /<br />
-                        UTENSILIOS
+                      <div className="flex flex-col items-center justify-center gap-0.5">
+                        <span>ESTRUCTURA</span>
+                        <span>MATERIALES</span>
+                        <span>UTENSILIOS</span>
                       </div>
                     </TableHead>
                     <TableHead
@@ -728,11 +728,11 @@ export function CleaningAreaReportManagement() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="border border-slate-500 text-center font-bold text-[9px] bg-teal-600 text-white py-2 w-12 align-middle"
+                      className="border border-slate-500 text-center font-bold text-[9px] bg-teal-600 text-white py-1.5 w-24 min-w-24 align-middle"
                     >
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex flex-col items-center justify-center gap-0.5">
                         <User className="h-3 w-3" />
-                        <span className="leading-tight">LUMINO-<br/>METRÍA</span>
+                        <span className="leading-tight whitespace-normal break-normal">LUMINO<br />METRÍA</span>
                       </div>
                     </TableHead>
                   </TableRow>
@@ -757,7 +757,7 @@ export function CleaningAreaReportManagement() {
                       </TableHead>
                     ))}
                     <TableHead
-                      className="border border-slate-400 text-center font-bold text-[11px] bg-teal-200 px-0.5 py-1.5"
+                      className="border border-slate-400 text-center font-bold text-[10px] bg-teal-200 px-0.5 py-1.5 min-w-20"
                       style={{ color: '#000000', fontWeight: 'bold' }}
                     >
                       URL

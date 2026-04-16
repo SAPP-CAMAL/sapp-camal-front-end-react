@@ -78,6 +78,16 @@ export interface ProductPostmortem {
   status: boolean;
   bodyPart: BodyPart;
   urlImage?: string | null;
+  speciesDisease?: {
+    id: number;
+    productDisease: {
+      id: number;
+      disease?: {
+        id: number;
+        names: string;
+      };
+    };
+  };
 }
 
 export interface SubProductPostmortem {
