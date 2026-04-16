@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ImageIcon } from "lucide-react";
@@ -23,6 +24,9 @@ export function ObservationImageModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-7xl w-full sm:w-[95vw] max-h-[95vh] sm:max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogDescription className="sr-only">
+          Vista ampliada de la imagen de observacion del decomiso.
+        </DialogDescription>
         <div className="flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-2.5 border-b bg-white shrink-0">
           <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
           <DialogTitle className="text-xs sm:text-sm font-semibold m-0 truncate">{title}</DialogTitle>

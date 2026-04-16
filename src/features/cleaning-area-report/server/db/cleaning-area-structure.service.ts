@@ -1,4 +1,5 @@
 import { http } from "@/lib/ky";
+import { HTTPError } from "ky";
 import type { ApiStructureResponse } from "../../domain";
 
 export async function getCleaningAreaStructureService(lineId?: number) {
@@ -7,8 +8,11 @@ export async function getCleaningAreaStructureService(lineId?: number) {
       return null;
     }
 
+    const lineIdAsString = lineId.toString();
     const searchParams: Record<string, string> = {
-      idLine: lineId.toString(),
+      // Algunos backends esperan lineId y otros idLine; enviamos ambos por compatibilidad.
+      lineId: lineIdAsString,
+      idLine: lineIdAsString,
     };
 
     const response = await http
@@ -19,6 +23,10 @@ export async function getCleaningAreaStructureService(lineId?: number) {
 
     return response;
   } catch (error) {
+    if (error instanceof HTTPError && error.response.status === 404) {
+      // 404 puede representar que no existe estructura configurada para la linea.
+      return null;
+    }
     console.error("Error fetching cleaning area structure:", error);
     return null;
   }

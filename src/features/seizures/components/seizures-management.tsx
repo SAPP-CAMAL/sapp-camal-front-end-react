@@ -394,7 +394,7 @@ export function SeizuresManagement() {
             header: () => (
               <div className="flex items-center gap-1">
                 <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                Observaciones (Partes / Pesos)
+                Observaciones (Partes / Patologias / Pesos)
               </div>
             ),
             cell: ({ row }) => {
@@ -411,28 +411,44 @@ export function SeizuresManagement() {
                 setImageModalOpen(true);
               };
 
+              const buildLabel = (description: string, weight: string, pathology?: string | null) => {
+                if (!pathology) return `${description} (${weight}kg)`;
+                return `${description} - ${pathology} (${weight}kg)`;
+              };
+
               return (
                 <div className="flex flex-wrap gap-1 max-w-[400px]">
-                  {products.map((p, idx) => (
-                    <button
-                      key={`p-${idx}`}
-                      onClick={() => handleObservationClick(p.urlImage, p.bodyPart?.description || "Parte del cuerpo")}
-                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 transition-colors cursor-pointer"
-                      title="Click para ver imagen"
-                    >
-                      {p.bodyPart?.description} ({p.weight}kg)
-                    </button>
-                  ))}
-                  {subproducts.map((s, idx) => (
-                    <button
-                      key={`s-${idx}`}
-                      onClick={() => handleObservationClick(s.urlImage, s.speciesDisease?.productDisease?.product?.description || "Subproducto")}
-                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
-                      title="Click para ver imagen"
-                    >
-                      {s.speciesDisease?.productDisease?.product?.description || "Subproducto"} ({s.weight}kg)
-                    </button>
-                  ))}
+                  {products.map((p, idx) => {
+                    const description = p.bodyPart?.description || "Parte del cuerpo";
+                    const pathology = p.speciesDisease?.productDisease?.disease?.names;
+
+                    return (
+                      <button
+                        key={`p-${idx}`}
+                        onClick={() => handleObservationClick(p.urlImage, description)}
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 transition-colors cursor-pointer"
+                        title="Click para ver imagen"
+                      >
+                        {buildLabel(description, p.weight, pathology)}
+                      </button>
+                    );
+                  })}
+                  {subproducts.map((s, idx) => {
+                    const description =
+                      s.speciesDisease?.productDisease?.product?.description || "Subproducto";
+                    const pathology = s.speciesDisease?.productDisease?.disease?.names;
+
+                    return (
+                      <button
+                        key={`s-${idx}`}
+                        onClick={() => handleObservationClick(s.urlImage, description)}
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
+                        title="Click para ver imagen"
+                      >
+                        {buildLabel(description, s.weight, pathology)}
+                      </button>
+                    );
+                  })}
                 </div>
               );
             },

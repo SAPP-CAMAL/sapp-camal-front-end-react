@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import {
   LineaType,
+  getLineaIdFromType,
   ProcessType,
   Corral,
   CorralStatus,
@@ -100,10 +101,8 @@ export function CorralsManagement() {
   useEffect(() => {
     setIsClientMounted(true);
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("corrals-selected-line");
-      if (saved && ["bovinos", "porcinos", "ovinos-caprinos"].includes(saved)) {
-        setSelectedTab(saved as LineaType);
-      }
+      // Always start on Line 1 (bovinos).
+      setSelectedTab("bovinos");
 
       // Check if we just reloaded after generating codes
       const justReloaded = sessionStorage.getItem("corrals-just-reloaded");
@@ -770,13 +769,7 @@ export function CorralsManagement() {
       // For bovinos use species ID 1, for porcinos use 2, for ovinos-caprinos use 3
       const speciesId =
         currentLineData?.specie?.id ||
-        (selectedTab === "bovinos"
-          ? 1
-          : selectedTab === "porcinos"
-          ? 2
-          : selectedTab === "ovinos-caprinos"
-          ? 3
-          : 1);
+        getLineaIdFromType(selectedTab);
 
       let slaughterDate =  format(add(new Date(), { days: 1 }), 'yyyy-MM-dd');
 
@@ -1077,7 +1070,9 @@ export function CorralsManagement() {
             ? "bovino"
             : selectedTab === "porcinos"
             ? "porcino"
-            : "ovino";
+            : selectedTab === "ovinos-caprinos"
+            ? "ovino"
+            : response.data?.specie?.name?.toLowerCase() || "";
 
         const specieName = response.data?.specie?.name?.toLowerCase() || "";
         const lineName = response.data?.name?.toLowerCase() || "";
@@ -1085,6 +1080,7 @@ export function CorralsManagement() {
 
         // Check if the response matches the expected specie
         const isCorrectSpecie =
+          !expectedSpecie ||
           specieName.includes(expectedSpecie) ||
           lineName.includes(expectedSpecie) ||
           description.includes(expectedSpecie);
@@ -1939,6 +1935,8 @@ export function CorralsManagement() {
         return "CORRALES DE LA LÍNEA 2 DE PORCINOS";
       case "ovinos-caprinos":
         return "CORRALES DE LA LÍNEA 3 DE OVINOS-CAPRINOS";
+      default:
+        return "CORRALES DE LA LÍNEA 1";
     }
   }
 
@@ -2070,7 +2068,7 @@ export function CorralsManagement() {
       >
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-5">
-          <div className="h-full w-full bg-gradient-to-br from-blue-400 to-pink-400"></div>
+          <div className="h-full w-full bg-linear-to-br from-blue-400 to-pink-400"></div>
         </div>
 
         {/* Content */}
@@ -2080,7 +2078,7 @@ export function CorralsManagement() {
             <h3 className="font-bold text-gray-900 text-sm truncate group-hover:text-blue-900 transition-colors">
               {brand.nameBrand}
             </h3>
-            <div className="flex items-center gap-2 mt-1 min-h-[18px]">
+            <div className="flex items-center gap-2 mt-1 min-h-4.5">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
                 <span className="text-xs text-gray-500 font-medium">
@@ -2091,7 +2089,7 @@ export function CorralsManagement() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="max-w-[160px] truncate inline-flex items-center gap-1 text-[9px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md px-2 py-0.5 shadow-sm">
+                      <span className="max-w-40 truncate inline-flex items-center gap-1 text-[9px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md px-2 py-0.5 shadow-sm">
                         {/* <Hash className="h-6 w-6" />  */}
                         <span>{codeText}</span>
                       </span>
@@ -2117,7 +2115,7 @@ export function CorralsManagement() {
             {/* Males */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm"></div>
+                <div className="w-3 h-3 rounded-full bg-linear-to-r from-blue-500 to-blue-600 shadow-sm"></div>
                 <span className="text-xs font-medium text-gray-600">
                   Machos
                 </span>
@@ -2130,7 +2128,7 @@ export function CorralsManagement() {
             {/* Females */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-pink-500 to-pink-600 shadow-sm"></div>
+                <div className="w-3 h-3 rounded-full bg-linear-to-r from-pink-500 to-pink-600 shadow-sm"></div>
                 <span className="text-xs font-medium text-gray-600">
                   Hembras
                 </span>
@@ -2145,11 +2143,11 @@ export function CorralsManagement() {
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                 <div className="h-full flex">
                   <div
-                    className="bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-300"
+                    className="bg-linear-to-r from-blue-500 to-blue-400 transition-all duration-300"
                     style={{ width: `${malePercentage}%` }}
                   ></div>
                   <div
-                    className="bg-gradient-to-r from-pink-500 to-pink-400 transition-all duration-300"
+                    className="bg-linear-to-r from-pink-500 to-pink-400 transition-all duration-300"
                     style={{ width: `${100 - malePercentage}%` }}
                   ></div>
                 </div>
@@ -2159,7 +2157,7 @@ export function CorralsManagement() {
         </div>
 
         {/* Hover effect overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+        <div className="absolute inset-0 bg-linear-to-r from-blue-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
       </div>
     );
   };
@@ -2217,7 +2215,6 @@ export function CorralsManagement() {
         <Card>
           <CardContent className="p-6 md:p-8">
             <ProcessFilterTabs
-              selectedTab={selectedTab}
               processFilter={processFilter}
               onChange={(v) => setProcessFilter(v)}
               counts={realFilterCounts}
@@ -2261,7 +2258,7 @@ export function CorralsManagement() {
                   onClick={() => toggleSort("disponibles")}
                   className={`h-8 text-xs flex items-center gap-1 transition-all duration-300 shadow-sm hover:shadow-md rounded-lg ${
                     sortBy === "disponibles"
-                      ? "text-teal-600 border-teal-300 bg-gradient-to-r from-teal-50 to-teal-100 font-medium"
+                      ? "text-teal-600 border-teal-300 bg-linear-to-r from-teal-50 to-teal-100 font-medium"
                       : "text-muted-foreground border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
                   }`}
                   title="Ordenar por disponibles"
@@ -2282,7 +2279,7 @@ export function CorralsManagement() {
                   onClick={() => toggleSort("ocupacion")}
                   className={`h-8 text-xs flex items-center gap-1 transition-all duration-300 shadow-sm hover:shadow-md rounded-lg ${
                     sortBy === "ocupacion"
-                      ? "text-orange-600 border-orange-300 bg-gradient-to-r from-orange-50 to-orange-100 font-medium"
+                      ? "text-orange-600 border-orange-300 bg-linear-to-r from-orange-50 to-orange-100 font-medium"
                       : "text-muted-foreground border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
                   }`}
                   title="Ordenar por ocupación"
@@ -2336,7 +2333,7 @@ export function CorralsManagement() {
                             >
                               <CardHeader className="pb-0 pt-1 px-4">
                                 {/* Badge CERRADO y punto verde arriba a la derecha */}
-                                <div className="flex justify-between items-center gap-2 min-h-[18px]">
+                                <div className="flex justify-between items-center gap-2 min-h-4.5">
                                   <span className="text-xs text-gray-600 font-medium">
                                     Total {corral.total}
                                   </span>
@@ -2356,7 +2353,7 @@ export function CorralsManagement() {
                                       </TooltipProvider>
                                     )}
                                     <div
-                                      className={`w-2 h-2 rounded-full flex-shrink-0 ${getOccupationColor(
+                                      className={`w-2 h-2 rounded-full shrink-0 ${getOccupationColor(
                                         corral.ocupacion
                                       )}`}
                                     />
@@ -2365,12 +2362,12 @@ export function CorralsManagement() {
                                 <h3 className="font-semibold mt-1">
                                   {corral.name}
                                 </h3>
-                                <div className="h-[2px] bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
+                                <div className="h-0.5 bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
                               </CardHeader>
 
                               <CardContent className="pt-0 px-4 pb-0 flex flex-col flex-1">
-                                <div className="relative border-2 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner p-5 -mt-4 flex-1 flex flex-col overflow-hidden transition-all duration-300 border-gray-200">
-                                  <div className="h-[6px] w-full bg-gray-100 border-b border-gray-200 rounded-t-sm mb-2" />
+                                <div className="relative border-2 rounded-lg bg-linear-to-br from-gray-50 to-gray-100 shadow-inner p-5 -mt-4 flex-1 flex flex-col overflow-hidden transition-all duration-300 border-gray-200">
+                                  <div className="h-1.5 w-full bg-gray-100 border-b border-gray-200 rounded-t-sm mb-2" />
                                   {(() => {
                                     const brands = getBrandDetailsForCorral(
                                       corral.id
@@ -2413,7 +2410,7 @@ export function CorralsManagement() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className={`text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 flex-1 rounded-lg h-10 text-xs sm:text-sm min-w-0 transition-all duration-300 flex items-center justify-center ${
+                                      className={`text-teal-600 border-teal-200 bg-linear-to-r from-white to-teal-50 flex-1 rounded-lg h-10 text-xs sm:text-sm min-w-0 transition-all duration-300 flex items-center justify-center ${
                                         !statusByDateMap[corral.id]
                                           ? "opacity-80 cursor-not-allowed"
                                           : "shadow-sm hover:shadow-md hover:from-teal-50 hover:to-teal-100 hover:border-teal-300"
@@ -2425,7 +2422,7 @@ export function CorralsManagement() {
                                         !canUploadVideoForCorral(corral.id)
                                       }
                                     >
-                                      <Video className="h-4 w-4 mr-1 flex-shrink-0" />
+                                      <Video className="h-4 w-4 mr-1 shrink-0" />
                                       <span className="truncate font-medium">
                                         Video
                                       </span>
@@ -2435,8 +2432,8 @@ export function CorralsManagement() {
                                       size="sm"
                                       className={`flex-1 rounded-lg h-10 text-xs sm:text-sm min-w-0 transition-all duration-300 flex items-center justify-center ${
                                         corral.dbStatus === true
-                                          ? "text-red-600 border-red-200 bg-gradient-to-r from-white to-red-50"
-                                          : "text-green-600 border-green-200 bg-gradient-to-r from-white to-green-50"
+                                          ? "text-red-600 border-red-200 bg-linear-to-r from-white to-red-50"
+                                          : "text-green-600 border-green-200 bg-linear-to-r from-white to-green-50"
                                       } ${
                                         isClosed
                                           ? "opacity-80 cursor-not-allowed"
@@ -2451,9 +2448,9 @@ export function CorralsManagement() {
                                       disabled={isClosed}
                                     >
                                       {corral.dbStatus === true ? (
-                                        <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
+                                        <Lock className="h-4 w-4 mr-1 shrink-0" />
                                       ) : (
-                                        <LockOpen className="h-4 w-4 mr-1 flex-shrink-0" />
+                                        <LockOpen className="h-4 w-4 mr-1 shrink-0" />
                                       )}
                                       <span className="truncate font-medium">
                                         {isClosed
@@ -2498,9 +2495,9 @@ export function CorralsManagement() {
                                             }}
                                           >
                                             {generatingCodes === corral.id ? (
-                                              <Loader2 className="h-4 w-4 mr-1 flex-shrink-0 animate-spin" />
+                                              <Loader2 className="h-4 w-4 mr-1 shrink-0 animate-spin" />
                                             ) : (
-                                              <Hash className="h-4 w-4 mr-1 flex-shrink-0" />
+                                              <Hash className="h-4 w-4 mr-1 shrink-0" />
                                             )}
                                             <span className="truncate font-medium">
                                               {generatingCodes === corral.id ? "Generando..." : "Generar Códigos"}
@@ -2533,7 +2530,7 @@ export function CorralsManagement() {
                   </div>
 
                   {/* Desktop: Normal grid */}
-                  <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 w-full max-w-[100%] px-2 mx-auto">
+                  <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 w-full max-w-full px-2 mx-auto">
                     {
                       sortedCorrales
                         .map((corral, index) => {
@@ -2562,7 +2559,7 @@ export function CorralsManagement() {
                             >
                               <CardHeader className="pb-0 pt-1 px-4">
                                 {/* Badge CERRADO y punto verde arriba a la derecha */}
-                                <div className="flex justify-between items-center gap-2 min-h-[18px]">
+                                <div className="flex justify-between items-center gap-2 min-h-4.5">
                                   <span className="text-xs text-gray-600 font-medium">
                                     Total {corral.total}
                                   </span>
@@ -2582,7 +2579,7 @@ export function CorralsManagement() {
                                       </TooltipProvider>
                                     )}
                                     <div
-                                      className={`w-2 h-2 rounded-full flex-shrink-0 ${getOccupationColor(
+                                      className={`w-2 h-2 rounded-full shrink-0 ${getOccupationColor(
                                         corral.ocupacion
                                       )}`}
                                     />
@@ -2592,12 +2589,12 @@ export function CorralsManagement() {
                                   {corral.name}
                                 </h3>
                                 {/* subtle divider like screenshot */}
-                                <div className="h-[2px] bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
+                                <div className="h-0.5 bg-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]" />
                               </CardHeader>
 
                               <CardContent className="pt-0 px-4 pb-0 flex flex-col flex-1">
-                                <div className="relative border-2 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner p-3 -mt-4 flex-1 flex flex-col overflow-hidden transition-all duration-300 border-gray-200 w-full max-w-full">
-                                  <div className="h-[6px] w-full bg-gray-100 border-b border-gray-200 rounded-t-sm mb-2" />
+                                <div className="relative border-2 rounded-lg bg-linear-to-br from-gray-50 to-gray-100 shadow-inner p-3 -mt-4 flex-1 flex flex-col overflow-hidden transition-all duration-300 border-gray-200 w-full max-w-full">
+                                  <div className="h-1.5 w-full bg-gray-100 border-b border-gray-200 rounded-t-sm mb-2" />
                                   {(() => {
                                     const brands = getBrandDetailsForCorral(
                                       corral.id
@@ -2643,7 +2640,7 @@ export function CorralsManagement() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-teal-600 border-teal-200 bg-gradient-to-r from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 hover:border-teal-300 flex-1 rounded-lg h-10 text-xs sm:text-sm min-w-0 transition-all duration-300 shadow-sm hover:shadow-md"
+                                      className="text-teal-600 border-teal-200 bg-linear-to-r from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 hover:border-teal-300 flex-1 rounded-lg h-10 text-xs sm:text-sm min-w-0 transition-all duration-300 shadow-sm hover:shadow-md"
                                       onClick={() =>
                                         openVideoDialogForLinea(corral.id)
                                       }
@@ -2651,7 +2648,7 @@ export function CorralsManagement() {
                                         !canUploadVideoForCorral(corral.id)
                                       }
                                     >
-                                      <Video className="h-4 w-4 mr-1 flex-shrink-0" />
+                                      <Video className="h-4 w-4 mr-1 shrink-0" />
                                       <span className="truncate font-medium">
                                         Video
                                       </span>
@@ -2667,15 +2664,15 @@ export function CorralsManagement() {
                                                 size="sm"
                                                 className={`w-full flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 opacity-80 cursor-not-allowed ${
                                                   corral.dbStatus === true
-                                                    ? "text-red-600 border-red-200 bg-gradient-to-r from-white to-red-50"
-                                                    : "text-green-600 border-green-200 bg-gradient-to-r from-white to-green-50"
+                                                    ? "text-red-600 border-red-200 bg-linear-to-r from-white to-red-50"
+                                                    : "text-green-600 border-green-200 bg-linear-to-r from-white to-green-50"
                                                 }`}
                                                 disabled
                                               >
                                                 {corral.dbStatus === true ? (
-                                                  <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
+                                                  <Lock className="h-4 w-4 mr-1 shrink-0" />
                                                 ) : (
-                                                  <LockOpen className="h-4 w-4 mr-1 flex-shrink-0" />
+                                                  <LockOpen className="h-4 w-4 mr-1 shrink-0" />
                                                 )}
                                                 <span className="truncate font-medium">
                                                   Cerrado
@@ -2694,8 +2691,8 @@ export function CorralsManagement() {
                                         size="sm"
                                         className={`flex-1 rounded-lg h-10 text-sm min-w-0 transition-all duration-300 shadow-sm hover:shadow-md ${
                                           corral.dbStatus === true
-                                            ? "text-red-600 border-red-200 bg-gradient-to-r from-white to-red-50 hover:from-red-50 hover:to-red-100 hover:border-red-300"
-                                            : "text-green-600 border-green-200 bg-gradient-to-r from-white to-green-50 hover:from-green-50 hover:to-green-100 hover:border-green-300"
+                                            ? "text-red-600 border-red-200 bg-linear-to-r from-white to-red-50 hover:from-red-50 hover:to-red-100 hover:border-red-300"
+                                            : "text-green-600 border-green-200 bg-linear-to-r from-white to-green-50 hover:from-green-50 hover:to-green-100 hover:border-green-300"
                                         }`}
                                         onClick={() => {
                                           if (corral && corral.id) {
@@ -2704,9 +2701,9 @@ export function CorralsManagement() {
                                         }}
                                       >
                                         {corral.dbStatus === true ? (
-                                          <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
+                                          <Lock className="h-4 w-4 mr-1 shrink-0" />
                                         ) : (
-                                          <LockOpen className="h-4 w-4 mr-1 flex-shrink-0" />
+                                          <LockOpen className="h-4 w-4 mr-1 shrink-0" />
                                         )}
                                         <span className="truncate font-medium">
                                           {corral.dbStatus === true
@@ -2750,9 +2747,9 @@ export function CorralsManagement() {
                                             }}
                                           >
                                             {generatingCodes === corral.id ? (
-                                              <Loader2 className="h-4 w-4 mr-1 flex-shrink-0 animate-spin" />
+                                              <Loader2 className="h-4 w-4 mr-1 shrink-0 animate-spin" />
                                             ) : (
-                                              <Hash className="h-4 w-4 mr-1 flex-shrink-0" />
+                                              <Hash className="h-4 w-4 mr-1 shrink-0" />
                                             )}
                                             <span className="truncate font-medium">
                                               {generatingCodes === corral.id ? "Generando..." : "Generar Códigos"}
