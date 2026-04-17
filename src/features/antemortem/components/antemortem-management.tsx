@@ -20,10 +20,16 @@ import SignosClinicosModal from "./signos-clinicos-modal";
 import { ObservacionesModal } from "./observaciones-modal";
 import { AntemortemMobileCard } from "./antemortem-mobile-card";
 import { getActiveLinesDataService, getAntemortemDataService, updateArgollasService } from "../server/db/antemortem.service";
-import { LineItem, mapLineItemToLineaType, getLineIdByType } from "../domain/line.types";
+import { LineItem, mapLineItemToLineaType } from "../domain/line.types";
 import { DatePicker } from "@/components/ui/date-picker";
 import { downloadStatusCorralsReport, downloadAntemortemAgrocalidadReport } from "../utils/download-antemortem-report";
 import { isToday } from "@/lib/date-utils";
+
+function getLineLabel(line: LineItem): string {
+  const name = line.name?.trim() || `Línea ${line.id}`;
+  const detail = (line.description || line.specie?.description || line.specie?.name || "").trim();
+  return detail ? `${name} - ${detail}` : name;
+}
 
 function SelectLinea({
   value,
@@ -31,17 +37,18 @@ function SelectLinea({
   availableLines = [],
   isLoading = false
 }: {
-  value: Linea;
-  onChange: (v: Linea) => void;
+  value: number | null;
+  onChange: (id: number) => void;
   availableLines?: LineItem[];
   isLoading?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
-  // Mapear las líneas de la API a los valores de Linea usando description
-  const opciones: Linea[] = availableLines.length > 0
-    ? availableLines.map(mapLineItemToLineaType)
-    : ["Bovinos", "Porcinos", "Ovinos Caprinos"];
+  const selectedLine = value !== null
+    ? availableLines.find(line => line.id === value)
+    : undefined;
+
+  const selectedLabel = selectedLine ? getLineLabel(selectedLine) : "Seleccione línea";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -51,7 +58,7 @@ function SelectLinea({
           className="justify-between w-full bg-muted/40"
           disabled={isLoading}
         >
-          <span>{isLoading ? "Cargando líneas..." : value}</span>
+          <span>{isLoading ? "Cargando líneas..." : selectedLabel}</span>
           <ChevronDown className="h-4 w-4 opacity-60" />
         </Button>
       </PopoverTrigger>
@@ -61,17 +68,21 @@ function SelectLinea({
             <div className="px-3 py-2 text-sm text-muted-foreground">
               Cargando líneas...
             </div>
+          ) : availableLines.length < 1 ? (
+            <div className="px-3 py-2 text-sm text-muted-foreground">
+              No hay líneas disponibles
+            </div>
           ) : (
-            opciones.map((op) => (
+            availableLines.map((line) => (
               <button
-                key={op}
-                className={`w-full text-left px-3 py-2 hover:bg-accent ${op === value ? "font-medium" : ""}`}
+                key={line.id}
+                className={`w-full text-left px-3 py-2 hover:bg-accent ${line.id === value ? "font-medium" : ""}`}
                 onClick={() => {
-                  onChange(op);
+                  onChange(line.id);
                   setOpen(false);
                 }}
               >
-                {op}
+                {getLineLabel(line)}
               </button>
             ))
           )}
@@ -90,6 +101,7 @@ export function AntemortemManagement() {
 
   const [fecha, setFecha] = useState<Date>(today);
   const [linea, setLinea] = useState<Linea>("Bovinos");
+  const [selectedLineId, setSelectedLineId] = useState<number | null>(null);
   const [signosOpen, setSignosOpen] = useState(false);
   const [signosSettingId, setSignosSettingId] = useState<number>(0);
   const [signosMarca, setSignosMarca] = useState<string>("");
@@ -220,8 +232,8 @@ export function AntemortemManagement() {
 
       // Establecer la primera línea como línea activa (siempre línea 1)
       if (response.length > 0) {
-        const firstLine = mapLineItemToLineaType(response[0]);
-        setLinea(firstLine);
+        setSelectedLineId(response[0].id);
+        setLinea(mapLineItemToLineaType(response[0]));
       }
     } catch (error) {
       console.error('Error cargando líneas disponibles:', error);
@@ -232,14 +244,13 @@ export function AntemortemManagement() {
   };
 
   // Función para cargar datos de antemortem
-  const loadAntemortemData = async (selectedFecha: Date, selectedLinea: Linea) => {
+  const loadAntemortemData = async (selectedFecha: Date, lineId: number) => {
     try {
       setIsLoadingData(true);
       const admissionDate = format(selectedFecha, "yyyy-MM-dd");
-      const lineId = getLineIdByType(selectedLinea);
 
-      if (lineId === 0) {
-        console.warn(`No se encontró ID para la línea: ${selectedLinea}`);
+      if (!lineId) {
+        console.warn("No se encontró ID para la línea seleccionada");
         setAntemortemData([]);
         return;
       }
@@ -261,20 +272,26 @@ export function AntemortemManagement() {
 
   // Efecto para cargar datos cuando cambien fecha o línea
   useEffect(() => {
-    if (availableLines.length > 0) {
-      loadAntemortemData(fecha, linea);
+    if (availableLines.length > 0 && selectedLineId !== null) {
+      loadAntemortemData(fecha, selectedLineId);
     }
-  }, [fecha, linea, availableLines]);
+  }, [fecha, selectedLineId, availableLines]);
 
   // Efecto para actualizar idSpecie cuando cambie la línea
   useEffect(() => {
-    if (availableLines.length > 0) {
-      const currentLine = availableLines.find(line => mapLineItemToLineaType(line) === linea);
+    if (availableLines.length > 0 && selectedLineId !== null) {
+      const currentLine = availableLines.find(line => line.id === selectedLineId);
       if (currentLine) {
         setSignosIdSpecie(currentLine.idSpecie);
+        setLinea(mapLineItemToLineaType(currentLine));
       }
     }
-  }, [linea, availableLines]);
+  }, [selectedLineId, availableLines]);
+
+  const selectedLine = useMemo(
+    () => (selectedLineId !== null ? availableLines.find(line => line.id === selectedLineId) : undefined),
+    [selectedLineId, availableLines]
+  );
 
   const data = useMemo(() => {
     return {
@@ -351,10 +368,15 @@ export function AntemortemManagement() {
   };
 
   const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
+      if (selectedLineId === null) {
+        toast.error('Seleccione una línea para generar el reporte');
+        return;
+      }
+
       const admissionDate = format(fecha, "yyyy-MM-dd");
 
       toast.promise(
-        downloadStatusCorralsReport(admissionDate, getLineIdByType(linea), type),
+        downloadStatusCorralsReport(admissionDate, selectedLineId, type),
         {
           loading: 'Generando reporte...',
           success: `Reporte ${type} descargado correctamente`,
@@ -371,7 +393,7 @@ export function AntemortemManagement() {
           {/* Título */}
           <div className="text-center">
             <h1 className="text-2xl font-normal flex items-center justify-center gap-2">
-              ANTEMORTEM INTERNO- {linea.toUpperCase()}
+              ANTEMORTEM INTERNO- {(selectedLine ? getLineLabel(selectedLine) : linea).toUpperCase()}
               {isRefreshing && (
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               )}
@@ -438,8 +460,8 @@ export function AntemortemManagement() {
               <span className="text-sm text-black font-semibold whitespace-nowrap">Línea:</span>
               <div className="flex items-center gap-2 w-full">
                 <SelectLinea
-                  value={linea}
-                  onChange={setLinea}
+                  value={selectedLineId}
+                  onChange={setSelectedLineId}
                   availableLines={availableLines}
                   isLoading={isLoadingLines}
                 />
@@ -496,9 +518,13 @@ export function AntemortemManagement() {
                       <DropdownMenuSubContent className="w-48">
                         <DropdownMenuItem
                           onClick={() => {
+                            if (selectedLineId === null) {
+                              toast.error('Seleccione una línea para generar el reporte');
+                              return;
+                            }
                             const admissionDate = format(fecha, "yyyy-MM-dd");
                             toast.promise(
-                              downloadAntemortemAgrocalidadReport(admissionDate, getLineIdByType(linea), 'EXCEL'),
+                              downloadAntemortemAgrocalidadReport(admissionDate, selectedLineId, 'EXCEL'),
                               {
                                 loading: 'Generando Excel...',
                                 success: 'Excel descargado correctamente',
@@ -512,9 +538,13 @@ export function AntemortemManagement() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
+                            if (selectedLineId === null) {
+                              toast.error('Seleccione una línea para generar el reporte');
+                              return;
+                            }
                             const admissionDate = format(fecha, "yyyy-MM-dd");
                             toast.promise(
-                              downloadAntemortemAgrocalidadReport(admissionDate, getLineIdByType(linea), 'PDF'),
+                              downloadAntemortemAgrocalidadReport(admissionDate, selectedLineId, 'PDF'),
                               {
                                 loading: 'Generando PDF...',
                                 success: 'PDF descargado correctamente',
@@ -885,7 +915,9 @@ export function AntemortemManagement() {
         idSpecie={signosIdSpecie}
         onSave={async () => {
           setIsRefreshing(true);
-          await loadAntemortemData(fecha, linea);
+          if (selectedLineId !== null) {
+            await loadAntemortemData(fecha, selectedLineId);
+          }
           setIsRefreshing(false);
         }}
       />

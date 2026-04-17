@@ -105,6 +105,38 @@ function isNetworkFailure(error: unknown): boolean {
     )
 }
 
+function looksLikePermissionError(status: number, bodyText: string): boolean {
+    if (status !== 401) return false
+
+    const normalized = bodyText.toLowerCase()
+    return (
+        normalized.includes("forbidden") ||
+        normalized.includes("permission") ||
+        normalized.includes("permiso") ||
+        normalized.includes("rol") ||
+        normalized.includes("role")
+    )
+}
+
+function looksLikeSessionExpired(status: number, bodyText: string): boolean {
+    if (status !== 401) return false
+
+    const normalized = bodyText.toLowerCase()
+    return (
+        normalized.includes("token") ||
+        normalized.includes("expired") ||
+        normalized.includes("expirado") ||
+        normalized.includes("invalid") ||
+        normalized.includes("invalido") ||
+        normalized.includes("inválido") ||
+        normalized.includes("jwt") ||
+        normalized.includes("session") ||
+        normalized.includes("sesion") ||
+        normalized.includes("sesión") ||
+        normalized.includes("unauthorized")
+    )
+}
+
 function getClientApiBases(): string[] {
     return [getRequiredApiBase()]
 }
@@ -134,23 +166,23 @@ function createKyClient(prefixUrl: string): KyInstance {
             ],
             afterResponse: [
                 async (request, options, response) => {
-                    if (!response.ok) {
-                        const method = (options as any)?.method ?? "GET"
-                        const url = (() => {
-                            try {
-                                return request.url
-                            } catch {
-                                return "<unknown>"
-                            }
-                        })()
-
-                        let bodyText = ""
+                    const method = (options as any)?.method ?? "GET"
+                    const url = (() => {
                         try {
-                            bodyText = await response.clone().text()
+                            return request.url
                         } catch {
-                            // ignore
+                            return "<unknown>"
                         }
+                    })()
 
+                    let bodyText = ""
+                    try {
+                        bodyText = await response.clone().text()
+                    } catch {
+                        // ignore
+                    }
+
+                    if (!response.ok) {
                         // No loguear errores esperados
                         const isExpectedEmptyResponse = response.status === 400
                         const isSlaughterhouseInfoNotFound = url.includes("environment-variables/find-camal-info") && response.status === 404
@@ -177,8 +209,33 @@ function createKyClient(prefixUrl: string): KyInstance {
                     }
 
                     if (response.status === 401) {
+                        const permissionError = looksLikePermissionError(response.status, bodyText)
+                        const sessionExpired = looksLikeSessionExpired(response.status, bodyText)
+
+                        if (permissionError) {
+                            console.warn("[HTTP] 401 detected for permission-like response. Session preserved.", {
+                                method,
+                                url,
+                                status: response.status,
+                            })
+                            return response
+                        }
+
+                        if (!sessionExpired) {
+                            console.warn("[HTTP] 401 without clear session-expired signal. Session preserved.", {
+                                method,
+                                url,
+                                status: response.status,
+                            })
+                            return response
+                        }
+
                         // Limpiar datos de sesión antes de redirigir para evitar bucles infinitos
-                        console.warn("[HTTP] 401 Unauthorized detected. Clearing session...")
+                        console.warn("[HTTP] 401 Unauthorized detected. Clearing session...", {
+                            method,
+                            url,
+                            status: response.status,
+                        })
                         clearAuthData()
                         window.location.href = "/auth/login"
                     }
