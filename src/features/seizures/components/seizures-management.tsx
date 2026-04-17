@@ -55,6 +55,7 @@ import {
   getAnimalSeizuresService,
   getAnimalConfiscationReportService,
   downloadAnimalSeizuresReport,
+  downloadGeneralConfiscationActReportService,
 } from "../server/seizures.service";
 import { toast } from "sonner";
 import {
@@ -147,6 +148,25 @@ export function SeizuresManagement() {
         loading: 'Generando reporte...',
         success: `Reporte ${type} descargado correctamente`,
         error: 'Error al descargar el reporte',
+      }
+    );
+  };
+
+  const handleDownloadGeneralActReport = async () => {
+    if (!searchParams.startDate || !searchParams.endDate) {
+      toast.error("Seleccione un rango de fechas en los filtros principales");
+      return;
+    }
+
+    toast.promise(
+      downloadGeneralConfiscationActReportService(
+        searchParams.startDate,
+        searchParams.endDate
+      ),
+      {
+        loading: "Generando acta general...",
+        success: "Acta general descargada correctamente",
+        error: "Error al descargar el acta general",
       }
     );
   };
@@ -313,6 +333,13 @@ export function SeizuresManagement() {
                 <User className="h-4 w-4 mr-2 text-blue-600" />
                 <span>Acta Introductor</span>
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleDownloadGeneralActReport}
+                className="cursor-pointer"
+              >
+                <FileText className="h-4 w-4 mr-2 text-slate-600" />
+                <span>Acta General</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -417,7 +444,7 @@ export function SeizuresManagement() {
               };
 
               return (
-                <div className="flex flex-wrap gap-1 max-w-[400px]">
+                <div className="flex flex-wrap gap-1 max-w-100">
                   {products.map((p, idx) => {
                     const description = p.bodyPart?.description || "Parte del cuerpo";
                     const pathology = p.speciesDisease?.productDisease?.disease?.names;
@@ -465,7 +492,7 @@ export function SeizuresManagement() {
               const brand = row.original.detailCertificateBrands?.detailsCertificateBrand?.brand;
               const fullName = brand?.introducer?.user?.person?.fullName;
               return (
-                <div className="flex flex-col max-w-[150px]">
+                <div className="flex flex-col max-w-37.5">
                   <span className="font-semibold text-xs truncate">
                     {fullName ? toCapitalize(fullName, true) : "—"}
                   </span>
@@ -540,6 +567,8 @@ export function SeizuresManagement() {
       <IntroducerReportModal
         open={introducerReportModalOpen}
         onOpenChange={setIntroducerReportModalOpen}
+        startDate={searchParams.startDate}
+        endDate={searchParams.endDate}
       />
     </div>
   );

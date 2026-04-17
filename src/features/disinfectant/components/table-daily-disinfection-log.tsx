@@ -87,7 +87,8 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
   {
     accessorKey: "species.name",
     header: "Especies",
-    cell: ({ row }) => toCapitalize(row.original.species.name ?? "", true),
+    cell: ({ row }) =>
+      toCapitalize(row.original.species?.name ?? "Sin especie", true),
   },
   {
     accessorKey: "disinfectant.name",
@@ -169,7 +170,7 @@ function MobileCard({
 
         {/* Chofer */}
         <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <User className="h-4 w-4 text-muted-foreground shrink-0" />
           <span className="text-sm font-medium truncate">
             {toCapitalize(
               row.registerVehicle?.shipping?.person?.fullName ?? "",
@@ -191,13 +192,13 @@ function MobileCard({
             </span>
           </div>
           <span>•</span>
-          <span>{toCapitalize(row.species.name ?? "", true)}</span>
+          <span>{toCapitalize(row.species?.name ?? "Sin especie", true)}</span>
         </div>
 
         {/* Desinfectante y Dosificación */}
         <div className="flex items-center gap-2 text-xs">
           <Droplets className="h-3.5 w-3.5 text-blue-500" />
-          <span>{row.disinfectant.name}</span>
+          <span>{row.disinfectant?.name ?? "Sin desinfectante"}</span>
           <span className="text-muted-foreground">({row.dosage})</span>
         </div>
 
@@ -443,7 +444,7 @@ export function DailyDisinfectionLogTable() {
           Anterior
         </Button>
 
-        <span className="text-xs sm:text-sm text-muted-foreground text-center order-first sm:order-none">
+        <span className="text-xs sm:text-sm text-muted-foreground text-center order-first sm:order-0">
           Pág. {table.getState().pagination.pageIndex + 1} de{" "}
           {table.getPageCount() || 1}
           <span className="hidden sm:inline"> • {searchParams.date}</span>

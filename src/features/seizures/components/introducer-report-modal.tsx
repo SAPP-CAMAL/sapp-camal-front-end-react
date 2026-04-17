@@ -18,16 +18,15 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { default as BaseDatePicker } from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import "@/components/ui/react-datepicker-custom-styles.css";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  startDate: string;
+  endDate: string;
 }
 
-export function IntroducerReportModal({ open, onOpenChange }: Props) {
+export function IntroducerReportModal({ open, onOpenChange, startDate, endDate }: Props) {
   const [filters, setFilters] = useState({
     fullName: "",
     identification: "",
@@ -37,11 +36,16 @@ export function IntroducerReportModal({ open, onOpenChange }: Props) {
   });
   const [selectedIntroducer, setSelectedIntroducer] = useState<number | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
-  const [endDate, setEndDate] = useState<Date | null>(new Date());
 
   const { data: introducersData, isLoading } = useIntroducersPaginatedList(filters);
   const introducers = introducersData?.data?.items ?? [];
+
+  const formatAppliedDate = (value: string) => {
+    if (!value) return "-";
+    const parsed = parseISO(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return format(parsed, "dd/MM/yyyy", { locale: es });
+  };
 
   const handleGenerateReport = async () => {
     if (!selectedIntroducer) {
@@ -50,7 +54,7 @@ export function IntroducerReportModal({ open, onOpenChange }: Props) {
     }
 
     if (!startDate || !endDate) {
-      toast.error("Seleccione el rango de fechas");
+      toast.error("Seleccione el rango de fechas en los filtros principales");
       return;
     }
 
@@ -58,8 +62,8 @@ export function IntroducerReportModal({ open, onOpenChange }: Props) {
     try {
       await downloadIntroducerReportService(
         selectedIntroducer,
-        format(startDate, "yyyy-MM-dd"),
-        format(endDate, "yyyy-MM-dd")
+        startDate,
+        endDate
       );
       toast.success("Reporte generado correctamente");
       onOpenChange(false);
@@ -71,8 +75,6 @@ export function IntroducerReportModal({ open, onOpenChange }: Props) {
         page: 1,
         limit: 10,
       });
-      setStartDate(new Date());
-      setEndDate(new Date());
     } catch (error: any) {
       const errorMessage = error?.message || "Error al generar el reporte";
       toast.error(errorMessage);
@@ -95,50 +97,17 @@ export function IntroducerReportModal({ open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="flex flex-col gap-4 overflow-y-auto flex-1 px-1">
-          {/* Filtros de Fecha */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b">
-            <div className="flex flex-col w-full">
-              <label className="mb-1 text-sm font-medium text-gray-700">
-                Fecha Inicio
-              </label>
-              <BaseDatePicker
-                selected={startDate}
-                onChange={(date: Date | null) => setStartDate(date)}
-                dateFormat="dd/MM/yyyy"
-                locale={es}
-                showIcon
-                isClearable
-                icon={
-                  <CalendarDays className="text-muted-foreground h-4 w-4" />
-                }
-                placeholderText="Desde"
-                wrapperClassName="w-full"
-                className="flex w-full min-w-0 rounded-md border border-gray-300 bg-background px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none h-10 focus:ring-2"
-                popperClassName="z-50"
-                popperPlacement="bottom-start"
-              />
-            </div>
-
-            <div className="flex flex-col w-full">
-              <label className="mb-1 text-sm font-medium text-gray-700">
-                Fecha Fin
-              </label>
-              <BaseDatePicker
-                selected={endDate}
-                onChange={(date: Date | null) => setEndDate(date)}
-                dateFormat="dd/MM/yyyy"
-                locale={es}
-                showIcon
-                isClearable
-                icon={
-                  <CalendarDays className="text-muted-foreground h-4 w-4" />
-                }
-                placeholderText="Hasta"
-                wrapperClassName="w-full"
-                className="flex w-full min-w-0 rounded-md border border-gray-300 bg-background px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none h-10 focus:ring-2"
-                popperClassName="z-50"
-                popperPlacement="bottom-start"
-              />
+          <div className="rounded-lg border border-teal-200 bg-teal-50/70 px-3 py-2.5 text-teal-900">
+            <div className="flex items-start gap-2">
+              <CalendarDays className="h-4 w-4 mt-0.5 shrink-0 text-teal-700" />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-teal-800">
+                  Rango aplicado
+                </p>
+                <p className="text-sm leading-5 font-medium wrap-break-word">
+                  {formatAppliedDate(startDate)} - {formatAppliedDate(endDate)}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -253,8 +222,6 @@ export function IntroducerReportModal({ open, onOpenChange }: Props) {
             onClick={() => {
               onOpenChange(false);
               setSelectedIntroducer(null);
-              setStartDate(new Date());
-              setEndDate(new Date());
             }}
             disabled={isDownloading}
             className="w-full sm:w-auto"

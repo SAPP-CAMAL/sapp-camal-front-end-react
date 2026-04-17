@@ -1,5 +1,19 @@
 import { http } from "@/lib/ky";
 
+async function throwBackendErrorMessage(error: any): Promise<never> {
+  if (error?.response) {
+    const errorData = await error.response.json().catch(() => null);
+    const backendMessage =
+      errorData?.message || errorData?.data || errorData?.error;
+
+    if (typeof backendMessage === "string" && backendMessage.trim()) {
+      throw new Error(backendMessage);
+    }
+  }
+
+  throw error;
+}
+
 export interface PostmortemReportFilters {
   startDate: string;
   endDate: string;
@@ -15,6 +29,11 @@ export interface DailyConfiscationReportFilters {
 export interface MonthlyConfiscationReportFilters {
   date: string; // formato YYYY-MM
   idSpecies: number;
+}
+
+export interface MonthlyPathologiesReportFilters {
+  month: string; // formato YYYY-MM
+  speciesId: number;
 }
 
 /**
@@ -51,8 +70,8 @@ export const downloadPostmortemGeneralReport = async (
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    await throwBackendErrorMessage(error);
   }
 };
 
@@ -92,8 +111,8 @@ export const downloadDailyConfiscationReport = async (
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    await throwBackendErrorMessage(error);
   }
 };
 
@@ -130,8 +149,8 @@ export const downloadMonthlyConfiscationReport = async (
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    await throwBackendErrorMessage(error);
   }
 };
 
@@ -168,7 +187,44 @@ export const downloadConsolidatedPostmortemReport = async (
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    await throwBackendErrorMessage(error);
+  }
+};
+
+/**
+ * Descarga el reporte mensual de patologias por especie
+ */
+export const downloadMonthlyPathologiesReport = async (
+  filters: MonthlyPathologiesReportFilters
+): Promise<void> => {
+  try {
+    const response = await http.post(
+      "v1/1.0.0/setting-cert-brand/monthly-pathologies-report",
+      {
+        searchParams: {
+          month: filters.month,
+          speciesId: filters.speciesId.toString(),
+        },
+      }
+    );
+
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get("content-disposition") || "";
+
+    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    const defaultFilename = `Reporte-Patologias-${filters.month}.pdf`;
+    const filename = filenameMatch?.[1]?.replace(/['"]/g, "") || defaultFilename;
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    await throwBackendErrorMessage(error);
   }
 };
