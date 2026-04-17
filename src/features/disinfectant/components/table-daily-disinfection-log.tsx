@@ -74,8 +74,9 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
       row.original.registerVehicle?.shipping?.vehicle?.plate ?? "",
   },
   {
-    accessorKey:
-      "registerVehicle.shipping.vehicle.vehicleDetail.vehicleType.name",
+    accessorFn: (row) =>
+      row.registerVehicle?.shipping?.vehicle?.vehicleDetail?.vehicleType?.name ??
+      "",
     header: "Tipo Vehículo",
     cell: ({ row }) =>
       toCapitalize(
@@ -85,14 +86,15 @@ const columns: ColumnDef<DetailRegisterVehicleByDate, string>[] = [
       ),
   },
   {
-    accessorKey: "species.name",
+    accessorFn: (row) => row.species?.name ?? "Sin especie",
     header: "Especies",
     cell: ({ row }) =>
       toCapitalize(row.original.species?.name ?? "Sin especie", true),
   },
   {
-    accessorKey: "disinfectant.name",
+    accessorFn: (row) => row.disinfectant?.name ?? "Sin desinfectante",
     header: "Desinfectante",
+    cell: ({ row }) => row.original.disinfectant?.name ?? "Sin desinfectante",
   },
   {
     accessorKey: "dosage",

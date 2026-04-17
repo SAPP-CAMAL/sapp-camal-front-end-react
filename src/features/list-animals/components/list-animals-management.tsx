@@ -285,6 +285,14 @@ export function ListAnimalsManagement() {
     setCurrentPage(1);
   };
 
+  const getAnimalsInGuide = (item: any): number => {
+    if (typeof item?.quantity === "number") return item.quantity;
+    if (typeof item?.certificate?.quantity === "number") {
+      return item.certificate.quantity;
+    }
+    return 0;
+  };
+
   const totals = {
     registros: totalRecords,
     totalEnGuia: allData.reduce(
@@ -438,7 +446,7 @@ export function ListAnimalsManagement() {
                 Animales en Guía
               </div>
               <div className="text-sm font-semibold">
-                {item.certificate?.quantity || 0}
+                {getAnimalsInGuide(item)}
               </div>
             </div>
           </div>
@@ -927,7 +935,7 @@ export function ListAnimalsManagement() {
                           </div>
                         </TableCell>
                         <TableCell className="text-center whitespace-normal font-semibold">
-                          {(item.males || 0) + (item.females || 0)}{" "}
+                          {getAnimalsInGuide(item)}
                         </TableCell>
                         <TableCell className="text-center whitespace-normal">
                           <Badge
