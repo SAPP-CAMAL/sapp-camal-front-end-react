@@ -13,7 +13,21 @@ export const downloadMonthlySummaryAgrocalidadReport = async (monthDate: string)
 
 		window.URL.revokeObjectURL(url);
 		document.body.removeChild(a);
-	} catch (error) {
-		throw 'Error al descargar el reporte';
+	} catch (error: any) {
+		if (error?.response) {
+			const errorData = await error.response.json().catch(() => null);
+			const backendMessage =
+				errorData?.message || errorData?.data || errorData?.error;
+
+			if (typeof backendMessage === 'string' && backendMessage.trim()) {
+				throw new Error(backendMessage);
+			}
+		}
+
+		if (error instanceof Error) {
+			throw error;
+		}
+
+		throw new Error('Error al descargar el reporte');
 	}
 };
