@@ -1903,27 +1903,20 @@ export function CorralsManagement() {
   }, [filteredCorrales, sortBy, sortDir]);
 
   function getLineaTitle(linea: LineaType) {
-    // Use real data from API if available, otherwise fallback to static titles
-    if (currentLineData && !isLoadingLine && currentLineData.specie) {
-      // Ensure we're using the correct specie name from the API
-      const specieName = currentLineData.specie.name?.toUpperCase() || "";
-      // Replace LINEA with LÍNEA to always show the accent
-      const lineName = (currentLineData.name?.toUpperCase() || "").replace(/LINEA/g, "LÍNEA");
+    // Use real data from API whenever available (supports dynamic lines).
+    if (currentLineData && !isLoadingLine) {
+      const specieName = currentLineData.specie?.name?.toUpperCase() || "";
+      const lineName = (currentLineData.name?.toUpperCase() || "").replace(
+        /LINEA/g,
+        "LÍNEA"
+      );
 
-      // Validate that the specie name matches the selected line type
-      const expectedSpecie =
-        linea === "bovinos"
-          ? "BOVINO"
-          : linea === "porcinos"
-          ? "PORCINO"
-          : "OVINO";
-
-      // If the API data doesn't match, use fallback
-      if (
-        specieName.includes(expectedSpecie) ||
-        lineName.includes(expectedSpecie)
-      ) {
+      if (lineName && specieName) {
         return `CORRALES DE LA ${lineName} DE ${specieName}`;
+      }
+
+      if (lineName) {
+        return `CORRALES DE LA ${lineName}`;
       }
     }
 
@@ -1936,7 +1929,13 @@ export function CorralsManagement() {
       case "ovinos-caprinos":
         return "CORRALES DE LA LÍNEA 3 DE OVINOS-CAPRINOS";
       default:
-        return "CORRALES DE LA LÍNEA 1";
+        if (linea.startsWith("line-")) {
+          const lineId = Number(linea.slice(5));
+          if (Number.isFinite(lineId) && lineId > 0) {
+            return `CORRALES DE LA LÍNEA ${lineId}`;
+          }
+        }
+        return "CORRALES DE LA LÍNEA";
     }
   }
 

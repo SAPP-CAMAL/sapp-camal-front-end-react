@@ -102,8 +102,8 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
       };
     }
 
-    // PRIORITY 3: Search by text as last resort
-    let searchTerm: string;
+    // PRIORITY 3: Search by text as last resort for known static lines
+    let searchTerm: string | null;
     switch (lineaType) {
       case "bovinos":
         searchTerm = "bovino";
@@ -115,27 +115,29 @@ export async function getLineByTypeService(lineaType: LineaType): Promise<Respon
         searchTerm = "ovino";
         break;
       default:
-        searchTerm = "bovino";
+        searchTerm = null;
     }
 
-    const matchingLine = activeLines.find((line: any) => {
-      const description = (line.description || '').toLowerCase();
-      const name = (line.name || '').toLowerCase();
-      const specieName = (line.specie?.name || '').toLowerCase();
-      const specieDescription = (line.specie?.description || '').toLowerCase();
+    if (searchTerm) {
+      const matchingLine = activeLines.find((line: any) => {
+        const description = (line.description || '').toLowerCase();
+        const name = (line.name || '').toLowerCase();
+        const specieName = (line.specie?.name || '').toLowerCase();
+        const specieDescription = (line.specie?.description || '').toLowerCase();
 
-      return description.includes(searchTerm) ||
-             name.includes(searchTerm) ||
-             specieName.includes(searchTerm) ||
-             specieDescription.includes(searchTerm);
-    });
+        return description.includes(searchTerm) ||
+               name.includes(searchTerm) ||
+               specieName.includes(searchTerm) ||
+               specieDescription.includes(searchTerm);
+      });
 
-    if (matchingLine) {
-      return {
-        code: 200,
-        message: "Success",
-        data: matchingLine
-      };
+      if (matchingLine) {
+        return {
+          code: 200,
+          message: "Success",
+          data: matchingLine
+        };
+      }
     }
 
     // FINAL FALLBACK: Use direct ID query
