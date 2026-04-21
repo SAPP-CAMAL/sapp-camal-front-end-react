@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SeizuresTable } from "./table-seizures";
-import { ObservationImageModal } from "./observation-image-modal";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import {
   CalendarDays,
@@ -55,7 +54,6 @@ import {
   getAnimalSeizuresService,
   getAnimalConfiscationReportService,
   downloadAnimalSeizuresReport,
-  downloadGeneralConfiscationActReportService,
 } from "../server/seizures.service";
 import { toast } from "sonner";
 import {
@@ -63,16 +61,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { IntroducerReportModal } from "./introducer-report-modal";
 
 export function SeizuresManagement() {
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
-  const [imageModalOpen, setImageModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<{
-    url: string | null | undefined;
-    title: string;
-  }>({ url: null, title: "" });
-  const [introducerReportModalOpen, setIntroducerReportModalOpen] = useState(false);
   
   const { data: speciesData } = useAllSpecies();
 
@@ -148,25 +139,6 @@ export function SeizuresManagement() {
         loading: 'Generando reporte...',
         success: `Reporte ${type} descargado correctamente`,
         error: 'Error al descargar el reporte',
-      }
-    );
-  };
-
-  const handleDownloadGeneralActReport = async () => {
-    if (!searchParams.startDate || !searchParams.endDate) {
-      toast.error("Seleccione un rango de fechas en los filtros principales");
-      return;
-    }
-
-    toast.promise(
-      downloadGeneralConfiscationActReportService(
-        searchParams.startDate,
-        searchParams.endDate
-      ),
-      {
-        loading: "Generando acta general...",
-        success: "Acta general descargada correctamente",
-        error: "Error al descargar el acta general",
       }
     );
   };
@@ -326,20 +298,6 @@ export function SeizuresManagement() {
                 <FileText className="h-4 w-4 mr-2 text-red-600" />
                 <span>Descargar PDF</span>
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setIntroducerReportModalOpen(true)}
-                className="cursor-pointer"
-              >
-                <User className="h-4 w-4 mr-2 text-blue-600" />
-                <span>Acta Introductor</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDownloadGeneralActReport}
-                className="cursor-pointer"
-              >
-                <FileText className="h-4 w-4 mr-2 text-slate-600" />
-                <span>Acta General</span>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -430,14 +388,6 @@ export function SeizuresManagement() {
 
               if (products.length === 0 && subproducts.length === 0) return "—";
 
-              const handleObservationClick = (urlImage: string | null | undefined, description: string) => {
-                setSelectedImage({
-                  url: urlImage,
-                  title: description,
-                });
-                setImageModalOpen(true);
-              };
-
               const buildLabel = (description: string, weight: string, pathology?: string | null) => {
                 if (!pathology) return `${description} (${weight}kg)`;
                 return `${description} - ${pathology} (${weight}kg)`;
@@ -450,14 +400,12 @@ export function SeizuresManagement() {
                     const pathology = p.speciesDisease?.productDisease?.disease?.names;
 
                     return (
-                      <button
+                      <span
                         key={`p-${idx}`}
-                        onClick={() => handleObservationClick(p.urlImage, description)}
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 transition-colors cursor-pointer"
-                        title="Click para ver imagen"
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200"
                       >
                         {buildLabel(description, p.weight, pathology)}
-                      </button>
+                      </span>
                     );
                   })}
                   {subproducts.map((s, idx) => {
@@ -466,14 +414,12 @@ export function SeizuresManagement() {
                     const pathology = s.speciesDisease?.productDisease?.disease?.names;
 
                     return (
-                      <button
+                      <span
                         key={`s-${idx}`}
-                        onClick={() => handleObservationClick(s.urlImage, description)}
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
-                        title="Click para ver imagen"
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200"
                       >
                         {buildLabel(description, s.weight, pathology)}
-                      </button>
+                      </span>
                     );
                   })}
                 </div>
@@ -557,19 +503,6 @@ export function SeizuresManagement() {
         isLoading={isLoading}
       />
 
-      <ObservationImageModal
-        open={imageModalOpen}
-        onOpenChange={setImageModalOpen}
-        urlImage={selectedImage.url}
-        title={selectedImage.title}
-      />
-
-      <IntroducerReportModal
-        open={introducerReportModalOpen}
-        onOpenChange={setIntroducerReportModalOpen}
-        startDate={searchParams.startDate}
-        endDate={searchParams.endDate}
-      />
     </div>
   );
 }
