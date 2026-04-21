@@ -591,7 +591,7 @@ export function AntemortemManagement() {
           <span className="text-sm text-muted-foreground">MACHOS</span>
         </div>
         <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-          <Venus className="h-6 w-6 text-blue-600" />
+          <Mars className="h-6 w-6 text-blue-600" />
         </div>
         </CardHeader>
       </Card>
@@ -602,7 +602,7 @@ export function AntemortemManagement() {
           <span className="text-sm text-muted-foreground">HEMBRAS</span>
         </div>
         <div className="h-12 w-12 rounded-full bg-rose-100 flex items-center justify-center">
-          <Mars className="h-6 w-6 text-rose-600" />
+          <Venus className="h-6 w-6 text-rose-600" />
         </div>
         </CardHeader>
       </Card>
@@ -645,8 +645,8 @@ export function AntemortemManagement() {
               <TableHead className="text-center border font-bold"> <Hash className="inline-block w-4 h-4 mb-1 mr-2" />MARCAS</TableHead>
               <TableHead className="text-center border font-bold"> <Eye className="inline-block w-4 h-4 mb-1 mr-2" />OBSERVACIONES</TableHead>
               {showArgollas && <TableHead className="text-center border font-bold"> <BringToFront className="inline-block w-4 h-4 mb-1 mr-2 text-white" />ARGOLLAS</TableHead>}
-              <TableHead className="text-center border font-bold"><Venus className="inline-block w-4 h-4 mb-1 mr-2 text-white" />MACHOS</TableHead>
-              <TableHead className="text-center border font-bold"><Mars className="inline-block w-4 h-4 mb-1 mr-2 text-white" />HEMBRAS</TableHead>
+              <TableHead className="text-center border font-bold"><Mars className="inline-block w-4 h-4 mb-1 mr-2 text-white" />MACHOS</TableHead>
+              <TableHead className="text-center border font-bold"><Venus className="inline-block w-4 h-4 mb-1 mr-2 text-white" />HEMBRAS</TableHead>
               <TableHead className="text-center border font-bold"> <CircleCheckBig className="inline-block w-4 h-4 mb-1 mr-2" />TOTAL</TableHead>
             </TableRow>
           </TableHeader>
