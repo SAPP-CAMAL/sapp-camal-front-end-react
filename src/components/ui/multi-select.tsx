@@ -568,9 +568,12 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     }, [options, deduplicateOptions, isGroupedOptions]);
 
     const getOptionByValue = React.useCallback(
-      (value: string): MultiSelectOption | undefined => {
+      (
+        value: string,
+        warnIfMissing = false
+      ): MultiSelectOption | undefined => {
         const option = getAllOptions().find((option) => option.value === value);
-        if (!option && process.env.NODE_ENV === "development") {
+        if (!option && warnIfMissing && process.env.NODE_ENV === "development") {
           console.warn(
             `MultiSelect: Option with value "${value}" not found in options list`
           );
@@ -619,7 +622,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
     const toggleOption = (optionValue: string) => {
       if (disabled) return;
-      const option = getOptionByValue(optionValue);
+      const option = getOptionByValue(optionValue, true);
       if (option?.disabled) return;
       const newSelectedValues = selectedValues.includes(optionValue)
         ? selectedValues.filter((value) => value !== optionValue)
@@ -678,6 +681,20 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
         prevDefaultValueRef.current = [...defaultValue];
       }
     }, [defaultValue, selectedValues, arraysEqual, resetOnDefaultValueChange]);
+
+    React.useEffect(() => {
+      if (selectedValues.length === 0) return;
+
+      const validValues = new Set(getAllOptions().map((option) => option.value));
+      const sanitizedValues = selectedValues.filter((value) =>
+        validValues.has(value)
+      );
+
+      if (sanitizedValues.length !== selectedValues.length) {
+        setSelectedValues(sanitizedValues);
+        onValueChange(sanitizedValues);
+      }
+    }, [selectedValues, getAllOptions, onValueChange]);
 
     const getWidthConstraints = () => {
       const defaultMinWidth = screenSize === "mobile" ? "0px" : "200px";

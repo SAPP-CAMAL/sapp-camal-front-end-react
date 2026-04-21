@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Fragment } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Info, ImageIcon, Upload, X, ZoomIn } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
-import { useSavePostmortem, useUpdatePostmortem } from "../hooks/use-save-postmortem";
+import { useSavePostmortem } from "../hooks/use-save-postmortem";
 import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
 import type { ProductPostmortem } from "../domain/save-postmortem.types";
 import { toast } from "sonner";
@@ -26,9 +26,6 @@ type AnimalWeight = {
   selected: boolean;
   weight: string;
   bodyPartComment?: string;
-  imagePreview?: string | null;
-  imageFile?: File | null;
-  existingImageUrl?: string | null;
 };
 
 type TotalConfiscationModalProps = {
@@ -52,7 +49,6 @@ export function TotalConfiscationModal({
 }: TotalConfiscationModalProps) {
   const { data: animalsData, isLoading } = useAnimalsByBrand(certId);
   const { mutate: savePostmortem, isPending: isSaving } = useSavePostmortem();
-  const { mutate: updatePostmortem, isPending: isUpdating } = useUpdatePostmortem();
 
   // Obtener datos guardados de postmortem
   const { data: postmortemData } = usePostmortemByBrand(certId);
@@ -62,8 +58,6 @@ export function TotalConfiscationModal({
   const unitSymbol = unitMeasureData?.data?.symbol || "kg";
 
   const [animalWeights, setAnimalWeights] = useState<AnimalWeight[]>([]);
-  const imageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (animalsData?.data) {
@@ -82,9 +76,7 @@ export function TotalConfiscationModal({
           animalId: animal.id.toString(),
           selected: !!savedTotalConfiscation,
           weight: savedTotalConfiscation ? String(savedTotalConfiscation.weight) : "",
-          bodyPartComment: savedTotalConfiscation?.bodyPartComment,
-          existingImageUrl: savedTotalConfiscation?.urlImage || null,
-          imagePreview: null,
+          bodyPartComment: savedTotalConfiscation?.bodyPartComment
         };
       });
 
@@ -118,135 +110,50 @@ export function TotalConfiscationModal({
     );
   };
 
-  const handleAnimalImage = (animalId: string, file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAnimalWeights((prev) =>
-        prev.map((a) =>
-          a.animalId === animalId ? { ...a, imagePreview: reader.result as string, imageFile: file } : a
-        )
-      );
-    };
-    reader.readAsDataURL(file);
-  };
+  const handleSaveAnimal = (animalId: string) => {
+    const animal = animalWeights.find((a) => a.animalId === animalId);
 
-  const handleClearImage = (animalId: string) => {
-    setAnimalWeights((prev) =>
-      prev.map((a) =>
-        a.animalId === animalId ? { ...a, imagePreview: null, imageFile: null, existingImageUrl: null } : a
-      )
-    );
-    if (imageInputRefs.current[animalId]) imageInputRefs.current[animalId]!.value = "";
-  };
-
-  const handleSaveAll = async () => {
-    const selectedAnimals = animalWeights.filter(a => a.selected);
-    
-    if (selectedAnimals.length === 0) {
-      toast.error("Debe seleccionar al menos un animal");
+    if (!animal || !animal.weight) {
+      toast.error("Debe ingresar el peso de la canal");
       return;
     }
 
-    // Validar que todos los animales seleccionados tengan peso
-    const animalsWithoutWeight = selectedAnimals.filter(a => !a.weight || parseFloat(a.weight) <= 0);
-    if (animalsWithoutWeight.length > 0) {
-      toast.error("Todos los animales seleccionados deben tener un peso válido mayor a 0");
+    const weight = parseFloat(animal.weight);
+    if (isNaN(weight) || weight <= 0) {
+      toast.error("El peso debe ser un número válido mayor a 0");
       return;
     }
 
-    let successCount = 0;
-    let errorCount = 0;
+    const bodyPartComment = animal.bodyPartComment ?? '';
+    // Para decomiso total, no se especifica idBodyPart, solo el peso total
+    const productsPostmortem: ProductPostmortem[] = [
+      {
+        idBodyPart: 0, // 0 indica decomiso total (toda la canal)
+        weight: weight,
+        isTotalConfiscation: true,
+        status: true,
+        bodyPartComment: bodyPartComment.length > 0 ? bodyPartComment : undefined,
+      },
+    ];
 
-    // Procesar todos los animales seleccionados
-    for (const animal of selectedAnimals) {
-      try {
-        const weight = parseFloat(animal.weight);
-        const bodyPartComment = animal.bodyPartComment ?? '';
-        
-        const productsPostmortem: ProductPostmortem[] = [
-          {
-            idBodyPart: 0, // 0 indica decomiso total (toda la canal)
-            weight: weight,
-            isTotalConfiscation: true,
-            status: true,
-            bodyPartComment: bodyPartComment.length > 0 ? bodyPartComment : undefined,
-            image: animal.imagePreview || undefined, // Incluir imagen en base64 si existe
-          },
-        ];
-
-        const existingPostmortem = postmortemData?.data?.find(
-          (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
-        );
-
-        // Verificar si tiene decomiso total específicamente
-        const hasTotalConfiscation = existingPostmortem?.productPostmortem?.some(
-          (prod) => prod.isTotalConfiscation === true
-        );
-
-        if (existingPostmortem && hasTotalConfiscation) {
-          // Actualizar (PATCH) - solo si ya tiene decomiso total
-          await new Promise((resolve, reject) => {
-            updatePostmortem(
-              {
-                id: existingPostmortem.id,
-                request: {
-                  status: true,
-                  productsPostmortem,
-                },
-              },
-              {
-                onSuccess: async () => {
-                  successCount++;
-                  resolve(true);
-                },
-                onError: (error) => {
-                  errorCount++;
-                  console.error(`Error al actualizar animal ${animal.animalId}:`, error);
-                  reject(error);
-                },
-              }
-            );
-          });
-        } else {
-          // Crear (POST)
-          await new Promise((resolve, reject) => {
-            savePostmortem(
-              {
-                idDetailsSpeciesCertificate: parseInt(animal.animalId),
-                status: true,
-                productsPostmortem,
-              },
-              {
-                onSuccess: async (response: any) => {
-                  successCount++;
-                  resolve(true);
-                },
-                onError: (error) => {
-                  errorCount++;
-                  console.error(`Error al guardar animal ${animal.animalId}:`, error);
-                  reject(error);
-                },
-              }
-            );
-          });
-        }
-      } catch (error) {
-        // El error ya se cuenta en errorCount
-        console.error(`Error procesando animal ${animal.animalId}:`, error);
+    savePostmortem(
+      {
+        idDetailsSpeciesCertificate: parseInt(animalId),
+        status: true,
+        productsPostmortem,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Animal ${animalId} guardado correctamente`);
+          // Actualizar el contador en la tabla
+          const selectedCount = animalWeights.filter((a) => a.selected).length;
+          onSave(selectedCount);
+        },
+        onError: () => {
+          toast.error(`Error al guardar el animal ${animalId}`);
+        },
       }
-    }
-
-    // Mostrar resultado final
-    if (errorCount === 0) {
-      toast.success(`Se guardaron correctamente ${successCount} animales`);
-      onSave(successCount);
-      onClose();
-    } else if (successCount > 0) {
-      toast.warning(`Se guardaron ${successCount} animales. ${errorCount} fallaron.`);
-      onSave(successCount);
-    } else {
-      toast.error(`No se pudo guardar ningún animal`);
-    }
+    );
   };
 
   const handleCancel = () => {
@@ -264,25 +171,10 @@ export function TotalConfiscationModal({
 
   const selectedCount = animalWeights.filter((a) => a.selected).length;
 
-  // Determinar si todos los animales seleccionados ya tienen DECOMISO TOTAL guardado
-  const selectedAnimals = animalWeights.filter((a) => a.selected);
-  const allSelectedHavePostmortem = selectedAnimals.length > 0 && selectedAnimals.every((animal) => {
-    const savedData = postmortemData?.data?.find(
-      (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
-    );
-    // Verificar si tiene al menos un producto con decomiso total
-    return savedData?.productPostmortem?.some(
-      (prod) => prod.isTotalConfiscation === true
-    );
-  });
-
-  const buttonText = allSelectedHavePostmortem ? "Actualizar" : "Guardar";
-
   return (
-    <Fragment>
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl flex flex-col max-h-[90vh]">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center">
               <Info className="h-4 w-4 text-teal-600" />
@@ -291,7 +183,6 @@ export function TotalConfiscationModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto scrollbar-hide px-1">
         {/* Header Info */}
         <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
           <div>
@@ -378,7 +269,7 @@ export function TotalConfiscationModal({
 												/>
 
 												<div className='flex flex-col md:flex-row items-end justify-center gap-2'>
-													<label className='text-xs font-medium text-gray-700 w-full flex-1'>
+													<label className='text-xs font-medium text-gray-700 w-full'>
 														Observación (Opcional)
 														<Textarea
 															placeholder='Observación'
@@ -400,66 +291,28 @@ export function TotalConfiscationModal({
 															}}
 														/>
 													</label>
-													{/* Imagen */}
-													<div className="shrink-0 flex flex-col items-center gap-1 self-start">
-														<div className="flex items-center gap-1 text-xs font-medium text-gray-500">
-															<ImageIcon className="h-3 w-3 text-teal-600" />
-															<span>Imagen</span>
-														</div>
-														<input
-															ref={(el) => { imageInputRefs.current[animalId] = el; }}
-															type="file"
-															accept="image/*"
-															className="hidden"
-															onChange={(e) => {
-																const file = e.target.files?.[0];
-																if (file) handleAnimalImage(animalId, file);
-															}}
-														/>
-														{(animalWeight?.imagePreview || animalWeight?.existingImageUrl) ? (
-															<div className="flex flex-col items-center gap-1">
-																<div
-																	className="w-16 h-16 rounded-lg overflow-hidden border bg-gray-50 cursor-pointer relative"
-																	onClick={() => {
-																		const url = animalWeight?.imagePreview || animalWeight?.existingImageUrl;
-																		if (url) setPreviewImageUrl(url);
-																	}}
-																	onMouseEnter={e => {
-																		const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
-																		if (overlay) overlay.style.opacity = '1';
-																	}}
-																	onMouseLeave={e => {
-																		const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
-																		if (overlay) overlay.style.opacity = '0';
-																	}}
-																	title="Ver imagen completa"
-																>
-																	<img src={animalWeight?.imagePreview || animalWeight?.existingImageUrl || ""} alt="Vista previa" className="w-full h-full object-cover" />
-																	<div data-overlay="true" className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-lg transition-opacity" style={{ opacity: 0 }}>
-																		<ZoomIn className="h-4 w-4 text-white" />
-																	</div>
-																</div>
-																<div className="flex gap-1">
-																	<Button type="button" variant="outline" size="sm" className="h-6 px-2" onClick={() => imageInputRefs.current[animalId]?.click()} disabled={!canEdit}>
-																		<Upload className="h-3 w-3" />
-																	</Button>
-																	<Button type="button" variant="outline" size="sm" className="h-6 px-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleClearImage(animalId)} disabled={!canEdit}>
-																		<X className="h-3 w-3" />
-																	</Button>
-																</div>
-															</div>
-														) : (
-															<button
-																type="button"
-																onClick={() => canEdit && imageInputRefs.current[animalId]?.click()}
-																disabled={!canEdit}
-																className="w-16 h-16 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:border-teal-400 hover:text-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-															>
-																<Upload className="h-4 w-4" />
-																<span>Imagen</span>
-															</button>
-														)}
-													</div>
+													{canEdit && (
+														<Button
+															size='sm'
+															onClick={() => handleSaveAnimal(animalId)}
+															disabled={!animalWeight.weight || isSaving}
+															className='bg-teal-600 hover:bg-teal-700'
+														>
+															{isSaving ? (
+																<>
+																	<Loader2 className='h-3 w-3 mr-1 animate-spin' />
+																	Guardando...
+																</>
+															) : (
+																// Verificar si ya existe data guardada para mostrar "Actualizar" o "Guardar"
+																(() => {
+																	const savedData = postmortemData?.data?.find(item => item.idDetailsSpeciesCertificate === parseInt(animalId));
+																	const hasTotalConfiscation = savedData?.productPostmortem?.some(prod => prod.isTotalConfiscation === true);
+																	return hasTotalConfiscation ? 'Actualizar' : 'Guardar';
+																})()
+															)}
+														</Button>
+													)}
 												</div>
 											</div>
 										)}
@@ -469,59 +322,13 @@ export function TotalConfiscationModal({
             </div>
           )}
         </div>
-        </div>
 
-        <DialogFooter className="flex-shrink-0 border-t pt-4 mt-0">
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving || isUpdating}>
+        <DialogFooter>
+          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
             {canEdit ? "Cancelar" : "Cerrar"}
           </Button>
-          {canEdit && (
-            <Button
-              onClick={handleSaveAll}
-              disabled={selectedCount === 0 || isSaving || isUpdating}
-              className="bg-teal-600 hover:bg-teal-700"
-            >
-              {(isSaving || isUpdating) ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {allSelectedHavePostmortem ? "Actualizando..." : "Guardando..."}
-                </>
-              ) : (
-                `${buttonText} (${selectedCount})`
-              )}
-            </Button>
-          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
-
-      {/* Lightbox */}
-      <Dialog open={!!previewImageUrl} onOpenChange={() => setPreviewImageUrl(null)}>
-        <DialogContent className="max-w-7xl w-full sm:w-[95vw] max-h-[95vh] sm:max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-2.5 border-b bg-white shrink-0">
-            <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-            <DialogTitle className="text-xs sm:text-sm font-semibold m-0 truncate">Vista previa</DialogTitle>
-          </div>
-          {previewImageUrl && (
-            <div 
-              className="flex-1 min-h-0 overflow-auto p-3 sm:p-6 bg-gray-50/50 scrollbar-hide"
-              style={{
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-              }}
-            >
-              <style jsx>{`
-                .scrollbar-hide::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
-              <div className="w-full h-full flex items-center justify-center">
-                <img src={previewImageUrl} alt="Imagen completa" className="max-w-full h-auto object-contain shadow-lg rounded-lg" style={{ maxHeight: 'calc(95vh - 80px)', minHeight: '200px' }} />
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </Fragment>
   );
 }

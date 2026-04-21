@@ -120,21 +120,3 @@ export const getMonthlySummaryAgrocalidadReport = async (
 		throw error;
 	}
 };
-
-/**
- * Sube una imagen para un registro postmortem específico
- * @param postmortemId - ID del registro postmortem
- * @param file - Imagen a subir
- */
-export async function uploadPostmortemImageService(
-  postmortemId: number,
-  file: File
-): Promise<any> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const response = await http.post(
-    `v1/1.0.0/postmortem/upload-file/${postmortemId}`,
-    { body: formData }
-  );
-  return response.json();
-}
