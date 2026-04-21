@@ -65,7 +65,6 @@ export const useOperator = ({
 	// Reset operator state when resetKey changes (e.g., when scanning a new QR)
 	useEffect(() => {
 		if (resetKey) {
-			console.log('🔧 Resetting operator state due to resetKey change:', resetKey);
 			setSelectedPerson(null);
 			setIsCreatingPerson(false);
 			// También limpiar campos de búsqueda
