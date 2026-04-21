@@ -11,3 +11,4 @@ pnpm dev
 # or
 bun dev
 ```
+## provincia en ingreso e imagenes en postmortem e decomisos 
