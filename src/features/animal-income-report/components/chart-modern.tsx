@@ -94,7 +94,7 @@ export function ChartModern({ data }: ChartModernProps) {
 
   return (
     <div className="w-full h-[300px] sm:h-[400px] lg:h-[500px] min-h-[300px] rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl p-4 sm:p-6">
-      <ResponsiveContainer width="100%" height="100%" debounce={1}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={1}>
         <PieChart>
           <defs>
             {COLORS.map((color, index) => (
