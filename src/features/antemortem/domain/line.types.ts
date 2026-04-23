@@ -36,6 +36,7 @@ export interface SettingCertificateBrand {
   commentary: string;
   males: number;
   females: number;
+  rings?: number | null;
   slaughterDate: string;
   idSpecies: number;
   idStatusCorrals: number;
@@ -63,6 +64,7 @@ export interface StatusCorralDetail {
   freeCorral: boolean;
   admissionDay: string;
   numberRings: number | null;
+  rings?: number | null;
   status: boolean;
   corral: {
     id: number;
@@ -179,6 +181,11 @@ export const mapStatusCorralToAntemortemRow = (detail: StatusCorralDetail): impo
   const machos = detail.settingCertificatesBrands.reduce((sum, setting) => sum + (setting.males || 0), 0);
   const hembras = detail.settingCertificatesBrands.reduce((sum, setting) => sum + (setting.females || 0), 0);
   const total = detail.quantity || (machos + hembras);
+  const ringsByBrands = detail.settingCertificatesBrands.reduce(
+    (sum, setting) => sum + Number(setting.rings ?? 0),
+    0
+  );
+  const argollas = Number(detail.numberRings ?? detail.rings ?? ringsByBrands);
 
   return {
     statusCorralId: statusCorralId,
@@ -186,7 +193,7 @@ export const mapStatusCorralToAntemortemRow = (detail: StatusCorralDetail): impo
     marcas,
     marcasInfo,
     observaciones: "Sin observaciones", // Dejamos como estaba, es otro servicio
-    argollas: detail.numberRings || 0, // Solo para bovinos
+    argollas, // Solo para bovinos
     total,
     machos,
     hembras,

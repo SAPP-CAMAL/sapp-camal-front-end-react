@@ -12,6 +12,7 @@ export const mapToAnimalAdmissions = (admissionList: SettingCertBrandByCertifica
 			date: admission.slaughterDate,
 			males: admission.males,
 			females: admission.females,
+			numberRings: admission.rings ?? null,
 			observations: admission.commentary,
 			codes: admission.codes,
 			isLoadingCorralGroups: false,

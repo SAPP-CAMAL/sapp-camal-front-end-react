@@ -100,7 +100,7 @@ export function computeTotals(rows: AntemortemRow[]) {
       acc.total += r.total;
       acc.machos += r.machos;
       acc.hembras += r.hembras;
-      acc.argollas += r.argollas ?? 0;
+      acc.argollas += Number(r.argollas ?? 0);
       return acc;
     },
     { total: 0, machos: 0, hembras: 0, argollas: 0 }

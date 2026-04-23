@@ -6,6 +6,7 @@ export interface SaveCertificateBrand {
 	idCorral: number;
 	males: number;
 	females: number;
+	rings: number | null;
 	slaughterDate?: string;
 	commentary: string;
 	status: boolean;
@@ -28,6 +29,7 @@ export interface SaveCertificateBrandResponse {
 	commentary: string;
 	males: number;
 	females: number;
+	numberRings: number | null;
 	slaughterDate: string;
 	idSpecies: number;
 	idStatusCorrals: number;
@@ -51,6 +53,7 @@ export interface SettingCertBrandByCertificateId {
 	commentary: string;
 	males?: number;
 	females?: number;
+	rings?: number | null;
 	slaughterDate: string;
 	idSpecies: number;
 	idStatusCorrals: number;
@@ -114,6 +117,7 @@ export interface SettingCertBrandByID {
 	commentary: string;
 	males: number;
 	females: number;
+	rings?: number | null;
 	slaughterDate: Date;
 	idSpecies: number;
 	idStatusCorrals: number;
@@ -188,6 +192,7 @@ export interface SettingCertBrandByIdResponse {
 	commentary: string;
 	males: number;
 	females: number;
+	rings?: number | null;
 	slaughterDate: string;
 	idSpecies: number;
 	idStatusCorrals: number;

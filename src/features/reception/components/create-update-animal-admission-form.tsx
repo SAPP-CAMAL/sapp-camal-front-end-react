@@ -36,6 +36,8 @@ export const CreateUpdateAnimalAdmissionForm = ({ animalAdmissionData, className
 		corralTypes,
 		isQuantitiesLessThan1,
 		isQuantityExceeds,
+		isBovineSpecie,
+		isInvalidRingsForBovine,
 		isInvalidBrand,
 		btnMessage,
 		corralTypesQuery,
@@ -70,6 +72,7 @@ export const CreateUpdateAnimalAdmissionForm = ({ animalAdmissionData, className
 	const selectedCorral = form.watch('corral');
 	const selectedDate = form.watch('date');
 	const selectedFinishType = form.watch('finishType');
+	const totalAnimalsForRings = +(form.watch('females') || 0) + +(form.watch('males') || 0);
 
 	return (
 		<Card className='border border-l-4 border-l-blue-500'>
@@ -339,6 +342,69 @@ export const CreateUpdateAnimalAdmissionForm = ({ animalAdmissionData, className
 								<span className='text-sm text-muted-foreground mt-2'>Cargando listado de etapas productivas...</span>
 							)}
 						</div>
+
+						{/* Rings / Argollas */}
+						{isBovineSpecie && (
+							<div className='space-y-2'>
+								<FormField
+									control={form.control}
+									name='numberRings'
+									rules={{
+										validate: value => {
+											if (value === null || value === undefined) return 'Ingrese el número de argollas';
+											const rings = +value;
+											if (Number.isNaN(rings) || rings < 0) return 'Ingrese un número de argollas válido';
+											if (rings > totalAnimalsForRings) return `No puede superar el total de animales (${totalAnimalsForRings})`;
+											return true;
+										},
+									}}
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												Número de argollas
+												<span className='text-red-500'>*</span>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<CircleQuestionMark className='w-4 h-4 cursor-help' />
+													</TooltipTrigger>
+													<TooltipContent side='top' align='center'>
+														Solo para bovino. No puede ser mayor al total de animales del ingreso.
+													</TooltipContent>
+												</Tooltip>
+											</FormLabel>
+											<FormControl>
+												<Input
+													className='w-[180px] sm:w-[220px]'
+													type='number'
+													min={0}
+													max={Math.max(0, totalAnimalsForRings)}
+													placeholder='Argollas'
+													onWheel={e => e.currentTarget.blur()}
+													value={field.value ?? ''}
+													onChange={e => {
+														const value = e.target.value;
+														if (value === '') {
+															field.onChange(null);
+															return;
+														}
+
+														const parsedValue = +value;
+														if (Number.isNaN(parsedValue)) return;
+
+														field.onChange(Math.min(Math.max(parsedValue, 0), Math.max(0, totalAnimalsForRings)));
+													}}
+												/>
+											</FormControl>
+											<p className='text-xs text-muted-foreground'>Máximo permitido: {Math.max(0, totalAnimalsForRings)}</p>
+											{isInvalidRingsForBovine && (
+												<p className='text-sm text-red-500'>Las argollas deben ser entre 0 y el total de animales ingresados</p>
+											)}
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+						)}
 
 						{/* Corral Types and corral groups */}
 						<div className='grid md:grid-cols-2 gap-4'>
