@@ -19,21 +19,38 @@ const emptyReport: AnimalIncomeReport = {
   historyData: [],
 };
 
+const normalizeRangeToDayBounds = (range: DateRange): DateRange => {
+  if (!range.from || !range.to) return range;
+
+  const from = new Date(range.from);
+  from.setHours(0, 0, 0, 0);
+
+  const to = new Date(range.to);
+  to.setHours(23, 59, 59, 999);
+
+  return { from, to };
+};
+
+const getDefaultDateRange = (): DateRange => {
+  const today = new Date();
+  const from = new Date(today);
+  from.setDate(today.getDate() - 6);
+  return normalizeRangeToDayBounds({ from, to: today });
+};
+
 export function useAnimalIncomeReport() {
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date("2023-02-03"),
-    to: new Date(),
-  });
+  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange);
   const [reportData, setReportData] = useState<AnimalIncomeReport>(emptyReport);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchReport = async (range: DateRange) => {
-    if (!range.from || !range.to) return;
+    const normalizedRange = normalizeRangeToDayBounds(range);
+    if (!normalizedRange.from || !normalizedRange.to) return;
 
     setIsLoading(true);
     try {
-      const startDate = format(range.from, "yyyy-MM-dd");
-      const endDate = format(range.to, "yyyy-MM-dd");
+      const startDate = format(normalizedRange.from, "yyyy-MM-dd");
+      const endDate = format(normalizedRange.to, "yyyy-MM-dd");
 
       const response = await getManagerReportTotals(startDate, endDate);
 
@@ -56,7 +73,7 @@ export function useAnimalIncomeReport() {
         });
       }
 
-      setDateRange(range);
+      setDateRange(normalizedRange);
     } catch (error) {
       console.error("Error fetching report:", error);
       setReportData(emptyReport);

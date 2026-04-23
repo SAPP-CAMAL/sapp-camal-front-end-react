@@ -834,10 +834,12 @@ export function ListAnimalsManagement() {
                       <span className="block text-xs font-semibold">
                         en faenamiento
                       </span>
-                      <div className="mt-2 grid grid-cols-3 gap-1 place-items-center text-[10px] border-t pt-1">
-                        <span className="font-bold">H</span>
-                        <span className="font-bold border-l pl-2">M</span>
-                        <span className="font-bold border-l pl-2">TOTAL</span>
+                      <div className="mt-2 flex items-center text-[10px] border-t pt-1 w-full">
+                        <span className="font-bold flex-1 text-center">H</span>
+                        <span className="w-px bg-current opacity-40 self-stretch mx-1" />
+                        <span className="font-bold flex-1 text-center">M</span>
+                        <span className="w-px bg-current opacity-40 self-stretch mx-1" />
+                        <span className="font-bold flex-1 text-center">TOTAL</span>
                       </div>
                     </TableHead>
                     <TableHead className="w-32 whitespace-normal leading-tight text-center">
@@ -851,13 +853,14 @@ export function ListAnimalsManagement() {
                     <TableHead className="w-28 whitespace-normal text-center">
                       <span className="text-xs font-semibold">Especie</span>
                     </TableHead>
-                    <TableHead className="w-40 whitespace-normal leading-tight text-center">
-                      <span className="block text-xs font-semibold">
-                        Identificación del
-                      </span>
-                      <span className="block text-xs font-semibold">
-                        Usuario al Camal
-                      </span>
+                    <TableHead className="w-28 whitespace-normal text-center border-l">
+                      <span className="text-xs font-semibold">Corral</span>
+                    </TableHead>
+                    <TableHead className="w-28 whitespace-normal text-center border-l">
+                      <span className="text-xs font-semibold">Marca</span>
+                    </TableHead>
+                    <TableHead className="w-28 whitespace-normal text-center border-l border-r">
+                      <span className="text-xs font-semibold">Códigos</span>
                     </TableHead>
                     <TableHead className="w-48 whitespace-normal text-center">
                       <span className="text-xs font-semibold">
@@ -869,7 +872,7 @@ export function ListAnimalsManagement() {
                 <TableBody>
                   {apiData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={11} className="text-center py-12">
+                      <TableCell colSpan={13} className="text-center py-12">
                         <div className="flex flex-col items-center gap-3">
                           <div className="rounded-full bg-muted p-3">
                             <Search className="h-6 w-6 text-muted-foreground" />
@@ -945,20 +948,22 @@ export function ListAnimalsManagement() {
                             {item.species?.name || "N/A"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="whitespace-normal text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            <Badge className="bg-primary text-xs">
-                              {item.brand?.name || "N/A"}
+                        <TableCell className="whitespace-normal text-center text-xs font-semibold text-emerald-600 border-l">
+                          {item.statusCorrals?.corral?.name || "N/A"}
+                        </TableCell>
+                        <TableCell className="whitespace-normal text-center border-l">
+                          <Badge className="bg-primary text-xs">
+                            {item.brand?.name || "N/A"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="whitespace-normal text-center border-l border-r">
+                          {item.codes ? (
+                            <Badge variant="outline" className="text-xs font-mono font-semibold border-primary text-primary">
+                              {item.codes}
                             </Badge>
-                            <div className="text-xs font-semibold text-primary">
-                              {item.statusCorrals?.corral?.name || "N/A"}
-                            </div>
-                            {item.codes && (
-                              <div className="text-[10px] text-muted-foreground">
-                                {item.codes}
-                              </div>
-                            )}
-                          </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="whitespace-normal text-center text-sm max-w-48">
                           <div
