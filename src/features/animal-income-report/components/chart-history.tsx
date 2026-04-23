@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -22,27 +22,74 @@ import {
 import { Menu, Printer, FileSpreadsheet, Maximize2 } from "lucide-react";
 import * as XLSX from "xlsx";
 
-import { AnimalIncomeData } from "../domain/animal-income.types";
+import { AnimalIncomeData, AnimalIncomeHistoryData } from "../domain/animal-income.types";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 
 export interface ChartHistoryProps {
-  data: any[];
+  data: AnimalIncomeHistoryData[];
   startDate: string;
   endDate: string;
   tableData?: AnimalIncomeData[];
 }
 
+const CHART_COLORS = ["#0f766e", "#14b8a6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+
 export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, endDate, tableData = [] }) => {
   const { getFullCompanyName } = useSlaughterhouseInfo();
   const [viewMode, setViewMode] = useState<"MENSUAL" | "ANUAL">("MENSUAL");
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [visibleBars, setVisibleBars] = useState<Record<string, boolean>>({
-    BOVINO: true,
-    PORCINO: true,
-    "OVINO/CAPRINO": true,
-  });
+  const [visibleBars, setVisibleBars] = useState<Record<string, boolean>>({});
   const chartRef = useRef<HTMLDivElement>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  const speciesKeys = useMemo(() => {
+    const keys = new Set<string>();
+
+    tableData.forEach((item) => {
+      if (item.species) keys.add(item.species);
+    });
+
+    data.forEach((row) => {
+      Object.entries(row).forEach(([key, value]) => {
+        if (key !== "date" && typeof value === "number") {
+          keys.add(key);
+        }
+      });
+    });
+
+    return Array.from(keys);
+  }, [data, tableData]);
+
+  useEffect(() => {
+    setVisibleBars((prev) => {
+      const nextState: Record<string, boolean> = {};
+      speciesKeys.forEach((key) => {
+        nextState[key] = prev[key] ?? true;
+      });
+      return nextState;
+    });
+  }, [speciesKeys]);
+
+  useEffect(() => {
+    const element = chartContainerRef.current;
+    if (!element) return;
+
+    const updateSize = () => {
+      const { width, height } = element.getBoundingClientRect();
+      setContainerSize({
+        width: Math.max(0, Math.floor(width)),
+        height: Math.max(0, Math.floor(height)),
+      });
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
 
   // Toggle visibility of a bar
   const handleLegendClick = (dataKey: string) => {
@@ -53,18 +100,28 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, end
   };
 
   // Process data for ANUAL view if needed
-  const chartData = viewMode === "ANUAL" 
-    ? Object.values(data.reduce((acc: any, curr) => {
-        const year = curr.date.split("-")[0];
-        if (!acc[year]) {
-          acc[year] = { date: year, BOVINO: 0, PORCINO: 0, "OVINO/CAPRINO": 0 };
-        }
-        acc[year].BOVINO += curr.BOVINO;
-        acc[year].PORCINO += curr.PORCINO;
-        acc[year]["OVINO/CAPRINO"] += curr["OVINO/CAPRINO"];
-        return acc;
-      }, {}))
-    : data;
+  const chartData = useMemo(() => {
+    if (viewMode !== "ANUAL") return data;
+
+    const annualMap = data.reduce((acc, curr) => {
+      const year = String(curr.date).split("-")[0];
+      if (!acc[year]) {
+        acc[year] = { date: year };
+      }
+
+      speciesKeys.forEach((species) => {
+        const currentValue = Number(curr[species] || 0);
+        const previousValue = Number(acc[year][species] || 0);
+        acc[year][species] = previousValue + currentValue;
+      });
+
+      return acc;
+    }, {} as Record<string, Record<string, string | number>>);
+
+    return Object.values(annualMap).sort((a, b) =>
+      String(a.date).localeCompare(String(b.date))
+    ) as AnimalIncomeHistoryData[];
+  }, [data, speciesKeys, viewMode]);
 
   const handlePrint = () => {
     const printContent = printRef.current;
@@ -142,9 +199,41 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, end
   };
 
   const handleDownloadXLS = () => {
-    const worksheet = XLSX.utils.json_to_sheet(chartData);
+    const exportRows = chartData.map((row) => {
+      const normalizedRow: Record<string, string | number> = {
+        Fecha: String(row.date),
+      };
+
+      speciesKeys.forEach((species) => {
+        normalizedRow[species] = Number(row[species] || 0);
+      });
+
+      normalizedRow.Total = speciesKeys.reduce(
+        (sum, species) => sum + Number(row[species] || 0),
+        0
+      );
+
+      return normalizedRow;
+    });
+
+    if (exportRows.length > 0) {
+      const totalsRow: Record<string, string | number> = { Fecha: "TOTAL" };
+      speciesKeys.forEach((species) => {
+        totalsRow[species] = exportRows.reduce(
+          (sum, row) => sum + Number(row[species] || 0),
+          0
+        );
+      });
+      totalsRow.Total = exportRows.reduce(
+        (sum, row) => sum + Number(row.Total || 0),
+        0
+      );
+      exportRows.push(totalsRow);
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
+    XLSX.utils.book_append_sheet(workbook, worksheet, `Reporte ${viewMode}`);
     XLSX.writeFile(workbook, `reporte-ingreso-animales-${startDate}-${endDate}.xlsx`);
   };
 
@@ -251,7 +340,7 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, end
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleDownloadXLS} className="cursor-pointer text-sm">
                   <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  <span>Descargar en XLS</span>
+                  <span>Descargar en EXCEL</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleFullScreen} className="cursor-pointer text-sm">
                   <Maximize2 className="mr-2 h-4 w-4" />
@@ -271,8 +360,9 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, end
         </div>
       </CardHeader>
       <CardContent className="p-3 sm:p-6">
-        <div className="h-[300px] sm:h-[350px] lg:h-[400px] min-h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%" debounce={1}>
+        <div ref={chartContainerRef} className="h-[300px] sm:h-[350px] lg:h-[400px] min-h-[300px] w-full">
+          {containerSize.width > 0 && containerSize.height > 0 ? (
+          <ResponsiveContainer width={containerSize.width} height={containerSize.height} debounce={1}>
             <BarChart
               data={chartData}
               margin={{
@@ -324,32 +414,20 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({ data, startDate, end
                   </span>
                 )}
               />
-              <Bar 
-                dataKey="BOVINO" 
-                fill="#0f766e" 
-                name="BOVINO" 
-                radius={[2, 2, 0, 0]} 
-                barSize={6}
-                hide={!visibleBars.BOVINO}
-              />
-              <Bar 
-                dataKey="PORCINO" 
-                fill="#14b8a6" 
-                name="PORCINO" 
-                radius={[2, 2, 0, 0]} 
-                barSize={6}
-                hide={!visibleBars.PORCINO}
-              />
-              <Bar 
-                dataKey="OVINO/CAPRINO" 
-                fill="#f59e0b" 
-                name="OVINO/CAPRINO" 
-                radius={[2, 2, 0, 0]} 
-                barSize={6}
-                hide={!visibleBars["OVINO/CAPRINO"]}
-              />
+              {speciesKeys.map((species, index) => (
+                <Bar
+                  key={species}
+                  dataKey={species}
+                  fill={CHART_COLORS[index % CHART_COLORS.length]}
+                  name={species}
+                  radius={[2, 2, 0, 0]}
+                  barSize={6}
+                  hide={!visibleBars[species]}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
+          ) : null}
         </div>
       </CardContent>
     </Card>
