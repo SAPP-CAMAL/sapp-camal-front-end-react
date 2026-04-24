@@ -106,6 +106,7 @@ export type BrandDetail = {
   idBrand: number;
   males: number;
   females: number;
+  rings?: number | null;
   codes: string | null;
   nameBrand: string;
   idCorral: number;

@@ -230,8 +230,13 @@ export function CorralsManagement() {
     targetCorralName: string | null;
     selectedMales: number;
     selectedFemales: number;
+    selectedRings: number;
+    isBovine?: boolean;
     selectedQuantitiesByStage?: Record<number, number>;
     initialQuantitiesByStage?: Record<number, number>; // Add initial quantities
+    initialRings?: number;
+    initialAnimals?: number;
+    isCompleteTransfer?: boolean;
   }>({
     isOpen: false,
     brand: null,
@@ -240,8 +245,13 @@ export function CorralsManagement() {
     targetCorralName: null,
     selectedMales: 0,
     selectedFemales: 0,
+    selectedRings: 0,
+    isBovine: false,
     selectedQuantitiesByStage: {},
-    initialQuantitiesByStage: {}, // Initialize
+    initialQuantitiesByStage: {},
+    initialRings: 0,
+    initialAnimals: 0,
+    isCompleteTransfer: false,
   });
 
   // Prevent duplicate transfers
@@ -286,8 +296,13 @@ export function CorralsManagement() {
       targetCorralName: null,
       selectedMales: 0,
       selectedFemales: 0,
+      selectedRings: 0,
+      isBovine: false,
       selectedQuantitiesByStage: {},
       initialQuantitiesByStage: {},
+      initialRings: 0,
+      initialAnimals: 0,
+      isCompleteTransfer: false,
     });
   }, []);
 
@@ -332,15 +347,17 @@ export function CorralsManagement() {
       const fullData = fullDataResponse.data;
 
       // Store the full certificate data in the brand for later use
-      const enhancedBrand = {
+      const enhancedBrand: BrandDetail = {
         ...brand,
+        // Capture rings from fullData (handle both 'rings' and 'numberRings')
+        rings: (fullData as any).rings !== undefined ? (fullData as any).rings : ((fullData as any).numberRings !== undefined ? (fullData as any).numberRings : brand.rings),
         certificateData: {
           idCertificate: fullData.idCertificate,
           idCorralType: fullData.idCorralType,
           idBrands: fullData.idBrands,
         },
-        // Add the details for quantity reference
-        detailsCertificateBrand: fullData.detailsCertificateBrand || [],
+        // Add the details for quantity reference - cast to DetailCertificateBrand[] to match interface
+        detailsCertificateBrand: (fullData.detailsCertificateBrand as any) || [],
       };
 
       // Initialize selected quantities based on detailsCertificateBrand
@@ -481,6 +498,34 @@ export function CorralsManagement() {
         (sum, stage) => sum + (selectedQuantitiesByStage[stage.id] || 0),
         0
       );
+    
+    // Use initialQuantitiesByStage as it's the most reliable source for the current corral state
+    const totalOriginalAnimals = Object.values(initialQuantitiesByStage || {}).reduce((sum: number, qty: number) => sum + qty, 0);
+    const totalSelectedAnimals = selectedMales + selectedFemales;
+    // Handle both 'rings' and 'numberRings' from API and ensure it's a number
+    const apiRings = (brandToMove as any).numberRings !== undefined ? (brandToMove as any).numberRings : (brandToMove.rings || 0);
+    const initialRings = typeof apiRings === 'string' ? parseInt(apiRings, 10) || 0 : Number(apiRings) || 0;
+    
+    const isCompleteTransfer = totalSelectedAnimals === totalOriginalAnimals && totalOriginalAnimals > 0;
+    
+    let suggestedRings = 0;
+    if (isCompleteTransfer) {
+      // In a complete transfer, we move all rings but capped by the number of animals
+      // to fix previous inconsistencies where rings > animals
+      suggestedRings = Math.min(initialRings, totalSelectedAnimals);
+    } else if (totalOriginalAnimals > 0 && initialRings > 0) {
+      // Proportional calculation: (selected / total) * initialRings
+      suggestedRings = Math.round((totalSelectedAnimals / totalOriginalAnimals) * initialRings);
+      
+      // RULE: We must transfer enough rings so the remaining animals don't have an excess of rings
+      const remainingAnimals = totalOriginalAnimals - totalSelectedAnimals;
+      const minRingsRequired = Math.min(totalSelectedAnimals, Math.max(0, initialRings - remainingAnimals));
+      
+      suggestedRings = Math.max(minRingsRequired, suggestedRings);
+      
+      // Ensure we don't transfer more rings than available OR more than animals being moved
+      suggestedRings = Math.min(suggestedRings, initialRings, totalSelectedAnimals);
+    }
 
     // Open confirmation modal with both selected and initial quantities
     setConfirmationModal({
@@ -491,8 +536,13 @@ export function CorralsManagement() {
       targetCorralName: targetCorral.name,
       selectedMales,
       selectedFemales,
+      selectedRings: suggestedRings,
+      isBovine: selectedTab === "bovinos",
       selectedQuantitiesByStage: selectedQuantitiesByStage,
       initialQuantitiesByStage: initialQuantitiesByStage, // Pass initial quantities
+      initialRings: initialRings,
+      initialAnimals: totalOriginalAnimals,
+      isCompleteTransfer: isCompleteTransfer,
     });
 
     // Close the transfer modal
@@ -560,6 +610,7 @@ export function CorralsManagement() {
       targetCorralId,
       selectedMales,
       selectedFemales,
+      selectedRings,
     } = confirmationModal;
 
     if (!brandToMove || !sourceCorralId || !targetCorralId) {
@@ -619,12 +670,15 @@ export function CorralsManagement() {
         selectedFemales,
         remainingMales,
         remainingFemales,
+        selectedRings,
+        remainingRings: Math.max(0, (confirmationModal.initialRings || 0) - selectedRings),
         isCompleteTransfer,
         selectedDate,
         selectedQuantitiesByStage:
           confirmationModal.selectedQuantitiesByStage || {},
         initialQuantitiesByStage:
           confirmationModal.initialQuantitiesByStage || {},
+        isBovine: confirmationModal.isBovine || false,
       });
 
       // 2. Then update the UI state
@@ -666,6 +720,7 @@ export function CorralsManagement() {
             ...originalBrand,
             males: remainingMales,
             females: remainingFemales,
+            rings: Math.max(0, (confirmationModal.initialRings || 0) - selectedRings),
           };
           const sourceBrandsUpdated = [
             ...sourceBrands.slice(0, foundIndex),
@@ -681,6 +736,7 @@ export function CorralsManagement() {
           idCorral: parseInt(targetCorralId),
           males: selectedMales,
           females: selectedFemales,
+          rings: selectedRings,
         };
 
         const targetBrands = newMap[targetCorralId] || [];
@@ -699,6 +755,7 @@ export function CorralsManagement() {
             ...existingBrand,
             males: existingBrand.males + selectedMales,
             females: existingBrand.females + selectedFemales,
+            rings: (existingBrand.rings || 0) + selectedRings,
           };
           const targetBrandsUpdated = [
             ...targetBrands.slice(0, existingBrandIndex),
@@ -753,6 +810,9 @@ export function CorralsManagement() {
     selectedDate,
     selectedQuantitiesByStage,
     initialQuantitiesByStage,
+    selectedRings,
+    remainingRings,
+    isBovine,
   }: {
     originalBrand: BrandDetail;
     targetCorralId: number;
@@ -764,6 +824,9 @@ export function CorralsManagement() {
     selectedDate: Date;
     selectedQuantitiesByStage: Record<number, number>;
     initialQuantitiesByStage: Record<number, number>;
+    selectedRings: number;
+    remainingRings: number;
+    isBovine: boolean;
   }) => {
     try {
       // For bovinos use species ID 1, for porcinos use 2, for ovinos-caprinos use 3
@@ -809,6 +872,7 @@ export function CorralsManagement() {
           idCorralType: targetCorralType?.id ?? 1,
           males: selectedMales,
           females: selectedFemales,
+          rings: isBovine ? selectedRings : null,
           slaughterDate,
 
           detailsCertificateBrand: detailsCertificateBrand,
@@ -859,6 +923,7 @@ export function CorralsManagement() {
           idCorral: targetCorralId,
           males: selectedMales,
           females: selectedFemales,
+          rings: isBovine ? selectedRings : null,
           slaughterDate: slaughterDate,
           commentary: originalSettingCert.commentary || '',
           status: true,
@@ -912,6 +977,7 @@ export function CorralsManagement() {
           idCorral: originalBrand.idCorral,
           males: remainingMalesTotal,
           females: remainingFemalesTotal,
+          rings: isBovine ? remainingRings : (originalBrand.rings || null),
           slaughterDate: slaughterDate,
 
           detailsCertificateBrand: remainingDetailsCertificateBrand,
@@ -2878,6 +2944,7 @@ export function CorralsManagement() {
         onConfirm={executeTransfer}
         onReset={resetConfirmationModal}
         isTransferring={isTransferring}
+        onRingsChange={(rings) => setConfirmationModal(prev => ({ ...prev, selectedRings: rings }))}
       />
     </div>
   );

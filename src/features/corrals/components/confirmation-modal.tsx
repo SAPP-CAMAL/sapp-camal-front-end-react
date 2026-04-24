@@ -23,6 +23,7 @@ import {
   Check,
   CheckCheckIcon,
   CheckCircle2Icon,
+  Hash,
 } from "lucide-react";
 import { type BrandDetail } from "../domain";
 
@@ -34,12 +35,18 @@ interface ConfirmationModalState {
   targetCorralName: string | null;
   selectedMales: number;
   selectedFemales: number;
+  selectedRings: number;
+  initialRings?: number;
+  initialAnimals?: number;
+  isBovine?: boolean;
+  isCompleteTransfer?: boolean;
 }
 
 interface ConfirmationModalProps {
   confirmationModal: ConfirmationModalState;
   onConfirm: () => void;
   onReset: () => void;
+  onRingsChange?: (rings: number) => void;
   isTransferring: boolean;
 }
 
@@ -47,6 +54,7 @@ export function ConfirmationModal({
   confirmationModal,
   onConfirm,
   onReset,
+  onRingsChange,
   isTransferring,
 }: ConfirmationModalProps) {
   if (!confirmationModal.brand) return null;
@@ -152,6 +160,85 @@ export function ConfirmationModal({
                     <span className="text-sm font-bold text-green-700">{confirmationModal.targetCorralName}</span>
                   </div>
                 </div>
+
+                {/* Rings (Argollas) section - only for bovines */}
+                {confirmationModal.isBovine && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 text-blue-700">
+                        <Hash className="h-4 w-4" />
+                        <span className="text-sm font-medium">Argollas a transferir:</span>
+                      </div>
+                      
+                      {confirmationModal.isCompleteTransfer ? (
+                        <div className="flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-full border border-blue-300">
+                          <span className="text-sm font-bold text-blue-700">
+                            {confirmationModal.selectedRings}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 border-blue-300 text-blue-700 hover:bg-blue-100"
+                            onClick={() => {
+                              const totalSelected = (confirmationModal.selectedMales || 0) + (confirmationModal.selectedFemales || 0);
+                              const remainingAnimals = (confirmationModal.initialAnimals || 0) - totalSelected;
+                              const minRings = Math.min(totalSelected, Math.max(0, (confirmationModal.initialRings || 0) - remainingAnimals));
+                              
+                              if (confirmationModal.selectedRings > minRings) {
+                                onRingsChange?.(confirmationModal.selectedRings - 1);
+                              }
+                            }}
+                            disabled={
+                              isTransferring || 
+                              confirmationModal.selectedRings <= Math.min(
+                                (confirmationModal.selectedMales || 0) + (confirmationModal.selectedFemales || 0),
+                                Math.max(0, (confirmationModal.initialRings || 0) - ((confirmationModal.initialAnimals || 0) - ((confirmationModal.selectedMales || 0) + (confirmationModal.selectedFemales || 0))))
+                              )
+                            }
+                          >
+                            -
+                          </Button>
+                          <span className="w-8 text-center font-bold text-blue-800">
+                            {confirmationModal.selectedRings}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 border-blue-300 text-blue-700 hover:bg-blue-100"
+                            onClick={() => {
+                              const totalAnimals = (confirmationModal.selectedMales || 0) + (confirmationModal.selectedFemales || 0);
+                              const maxAvailable = confirmationModal.initialRings || 0;
+                              const maxAllowed = Math.min(totalAnimals, maxAvailable);
+                              
+                              if (confirmationModal.selectedRings < maxAllowed) {
+                                onRingsChange?.(confirmationModal.selectedRings + 1);
+                              }
+                            }}
+                            disabled={
+                              isTransferring || 
+                              confirmationModal.selectedRings >= Math.min(
+                                (confirmationModal.selectedMales || 0) + (confirmationModal.selectedFemales || 0),
+                                confirmationModal.initialRings || 0
+                              )
+                            }
+                          >
+                            +
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-blue-600 text-center italic">
+                      {confirmationModal.isCompleteTransfer 
+                        ? "Transferencia total: se moverán todas las argollas disponibles."
+                        : (confirmationModal.initialRings || 0) <= 0 
+                          ? "No hay argollas registradas para esta marca."
+                          : "Se calculó automáticamente según la proporción de animales."}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
