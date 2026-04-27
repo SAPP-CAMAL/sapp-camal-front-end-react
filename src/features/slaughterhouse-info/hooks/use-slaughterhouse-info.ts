@@ -8,11 +8,6 @@ import type { SlaughterhouseInfo } from "../types/slaughterhouse.types";
  * Hook para obtener la información del camal desde el backend.
  * La información se cachea y se mantiene actualizada automáticamente.
  *
- * Valores por defecto mientras se carga o en caso de error:
- * - EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO
-DEL CANTÓN  RIOBAMBA para el nombre del camal
- * - CHIMBORAZO para la provincia
- * - EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO para la empresa
  */
 export function useSlaughterhouseInfo() {
   const query = useQuery({
@@ -22,7 +17,7 @@ export function useSlaughterhouseInfo() {
         return await getSlaughterhouseInfo();
       } catch (error) {
         // Silenciar el error y devolver null - se usarán los valores por defecto
-        console.info("[SlaughterhouseInfo] Endpoint no disponible, usando valores por defecto");
+        console.info("[SlaughterhouseInfo] Endpoint no disponible, usando valores por defecto", error);
         return null;
       }
     },
