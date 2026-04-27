@@ -12,13 +12,9 @@ function getSsrApiBases() {
     const configured = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
 
     if (!configured) {
-        // FALLBACK: Si la variable de entorno no está configurada en el servidor,
-        // usar la URL de producción por defecto
-        console.warn("[SSR API] NEXT_PUBLIC_API_URL no está configurado. Usando URL de producción como fallback.");
-        return ["https://sapp-riobamba.com"]
+        throw new Error("NEXT_PUBLIC_API_URL no esta configurado. Define esta variable en .env.local.")
     }
 
-    // En servidor, usar SOLO la URL configurada
     return [configured]
 }
 

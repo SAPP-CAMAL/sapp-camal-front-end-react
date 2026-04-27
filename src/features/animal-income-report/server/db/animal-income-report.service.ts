@@ -1,11 +1,7 @@
 import { http } from "@/lib/ky";
 
-// Mapeo de idSpecies a nombres de especies
-const SPECIES_MAP: Record<number, string> = {
-  3: "PORCINO",
-  4: "BOVINO",
-  5: "OVINO/CAPRINO",
-};
+const normalizeSpeciesName = (name: string) =>
+  name.trim().replace(/\s+/g, " ").toUpperCase();
 
 export interface ManagerReportTotalsResponse {
   code: number;
@@ -13,6 +9,7 @@ export interface ManagerReportTotalsResponse {
   data: {
     totals: Array<{
       idSpecies: number;
+      name: string;
       total: number;
     }>;
     data: Array<{
@@ -24,6 +21,10 @@ export interface ManagerReportTotalsResponse {
           createdAt: string;
           id: number;
           idSpecies: number;
+          species?: {
+            id: number;
+            name: string;
+          };
         };
       };
     }>;
@@ -31,6 +32,7 @@ export interface ManagerReportTotalsResponse {
 }
 
 export interface AnimalIncomeReportData {
+  idSpecies: number;
   species: string;
   quantity: number;
   percentage: number;
@@ -45,9 +47,7 @@ export interface ProcessedReportData {
   };
   historyData: Array<{
     date: string;
-    BOVINO: number;
-    PORCINO: number;
-    "OVINO/CAPRINO": number;
+    [species: string]: string | number;
   }>;
 }
 
@@ -84,13 +84,22 @@ export const processReportData = (
   endDate: string
 ): ProcessedReportData => {
   const { totals, data } = response.data;
+  const speciesById = new Map<number, string>(
+    totals.map((item) => [item.idSpecies, normalizeSpeciesName(item.name)])
+  );
+
+  const getSpeciesName = (idSpecies: number, fallbackName?: string) => {
+    if (fallbackName) return normalizeSpeciesName(fallbackName);
+    return speciesById.get(idSpecies) || `ESPECIE ${idSpecies}`;
+  };
 
   // Calcular el total general
   const totalQuantity = totals.reduce((acc, item) => acc + item.total, 0);
 
   // Transformar los totales al formato esperado
   const speciesData: AnimalIncomeReportData[] = totals.map((item) => ({
-    species: SPECIES_MAP[item.idSpecies] || `Especie ${item.idSpecies}`,
+    idSpecies: item.idSpecies,
+    species: getSpeciesName(item.idSpecies, item.name),
     quantity: item.total,
     percentage: totalQuantity > 0 ? Number(((item.total / totalQuantity) * 100).toFixed(1)) : 0,
   }));
@@ -99,28 +108,23 @@ export const processReportData = (
   speciesData.sort((a, b) => b.quantity - a.quantity);
 
   // Generar datos históricos agrupados por mes
-  const historyMap = new Map<string, { BOVINO: number; PORCINO: number; "OVINO/CAPRINO": number }>();
+  const historyMap = new Map<string, Record<string, number>>();
 
   data.forEach((item) => {
     const createdAt = item.detailCertificateBrands.detailsCertificateBrand.createdAt;
-    const idSpecies = item.detailCertificateBrands.detailsCertificateBrand.idSpecies;
+    const detailSpecie = item.detailCertificateBrands.detailsCertificateBrand;
+    const idSpecies = detailSpecie.idSpecies;
+    const detailSpeciesName = detailSpecie.species?.name;
     const date = new Date(createdAt);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
     if (!historyMap.has(monthKey)) {
-      historyMap.set(monthKey, { BOVINO: 0, PORCINO: 0, "OVINO/CAPRINO": 0 });
+      historyMap.set(monthKey, {});
     }
 
     const monthData = historyMap.get(monthKey)!;
-    const speciesName = SPECIES_MAP[idSpecies];
-
-    if (speciesName === "BOVINO") {
-      monthData.BOVINO += 1;
-    } else if (speciesName === "PORCINO") {
-      monthData.PORCINO += 1;
-    } else if (speciesName === "OVINO/CAPRINO") {
-      monthData["OVINO/CAPRINO"] += 1;
-    }
+    const speciesName = getSpeciesName(idSpecies, detailSpeciesName);
+    monthData[speciesName] = (monthData[speciesName] || 0) + 1;
   });
 
   // Convertir el mapa a array y ordenar por fecha

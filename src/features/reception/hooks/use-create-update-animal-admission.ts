@@ -21,6 +21,7 @@ import { ProductiveStage } from '@/features/productive-stage/domain';
 import { FinishType } from '@/features/finish-type/domain';
 import { useFinishTypeBySpecies } from '@/features/finish-type/hooks';
 import { BrandByFilterMapped } from '@/features/brand/domain/get-brand-by-filter';
+import { useEffect } from 'react';
 
 export type AnimalAdmissionForm = {
 	/** setting cert brand id */
@@ -34,6 +35,7 @@ export type AnimalAdmissionForm = {
 	date?: string;
 	males: number;
 	females: number;
+	numberRings?: number | null;
 	corralType?: CorralType;
 	finishType?: FinishType;
 	observations?: string;
@@ -47,6 +49,7 @@ const defaultValues: AnimalAdmissionForm = {
 	date: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`,
 	males: 0,
 	females: 0,
+	numberRings: null,
 	selectedProductiveStages: [],
 };
 
@@ -80,6 +83,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 	const { searchParams, setSearchParams } = useAnimalAdmissionParams();
 
 	const selectedBrand = form.watch('brand');
+	const selectedNumberRings = form.watch('numberRings');
 
 	const brandsQuery = useBrandByFilter({
 		...(searchParams.introducerName.length > 0 && { fullName: searchParams.introducerName }),
@@ -212,12 +216,19 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 		const total = quantityMale + quantityFemale;
 
 		const subTotal = resetTotalAnimals + total;
+		const isBovineSpecie = selectedSpecie?.id === 4;
+		const normalizedRings =
+			data.numberRings === undefined || data.numberRings === null ? null : +data.numberRings;
 
 		if (!selectedSpecie) return toast.error('Debe seleccionar una especie');
 		if (total < 1) return toast.error('Debe ingresar al menos un animal');
 		if (subTotal < 1) return;
 		if (!data?.brand?.id) return;
 		if (subTotal > +(selectedCertificate?.quantity || 0)) return;
+		if (isBovineSpecie && (normalizedRings === null || Number.isNaN(normalizedRings) || normalizedRings < 0))
+			return toast.error('Debe ingresar un número de argollas válido para bovino');
+		if (isBovineSpecie && normalizedRings! > total)
+			return toast.error(`El número de argollas no puede ser mayor al total de animales (${total})`);
 
 		let detailsCertificateBrand = data.selectedProductiveStages.map(stage => ({
 			idProductiveStage: stage.id,
@@ -232,6 +243,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 			commentary: data.observations || '',
 			females: quantityFemale,
 			males: quantityMale,
+			rings: isBovineSpecie ? normalizedRings : null,
 			idCorral: data.corral?.id ?? NaN,
 			slaughterDate: data.date,
 			idSpecies: selectedSpecie.id,
@@ -315,6 +327,30 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 		brands?.length === 0;
 
 	const totalFormAnimals = +form.watch('females') + +form.watch('males');
+	const isBovineSpecie = selectedSpecie?.id === 4;
+	const isInvalidRingsForBovine =
+		isBovineSpecie &&
+		(form.formState.touchedFields.numberRings || form.formState.isSubmitted) &&
+		(selectedNumberRings === null ||
+			selectedNumberRings === undefined ||
+			Number.isNaN(+selectedNumberRings) ||
+			+selectedNumberRings < 0 ||
+			+selectedNumberRings > totalFormAnimals);
+
+	useEffect(() => {
+		if (!isBovineSpecie) {
+			if (selectedNumberRings !== null) form.setValue('numberRings', null);
+			return;
+		}
+
+		if (selectedNumberRings === null || selectedNumberRings === undefined) return;
+
+		const rings = +selectedNumberRings;
+		if (Number.isNaN(rings)) return;
+		if (rings > totalFormAnimals) {
+			form.setValue('numberRings', totalFormAnimals);
+		}
+	}, [form, isBovineSpecie, selectedNumberRings, totalFormAnimals]);
 
 	const isQuantitiesLessThan1 =
 		totalFormAnimals < 1 && (form.formState.touchedFields.males || form.formState.touchedFields.females || form.formState.isSubmitted);
@@ -348,6 +384,8 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 		corralTypesQuery,
 		isQuantitiesLessThan1,
 		isQuantityExceeds,
+		isBovineSpecie,
+		isInvalidRingsForBovine,
 		isInvalidBrand,
 		btnMessage,
 		showEmptyBrandsAlert,

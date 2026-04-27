@@ -1,10 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Hand, Check, Loader2 } from "lucide-react";
+import { Eye, Hand } from "lucide-react";
 import { ObservacionesModal } from "./observaciones-modal";
 import { MarcaInfo } from "../domain";
-import { QuantitySelector } from "@/components/quantity-selector";
 
 type AntemortemMobileCardProps = {
   item: {
@@ -21,13 +20,6 @@ type AntemortemMobileCardProps = {
   };
   showArgollas: boolean;
   onViewSignosClinicas: (marca: string, settingId: number) => void;
-  editingArgollasCorral?: string | null;
-  tempArgollasValue?: number;
-  savingArgollasCorral?: string | null;
-  onArgollasClick?: (corral: string, currentValue: number) => void;
-  onArgollasChange?: (value: number) => void;
-  onSaveArgollas?: () => void;
-  onCancelArgollas?: () => void;
   admissionDate?: string;
 };
 
@@ -35,13 +27,6 @@ export function AntemortemMobileCard({
   item, 
   showArgollas, 
   onViewSignosClinicas,
-  editingArgollasCorral,
-  tempArgollasValue = 0,
-  savingArgollasCorral,
-  onArgollasClick,
-  onArgollasChange,
-  onSaveArgollas,
-  onCancelArgollas,
   admissionDate
 }: AntemortemMobileCardProps) {
   // Función para extraer conteos H y M de una marca
@@ -162,48 +147,7 @@ export function AntemortemMobileCard({
             {showArgollas && (
               <div className="text-center bg-amber-50 rounded-md p-2">
                 <div className="text-sm text-muted-foreground mb-1">Argollas</div>
-                {editingArgollasCorral === item.corral ? (
-                  <div className="space-y-2">
-                    <QuantitySelector
-                      quantity={tempArgollasValue}
-                      onQuantityChanged={(val) => onArgollasChange?.(val)}
-                      title=""
-                      className="min-w-0 w-full"
-                    />
-                    <div className="flex gap-1 justify-center">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={onCancelArgollas}
-                        className="h-7 px-2 text-xs hover:bg-gray-100"
-                        disabled={savingArgollasCorral === item.corral}
-                      >
-                        ✕
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={onSaveArgollas}
-                        disabled={savingArgollasCorral === item.corral}
-                        className="h-7 px-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      >
-                        {savingArgollasCorral === item.corral ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Check className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => onArgollasClick?.(item.corral, item.argollas || 0)}
-                    className="text-amber-600 font-bold hover:text-amber-700 hover:underline w-full"
-                  >
-                    {item.argollas || 0}
-                  </button>
-                )}
+                <div className="text-amber-600 font-bold">{item.argollas || 0}</div>
               </div>
             )}
           </div>

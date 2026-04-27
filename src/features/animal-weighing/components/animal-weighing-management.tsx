@@ -2092,24 +2092,6 @@ export function AnimalWeighingManagement() {
                     const idB = b.idChannelSection || 0;
                     return idA - idB;
                   });
-
-                  // Log solo cuando hay destinatario asignado
-                  if (sortedRows.some((r) => r.addressee)) {
-                    console.log(
-                      `👑 Animal ${animalCode}:`,
-                      sortedRows.map((r) => ({
-                        section: r.sectionCode,
-                        prioridad:
-                          r.addressee && r.savedWeight === 0
-                            ? "1-LISTO PARA PESAR ⭐"
-                            : !r.addressee && r.savedWeight === 0
-                              ? "2-ESPERANDO"
-                              : "3-COMPLETADO",
-                        isPrimary: r.isPrimaryRow,
-                        peso: r.savedWeight,
-                      })),
-                    );
-                  }
                   return (
                     <Card
                       key={groupKey}
@@ -2562,24 +2544,6 @@ export function AnimalWeighingManagement() {
                             const idB = b.idChannelSection || 0;
                             return idA - idB;
                           });
-
-                          // Log solo cuando hay destinatario asignado
-                          if (sortedRows.some((r) => r.addressee)) {
-                            console.log(
-                              `👑 Animal ${animalCode} (DESKTOP):`,
-                              sortedRows.map((r) => ({
-                                section: r.sectionCode,
-                                prioridad:
-                                  r.addressee && r.savedWeight === 0
-                                    ? "1-LISTO PARA PESAR ⭐"
-                                    : !r.addressee && r.savedWeight === 0
-                                      ? "2-ESPERANDO"
-                                      : "3-COMPLETADO",
-                                isPrimary: r.isPrimaryRow,
-                                peso: r.savedWeight,
-                              })),
-                            );
-                          }
 
                           const rowSpan = sortedRows.length;
                           return sortedRows.map((row, index) => {

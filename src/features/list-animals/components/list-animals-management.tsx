@@ -58,7 +58,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DatePicker } from "@/components/ui/date-picker";
 import { parseLocalDateString, getLocalDateString } from "@/lib/formatDate";
 import { downloadListVehicleReport } from "../utils/download-list-vehicle-report";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { getAnimalStatisticsByProvinceReportService } from "../server/db/list-animals-by-filters.service";
 
 export function ListAnimalsManagement() {
   const [fechaIngreso, setFechaIngreso] = useState<Date | null>(null);
@@ -82,6 +85,42 @@ export function ListAnimalsManagement() {
   const [totalRecords, setTotalRecords] = useState(0);
   const [pageSize, setPageSize] = useState(10); // Tamaño de página configurable
   const isMobile = useIsMobile();
+
+  // Estado modal reporte de procedencia
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - i);
+  const [provinceReportOpen, setProvinceReportOpen] = useState(false);
+  const [provinceReportYear, setProvinceReportYear] = useState<string>("");
+  const [provinceReportSpecieId, setProvinceReportSpecieId] = useState<string>("");
+  const [isDownloadingProvince, setIsDownloadingProvince] = useState(false);
+
+  const handleDownloadProvinceReport = async () => {
+    if (!provinceReportSpecieId) {
+      toast.error("Debe seleccionar una especie");
+      return;
+    }
+    setIsDownloadingProvince(true);
+    try {
+      const { blob, filename } = await getAnimalStatisticsByProvinceReportService(
+        Number(provinceReportYear),
+        Number(provinceReportSpecieId)
+      );
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Reporte de procedencia descargado correctamente");
+      setProvinceReportOpen(false);
+    } catch {
+      toast.error("Error al descargar el reporte de procedencia");
+    } finally {
+      setIsDownloadingProvince(false);
+    }
+  };
 
   // Cargar las especies al montar el componente
   useEffect(() => {
@@ -246,6 +285,14 @@ export function ListAnimalsManagement() {
     setCurrentPage(1);
   };
 
+  const getAnimalsInGuide = (item: any): number => {
+    if (typeof item?.quantity === "number") return item.quantity;
+    if (typeof item?.certificate?.quantity === "number") {
+      return item.certificate.quantity;
+    }
+    return 0;
+  };
+
   const totals = {
     registros: totalRecords,
     totalEnGuia: allData.reduce(
@@ -399,7 +446,7 @@ export function ListAnimalsManagement() {
                 Animales en Guía
               </div>
               <div className="text-sm font-semibold">
-                {item.certificate?.quantity || 0}
+                {getAnimalsInGuide(item)}
               </div>
             </div>
           </div>
@@ -457,23 +504,25 @@ export function ListAnimalsManagement() {
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
-                title="Generar reporte de los registros actuales"
-                disabled={isLoading || apiData.length === 0}
+                title="Generar reportes"
+                disabled={isLoading}
               >
                 <FileUp className="h-4 w-4" />
-                <span className="ml-2">Reporte</span>
+                <span className="ml-2">Reportes</span>
                 <ChevronDown className="h-3 w-3 ml-1" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56"
+              className="w-60"
               sideOffset={5}
               alignOffset={0}
             >
+              <DropdownMenuLabel className="text-xs text-muted-foreground">Reporte Ingreso</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => handleDownloadReport('EXCEL')}
                 className="cursor-pointer"
+                disabled={apiData.length === 0}
               >
                 <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
                 <span>Descargar Excel</span>
@@ -481,10 +530,20 @@ export function ListAnimalsManagement() {
               <DropdownMenuItem
                 onClick={() => handleDownloadReport('PDF')}
                 className="cursor-pointer"
+                disabled={apiData.length === 0}
               >
                 <FileText className="h-4 w-4 mr-2 text-red-600" />
                 <span>Descargar PDF</span>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {/* <DropdownMenuLabel className="text-xs text-muted-foreground">Reporte Procedencia</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => setProvinceReportOpen(true)}
+                className="cursor-pointer"
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                <span>Descargar Excel</span>
+              </DropdownMenuItem> */}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -498,6 +557,68 @@ export function ListAnimalsManagement() {
           </Button>
         </div>
       </section>
+
+      {/* Modal Reporte Procedencia */}
+      <Dialog open={provinceReportOpen} onOpenChange={(open) => {
+        if (!open) {
+          setProvinceReportSpecieId("");
+          setProvinceReportYear("");
+        }
+        setProvinceReportOpen(open);
+      }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Reporte de Procedencia</DialogTitle>
+            <DialogDescription>
+              Seleccione la especie y el año para descargar el reporte de animales por provincia.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Especie <span className="text-red-500">*</span></Label>
+              <Select
+                value={provinceReportSpecieId}
+                onValueChange={setProvinceReportSpecieId}
+                disabled={isLoadingSpecies}
+              >
+                <SelectTrigger className="w-full bg-secondary">
+                  <SelectValue placeholder={isLoadingSpecies ? "Cargando especies..." : "Seleccione una especie"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSpecies.map((specie) => (
+                    <SelectItem key={specie.id} value={String(specie.id)}>
+                      {specie.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Año <span className="text-red-500">*</span></Label>
+              <Select value={provinceReportYear} onValueChange={setProvinceReportYear}>
+                <SelectTrigger className="w-full bg-secondary">
+                  <SelectValue placeholder="Seleccione un año" />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearOptions.map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              className="w-full"
+              onClick={handleDownloadProvinceReport}
+              disabled={isDownloadingProvince || !provinceReportSpecieId || !provinceReportYear}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              {isDownloadingProvince ? "Descargando..." : "Descargar Excel"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
@@ -657,7 +778,7 @@ export function ListAnimalsManagement() {
                 </div>
               </div>
             ) : (
-              <Table className="min-w-[1200px]">
+              <Table className="min-w-300">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-32 whitespace-normal leading-tight text-center sticky left-0  border-r">
@@ -713,10 +834,12 @@ export function ListAnimalsManagement() {
                       <span className="block text-xs font-semibold">
                         en faenamiento
                       </span>
-                      <div className="mt-2 grid grid-cols-3 gap-1 place-items-center text-[10px] border-t pt-1">
-                        <span className="font-bold">H</span>
-                        <span className="font-bold border-l pl-2">M</span>
-                        <span className="font-bold border-l pl-2">TOTAL</span>
+                      <div className="mt-2 flex items-center text-[10px] border-t pt-1 w-full">
+                        <span className="font-bold flex-1 text-center">H</span>
+                        <span className="w-px bg-current opacity-40 self-stretch mx-1" />
+                        <span className="font-bold flex-1 text-center">M</span>
+                        <span className="w-px bg-current opacity-40 self-stretch mx-1" />
+                        <span className="font-bold flex-1 text-center">TOTAL</span>
                       </div>
                     </TableHead>
                     <TableHead className="w-32 whitespace-normal leading-tight text-center">
@@ -730,13 +853,14 @@ export function ListAnimalsManagement() {
                     <TableHead className="w-28 whitespace-normal text-center">
                       <span className="text-xs font-semibold">Especie</span>
                     </TableHead>
-                    <TableHead className="w-40 whitespace-normal leading-tight text-center">
-                      <span className="block text-xs font-semibold">
-                        Identificación del
-                      </span>
-                      <span className="block text-xs font-semibold">
-                        Usuario al Camal
-                      </span>
+                    <TableHead className="w-28 whitespace-normal text-center border-l">
+                      <span className="text-xs font-semibold">Corral</span>
+                    </TableHead>
+                    <TableHead className="w-28 whitespace-normal text-center border-l">
+                      <span className="text-xs font-semibold">Marca</span>
+                    </TableHead>
+                    <TableHead className="w-28 whitespace-normal text-center border-l border-r">
+                      <span className="text-xs font-semibold">Códigos</span>
                     </TableHead>
                     <TableHead className="w-48 whitespace-normal text-center">
                       <span className="text-xs font-semibold">
@@ -748,7 +872,7 @@ export function ListAnimalsManagement() {
                 <TableBody>
                   {apiData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={11} className="text-center py-12">
+                      <TableCell colSpan={13} className="text-center py-12">
                         <div className="flex flex-col items-center gap-3">
                           <div className="rounded-full bg-muted p-3">
                             <Search className="h-6 w-6 text-muted-foreground" />
@@ -814,7 +938,7 @@ export function ListAnimalsManagement() {
                           </div>
                         </TableCell>
                         <TableCell className="text-center whitespace-normal font-semibold">
-                          {(item.males || 0) + (item.females || 0)}{" "}
+                          {getAnimalsInGuide(item)}
                         </TableCell>
                         <TableCell className="text-center whitespace-normal">
                           <Badge
@@ -824,20 +948,22 @@ export function ListAnimalsManagement() {
                             {item.species?.name || "N/A"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="whitespace-normal text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            <Badge className="bg-primary text-xs">
-                              {item.brand?.name || "N/A"}
+                        <TableCell className="whitespace-normal text-center text-xs font-semibold text-emerald-600 border-l">
+                          {item.statusCorrals?.corral?.name || "N/A"}
+                        </TableCell>
+                        <TableCell className="whitespace-normal text-center border-l">
+                          <Badge className="bg-primary text-xs">
+                            {item.brand?.name || "N/A"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="whitespace-normal text-center border-l border-r">
+                          {item.codes ? (
+                            <Badge variant="outline" className="text-xs font-mono font-semibold border-primary text-primary">
+                              {item.codes}
                             </Badge>
-                            <div className="text-xs font-semibold text-primary">
-                              {item.statusCorrals?.corral?.name || "N/A"}
-                            </div>
-                            {item.codes && (
-                              <div className="text-[10px] text-muted-foreground">
-                                {item.codes}
-                              </div>
-                            )}
-                          </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="whitespace-normal text-center text-sm max-w-48">
                           <div

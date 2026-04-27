@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { DynamicMetadata } from "@/components/dynamic-metadata";
+import { ChunkErrorHandler } from "@/components/chunk-error-handler";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -56,13 +57,14 @@ export default function RootLayout({
               {/* Inyectar la URL de la API en una variable global antes de que se cargue la app */}
               <script
                 dangerouslySetInnerHTML={{
-                  __html: `window.__NEXT_PUBLIC_API_URL__ = "${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}";`,
+                  __html: `window.__NEXT_PUBLIC_API_URL__ = "${process.env.NEXT_PUBLIC_API_URL ?? ''}";`,
                 }}
               />
             </head>
             <body
               className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
+              <ChunkErrorHandler />
               <DynamicMetadata />
               {children}
               <Toaster />

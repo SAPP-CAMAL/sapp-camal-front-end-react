@@ -64,6 +64,7 @@ import {
 
 export function SeizuresManagement() {
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  
   const { data: speciesData } = useAllSpecies();
 
   const [searchParams, setSearchParams] = useQueryStates(
@@ -378,7 +379,7 @@ export function SeizuresManagement() {
             header: () => (
               <div className="flex items-center gap-1">
                 <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                Observaciones (Partes / Pesos)
+                Observaciones (Partes / Patologias / Pesos)
               </div>
             ),
             cell: ({ row }) => {
@@ -387,18 +388,40 @@ export function SeizuresManagement() {
 
               if (products.length === 0 && subproducts.length === 0) return "—";
 
+              const buildLabel = (description: string, weight: string, pathology?: string | null) => {
+                if (!pathology) return `${description} (${weight}kg)`;
+                return `${description} - ${pathology} (${weight}kg)`;
+              };
+
               return (
-                <div className="flex flex-wrap gap-1 max-w-[400px]">
-                  {products.map((p, idx) => (
-                    <span key={`p-${idx}`} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                      {p.bodyPart?.description} ({p.weight}kg)
-                    </span>
-                  ))}
-                  {subproducts.map((s, idx) => (
-                    <span key={`s-${idx}`} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                      {s.speciesDisease?.productDisease?.product?.description || "Subproducto"} ({s.weight}kg)
-                    </span>
-                  ))}
+                <div className="flex flex-wrap gap-1 max-w-100">
+                  {products.map((p, idx) => {
+                    const description = p.bodyPart?.description || "Parte del cuerpo";
+                    const pathology = p.speciesDisease?.productDisease?.disease?.names;
+
+                    return (
+                      <span
+                        key={`p-${idx}`}
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200"
+                      >
+                        {buildLabel(description, p.weight, pathology)}
+                      </span>
+                    );
+                  })}
+                  {subproducts.map((s, idx) => {
+                    const description =
+                      s.speciesDisease?.productDisease?.product?.description || "Subproducto";
+                    const pathology = s.speciesDisease?.productDisease?.disease?.names;
+
+                    return (
+                      <span
+                        key={`s-${idx}`}
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200"
+                      >
+                        {buildLabel(description, s.weight, pathology)}
+                      </span>
+                    );
+                  })}
                 </div>
               );
             },
@@ -415,7 +438,7 @@ export function SeizuresManagement() {
               const brand = row.original.detailCertificateBrands?.detailsCertificateBrand?.brand;
               const fullName = brand?.introducer?.user?.person?.fullName;
               return (
-                <div className="flex flex-col max-w-[150px]">
+                <div className="flex flex-col max-w-37.5">
                   <span className="font-semibold text-xs truncate">
                     {fullName ? toCapitalize(fullName, true) : "—"}
                   </span>
@@ -479,6 +502,7 @@ export function SeizuresManagement() {
         }}
         isLoading={isLoading}
       />
+
     </div>
   );
 }

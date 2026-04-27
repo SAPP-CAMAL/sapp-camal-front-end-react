@@ -32,24 +32,33 @@ export function ObservacionesModal({
   const [error, setError] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
+  const extractBrandName = (label: string): string => {
+    // Formato esperado de label: "<MARCA> <machos>M <hembras>H"
+    // Ejemplo: "J37 1M 0H" -> "J37"
+    const matchWithCounts = label.match(/^(.*?)\s+\d+M\s+\d+H$/i);
+    if (matchWithCounts?.[1]) return matchWithCounts[1].trim();
+
+    return label.trim();
+  };
+
   const getMarcaName = (animalCode: string): string => {
     if (marcasInfo.length === 0) return "";
     if (marcasInfo.length === 1) {
-      const match = marcasInfo[0].label.match(/^([A-Z\s\u00f1\u00d1]+)/);
-      return match ? match[1].trim() : marcasInfo[0].label.split(' ')[0];
+      return extractBrandName(marcasInfo[0].label);
     }
-    return marcasInfo.map(m => {
-      const match = m.label.match(/^([A-Z\s\u00f1\u00d1]+)/);
-      return match ? match[1].trim() : m.label.split(' ')[0];
-    }).filter((value, index, self) => self.indexOf(value) === index).join(', ');
+
+    return marcasInfo
+      .map((m) => extractBrandName(m.label))
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .join(", ");
   };
 
   const getAllMarcasNames = (): string[] => {
     if (marcasInfo.length === 0) return [];
-    return marcasInfo.map(m => {
-      const match = m.label.match(/^([A-Z\s\u00f1\u00d1]+)/);
-      return match ? match[1].trim() : m.label.split(' ')[0];
-    }).filter((value, index, self) => self.indexOf(value) === index);
+
+    return marcasInfo
+      .map((m) => extractBrandName(m.label))
+      .filter((value, index, self) => self.indexOf(value) === index);
   };
 
   useEffect(() => {
@@ -67,10 +76,22 @@ export function ObservacionesModal({
       const response = await getObservationsByStatusCorralService(admissionDate, statusCorralId);
 
       if (response.code === 200) {
-        const withObservations = response.data.filter(
-          (obs) => (obs.observationsText && obs.observationsText.trim() !== "")
-            || (obs.deathCause && obs.deathCause.trim() !== "")
-        );
+        const withObservations = response.data.filter((obs) => {
+          const hasObservationText = Boolean(
+            obs.observationsText && obs.observationsText.trim() !== ""
+          );
+          const hasOpinions = Boolean(
+            obs.opinions &&
+              obs.opinions.some((opinion) => opinion && opinion.trim() !== "")
+          );
+          const hasDeathInfo = Boolean(
+            (obs.deathCause && obs.deathCause.trim() !== "") ||
+              obs.deathUse !== undefined ||
+              obs.deathConfiscation !== undefined
+          );
+
+          return hasObservationText || hasOpinions || hasDeathInfo;
+        });
         setObservationsData(withObservations);
       } else {
         setError("Error al cargar las observaciones");

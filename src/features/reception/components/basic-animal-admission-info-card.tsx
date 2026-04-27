@@ -143,6 +143,14 @@ export const BasicAnimalAdmissionInfoCard = ({
                 {animalAdmissionItem?.animalAdmission?.males || 0}
               </span>
             </div>
+            {selectedSpecie?.id === 4 && (
+              <div className="flex flex-col">
+                <span className="font-medium text-muted-foreground">
+                  Argollas:
+                </span>
+                <span>{animalAdmissionItem?.animalAdmission?.numberRings ?? 0}</span>
+              </div>
+            )}
             <div className="flex flex-col">
               <span className="font-medium text-muted-foreground">
                 Fecha Faenamiento:
