@@ -50,6 +50,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const runtimeApiUrl =
+    process.env.NEXT_PUBLIC_API_URL ??
+    process.env.API_URL_LOCAL_FALLBACK ??
+    "";
+
   return (
     <Providers>
       <NuqsAdapter>
@@ -59,7 +64,7 @@ export default function RootLayout({
               {/* Inyectar la URL de la API en una variable global antes de que se cargue la app */}
               <script
                 dangerouslySetInnerHTML={{
-                  __html: `window.__NEXT_PUBLIC_API_URL__ = "${process.env.NEXT_PUBLIC_API_URL ?? ''}";`,
+                  __html: `window.__NEXT_PUBLIC_API_URL__ = "${runtimeApiUrl}";`,
                 }}
               />
             </head>

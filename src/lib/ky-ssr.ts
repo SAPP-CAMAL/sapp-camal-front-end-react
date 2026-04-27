@@ -9,10 +9,12 @@ function normalizeApiBase(raw: string | undefined) {
 }
 
 function getSsrApiBases() {
-    const configured = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
+    const configured = normalizeApiBase(
+        process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL_LOCAL_FALLBACK
+    )
 
     if (!configured) {
-        throw new Error("NEXT_PUBLIC_API_URL no esta configurado. Define esta variable en .env.local.")
+        throw new Error("NEXT_PUBLIC_API_URL o API_URL_LOCAL_FALLBACK no estan configurados.")
     }
 
     return [configured]
