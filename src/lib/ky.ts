@@ -19,11 +19,20 @@ function readConfiguredApiBase(): string | undefined {
     return undefined
 }
 
-function getRequiredApiBase(): string {
-    const configured = readConfiguredApiBase()
-    if (configured) return configured
+function getClientApiBases(): string[] {
+    const bases: string[] = []
 
-    throw new Error("NEXT_PUBLIC_API_URL no esta configurado. Define esta variable en .env.local.")
+    const configured = readConfiguredApiBase()
+    if (configured) {
+        bases.push(configured)
+    }
+
+    // Fallback por proxy interno de Next para no bloquear llamadas del cliente.
+    if (!bases.includes("/api/proxy")) {
+        bases.push("/api/proxy")
+    }
+
+    return bases
 }
 
 function readCookie(name: string): string | undefined {
@@ -135,10 +144,6 @@ function looksLikeSessionExpired(status: number, bodyText: string): boolean {
         normalized.includes("sesión") ||
         normalized.includes("unauthorized")
     )
-}
-
-function getClientApiBases(): string[] {
-    return [getRequiredApiBase()]
 }
 
 // IMPORTANTE: No evaluamos API_BASES al cargar el módulo porque la variable global
