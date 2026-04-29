@@ -10,19 +10,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, Loader2, X, GripVertical, Venus, Mars, BringToFront, CircleCheckBig, FileSpreadsheet, FileUp } from "lucide-react";
+import { Calendar, CalendarIcon, ChevronDown, Coins, Eye, FileText, Hash, Info, User, Users, Save, Loader2, X, GripVertical, Venus, Mars, BringToFront, CircleCheckBig, FileSpreadsheet, FileUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { QuantitySelector } from "@/components/quantity-selector";
 import { format } from "date-fns";
 import { AntemortemRow, Linea, computeTotals } from "../domain";
 import { es } from "date-fns/locale";
 import SignosClinicosModal from "./signos-clinicos-modal";
 import { ObservacionesModal } from "./observaciones-modal";
 import { AntemortemMobileCard } from "./antemortem-mobile-card";
-import { getActiveLinesDataService, getAntemortemDataService } from "../server/db/antemortem.service";
+import { getActiveLinesDataService, getAntemortemDataService, updateArgollasService } from "../server/db/antemortem.service";
 import { LineItem, mapLineItemToLineaType } from "../domain/line.types";
 import { DatePicker } from "@/components/ui/date-picker";
 import { downloadStatusCorralsReport, downloadAntemortemAgrocalidadReport } from "../utils/download-antemortem-report";
-import { isToday } from "@/lib/date-utils";
+import { isTodayOrTomorrow } from "@/lib/date-utils";
 
 function getLineLabel(line: LineItem): string {
   const name = line.name?.trim() || `Línea ${line.id}`;
@@ -106,6 +107,11 @@ export function AntemortemManagement() {
   const [signosMarca, setSignosMarca] = useState<string>("");
   const [signosIdSpecie, setSignosIdSpecie] = useState<number>(1); // Default: Bovinos = 1
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Estados para editar argollas
+  const [editingArgollasCorral, setEditingArgollasCorral] = useState<string | null>(null);
+  const [tempArgollasValue, setTempArgollasValue] = useState<number>(0);
+  const [savingArgollasCorral, setSavingArgollasCorral] = useState<string | null>(null);
 
   // Estados para resumen flotante y draggable
   const [showFloatingTotals, setShowFloatingTotals] = useState(true);
@@ -313,7 +319,53 @@ export function AntemortemManagement() {
 
   const showArgollas = linea === "Bovinos";
 
-  // Argollas queda solo informativo: se muestra tal cual viene del backend.
+  // Verificar si la fecha seleccionada es hoy o mañana (solo se puede editar en esas fechas)
+  const canEdit = isTodayOrTomorrow(fecha);
+
+  // Funciones para editar argollas
+  const handleArgollasClick = (corral: string, currentValue: number) => {
+    // Solo permitir edición si es la fecha actual
+    if (!canEdit) return;
+
+    setEditingArgollasCorral(corral);
+    setTempArgollasValue(currentValue || 0);
+  };
+
+  const handleSaveArgollas = async (row: AntemortemRow) => {
+    if (!row.statusCorralId) {
+      return;
+    }
+
+    try {
+      setSavingArgollasCorral(row.corral);
+
+      const response = await updateArgollasService(row.statusCorralId, tempArgollasValue);
+
+      if (response.code === 200) {
+        // Actualizar los datos localmente
+        setAntemortemData(prevData =>
+          prevData.map(item =>
+            item.corral === row.corral
+              ? { ...item, argollas: tempArgollasValue }
+              : item
+          )
+        );
+
+        // Limpiar estado de edición
+        setEditingArgollasCorral(null);
+        setTempArgollasValue(0);
+      }
+    } catch (error) {
+      // Error silencioso
+    } finally {
+      setSavingArgollasCorral(null);
+    }
+  };
+
+  const handleCancelArgollas = () => {
+    setEditingArgollasCorral(null);
+    setTempArgollasValue(0);
+  };
 
   const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
       if (selectedLineId === null) {
@@ -650,7 +702,55 @@ export function AntemortemManagement() {
                 </TableCell>
                 {showArgollas && (
                   <TableCell className="text-center border">
-                    <span className="font-medium text-amber-600">{r.argollas ?? 0}</span>
+                    {editingArgollasCorral === r.corral ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <QuantitySelector
+                          quantity={tempArgollasValue}
+                          onQuantityChanged={setTempArgollasValue}
+                          title="Argollas"
+                          className="min-w-[180px]"
+                        />
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleCancelArgollas}
+                            className="h-8 w-8 p-0 hover:bg-gray-100"
+                            title="Cancelar"
+                          >
+                            ✕
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => handleSaveArgollas(r)}
+                            disabled={savingArgollasCorral === r.corral}
+                            className="h-8 w-8 p-0 bg-primary hover:bg-primary/80 text-white"
+                            title="Guardar argollas"
+                          >
+                            {savingArgollasCorral === r.corral ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Save  className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleArgollasClick(r.corral, r.argollas ?? 0)}
+                        className={`font-medium w-full ${
+                          canEdit
+                            ? "text-amber-600 hover:text-amber-700 hover:underline cursor-pointer"
+                            : "text-gray-500 cursor-not-allowed"
+                        }`}
+                        disabled={!canEdit}
+                        title={canEdit ? "Editar argollas" : "Solo se puede editar hoy o mañana"}
+                      >
+                        {r.argollas ?? 0}
+                      </button>
+                    )}
                   </TableCell>
                 )}
                 <TableCell className="text-center text-blue-600 font-medium border bg-blue-100/40">{r.machos}</TableCell>
@@ -680,6 +780,13 @@ export function AntemortemManagement() {
                 key={idx}
                 item={item}
                 showArgollas={showArgollas}
+                editingArgollasCorral={editingArgollasCorral}
+                tempArgollasValue={tempArgollasValue}
+                savingArgollasCorral={savingArgollasCorral}
+                onArgollasClick={handleArgollasClick}
+                onArgollasChange={setTempArgollasValue}
+                onSaveArgollas={() => handleSaveArgollas(item)}
+                onCancelArgollas={handleCancelArgollas}
                 admissionDate={format(fecha, "yyyy-MM-dd")}
                 onViewSignosClinicas={(marca, settingId) => {
                   setSignosMarca(marca);
@@ -806,6 +913,7 @@ export function AntemortemManagement() {
         marcaLabel={signosMarca}
         settingCertificateBrandsId={signosSettingId}
         idSpecie={signosIdSpecie}
+        readOnly={!canEdit}
         onSave={async () => {
           setIsRefreshing(true);
           if (selectedLineId !== null) {
