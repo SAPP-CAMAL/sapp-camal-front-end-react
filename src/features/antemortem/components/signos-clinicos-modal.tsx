@@ -42,6 +42,7 @@ type Props = {
   idSpecie: number;
   initial?: Record<string, AnimalSignsSelection>;
   onSave?: (sel: Record<string, AnimalSignsSelection>) => void;
+  readOnly?: boolean;
 };
 
 export function SignosClinicosModal({ 
@@ -51,7 +52,8 @@ export function SignosClinicosModal({
   settingCertificateBrandsId, 
   idSpecie, 
   initial, 
-  onSave 
+  onSave,
+  readOnly = false
 }: Props) {
   const [animales, setAnimales] = useState<AnimalDetail[]>([]);
   const [isLoadingAnimales, setIsLoadingAnimales] = useState(false);
@@ -1119,6 +1121,12 @@ export function SignosClinicosModal({
           </div>
         </div>
         <div className="border-t p-4 bg-background/95 backdrop-blur">
+          {readOnly && (
+            <div className="mb-3 flex items-center gap-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-amber-700 text-xs">
+              <Lock className="h-3.5 w-3.5 flex-shrink-0" />
+              Solo lectura — la edición está disponible únicamente para hoy y mañana.
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-sm text-muted-foreground hidden sm:block">
               Animal {currentId}: {currentCount} {currentCount === 1 ? 'signo' : 'signos'}
@@ -1127,6 +1135,7 @@ export function SignosClinicosModal({
               <Button 
                 variant="outline" 
                 onClick={handleClear}
+                disabled={readOnly}
                 className="w-full sm:w-auto h-11 sm:h-10"
               >
                 Limpiar
@@ -1140,8 +1149,9 @@ export function SignosClinicosModal({
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={isSaving || isLoadingAnimalData || (currentAnimalHasSavedData && !hasUnsavedChanges)}
+                disabled={readOnly || isSaving || isLoadingAnimalData || (currentAnimalHasSavedData && !hasUnsavedChanges)}
                 className="bg-primary hover:bg-primary w-full sm:w-auto h-11 sm:h-10 font-semibold"
+                title={readOnly ? 'Solo se puede guardar para hoy o mañana' : undefined}
               >
                 {isSaving ? (
                   <>

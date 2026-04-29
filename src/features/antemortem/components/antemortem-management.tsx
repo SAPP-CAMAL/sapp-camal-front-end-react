@@ -23,7 +23,7 @@ import { getActiveLinesDataService, getAntemortemDataService, updateArgollasServ
 import { LineItem, mapLineItemToLineaType } from "../domain/line.types";
 import { DatePicker } from "@/components/ui/date-picker";
 import { downloadStatusCorralsReport, downloadAntemortemAgrocalidadReport } from "../utils/download-antemortem-report";
-import { isToday } from "@/lib/date-utils";
+import { isTodayOrTomorrow } from "@/lib/date-utils";
 
 function getLineLabel(line: LineItem): string {
   const name = line.name?.trim() || `Línea ${line.id}`;
@@ -319,8 +319,8 @@ export function AntemortemManagement() {
 
   const showArgollas = linea === "Bovinos";
 
-  // Verificar si la fecha seleccionada es hoy (solo se puede editar hoy)
-  const canEdit = isToday(fecha);
+  // Verificar si la fecha seleccionada es hoy o mañana (solo se puede editar en esas fechas)
+  const canEdit = isTodayOrTomorrow(fecha);
 
   // Funciones para editar argollas
   const handleArgollasClick = (corral: string, currentValue: number) => {
@@ -746,7 +746,7 @@ export function AntemortemManagement() {
                             : "text-gray-500 cursor-not-allowed"
                         }`}
                         disabled={!canEdit}
-                        title={canEdit ? "Editar argollas" : "Solo se puede editar en la fecha actual"}
+                        title={canEdit ? "Editar argollas" : "Solo se puede editar hoy o mañana"}
                       >
                         {r.argollas ?? 0}
                       </button>
@@ -913,6 +913,7 @@ export function AntemortemManagement() {
         marcaLabel={signosMarca}
         settingCertificateBrandsId={signosSettingId}
         idSpecie={signosIdSpecie}
+        readOnly={!canEdit}
         onSave={async () => {
           setIsRefreshing(true);
           if (selectedLineId !== null) {
