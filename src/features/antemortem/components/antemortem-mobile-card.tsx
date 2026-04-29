@@ -1,9 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Hand } from "lucide-react";
+import { Eye, Hand, Save, Loader2 } from "lucide-react";
 import { ObservacionesModal } from "./observaciones-modal";
 import { MarcaInfo } from "../domain";
+import { QuantitySelector } from "@/components/quantity-selector";
 
 type AntemortemMobileCardProps = {
   item: {
@@ -21,13 +22,29 @@ type AntemortemMobileCardProps = {
   showArgollas: boolean;
   onViewSignosClinicas: (marca: string, settingId: number) => void;
   admissionDate?: string;
+  editingArgollasCorral?: string | null;
+  tempArgollasValue?: number;
+  savingArgollasCorral?: string | null;
+  onArgollasClick?: (corral: string, currentValue: number) => void;
+  onArgollasChange?: (value: number) => void;
+  onSaveArgollas?: () => void;
+  onCancelArgollas?: () => void;
+  canEdit?: boolean;
 };
 
 export function AntemortemMobileCard({ 
   item, 
   showArgollas, 
   onViewSignosClinicas,
-  admissionDate
+  admissionDate,
+  editingArgollasCorral,
+  tempArgollasValue,
+  savingArgollasCorral,
+  onArgollasClick,
+  onArgollasChange,
+  onSaveArgollas,
+  onCancelArgollas,
+  canEdit = true
 }: AntemortemMobileCardProps) {
   // Función para extraer conteos H y M de una marca
   const extractHMCounts = (m: string) => {
@@ -145,9 +162,55 @@ export function AntemortemMobileCard({
               <div className="text-rose-600 font-bold">{item.hembras}</div>
             </div>
             {showArgollas && (
-              <div className="text-center bg-amber-50 rounded-md p-2">
+              <div className="text-center bg-amber-50 rounded-md p-2 flex flex-col justify-center items-center">
                 <div className="text-sm text-muted-foreground mb-1">Argollas</div>
-                <div className="text-amber-600 font-bold">{item.argollas || 0}</div>
+                {editingArgollasCorral === item.corral ? (
+                  <div className="flex flex-col items-center gap-2 w-full">
+                    <QuantitySelector
+                      quantity={tempArgollasValue || 0}
+                      onQuantityChanged={onArgollasChange || (() => {})}
+                      className="w-full"
+                      title="Argollas"
+                    />
+                    <div className="flex gap-1 justify-center w-full">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={onCancelArgollas}
+                        className="h-8 flex-1 bg-white hover:bg-gray-100"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={onSaveArgollas}
+                        disabled={savingArgollasCorral === item.corral}
+                        className="h-8 flex-1 bg-primary hover:bg-primary/80 text-white"
+                      >
+                        {savingArgollasCorral === item.corral ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => canEdit && onArgollasClick?.(item.corral, item.argollas ?? 0)}
+                    className={`font-bold w-full ${
+                      canEdit
+                        ? "text-amber-600 hover:underline cursor-pointer"
+                        : "text-gray-500 cursor-not-allowed"
+                    }`}
+                    disabled={!canEdit}
+                    title={canEdit ? "Editar argollas" : "Solo se puede editar hoy o mañana"}
+                  >
+                    {item.argollas || 0}
+                  </button>
+                )}
               </div>
             )}
           </div>
