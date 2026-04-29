@@ -788,6 +788,7 @@ export function AntemortemManagement() {
                 onSaveArgollas={() => handleSaveArgollas(item)}
                 onCancelArgollas={handleCancelArgollas}
                 admissionDate={format(fecha, "yyyy-MM-dd")}
+                canEdit={canEdit}
                 onViewSignosClinicas={(marca, settingId) => {
                   setSignosMarca(marca);
                   setSignosSettingId(settingId);
