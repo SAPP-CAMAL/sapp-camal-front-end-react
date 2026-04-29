@@ -198,12 +198,60 @@ export function AnimalSelectionModal({
   ]);
 
   const handleAnimalToggle = (animalId: string) => {
+    const defaultWeight = avgOrgansData?.data?.avgWeight
+      ? parseFloat(String(avgOrgansData.data.avgWeight))
+      : 0;
+
     setAnimalSelections((prev) =>
-      prev.map((animal) =>
-        animal.animalId === animalId
-          ? { ...animal, selected: !animal.selected }
-          : animal
-      )
+      prev.map((animal) => {
+        if (animal.animalId !== animalId) return animal;
+
+        const nextSelected = !animal.selected;
+
+        if (nextSelected) {
+          return { ...animal, selected: true };
+        }
+
+        const resetAnatomicalPercentages: Record<number, number> = {
+          ...animal.anatomicalPercentages,
+        };
+        const resetAnatomicalWeights: Record<number, number> = {
+          ...animal.anatomicalWeights,
+        };
+        const resetAnatomicalAdverseSituations: Record<number, string> = {
+          ...animal.anatomicalAdverseSituations,
+        };
+        const resetAnatomicalDiseaseComment: Record<number, string> = {
+          ...animal.anatomicalDiseaseComment,
+        };
+        const resetSelectedAnatomicalLocations: Record<number, boolean> = {
+          ...animal.selectedAnatomicalLocations,
+        };
+
+        if (anatomicalLocationsData?.data) {
+          anatomicalLocationsData.data.forEach((location) => {
+            resetAnatomicalPercentages[location.id] = 40;
+            resetAnatomicalWeights[location.id] = defaultWeight;
+            resetAnatomicalAdverseSituations[location.id] = "";
+            resetAnatomicalDiseaseComment[location.id] = "";
+            resetSelectedAnatomicalLocations[location.id] = false;
+          });
+        }
+
+        return {
+          ...animal,
+          selected: false,
+          percentage: 40,
+          weight: defaultWeight,
+          adverseSituation: "",
+          diseaseComment: "",
+          anatomicalPercentages: resetAnatomicalPercentages,
+          anatomicalWeights: resetAnatomicalWeights,
+          anatomicalAdverseSituations: resetAnatomicalAdverseSituations,
+          anatomicalDiseaseComment: resetAnatomicalDiseaseComment,
+          selectedAnatomicalLocations: resetSelectedAnatomicalLocations,
+        };
+      })
     );
   };
 
@@ -407,18 +455,24 @@ export function AnimalSelectionModal({
       return;
     }
 
-    // Solo procesar los animales modificados que están seleccionados
+    // Separar animales que quedaron seleccionados y los que se desmarcaron
     const selectedModified = modifiedAnimals.filter((a) => a.selected);
+    const deselectedModified = modifiedAnimals.filter((a) => {
+      const initial = initialSelections.find((i) => i.animalId === a.animalId);
+      return initial?.selected && !a.selected;
+    });
 
-    if (selectedModified.length === 0) {
-      toast.info("No hay animales seleccionados para guardar");
+    const totalAnimals = selectedModified.length + deselectedModified.length;
+
+    if (totalAnimals === 0) {
+      toast.info("No hay cambios para guardar");
       return;
     }
 
     let processedCount = 0;
-    const totalAnimals = selectedModified.length;
+    const animalsToProcess = [...selectedModified, ...deselectedModified];
 
-    selectedModified.forEach((animal) => {
+    animalsToProcess.forEach((animal) => {
       const existingPostmortem = postmortemData?.data?.find(
         (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
       );
@@ -427,13 +481,87 @@ export function AnimalSelectionModal({
         (sub) => sub.idSpeciesDisease === idSpeciesDisease
       );
 
-      // Construir subProductsPostmortem según si hay ubicaciones anatómicas o no
-      let subProductsPostmortem: SubProductPostmortem[] = [];
-
       // Obtener el estado inicial del animal para comparar
       const initialAnimal = initialSelections.find(
         (i) => i.animalId === animal.animalId
       );
+
+      // Si se desmarcó, enviar desactivación de subproductos
+      if (!animal.selected) {
+        if (!existingPostmortem) {
+          processedCount++;
+          if (processedCount === totalAnimals) {
+            toast.success(
+              `Se ${totalAnimals === 1 ? "actualizó" : "actualizaron"} ${totalAnimals} ${
+                totalAnimals === 1 ? "animal" : "animales"
+              } correctamente`
+            );
+            onSave(totalAnimals);
+            onClose();
+          }
+          return;
+        }
+
+        let subProductsPostmortem: SubProductPostmortem[] = [];
+
+        if (anatomicalLocationsData?.data && anatomicalLocationsData.data.length > 0) {
+          anatomicalLocationsData.data.forEach((location) => {
+            if (initialAnimal?.selectedAnatomicalLocations?.[location.id]) {
+              subProductsPostmortem.push({
+                idSpeciesDisease: idSpeciesDisease,
+                presence: 0,
+                percentageAffection: initialAnimal.anatomicalPercentages?.[location.id] || 0,
+                weight: initialAnimal.anatomicalWeights?.[location.id] || 0,
+                status: false,
+                idProductAnatomicalLocation: location.id,
+              });
+            }
+          });
+        }
+
+        if (subProductsPostmortem.length === 0) {
+          subProductsPostmortem = [
+            {
+              idSpeciesDisease: idSpeciesDisease,
+              presence: 0,
+              percentageAffection: 0,
+              weight: 0,
+              status: false,
+            },
+          ];
+        }
+
+        updatePostmortem(
+          {
+            id: existingPostmortem.id,
+            request: {
+              status: true,
+              subProductsPostmortem,
+            },
+          },
+          {
+            onSuccess: () => {
+              processedCount++;
+              if (processedCount === totalAnimals) {
+                toast.success(
+                  `Se ${
+                    totalAnimals === 1 ? "actualizó" : "actualizaron"
+                  } ${totalAnimals} ${
+                    totalAnimals === 1 ? "animal" : "animales"
+                  } correctamente`
+                );
+                onSave(totalAnimals);
+                onClose();
+              }
+            },
+          }
+        );
+
+        return;
+      }
+
+      // Construir subProductsPostmortem según si hay ubicaciones anatómicas o no
+      let subProductsPostmortem: SubProductPostmortem[] = [];
 
       if (anatomicalLocationsData?.data && anatomicalLocationsData.data.length > 0) {
         // Si hay ubicaciones anatómicas, crear un SubProductPostmortem solo para ubicaciones NUEVAS o MODIFICADAS
@@ -453,8 +581,8 @@ export function AnimalSelectionModal({
               initialAnimal?.anatomicalDiseaseComment?.[location.id] !== animal.anatomicalDiseaseComment?.[location.id]; // Cambió comentario enfermedad
 
             if (hasChanged) {
-              const adverseSituation = animal?.anatomicalAdverseSituations?.[location.id] ?? '';
-              const diseaseComment = animal?.anatomicalDiseaseComment?.[location.id] ?? '';
+              const adverseSituation = (animal?.anatomicalAdverseSituations?.[location.id] ?? "").trim();
+              const diseaseComment = (animal?.anatomicalDiseaseComment?.[location.id] ?? "").trim();
 
               // Validate if patologia is 'OTROS', adverseSituation is required
               if (patologia?.toUpperCase() === 'OTROS' && adverseSituation.length === 0) {
@@ -467,8 +595,8 @@ export function AnimalSelectionModal({
                 presence: 1,
                 percentageAffection: animal.anatomicalPercentages?.[location.id] || 0,
                 weight: animal.anatomicalWeights?.[location.id] || 0,
-                adverseSituation: adverseSituation.length > 0 ? adverseSituation : undefined,
-                diseaseComment: diseaseComment.length > 0 ? diseaseComment : undefined,
+                adverseSituation: adverseSituation,
+                diseaseComment: diseaseComment,
                 status: true,
                 idProductAnatomicalLocation: location.id,
               });
@@ -502,17 +630,20 @@ export function AnimalSelectionModal({
 					return;
 				}
 
-				subProductsPostmortem = [
-					{
-						idSpeciesDisease: idSpeciesDisease,
-						presence: 1,
-						percentageAffection: animal.percentage,
-						weight: animal.weight || 0,
-						adverseSituation: animal.adverseSituation?.length > 0 ? animal.adverseSituation : undefined,
-						diseaseComment: animal.diseaseComment?.length > 0 ? animal.diseaseComment : undefined,
-						status: true,
-					},
-				];
+        const adverseSituation = (animal.adverseSituation ?? "").trim();
+        const diseaseComment = (animal.diseaseComment ?? "").trim();
+
+        subProductsPostmortem = [
+          {
+            idSpeciesDisease: idSpeciesDisease,
+            presence: 1,
+            percentageAffection: animal.percentage,
+            weight: animal.weight || 0,
+            adverseSituation: adverseSituation,
+            diseaseComment: diseaseComment,
+            status: true,
+          },
+        ];
 			}
 
       if (existingPostmortem && existingSubProduct) {

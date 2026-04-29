@@ -1702,10 +1702,10 @@ export function OrderEntryManagement() {
 
           {/* Footer Fijo */}
           <div className="border-t px-6 py-4 bg-gray-50 shrink-0 z-30 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between gap-4">
+            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:flex-nowrap justify-between gap-4">
               <Button
                 variant="ghost"
-                className="w-full sm:w-auto h-12 text-gray-400 hover:text-gray-600 font-black uppercase text-xs tracking-widest"
+                className="w-full sm:w-auto h-12 text-gray-400 hover:text-gray-600 font-black uppercase text-[11px] sm:text-xs tracking-widest sm:whitespace-nowrap"
                 onClick={() => {
                   setIsProductModalOpen(false);
                   setSelectedProducts(new Set());
@@ -1715,10 +1715,10 @@ export function OrderEntryManagement() {
                 Cerrar sin guardar
               </Button>
               
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:flex-nowrap gap-3">
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto h-12 border-teal-600 text-teal-700 hover:bg-teal-50 font-black px-8 shadow-sm text-xs tracking-widest uppercase"
+                  className="w-full sm:w-auto h-12 border-teal-600 text-teal-700 hover:bg-teal-50 font-black px-4 sm:px-6 md:px-8 shadow-sm text-[11px] sm:text-xs tracking-widest uppercase sm:whitespace-nowrap shrink-0"
                   onClick={() => {
                     if (currentAnimalId) {
                       const animal = animalStock.find((a) => a.id === currentAnimalId);
@@ -1776,30 +1776,27 @@ export function OrderEntryManagement() {
                   Finalizar Selección
                 </Button>
 
-                <Button
-                  className="w-full sm:w-auto h-12 bg-teal-600 hover:bg-teal-700 text-white font-black px-10 shadow-lg shadow-teal-100 text-xs tracking-widest uppercase"
-                  onClick={handleSaveProductsForAnimal}
-                >
-                  <div className="flex items-center">
-                    <span>Siguiente</span>
-                    {(() => {
-                      const cachedSelections = productSelectionsCache.get(currentAnimalId!) || {
-                        productos: new Set<number>(),
-                        subproductos: new Set<number>()
-                      };
-                      const currentProductos = productType === "producto" ? selectedProducts : cachedSelections.productos;
-                      const currentSubproductos = productType === "subproducto" ? selectedProducts : cachedSelections.subproductos;
-                      const totalCount = new Set([...currentProductos, ...currentSubproductos]).size;
-                      
-                      return totalCount > 0 ? (
-                        <div className="ml-3 bg-teal-400 text-teal-900 h-6 min-w-[24px] rounded-md flex items-center justify-center px-1 font-black text-xs">
-                          {totalCount}
-                        </div>
-                      ) : null;
-                    })()}
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </div>
-                </Button>
+                {(() => {
+                  const totalCount = selectedProducts.size;
+
+                  return (
+                    <Button
+                      className="w-full sm:w-auto h-12 bg-teal-600 hover:bg-teal-700 text-white font-black px-6 sm:px-8 md:px-10 shadow-lg shadow-teal-100 text-[11px] sm:text-xs tracking-widest uppercase sm:whitespace-nowrap shrink-0 gap-3"
+                      onClick={handleSaveProductsForAnimal}
+                      disabled={totalCount === 0}
+                    >
+                      <span>Siguiente</span>
+                      <div
+                        className={`h-6 w-6 rounded-md flex items-center justify-center font-black text-xs transition-opacity ${
+                          totalCount > 0 ? "bg-teal-400 text-teal-900 opacity-100" : "bg-transparent text-transparent opacity-0"
+                        }`}
+                      >
+                        {totalCount}
+                      </div>
+                      <ChevronRight className="w-5 h-5" />
+                    </Button>
+                  );
+                })()}
               </div>
             </div>
           </div>
