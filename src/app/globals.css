@@ -252,6 +252,51 @@ aside[class*="sidebar"] {
   transform: none !important;
 }
 
+/* ========================================
+   PRINT - SOLO TICKET
+   ======================================== */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  body * {
+    display: none !important;
+  }
+
+  .print-ticket-body {
+    display: block !important;
+    visibility: visible !important;
+    width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-ticket-body * {
+    display: initial !important;
+    visibility: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-ticket-body svg,
+  .print-ticket-body canvas,
+  .print-ticket-body img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+}
+
 /* Trigger button del sidebar */
 button[data-sidebar="trigger"],
 button[class*="sidebar-trigger"] {

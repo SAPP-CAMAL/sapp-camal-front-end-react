@@ -67,6 +67,7 @@ export function PartialConfiscationModal({
   // Obtener unidad de medida desde la API
   const { data: unitMeasureData } = useUnitMeasure();
   const unitSymbol = unitMeasureData?.data?.symbol || "kg";
+  const isSavingOrUpdating = isSaving;
 
   // Verificar si ya existen datos guardados de decomiso parcial
   const hasExistingData = useMemo(() => {
@@ -264,7 +265,7 @@ export function PartialConfiscationModal({
           weight: parseFloat(part.weight),
           isTotalConfiscation: false, // Decomiso parcial
           status: true,
-          bodyPartComment: ((part?.bodyPartComment ?? '').length) > 0 ? part.bodyPartComment : undefined,
+          bodyPartComment: (part?.bodyPartComment ?? "").trim(),
         })
       );
 
@@ -484,7 +485,11 @@ export function PartialConfiscationModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSavingOrUpdating}
+          >
             {canEdit ? "Cancelar" : "Cerrar"}
           </Button>
           {canEdit && (

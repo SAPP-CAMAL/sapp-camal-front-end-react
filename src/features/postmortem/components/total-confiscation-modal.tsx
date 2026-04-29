@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Info } from "lucide-react";
 import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
-import { useSavePostmortem } from "../hooks/use-save-postmortem";
+import { useSavePostmortem, useUpdatePostmortem } from "../hooks/use-save-postmortem";
 import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
 import type { ProductPostmortem } from "../domain/save-postmortem.types";
 import { toast } from "sonner";
@@ -49,6 +49,8 @@ export function TotalConfiscationModal({
 }: TotalConfiscationModalProps) {
   const { data: animalsData, isLoading } = useAnimalsByBrand(certId);
   const { mutate: savePostmortem, isPending: isSaving } = useSavePostmortem();
+  const { mutate: updatePostmortem, isPending: isUpdating } =
+    useUpdatePostmortem();
 
   // Obtener datos guardados de postmortem
   const { data: postmortemData } = usePostmortemByBrand(certId);
@@ -56,6 +58,10 @@ export function TotalConfiscationModal({
   // Obtener unidad de medida desde la API
   const { data: unitMeasureData } = useUnitMeasure();
   const unitSymbol = unitMeasureData?.data?.symbol || "kg";
+  const isSavingOrUpdating = isSaving || isUpdating;
+
+  const [isUpdatingAll, setIsUpdatingAll] = useState(false);
+  const updateAllRemainingRef = useRef(0);
 
   const [animalWeights, setAnimalWeights] = useState<AnimalWeight[]>([]);
 
@@ -110,10 +116,79 @@ export function TotalConfiscationModal({
     );
   };
 
+  const hasAnimalChanges = (animal: AnimalWeight) => {
+    const savedData = postmortemData?.data?.find(
+      (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
+    );
+    const savedTotal = savedData?.productPostmortem?.find(
+      (prod) => prod.isTotalConfiscation === true
+    );
+
+    const savedSelected = !!savedTotal;
+    if (animal.selected !== savedSelected) return true;
+    if (!animal.selected && !savedSelected) return false;
+
+    const savedWeight = savedTotal ? String(savedTotal.weight) : "";
+    const savedComment = (savedTotal?.bodyPartComment ?? "").trim();
+    const currentComment = (animal.bodyPartComment ?? "").trim();
+
+    if (String(animal.weight ?? "") !== savedWeight) return true;
+    if (currentComment !== savedComment) return true;
+
+    return false;
+  };
+
   const handleSaveAnimal = (animalId: string) => {
     const animal = animalWeights.find((a) => a.animalId === animalId);
+    const existingPostmortem = postmortemData?.data?.find(
+      (item) => item.idDetailsSpeciesCertificate === parseInt(animalId)
+    );
+    const existingTotal = existingPostmortem?.productPostmortem?.find(
+      (prod) => prod.isTotalConfiscation === true
+    );
 
-    if (!animal || !animal.weight) {
+    if (!animal) return;
+
+    if (!animal.selected) {
+      if (!existingPostmortem || !existingTotal) {
+        toast.info("No hay cambios para guardar");
+        return;
+      }
+
+      const productsPostmortem: ProductPostmortem[] = [
+        {
+          idBodyPart: existingTotal.idBodyPart || 0,
+          weight: parseFloat(existingTotal.weight) || 0,
+          isTotalConfiscation: true,
+          status: false,
+          bodyPartComment: "",
+        },
+      ];
+
+      updatePostmortem(
+        {
+          id: existingPostmortem.id,
+          request: {
+            status: true,
+            productsPostmortem,
+          },
+        },
+        {
+          onSuccess: () => {
+            toast.success(`Animal ${animalId} actualizado correctamente`);
+            const selectedCount = animalWeights.filter((a) => a.selected).length;
+            onSave(selectedCount);
+          },
+          onError: () => {
+            toast.error(`Error al actualizar el animal ${animalId}`);
+          },
+        }
+      );
+
+      return;
+    }
+
+    if (!animal.weight) {
       toast.error("Debe ingresar el peso de la canal");
       return;
     }
@@ -124,7 +199,7 @@ export function TotalConfiscationModal({
       return;
     }
 
-    const bodyPartComment = animal.bodyPartComment ?? '';
+    const bodyPartComment = (animal.bodyPartComment ?? "").trim();
     // Para decomiso total, no se especifica idBodyPart, solo el peso total
     const productsPostmortem: ProductPostmortem[] = [
       {
@@ -132,9 +207,32 @@ export function TotalConfiscationModal({
         weight: weight,
         isTotalConfiscation: true,
         status: true,
-        bodyPartComment: bodyPartComment.length > 0 ? bodyPartComment : undefined,
+        bodyPartComment: bodyPartComment,
       },
     ];
+
+    if (existingPostmortem) {
+      updatePostmortem(
+        {
+          id: existingPostmortem.id,
+          request: {
+            status: true,
+            productsPostmortem,
+          },
+        },
+        {
+          onSuccess: () => {
+            toast.success(`Animal ${animalId} actualizado correctamente`);
+            const selectedCount = animalWeights.filter((a) => a.selected).length;
+            onSave(selectedCount);
+          },
+          onError: () => {
+            toast.error(`Error al actualizar el animal ${animalId}`);
+          },
+        }
+      );
+      return;
+    }
 
     savePostmortem(
       {
@@ -156,6 +254,128 @@ export function TotalConfiscationModal({
     );
   };
 
+  const handleUpdateAll = () => {
+    const animalsToUpdate = animalWeights.filter((animal) => {
+      if (!hasAnimalChanges(animal)) return false;
+      const existingPostmortem = postmortemData?.data?.find(
+        (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
+      );
+      const existingTotal = existingPostmortem?.productPostmortem?.find(
+        (prod) => prod.isTotalConfiscation === true
+      );
+      return !!existingTotal;
+    });
+
+    if (animalsToUpdate.length === 0) {
+      toast.info("No hay cambios para actualizar");
+      return;
+    }
+
+    const hasInvalidWeight = animalsToUpdate.some((animal) => {
+      if (!animal.selected) return false;
+      const weight = parseFloat(animal.weight);
+      return !animal.weight || isNaN(weight) || weight <= 0;
+    });
+
+    if (hasInvalidWeight) {
+      toast.error("Debe ingresar un peso valido para actualizar");
+      return;
+    }
+
+    setIsUpdatingAll(true);
+    updateAllRemainingRef.current = animalsToUpdate.length;
+
+    const finalizeUpdateAll = () => {
+      updateAllRemainingRef.current -= 1;
+      if (updateAllRemainingRef.current <= 0) {
+        setIsUpdatingAll(false);
+        onClose();
+      }
+    };
+
+    animalsToUpdate.forEach((animal) => {
+      const existingPostmortem = postmortemData?.data?.find(
+        (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
+      );
+      const existingTotal = existingPostmortem?.productPostmortem?.find(
+        (prod) => prod.isTotalConfiscation === true
+      );
+
+      if (!existingPostmortem || !existingTotal) {
+        finalizeUpdateAll();
+        return;
+      }
+
+      if (!animal.selected) {
+        const productsPostmortem: ProductPostmortem[] = [
+          {
+            idBodyPart: existingTotal.idBodyPart || 0,
+            weight: parseFloat(existingTotal.weight) || 0,
+            isTotalConfiscation: true,
+            status: false,
+            bodyPartComment: "",
+          },
+        ];
+
+        updatePostmortem(
+          {
+            id: existingPostmortem.id,
+            request: {
+              status: true,
+              productsPostmortem,
+            },
+          },
+          {
+            onSuccess: () => {
+              const selectedCount = animalWeights.filter((a) => a.selected).length;
+              onSave(selectedCount);
+              finalizeUpdateAll();
+            },
+            onError: () => {
+              toast.error(`Error al actualizar el animal ${animal.animalId}`);
+              finalizeUpdateAll();
+            },
+          }
+        );
+
+        return;
+      }
+
+      const weight = parseFloat(animal.weight);
+      const bodyPartComment = (animal.bodyPartComment ?? "").trim();
+      const productsPostmortem: ProductPostmortem[] = [
+        {
+          idBodyPart: 0,
+          weight: weight,
+          isTotalConfiscation: true,
+          status: true,
+          bodyPartComment: bodyPartComment,
+        },
+      ];
+
+      updatePostmortem(
+        {
+          id: existingPostmortem.id,
+          request: {
+            status: true,
+            productsPostmortem,
+          },
+        },
+        {
+          onSuccess: () => {
+            const selectedCount = animalWeights.filter((a) => a.selected).length;
+            onSave(selectedCount);
+            finalizeUpdateAll();
+          },
+          onError: () => {
+            toast.error(`Error al actualizar el animal ${animal.animalId}`);
+            finalizeUpdateAll();
+          },
+        }
+      );
+    });
+  };
+
   const handleCancel = () => {
     if (animalsData?.data) {
       setAnimalWeights(
@@ -170,6 +390,7 @@ export function TotalConfiscationModal({
   };
 
   const selectedCount = animalWeights.filter((a) => a.selected).length;
+  const hasChanges = animalWeights.some((animal) => hasAnimalChanges(animal));
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
@@ -230,101 +451,126 @@ export function TotalConfiscationModal({
                   (a) => a.animalId === animalId
                 );
                 if (!animalWeight) return null;
-
+                const savedData = postmortemData?.data?.find(
+                  (item) => item.idDetailsSpeciesCertificate === parseInt(animalId)
+                );
+                const hasTotalConfiscation = savedData?.productPostmortem?.some(
+                  (prod) => prod.isTotalConfiscation === true
+                );
                 return (
-									<div key={animal.id} className='border rounded-lg p-4 space-y-3 bg-white'>
-										<div className='flex items-center gap-3'>
-											<Checkbox
-												checked={animalWeight.selected}
-												onCheckedChange={() => handleAnimalToggle(animalId)}
-												id={`animal-${animal.id}`}
-												disabled={!canEdit}
-											/>
-											<label htmlFor={`animal-${animal.id}`} className='flex items-center gap-3 cursor-pointer flex-1'>
-												<div className='flex items-center justify-center w-16 h-12 bg-gray-100 rounded-lg'>
-													<span className='font-mono text-sm font-semibold'>{animal.code}</span>
-												</div>
-												<span className='text-sm text-gray-600'>Animal #{animal.code}</span>
-											</label>
-										</div>
+                  <div key={animal.id} className="border rounded-lg p-4 space-y-3 bg-white">
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={animalWeight.selected}
+                        onCheckedChange={() => handleAnimalToggle(animalId)}
+                        id={`animal-${animal.id}`}
+                        disabled={!canEdit}
+                      />
+                      <label
+                        htmlFor={`animal-${animal.id}`}
+                        className="flex items-center gap-3 cursor-pointer flex-1"
+                      >
+                        <div className="flex items-center justify-center w-16 h-12 bg-gray-100 rounded-lg">
+                          <span className="font-mono text-sm font-semibold">
+                            {animal.code}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-600">
+                          Animal #{animal.code}
+                        </span>
+                      </label>
+                    </div>
 
-										{animalWeight.selected && (
-											<div className='ml-14 space-y-2'>
-												<div className='flex items-center gap-2'>
-													<span className='text-xs font-medium text-gray-700'>Peso de la Canal ({unitSymbol}) *</span>
-													<Info className='h-3 w-3 text-gray-400' />
-													<Badge variant='secondary' className='bg-green-100 text-green-700 hover:bg-green-100'>
-														Manual
-													</Badge>
-												</div>
-												<Input
-													type='number'
-													min='0'
-													step='0.01'
-													placeholder={`Peso de la canal en ${unitSymbol}`}
-													value={animalWeight.weight}
-													onChange={e => handleWeightChange(animalId, e.target.value)}
-													disabled={!canEdit}
-													className='flex-1 h-10'
-												/>
+                    {animalWeight.selected && (
+                      <div className="ml-14 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-700">
+                            Peso de la Canal ({unitSymbol}) *
+                          </span>
+                          <Info className="h-3 w-3 text-gray-400" />
+                          <Badge
+                            variant="secondary"
+                            className="bg-green-100 text-green-700 hover:bg-green-100"
+                          >
+                            Manual
+                          </Badge>
+                        </div>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder={`Peso de la canal en ${unitSymbol}`}
+                          value={animalWeight.weight}
+                          onChange={e => handleWeightChange(animalId, e.target.value)}
+                          disabled={!canEdit}
+                          className="flex-1 h-10"
+                        />
 
-												<div className='flex flex-col md:flex-row items-end justify-center gap-2'>
-													<label className='text-xs font-medium text-gray-700 w-full'>
-														Observación (Opcional)
-														<Textarea
-															placeholder='Observación'
-															className='w-full bg-white text-xs'
-															value={animalWeight?.bodyPartComment ?? ''}
-															onChange={e => {
-																handleWeightCommentChange(animalId, e.target.value);
-																const textarea = e.target as HTMLTextAreaElement;
-																textarea.style.height = 'auto';
-																textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-															}}
-															style={{
-																minHeight: '60px',
-																maxHeight: '120px',
-																overflow: 'auto',
-																wordWrap: 'break-word',
-																whiteSpace: 'pre-wrap',
-																wordBreak: 'break-word',
-															}}
-														/>
-													</label>
-													{canEdit && (
-														<Button
-															size='sm'
-															onClick={() => handleSaveAnimal(animalId)}
-															disabled={!animalWeight.weight || isSaving}
-															className='bg-teal-600 hover:bg-teal-700'
-														>
-															{isSaving ? (
-																<>
-																	<Loader2 className='h-3 w-3 mr-1 animate-spin' />
-																	Guardando...
-																</>
-															) : (
-																// Verificar si ya existe data guardada para mostrar "Actualizar" o "Guardar"
-																(() => {
-																	const savedData = postmortemData?.data?.find(item => item.idDetailsSpeciesCertificate === parseInt(animalId));
-																	const hasTotalConfiscation = savedData?.productPostmortem?.some(prod => prod.isTotalConfiscation === true);
-																	return hasTotalConfiscation ? 'Actualizar' : 'Guardar';
-																})()
-															)}
-														</Button>
-													)}
-												</div>
-											</div>
-										)}
-									</div>
-								);
+                        <div className="flex flex-col md:flex-row items-end justify-center gap-2">
+                          <label className="text-xs font-medium text-gray-700 w-full">
+                            Observación (Opcional)
+                            <Textarea
+                              placeholder="Observación"
+                              className="w-full bg-white text-xs"
+                              value={animalWeight?.bodyPartComment ?? ""}
+                              onChange={e => {
+                                handleWeightCommentChange(animalId, e.target.value);
+                                const textarea = e.target as HTMLTextAreaElement;
+                                textarea.style.height = "auto";
+                                textarea.style.height =
+                                  Math.min(textarea.scrollHeight, 120) + "px";
+                              }}
+                              style={{
+                                minHeight: "60px",
+                                maxHeight: "120px",
+                                overflow: "auto",
+                                wordWrap: "break-word",
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
+                              }}
+                            />
+                          </label>
+                          {canEdit && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveAnimal(animalId)}
+                              disabled={!animalWeight.weight || isSavingOrUpdating || hasTotalConfiscation}
+                              className="bg-teal-600 hover:bg-teal-700"
+                            >
+                              {isSavingOrUpdating ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  Guardando...
+                                </>
+                              ) : (
+                                "Guardar"
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
               })}
             </div>
           )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+          {canEdit && (
+            <Button onClick={handleUpdateAll} disabled={!hasChanges || isUpdatingAll}>
+              {isUpdatingAll ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Actualizando...
+                </>
+              ) : (
+                "Actualizar"
+              )}
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleCancel} disabled={isSavingOrUpdating}>
             {canEdit ? "Cancelar" : "Cerrar"}
           </Button>
         </DialogFooter>
