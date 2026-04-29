@@ -51,6 +51,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 
 import { fetchWithFallback } from "@/lib/ky";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { mapCategoryKey } from "../lib/normalize-category-key";
 
 // Componente para mostrar vestuario y lencería
 function VestuarioPopover({ items }: { items: string[] }) {
@@ -65,7 +66,7 @@ function VestuarioPopover({ items }: { items: string[] }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-2">
+        <Button variant="outline" size="sm" className="h-8 gap-2 mx-auto">
           <ShieldHalf className="text-green-500 h-4 w-4" />
           Ver ({items.length})
         </Button>
@@ -106,7 +107,7 @@ function EquipoProteccionPopover({ items }: { items: string[] }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-2">
+        <Button variant="outline" size="sm" className="h-8 gap-2 mx-auto">
           <Shield className="h-4 w-4 text-red-500" />
           Ver ({items.length})
         </Button>
@@ -147,7 +148,7 @@ function PersonalHygienePopover({ items }: { items: string[] }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-2">
+        <Button variant="outline" size="sm" className="h-8 gap-2 mx-auto">
           <Bubbles className="h-4 w-4 text-blue-500" />
           Ver ({items.length})
         </Button>
@@ -176,6 +177,14 @@ function PersonalHygienePopover({ items }: { items: string[] }) {
 }
 
 export function HygieneControlManagement() {
+  const categoryKeys = useMemo(
+    () => ({
+      uniforms: mapCategoryKey("UNIFORMES"),
+      protective: mapCategoryKey("EQUIPO DE PROTECCION"),
+      personal: mapCategoryKey("ASEO PERSONAL"),
+    }),
+    []
+  );
   const queryClient = useQueryClient();
   const today = useMemo(() => {
     const now = new Date();
@@ -432,30 +441,28 @@ export function HygieneControlManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center border font-bold border-l-0">
+                <TableHead className="text-center border font-bold border-l-0 text-xs px-2 py-1.5 whitespace-nowrap">
                   FECHA
                 </TableHead>
-                <TableHead className="text-center border font-bold">
-                  TECNICO Y/O OPERARIO
+                <TableHead className="text-center border font-bold text-xs px-2 py-1.5">
+                  TÉCNICO<br/>Y/O OPERARIO
                 </TableHead>
-                <TableHead className="text-center border font-bold">
+                <TableHead className="text-center border font-bold text-xs px-2 py-1.5 whitespace-nowrap">
                   RESPONSABLE
                 </TableHead>
-                <TableHead className="text-center border font-bold">
+                <TableHead className="text-center border font-bold text-xs px-2 py-1.5 whitespace-nowrap">
                   UNIFORMES
                 </TableHead>
-                <TableHead className="text-center border font-bold">
-                  EQUIPO DE PROTECCIÓN
+                <TableHead className="text-center border font-bold text-xs px-2 py-1.5">
+                  EQUIPO DE<br/>PROTECCIÓN
                 </TableHead>
-                <TableHead className="text-center border font-bold">
-                  ASEO PERSONAL
+                <TableHead className="text-center border font-bold text-xs px-2 py-1.5">
+                  ASEO<br/>PERSONAL
                 </TableHead>
-
-                <TableHead className="text-center border font-bold">
+                <TableHead className="text-center border font-bold text-xs px-2 py-1.5 whitespace-nowrap">
                   OBSERVACIÓN
                 </TableHead>
-
-                <TableHead className="text-center border font-bold">
+                <TableHead className="text-center border font-bold text-xs px-2 py-1.5 whitespace-nowrap">
                   ACCIONES
                 </TableHead>
               </TableRow>
@@ -464,38 +471,48 @@ export function HygieneControlManagement() {
             <TableBody>
               {lockerRoomData?.map((row, idx) => (
                 <TableRow key={idx}>
-                  <TableCell className="text-center border">
+                  <TableCell className="text-center border text-xs px-2 py-1.5 whitespace-nowrap">
                     {new Date(row.timeRegister).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="font-semibold border">
+                  <TableCell className="font-semibold border text-xs px-2 py-1.5">
                     {row.employeeFullName}
                   </TableCell>
-                  <TableCell className="font-semibold border">
+                  <TableCell className="font-semibold border text-xs px-2 py-1.5">
                     {row.responsibleFullName}
                   </TableCell>
-                  <TableCell className="text-center border">
+                  <TableCell className="text-center border px-2 py-1.5">
                     <VestuarioPopover
-                      items={row.detailsHygieneGrouped?.["UNIFORMES"] ?? []}
-                    />
-                  </TableCell>
-                  <TableCell className="text-center border">
-                    <EquipoProteccionPopover
                       items={
-                        row.detailsHygieneGrouped?.["EQUIPO DE PROTECCIÓN"] ??
+                        row.detailsHygieneGrouped?.[categoryKeys.uniforms] ??
                         []
                       }
                     />
                   </TableCell>
-                  <TableCell className="text-center border">
+                  <TableCell className="text-center border px-2 py-1.5">
+                    <div className="flex items-center justify-center">
+                      <EquipoProteccionPopover
+                        items={
+                          row.detailsHygieneGrouped?.[
+                            categoryKeys.protective
+                          ] ??
+                          []
+                        }
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center border px-2 py-1.5">
                     <PersonalHygienePopover
-                      items={row.detailsHygieneGrouped?.["ASEO PERSONAL"] ?? []}
+                      items={
+                        row.detailsHygieneGrouped?.[categoryKeys.personal] ??
+                        []
+                      }
                     />
                   </TableCell>
-                  <TableCell className="text-center border">
+                  <TableCell className="text-center border text-xs px-2 py-1.5">
                     {row.commentary}
                   </TableCell>
 
-                  <TableCell className="text-center border">
+                  <TableCell className="text-center border px-2 py-1.5">
                     <div className="flex items-center justify-center gap-2">
                       {(() => {
                         const disabled =

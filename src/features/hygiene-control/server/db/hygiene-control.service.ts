@@ -1,6 +1,12 @@
 import { http } from "@/lib/ky";
-import { HygieneControl, hygieneControlRequest, HygieneControlResponse, MappedHygieneControl } from "../../domain/hygiene-control.types";
+import {
+  HygieneControl,
+  hygieneControlRequest,
+  HygieneControlResponse,
+  MappedHygieneControl,
+} from "../../domain/hygiene-control.types";
 import { EquipmentHygieneResponse } from "../../domain/equipment-hygiene-control.types";
+import { mapCategoryKey } from "../../lib/normalize-category-key";
 
 export const saveHygieneControlService = async (
   request: hygieneControlRequest
@@ -30,12 +36,13 @@ export const mapHygieneControlData = (
         detail.settingHygiene.equipment.equipmentType.description;
       const equipmentDescription =
         detail.settingHygiene.equipment.description;
+      const normalizedType = mapCategoryKey(equipmentType);
 
-      if (!grouped[equipmentType]) {
-        grouped[equipmentType] = [];
+      if (!grouped[normalizedType]) {
+        grouped[normalizedType] = [];
       }
 
-      grouped[equipmentType].push(equipmentDescription);
+      grouped[normalizedType].push(equipmentDescription);
     });
 
     return {
