@@ -1,4 +1,4 @@
-## Getting Started on SAPP RIOBAMBA
+## Getting Started on SAPP IBARRA
 
 First, run the development server:
 
