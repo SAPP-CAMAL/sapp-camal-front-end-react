@@ -462,18 +462,24 @@ export function ScanBarcodeManagement() {
                       <p className="text-sm text-muted-foreground">NRO</p>
                       <p className="text-base sm:text-lg font-bold">
                         {ticketData.id
-                          ? `${ticketData.date}-${ticketData.id}`
+                          ? `${ticketData.date}-${String(ticketData.id).padStart(3, '0')}`
                           : ticketData.date}
                       </p>
                     </div>
 
-                    <div className="flex justify-center">
+                    <div className="flex flex-col items-center gap-1">
                       <BarcodeDisplay
                         value={ticketData.id ? String(ticketData.id) : ""}
                         format="CODE128"
                         width={2}
                         height={50}
+                        displayValue={false}
                       />
+                      {ticketData.id && (
+                        <p className="text-sm tracking-widest">
+                          {String(ticketData.id).padStart(3, "0")}
+                        </p>
+                      )}
                     </div>
 
                     <div className="text-center">
@@ -621,18 +627,24 @@ export function ScanBarcodeManagement() {
                 <p className="text-sm text-muted-foreground">NRO</p>
                 <p className="text-base sm:text-lg font-bold">
                   {ticketData.id
-                    ? `${ticketData.date}-${ticketData.id}`
+                    ? `${ticketData.date}-${String(ticketData.id).padStart(3, '0')}`
                     : ticketData.date}
                 </p>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-1">
                 <BarcodeDisplay
                   value={ticketData.id ? String(ticketData.id) : ""}
                   format="CODE128"
                   width={2}
                   height={50}
+                  displayValue={false}
                 />
+                {ticketData.id && (
+                  <p className="text-sm tracking-widest">
+                    {String(ticketData.id).padStart(3, "0")}
+                  </p>
+                )}
               </div>
 
               <div className="text-center">
