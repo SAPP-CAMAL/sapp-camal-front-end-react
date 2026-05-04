@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SimpleCarousel } from "@/components/simple-carousel";
 import { fixUtf8 } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ interface DashboardClientProps {
 export function DashboardClient({
   images,
   userName,
+  userRole: serverUserRole,
   userRole: serverUserRole,
   slaughterhouseLogo,
 }: DashboardClientProps) {
