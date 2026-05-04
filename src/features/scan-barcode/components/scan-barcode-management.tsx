@@ -343,7 +343,7 @@ export function ScanBarcodeManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarcodeIcon className="h-4 w-4 text-muted-foreground opacity-50" />
-            Configuración de Registro
+            Registro de Tickets
           </CardTitle>
           <CardDescription>
             Seleccione la etapa productiva antes de escanear
@@ -378,7 +378,7 @@ export function ScanBarcodeManagement() {
 
             <div className="flex flex-col gap-1 min-w-0">
               <Label className="text-xs text-muted-foreground font-medium">
-                Código de Barras (Lector USB)
+                Código del ticket
               </Label>
               <div className="relative">
                 <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
@@ -386,7 +386,7 @@ export function ScanBarcodeManagement() {
                   ref={inputRef}
                   type="text"
                   className="pl-10 pr-3 w-full h-10"
-                  placeholder="Esperando lectura del lector..."
+                  placeholder="Esperando lectura..."
                   value={scannedCode}
                   onChange={(e) => setScannedCode(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -410,10 +410,10 @@ export function ScanBarcodeManagement() {
               {isProcessing ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Procesando...
+                  Registrando...
                 </>
               ) : (
-                "Procesar"
+                "Registrar"
               )}
             </Button>
             <Button
@@ -437,7 +437,7 @@ export function ScanBarcodeManagement() {
       {scanResult && (
         <Card>
           <CardHeader>
-            <CardTitle>Resultado del Procesamiento</CardTitle>
+            <CardTitle>Resultado del Registro</CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="default">
@@ -516,17 +516,17 @@ export function ScanBarcodeManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-muted-foreground opacity-50" />
-            Verificación de Boletos
+            Verificación de Tickets
           </CardTitle>
           <CardDescription>
-            Escanee el barcode del ticket impreso para validarlo y marcarlo como reclamado
+            Escanee el código de barras del ticket para validarlo y marcarlo como reclamado
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             <div className="flex flex-col gap-1 min-w-0">
               <Label className="text-xs text-muted-foreground font-medium">
-                Código del ticket impreso
+                Código del ticket
               </Label>
               <div className="relative">
                 <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
@@ -534,7 +534,7 @@ export function ScanBarcodeManagement() {
                   ref={verifyInputRef}
                   type="text"
                   className="pl-10 pr-3 w-full h-10"
-                  placeholder="Escanee el barcode del ticket..."
+                  placeholder="Esperando lectura..."
                   value={verifyInput}
                   onChange={(e) => setVerifyInput(e.target.value)}
                   onKeyDown={handleVerifyKeyDown}
@@ -560,7 +560,7 @@ export function ScanBarcodeManagement() {
                   Verificando...
                 </>
               ) : (
-                "Verificar Ticket"
+                "Verificar"
               )}
             </Button>
             <Button
