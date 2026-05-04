@@ -6,21 +6,22 @@ interface BarcodeDisplayProps {
   format?: "CODE128";
   width?: number;
   height?: number;
+  displayValue?: boolean;
 }
 
-export function BarcodeDisplay({ value, format = "CODE128", width = 2, height = 50 }: BarcodeDisplayProps) {
+export function BarcodeDisplay({ value, format = "CODE128", width = 2, height = 50, displayValue = true }: BarcodeDisplayProps) {
   const barcodeProps = useMemo(
     () => ({
       value,
       format,
       width,
       height,
-      displayValue: true,
+      displayValue,
       fontSize: 14,
       margin: 12,
       background: "#ffffff",
     }),
-    [value, format, width, height]
+    [value, format, width, height, displayValue]
   );
 
   if (!value) return null;

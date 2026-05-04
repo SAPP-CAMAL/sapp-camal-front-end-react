@@ -21,9 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle, XCircle, Barcode as BarcodeIcon, Beef, Loader2, Printer } from "lucide-react";
-import { saveFairTicketService } from "../server/db/scan-barcode.service";
-import { useQuery } from "@tanstack/react-query";
+import {
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Barcode as BarcodeIcon,
+  Beef,
+  Loader2,
+  Printer,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  saveFairTicketService,
+  reclaimFairTicketByIdService,
+  printFairTicketPdfService,
+} from "../server/db/scan-barcode.service";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -31,30 +44,59 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BarcodeDisplay } from "./barcode-display";
-import { createProductiveStage, getFairProductiveStagesAll, FairProductiveStage } from "@/features/productive-stage/server/db/productive-stage.service";
+import {
+  createProductiveStage,
+  getFairProductiveStagesAll,
+  FairProductiveStage,
+} from "@/features/productive-stage/server/db/productive-stage.service";
+
+async function getBackendMessage(error: any, fallback: string): Promise<string> {
+  try {
+    const body = await error?.response?.json();
+    return body?.message || fallback;
+  } catch {
+    return error?.message || fallback;
+  }
+}
+
+type ScanResult = {
+  code: string;
+  status: "success" | "error";
+  message: string;
+};
+
+type VerifyResult = {
+  id: string;
+  status: "validated" | "not_found" | "already_claimed" | "error";
+  message: string;
+};
 
 export function ScanBarcodeManagement() {
+  const queryClient = useQueryClient();
   const [scannedCode, setScannedCode] = useState("");
   const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
   const [selectedStage, setSelectedStage] = useState<FairProductiveStage | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [scanResult, setScanResult] = useState<{
-    code: string;
-    status: "success" | "error";
-    message: string;
-  } | null>(null);
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showProductiveStageModal, setShowProductiveStageModal] = useState(false);
   const [productiveStageName, setProductiveStageName] = useState("");
   const [productiveStageDescription, setProductiveStageDescription] = useState("");
   const [isSavingProductiveStage, setIsSavingProductiveStage] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [ticketData, setTicketData] = useState<{
     code: string;
     id?: number;
     species: string;
     date: string;
   } | null>(null);
+
+  const [verifyInput, setVerifyInput] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
+  const verifyInputRef = useRef<HTMLInputElement>(null);
 
   const productiveStagesQuery = useQuery({
     queryKey: ["fair-productive-stages"],
@@ -65,31 +107,32 @@ export function ScanBarcodeManagement() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Enfocar el input al cargar y mantener foco
   useEffect(() => {
-    const focusInput = () => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const focusInput = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (verifyInputRef.current?.contains(target)) return;
       if (inputRef.current && !isProcessing) {
         inputRef.current.focus();
       }
     };
-    focusInput();
     document.addEventListener("click", focusInput);
     return () => document.removeEventListener("click", focusInput);
   }, [isProcessing]);
 
-  // Manejar entrada del lector físico (que actúa como teclado)
   const handleKeyDown = useCallback(
     async (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter" && !isProcessing) {
         e.preventDefault();
         const code = inputRef.current?.value?.trim();
         if (!code) return;
-
         if (!selectedStage) {
           toast.error("Seleccione una etapa productiva");
           return;
         }
-
         await processCode(code);
       }
     },
@@ -130,17 +173,14 @@ export function ScanBarcodeManagement() {
         });
         toast.success("Código procesado correctamente");
 
-        // Mostrar modal con el ticket
         setShowTicketModal(true);
 
-        // Limpiar para siguiente lectura
         setScannedCode("");
         if (inputRef.current) {
           inputRef.current.value = "";
           setTimeout(() => inputRef.current?.focus(), 100);
         }
 
-        // Limpiar filtros superiores tras guardar
         setSelectedStageId(null);
         setSelectedStage(null);
       } else {
@@ -152,13 +192,9 @@ export function ScanBarcodeManagement() {
         toast.error("Error al procesar el código");
       }
     } catch (error: any) {
-      console.error("Error al procesar el escaneo:", error);
-      setScanResult({
-        code,
-        status: "error",
-        message: error?.message || "Error de conexión con el servidor.",
-      });
-      toast.error("Error al procesar el escaneo");
+      const message = await getBackendMessage(error, "Error de conexión con el servidor.");
+      setScanResult({ code, status: "error", message });
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -168,7 +204,6 @@ export function ScanBarcodeManagement() {
     const stage = productiveStagesQuery.data?.find(
       (item: FairProductiveStage) => item.id.toString() === value
     );
-
     if (stage) {
       setSelectedStageId(stage.id);
       setSelectedStage(stage);
@@ -184,9 +219,16 @@ export function ScanBarcodeManagement() {
     await processCode(code);
   };
 
-  const handlePrint = () => {
-    window.print();
-    setShowTicketModal(false);
+  const handlePrint = async () => {
+    if (!ticketData?.code) return;
+    setIsPrinting(true);
+    try {
+      await printFairTicketPdfService(ticketData.code);
+    } catch {
+      toast.error("No se pudo generar el PDF del ticket");
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const handleCreateProductiveStage = async () => {
@@ -200,21 +242,83 @@ export function ScanBarcodeManagement() {
 
     setIsSavingProductiveStage(true);
     try {
-      await createProductiveStage({
-        name,
-        description,
-        status: true,
-      });
-
+      await createProductiveStage({ name, description, status: true });
+      await queryClient.invalidateQueries({ queryKey: ["fair-productive-stages"] });
       toast.success("Etapa productiva creada");
       setShowProductiveStageModal(false);
       setProductiveStageName("");
       setProductiveStageDescription("");
-    } catch (error) {
+    } catch {
       toast.error("No se pudo crear la etapa productiva");
     } finally {
       setIsSavingProductiveStage(false);
     }
+  };
+
+  const handleVerifyKeyDown = useCallback(
+    async (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && !isVerifying) {
+        e.preventDefault();
+        const id = verifyInputRef.current?.value?.trim();
+        if (!id) return;
+        await processVerify(id);
+      }
+    },
+    [isVerifying]
+  );
+
+  const processVerify = async (rawId: string) => {
+    const id = Number(rawId);
+    if (!rawId || isNaN(id)) {
+      toast.error("El código escaneado no es válido");
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerifyResult(null);
+
+    try {
+      await reclaimFairTicketByIdService(id);
+      setVerifyResult({
+        id: rawId,
+        status: "validated",
+        message: "Ticket validado y reclamado exitosamente.",
+      });
+      toast.success("Ticket validado correctamente");
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const message = await getBackendMessage(error, "Error al verificar el ticket.");
+      if (status === 404) {
+        setVerifyResult({ id: rawId, status: "not_found", message });
+        toast.error("Ticket no encontrado");
+      } else if (status === 409) {
+        setVerifyResult({
+          id: rawId,
+          status: "already_claimed",
+          message: `El ticket #${rawId} ya fue reclamado anteriormente.`,
+        });
+        toast.warning("Ticket ya reclamado");
+      } else {
+        setVerifyResult({ id: rawId, status: "error", message });
+        toast.error(message);
+      }
+    } finally {
+      setIsVerifying(false);
+      setVerifyInput("");
+      if (verifyInputRef.current) {
+        verifyInputRef.current.value = "";
+        setTimeout(() => verifyInputRef.current?.focus(), 100);
+      }
+    }
+  };
+
+  const handleManualVerify = async () => {
+    const id = verifyInput.trim();
+    if (!id) {
+      toast.error("Ingrese o escanee el código del ticket impreso");
+      return;
+    }
+    await processVerify(id);
   };
 
   return (
@@ -241,7 +345,7 @@ export function ScanBarcodeManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarcodeIcon className="h-4 w-4 text-muted-foreground opacity-50" />
-            Configuración de Registro
+            Registro de Tickets
           </CardTitle>
           <CardDescription>
             Seleccione la etapa productiva antes de escanear
@@ -274,10 +378,9 @@ export function ScanBarcodeManagement() {
               </Select>
             </div>
 
-            {/* Input para el lector físico */}
             <div className="flex flex-col gap-1 min-w-0">
               <Label className="text-xs text-muted-foreground font-medium">
-                Código de Barras (Lector USB)
+                Código del ticket
               </Label>
               <div className="relative">
                 <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
@@ -285,7 +388,7 @@ export function ScanBarcodeManagement() {
                   ref={inputRef}
                   type="text"
                   className="pl-10 pr-3 w-full h-10"
-                  placeholder="Esperando lectura del lector..."
+                  placeholder="Esperando lectura..."
                   value={scannedCode}
                   onChange={(e) => setScannedCode(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -299,62 +402,55 @@ export function ScanBarcodeManagement() {
               </p>
             </div>
           </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              onClick={handleManualSubmit}
+              disabled={isProcessing || !scannedCode.trim() || !selectedStage}
+              className="w-full sm:w-auto"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Registrando...
+                </>
+              ) : (
+                "Registrar"
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setScannedCode("");
+                setScanResult(null);
+                if (inputRef.current) {
+                  inputRef.current.value = "";
+                  inputRef.current.focus();
+                }
+              }}
+            >
+              Limpiar
+            </Button>
+          </div>
         </CardContent>
       </Card>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Button
-          onClick={handleManualSubmit}
-          disabled={
-            isProcessing ||
-            !scannedCode.trim() ||
-            !selectedStage
-          }
-          className="w-full sm:w-auto"
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Procesando...
-            </>
-          ) : (
-            "Procesar Código"
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => {
-            setScannedCode("");
-            setScanResult(null);
-            if (inputRef.current) {
-              inputRef.current.value = "";
-              inputRef.current.focus();
-            }
-          }}
-        >
-          Limpiar
-        </Button>
-      </div>
 
-      {/* Resultado del procesamiento */}
+      {/* Resultado del registro */}
       {scanResult && (
         <Card>
           <CardHeader>
-            <CardTitle>Resultado del Procesamiento</CardTitle>
+            <CardTitle>Resultado del Registro</CardTitle>
           </CardHeader>
           <CardContent>
-            <Alert
-              variant={
-                scanResult.status === "success" ? "default" : "destructive"
-              }
-            >
+            <Alert variant="default">
               <div className="flex items-center gap-2">
                 {scanResult.status === "success" ? (
                   <CheckCircle className="h-4 w-4 text-green-600" />
                 ) : (
-                  <XCircle className="h-4 w-4 text-red-600" />
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
                 )}
                 <AlertTitle>
-                  {scanResult.status === "success" ? "Éxito" : "Error"}
+                  {scanResult.status === "success" ? "Registrado" : "Aviso"}
                 </AlertTitle>
               </div>
               <AlertDescription className="mt-2">
@@ -367,17 +463,25 @@ export function ScanBarcodeManagement() {
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">NRO</p>
                       <p className="text-base sm:text-lg font-bold">
-                        {ticketData.id ? `${ticketData.date}-${ticketData.id}` : ticketData.date}
+                        {ticketData.id
+                          ? `${ticketData.date}-${String(ticketData.id).padStart(3, '0')}`
+                          : ticketData.date}
                       </p>
                     </div>
 
-                    <div className="flex justify-center">
+                    <div className="flex flex-col items-center gap-1">
                       <BarcodeDisplay
                         value={ticketData.id ? String(ticketData.id) : ""}
                         format="CODE128"
                         width={2}
                         height={50}
+                        displayValue={false}
                       />
+                      {ticketData.id && (
+                        <p className="text-sm tracking-widest">
+                          {String(ticketData.id).padStart(3, "0")}
+                        </p>
+                      )}
                     </div>
 
                     <div className="text-center">
@@ -388,7 +492,9 @@ export function ScanBarcodeManagement() {
 
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">Etapa</p>
-                      <p className="text-base sm:text-lg font-semibold">{ticketData.species}</p>
+                      <p className="text-base sm:text-lg font-semibold">
+                        {ticketData.species}
+                      </p>
                     </div>
 
                     <div className="text-center">
@@ -397,7 +503,10 @@ export function ScanBarcodeManagement() {
                     </div>
 
                     <div className="flex flex-col gap-2 sm:flex-row">
-                      <Button onClick={() => setShowTicketModal(true)} className="w-full">
+                      <Button
+                        onClick={() => setShowTicketModal(true)}
+                        className="w-full"
+                      >
                         <Printer className="h-4 w-4 mr-2" />
                         Ver / Imprimir Ticket
                       </Button>
@@ -410,9 +519,107 @@ export function ScanBarcodeManagement() {
         </Card>
       )}
 
+      {/* Sección de verificación */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-muted-foreground opacity-50" />
+            Verificación de Tickets
+          </CardTitle>
+          <CardDescription>
+            Escanee el código de barras del ticket para validarlo y marcarlo como reclamado
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+            <div className="flex flex-col gap-1 min-w-0">
+              <Label className="text-xs text-muted-foreground font-medium">
+                Código del ticket
+              </Label>
+              <div className="relative">
+                <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <Input
+                  ref={verifyInputRef}
+                  type="text"
+                  className="pl-10 pr-3 w-full h-10"
+                  placeholder="Esperando lectura..."
+                  value={verifyInput}
+                  onChange={(e) => setVerifyInput(e.target.value)}
+                  onKeyDown={handleVerifyKeyDown}
+                  disabled={isVerifying}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                El lector enviará el ID del ticket y presionará Enter automáticamente
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              onClick={handleManualVerify}
+              disabled={isVerifying || !verifyInput.trim()}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              {isVerifying ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Verificando...
+                </>
+              ) : (
+                "Verificar"
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setVerifyInput("");
+                setVerifyResult(null);
+                if (verifyInputRef.current) {
+                  verifyInputRef.current.value = "";
+                }
+              }}
+            >
+              Limpiar
+            </Button>
+          </div>
+
+          {verifyResult && (
+            <Alert variant="default">
+              <div className="flex items-center gap-2">
+                {verifyResult.status === "validated" && (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                )}
+                {(verifyResult.status === "already_claimed" ||
+                  verifyResult.status === "not_found" ||
+                  verifyResult.status === "error") && (
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                )}
+                <AlertTitle>
+                  {verifyResult.status === "validated" && "Ticket válido"}
+                  {verifyResult.status === "already_claimed" && "Ya reclamado"}
+                  {verifyResult.status === "not_found" && "No encontrado"}
+                  {verifyResult.status === "error" && "Aviso"}
+                </AlertTitle>
+              </div>
+              <AlertDescription className="mt-2">
+                <p>
+                  <strong>ID:</strong> {verifyResult.id}
+                </p>
+                <p className="mt-1">{verifyResult.message}</p>
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Modal de Ticket */}
       <Dialog open={showTicketModal} onOpenChange={setShowTicketModal}>
-        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md print-ticket" showCloseButton={false}>
+        <DialogContent
+          className="w-[calc(100%-2rem)] sm:max-w-md print-ticket"
+          showCloseButton={false}
+        >
           <DialogHeader className="print-hide">
             <DialogTitle className="text-center">Ticket de Feria</DialogTitle>
           </DialogHeader>
@@ -421,17 +628,25 @@ export function ScanBarcodeManagement() {
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">NRO</p>
                 <p className="text-base sm:text-lg font-bold">
-                  {ticketData.id ? `${ticketData.date}-${ticketData.id}` : ticketData.date}
+                  {ticketData.id
+                    ? `${ticketData.date}-${String(ticketData.id).padStart(3, '0')}`
+                    : ticketData.date}
                 </p>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-1">
                 <BarcodeDisplay
                   value={ticketData.id ? String(ticketData.id) : ""}
                   format="CODE128"
                   width={2}
                   height={50}
+                  displayValue={false}
                 />
+                {ticketData.id && (
+                  <p className="text-sm tracking-widest">
+                    {String(ticketData.id).padStart(3, "0")}
+                  </p>
+                )}
               </div>
 
               <div className="text-center">
@@ -442,7 +657,9 @@ export function ScanBarcodeManagement() {
 
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Etapa</p>
-                <p className="text-base sm:text-lg font-semibold">{ticketData.species}</p>
+                <p className="text-base sm:text-lg font-semibold">
+                  {ticketData.species}
+                </p>
               </div>
 
               <div className="text-center print-hide">
@@ -450,9 +667,22 @@ export function ScanBarcodeManagement() {
                 <p className="text-base">{ticketData.date}</p>
               </div>
 
-              <Button onClick={handlePrint} className="w-full print-hide">
-                <Printer className="h-4 w-4 mr-2" />
-                Imprimir Ticket
+              <Button
+                onClick={handlePrint}
+                disabled={isPrinting}
+                className="w-full print-hide"
+              >
+                {isPrinting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generando PDF...
+                  </>
+                ) : (
+                  <>
+                    <Printer className="h-4 w-4 mr-2" />
+                    Imprimir Ticket
+                  </>
+                )}
               </Button>
             </div>
           )}
@@ -460,10 +690,15 @@ export function ScanBarcodeManagement() {
       </Dialog>
 
       {/* Modal nueva etapa productiva */}
-      <Dialog open={showProductiveStageModal} onOpenChange={setShowProductiveStageModal}>
+      <Dialog
+        open={showProductiveStageModal}
+        onOpenChange={setShowProductiveStageModal}
+      >
         <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-center">Nueva etapa productiva</DialogTitle>
+            <DialogTitle className="text-center">
+              Nueva etapa productiva
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
