@@ -36,7 +36,7 @@ import {
   reclaimFairTicketByIdService,
   printFairTicketPdfService,
 } from "../server/db/scan-barcode.service";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -72,6 +72,7 @@ type VerifyResult = {
 };
 
 export function ScanBarcodeManagement() {
+  const queryClient = useQueryClient();
   const [scannedCode, setScannedCode] = useState("");
   const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
   const [selectedStage, setSelectedStage] = useState<FairProductiveStage | null>(null);
@@ -242,6 +243,7 @@ export function ScanBarcodeManagement() {
     setIsSavingProductiveStage(true);
     try {
       await createProductiveStage({ name, description, status: true });
+      await queryClient.invalidateQueries({ queryKey: ["fair-productive-stages"] });
       toast.success("Etapa productiva creada");
       setShowProductiveStageModal(false);
       setProductiveStageName("");
