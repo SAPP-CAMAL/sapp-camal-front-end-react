@@ -10,7 +10,7 @@ import { PersonSearch, SelectedPersonCard } from '@/features/security/components
 import { useQuery } from '@tanstack/react-query';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { getPersonByIdentificationOrFullNameService } from '@/features/people/server/db/people.service';
-import { getAllRolesService } from '@/features/roles/server/db/roles.service';
+import { getUserRolesService } from '@/features/roles/server/db/roles.service';
 import { toCapitalize } from '@/lib/toCapitalize';
 
 const veterinarianCode = 'VETE';
@@ -32,8 +32,8 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
 	});
 
 	const query = useQuery({
-		queryKey: ['all-roles'],
-		queryFn: () => getAllRolesService(),
+		queryKey: ['available-user-roles'],
+		queryFn: () => getUserRolesService(),
 	});
 
 	const form = useFormContext();
