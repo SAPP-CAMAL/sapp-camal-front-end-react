@@ -1033,7 +1033,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               screenSize === "mobile" && "w-[85vw] max-w-[280px]",
               screenSize === "tablet" && "w-[70vw] max-w-md",
               screenSize === "desktop" && "min-w-[350px]",
-              popoverClassName
+              popoverClassName,
+              "pointer-events-auto"
             )}
             style={{
               animationDuration: `${animationConfig?.duration || animation}s`,
@@ -1066,9 +1067,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               )}
               <CommandList
                 className={cn(
-                  "flex-1 overflow-y-auto multiselect-scrollbar",
-                  screenSize === "mobile" && "max-h-[50vh]",
-                  "overscroll-behavior-y-contain"
+                  "max-h-[300px] overflow-y-auto multiselect-scrollbar pointer-events-auto",
+                  screenSize === "mobile" && "max-h-[50vh]"
                 )}
               >
                 <CommandEmpty>
