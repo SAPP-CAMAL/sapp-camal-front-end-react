@@ -265,19 +265,14 @@ export function ListTransportManagement() {
 
           {/* Cantidad, Provincia y Origen */}
           <div className="bg-muted/50 rounded-lg p-3">
-            <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="grid grid-cols-2 gap-2 text-center">
               <div>
                 <div className="text-xs text-muted-foreground">Cantidad</div>
                 <div className="text-lg font-bold text-emerald-600">
                   {item.quantity || 0}
                 </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Provincia</div>
-                <div className="text-sm font-medium">
-                  {item.province?.name || "N/A"}
-                </div>
-              </div>
+
               <div>
                 <div className="text-xs text-muted-foreground">Origen</div>
                 <div className="text-sm font-medium">
@@ -640,9 +635,7 @@ export function ListTransportManagement() {
                         Cantidad
                       </span>
                     </TableHead>
-                    <TableHead className="w-28 whitespace-normal text-center">
-                      <span className="text-xs font-semibold">Provincia</span>
-                    </TableHead>
+
                     <TableHead className="w-28 whitespace-normal text-center">
                       <span className="text-xs font-semibold">Origen</span>
                     </TableHead>
@@ -704,14 +697,7 @@ export function ListTransportManagement() {
                         <TableCell className="text-center whitespace-normal font-semibold text-emerald-600">
                           {item.quantity || 0}
                         </TableCell>
-                        <TableCell className="text-center whitespace-normal">
-                          <Badge
-                            variant="secondary"
-                            className="bg-purple-100 text-purple-800 border-0 font-normal text-xs"
-                          >
-                            {item.province?.name || "N/A"}
-                          </Badge>
-                        </TableCell>
+
                         <TableCell className="text-center whitespace-normal">
                           <Badge
                             variant="secondary"

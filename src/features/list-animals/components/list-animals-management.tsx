@@ -536,14 +536,14 @@ export function ListAnimalsManagement() {
                 <span>Descargar PDF</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-xs text-muted-foreground">Reporte Procedencia</DropdownMenuLabel>
+              {/* <DropdownMenuLabel className="text-xs text-muted-foreground">Reporte Procedencia</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => setProvinceReportOpen(true)}
                 className="cursor-pointer"
               >
                 <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
                 <span>Descargar Excel</span>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
             </DropdownMenuContent>
           </DropdownMenu>
 
