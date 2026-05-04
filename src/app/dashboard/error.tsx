@@ -29,7 +29,7 @@ async function clearAuthAndRedirect() {
   window.location.replace(`/auth/login?_cb=${Date.now()}`);
 }
 
-export default function DashboardError({ error }: ErrorProps) {
+export default function DashboardError({ error, reset }: ErrorProps) {
   useEffect(() => {
     console.error("[DashboardError]", error.message, error.digest ?? "");
   // eslint-disable-next-line react-hooks/exhaustive-deps
