@@ -54,7 +54,17 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuPortal,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { AnimalSelectionModal } from "./animal-selection-modal";
 import { DatePicker } from "@/components/ui/date-picker";
 import { TotalConfiscationModal } from "./total-confiscation-modal";
@@ -91,6 +101,8 @@ import {
   downloadPostmortemGeneralReport,
   downloadDailyConfiscationReport,
   downloadMonthlyConfiscationReport,
+  downloadConsolidatedPostmortemReport,
+  downloadMonthlyPathologiesReport,
 } from "../server/db/postmortem-report.service";
 import { toast } from "sonner";
 import { downloadMonthlySummaryAgrocalidadReport } from "../utils/download-monthly-summary-agrocalidad.report";
@@ -134,6 +146,13 @@ export function PostmortemManagement() {
 
   // Estado para controlar qué órganos están expandidos
   const [expandedOrgans, setExpandedOrgans] = useState<Set<string>>(new Set());
+  const [monthlyPathologiesModalOpen, setMonthlyPathologiesModalOpen] =
+    useState(false);
+  const [selectedPathologiesMonth, setSelectedPathologiesMonth] = useState(
+    slaughterDate.substring(0, 7)
+  );
+  const [isDownloadingMonthlyPathologies, setIsDownloadingMonthlyPathologies] =
+    useState(false);
 
   // Construir request para certificados
   const certificatesRequest: GetCertificatesRequest | null = useMemo(() => {
@@ -155,6 +174,49 @@ export function PostmortemManagement() {
 
   // Obtener líneas desde la API
   const { data: lines, isLoading: isLoadingLines } = useLines();
+
+  const handleOpenMonthlyPathologiesModal = () => {
+    if (!selectedSpecieId) {
+      toast.error("Selecciona una línea de producción");
+      return;
+    }
+
+    setSelectedPathologiesMonth(slaughterDate.substring(0, 7));
+    setMonthlyPathologiesModalOpen(true);
+  };
+
+  const handleDownloadMonthlyPathologies = async () => {
+    if (!selectedSpecieId) {
+      toast.error("Selecciona una línea de producción");
+      return;
+    }
+
+    if (!selectedPathologiesMonth || !/^\d{4}-\d{2}$/.test(selectedPathologiesMonth)) {
+      toast.error("Selecciona un mes válido");
+      return;
+    }
+
+    setIsDownloadingMonthlyPathologies(true);
+    try {
+      await toast.promise(
+        downloadMonthlyPathologiesReport({
+          month: selectedPathologiesMonth,
+          speciesId: selectedSpecieId,
+        }),
+        {
+          loading: "Generando reporte de patologías...",
+          success: "Reporte de patologías descargado correctamente",
+          error: (err) =>
+            err instanceof Error
+              ? err.message
+              : "Error al descargar el reporte de patologías",
+        }
+      );
+      setMonthlyPathologiesModalOpen(false);
+    } finally {
+      setIsDownloadingMonthlyPathologies(false);
+    }
+  };
 
   // Seleccionar Bovinos por defecto cuando se carguen las líneas
   useEffect(() => {
@@ -693,7 +755,10 @@ export function PostmortemManagement() {
                       {
                         loading: "Generando reporte...",
                         success: "Reporte descargado correctamente",
-                        error: "Error al descargar el reporte",
+                        error: (err) =>
+                          err instanceof Error
+                            ? err.message
+                            : "Error al descargar el reporte",
                       }
                     );
                   }}
@@ -723,7 +788,10 @@ export function PostmortemManagement() {
                             {
                               loading: "Generando Excel...",
                               success: "Excel descargado correctamente",
-                              error: "Error al descargar el Excel",
+                              error: (err) =>
+                                err instanceof Error
+                                  ? err.message
+                                  : "Error al descargar el Excel",
                             }
                           );
                         }}
@@ -746,7 +814,10 @@ export function PostmortemManagement() {
                             {
                               loading: "Generando PDF...",
                               success: "PDF descargado correctamente",
-                              error: "Error al descargar el PDF",
+                              error: (err) =>
+                                err instanceof Error
+                                  ? err.message
+                                  : "Error al descargar el PDF",
                             }
                           );
                         }}
@@ -773,13 +844,47 @@ export function PostmortemManagement() {
                       {
                         loading: "Generando reporte mensual...",
                         success: "Reporte mensual descargado correctamente",
-                        error: "Error al descargar el reporte mensual",
+                        error: (err) =>
+                          err instanceof Error
+                            ? err.message
+                            : "Error al descargar el reporte mensual",
                       }
                     );
                   }}
                 >
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   Reporte Mensual de Decomisos
+                </DropdownMenuItem> 
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (!selectedSpecieId) {
+                      toast.error("Selecciona una línea de producción");
+                      return;
+                    }
+                    const startDate = slaughterDate;
+                    const tomorrow = new Date(slaughterDate);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const endDate = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+                    toast.promise(
+                      downloadConsolidatedPostmortemReport({
+                        startDate,
+                        endDate,
+                        idSpecies: selectedSpecieId,
+                      }),
+                      {
+                        loading: "Generando reporte consolidado...",
+                        success: "Reporte consolidado descargado correctamente",
+                        error: (err) =>
+                          err instanceof Error
+                            ? err.message
+                            : "Error al descargar el reporte consolidado",
+                      }
+                    );
+                  }}
+                >
+                  <FileBarChart className="h-4 w-4 mr-2" />
+                  Reporte Consolidado
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -794,13 +899,20 @@ export function PostmortemManagement() {
                       {
                         loading: "Generando reporte mensual de agrocalidad...",
                         success: "Reporte mensual de agrocalidad descargado correctamente",
-                        error: "Error al descargar el reporte mensual de agrocalidad",
+                        error: (err) =>
+                          err instanceof Error
+                            ? err.message
+                            : "Error al descargar el reporte mensual de agrocalidad",
                       }
                     );
                   }}
                 >
                   <CalendarRange className="h-4 w-4 mr-2" />
                   Reporte Mensual de Agrocalidad
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleOpenMonthlyPathologiesModal}>
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  Patologías por Mes
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1336,6 +1448,52 @@ export function PostmortemManagement() {
         certId={partialConfiscationIntroductor?.certId ?? null}
         canEdit={canEdit}
       />
+
+      <Dialog
+        open={monthlyPathologiesModalOpen}
+        onOpenChange={setMonthlyPathologiesModalOpen}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Patologías por Mes</DialogTitle>
+            <DialogDescription className="text-sm">
+              Selecciona el mes para generar el reporte de patologías.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="pathologies-month">Mes</Label>
+            <div className="w-full flex">
+              <Input
+                id="pathologies-month"
+                type="month"
+                value={selectedPathologiesMonth}
+                onChange={(e) => setSelectedPathologiesMonth(e.target.value)}
+                disabled={isDownloadingMonthlyPathologies}
+                className="w-52 max-w-full"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setMonthlyPathologiesModalOpen(false)}
+              disabled={isDownloadingMonthlyPathologies}
+              className="w-full sm:w-auto"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDownloadMonthlyPathologies}
+              disabled={isDownloadingMonthlyPathologies || !selectedPathologiesMonth}
+              className="w-full sm:w-auto"
+            >
+              {isDownloadingMonthlyPathologies ? "Generando..." : "Descargar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

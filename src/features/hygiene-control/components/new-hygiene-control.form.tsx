@@ -32,6 +32,7 @@ import {
   updateHygieneControlService,
 } from "../server/db/hygiene-control.service";
 import { MappedHygieneControl } from "../domain/hygiene-control.types";
+import { mapCategoryKey } from "../lib/normalize-category-key";
 
 interface NewHygieneControlFormProps {
   trigger: React.ReactNode;
@@ -148,7 +149,7 @@ export default function NewHygieneControlForm({
     const checked: Record<number, boolean> = {};
 
     groupedData.forEach((group: any) => {
-      const category = group.equipmentTypeDescription;
+      const category = mapCategoryKey(group.equipmentTypeDescription);
       const selectedDescriptions =
         hygieneControlData.detailsHygieneGrouped[category] || [];
 

@@ -64,3 +64,78 @@ export async function downloadAnimalSeizuresReport(
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
+
+export async function downloadIntroducerReportService(
+  introducerId: number,
+  startDate: string,
+  endDate: string
+): Promise<void> {
+  try {
+    const response = await http.post(
+      `v1/1.0.0/detail-specie-cert/confiscation-act-by-introducer-report`,
+      {
+        json: {
+          startDate,
+          endDate,
+          introducerId,
+        },
+      }
+    );
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `acta_introductor_${introducerId}_${startDate}_${endDate}.pdf`;
+
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error: any) {
+    // Intentar extraer el mensaje del error
+    if (error.response) {
+      const errorData = await error.response.json().catch(() => null);
+      if (errorData?.message) {
+        throw new Error(errorData.message);
+      }
+    }
+    throw error;
+  }
+}
+
+export async function downloadGeneralConfiscationActReportService(
+  startDate: string,
+  endDate: string
+): Promise<void> {
+  try {
+    const response = await http.post(
+      `v1/1.0.0/detail-specie-cert/confiscation-act-report`,
+      {
+        json: {
+          startDate,
+          endDate,
+        },
+      }
+    );
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `acta_general_decomisos_${startDate}_${endDate}.pdf`;
+
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error: any) {
+    if (error.response) {
+      const errorData = await error.response.json().catch(() => null);
+      if (errorData?.message) {
+        throw new Error(errorData.message);
+      }
+    }
+    throw error;
+  }
+}

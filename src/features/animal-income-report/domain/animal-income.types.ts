@@ -1,8 +1,14 @@
 export interface AnimalIncomeData {
+    idSpecies: number;
     species: string;
     quantity: number;
     totalAmount: number;
     percentage: number;
+}
+
+export interface AnimalIncomeHistoryData {
+    date: string;
+    [species: string]: string | number;
 }
 
 export interface AnimalIncomeReport {
@@ -13,12 +19,7 @@ export interface AnimalIncomeReport {
         quantity: number;
         amount: number;
     };
-    historyData: {
-        date: string;
-        BOVINO: number;
-        PORCINO: number;
-        "OVINO/CAPRINO": number;
-    }[];
+    historyData: AnimalIncomeHistoryData[];
 }
 
 export interface DateRange {

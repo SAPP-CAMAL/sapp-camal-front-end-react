@@ -80,7 +80,7 @@ export function AnimalSelectionModal({
     []
   );
 
-  const [generalPercentage, setGeneralPercentage] = useState<string>("100");
+  const [generalPercentage, setGeneralPercentage] = useState<string>("40");
 
   // Trackear los valores iniciales para detectar cambios
   const [initialSelections, setInitialSelections] = useState<AnimalSelection[]>(
@@ -146,7 +146,7 @@ export function AnimalSelectionModal({
               anatomicalDiseaseComment[location.id] = savedForLocation.diseaseComment || "";
             } else {
               // Valores por defecto
-              anatomicalPercentages[location.id] = 100;
+              anatomicalPercentages[location.id] = 40;
               anatomicalWeights[location.id] = avgOrgansData?.data?.avgWeight
                 ? parseFloat(String(avgOrgansData.data.avgWeight))
                 : 0;
@@ -173,7 +173,7 @@ export function AnimalSelectionModal({
           selected: savedSubProducts.length > 0, // Seleccionado si hay al menos un subproducto guardado
           percentage: savedSubProduct
             ? parseFloat(savedSubProduct.percentageAffection)
-            : 100,
+            : 40,
           weight,
           anatomicalPercentages,
           anatomicalWeights,
@@ -198,12 +198,60 @@ export function AnimalSelectionModal({
   ]);
 
   const handleAnimalToggle = (animalId: string) => {
+    const defaultWeight = avgOrgansData?.data?.avgWeight
+      ? parseFloat(String(avgOrgansData.data.avgWeight))
+      : 0;
+
     setAnimalSelections((prev) =>
-      prev.map((animal) =>
-        animal.animalId === animalId
-          ? { ...animal, selected: !animal.selected }
-          : animal
-      )
+      prev.map((animal) => {
+        if (animal.animalId !== animalId) return animal;
+
+        const nextSelected = !animal.selected;
+
+        if (nextSelected) {
+          return { ...animal, selected: true };
+        }
+
+        const resetAnatomicalPercentages: Record<number, number> = {
+          ...animal.anatomicalPercentages,
+        };
+        const resetAnatomicalWeights: Record<number, number> = {
+          ...animal.anatomicalWeights,
+        };
+        const resetAnatomicalAdverseSituations: Record<number, string> = {
+          ...animal.anatomicalAdverseSituations,
+        };
+        const resetAnatomicalDiseaseComment: Record<number, string> = {
+          ...animal.anatomicalDiseaseComment,
+        };
+        const resetSelectedAnatomicalLocations: Record<number, boolean> = {
+          ...animal.selectedAnatomicalLocations,
+        };
+
+        if (anatomicalLocationsData?.data) {
+          anatomicalLocationsData.data.forEach((location) => {
+            resetAnatomicalPercentages[location.id] = 40;
+            resetAnatomicalWeights[location.id] = defaultWeight;
+            resetAnatomicalAdverseSituations[location.id] = "";
+            resetAnatomicalDiseaseComment[location.id] = "";
+            resetSelectedAnatomicalLocations[location.id] = false;
+          });
+        }
+
+        return {
+          ...animal,
+          selected: false,
+          percentage: 40,
+          weight: defaultWeight,
+          adverseSituation: "",
+          diseaseComment: "",
+          anatomicalPercentages: resetAnatomicalPercentages,
+          anatomicalWeights: resetAnatomicalWeights,
+          anatomicalAdverseSituations: resetAnatomicalAdverseSituations,
+          anatomicalDiseaseComment: resetAnatomicalDiseaseComment,
+          selectedAnatomicalLocations: resetSelectedAnatomicalLocations,
+        };
+      })
     );
   };
 
@@ -407,18 +455,24 @@ export function AnimalSelectionModal({
       return;
     }
 
-    // Solo procesar los animales modificados que están seleccionados
+    // Separar animales que quedaron seleccionados y los que se desmarcaron
     const selectedModified = modifiedAnimals.filter((a) => a.selected);
+    const deselectedModified = modifiedAnimals.filter((a) => {
+      const initial = initialSelections.find((i) => i.animalId === a.animalId);
+      return initial?.selected && !a.selected;
+    });
 
-    if (selectedModified.length === 0) {
-      toast.info("No hay animales seleccionados para guardar");
+    const totalAnimals = selectedModified.length + deselectedModified.length;
+
+    if (totalAnimals === 0) {
+      toast.info("No hay cambios para guardar");
       return;
     }
 
     let processedCount = 0;
-    const totalAnimals = selectedModified.length;
+    const animalsToProcess = [...selectedModified, ...deselectedModified];
 
-    selectedModified.forEach((animal) => {
+    animalsToProcess.forEach((animal) => {
       const existingPostmortem = postmortemData?.data?.find(
         (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
       );
@@ -427,13 +481,87 @@ export function AnimalSelectionModal({
         (sub) => sub.idSpeciesDisease === idSpeciesDisease
       );
 
-      // Construir subProductsPostmortem según si hay ubicaciones anatómicas o no
-      let subProductsPostmortem: SubProductPostmortem[] = [];
-
       // Obtener el estado inicial del animal para comparar
       const initialAnimal = initialSelections.find(
         (i) => i.animalId === animal.animalId
       );
+
+      // Si se desmarcó, enviar desactivación de subproductos
+      if (!animal.selected) {
+        if (!existingPostmortem) {
+          processedCount++;
+          if (processedCount === totalAnimals) {
+            toast.success(
+              `Se ${totalAnimals === 1 ? "actualizó" : "actualizaron"} ${totalAnimals} ${
+                totalAnimals === 1 ? "animal" : "animales"
+              } correctamente`
+            );
+            onSave(totalAnimals);
+            onClose();
+          }
+          return;
+        }
+
+        let subProductsPostmortem: SubProductPostmortem[] = [];
+
+        if (anatomicalLocationsData?.data && anatomicalLocationsData.data.length > 0) {
+          anatomicalLocationsData.data.forEach((location) => {
+            if (initialAnimal?.selectedAnatomicalLocations?.[location.id]) {
+              subProductsPostmortem.push({
+                idSpeciesDisease: idSpeciesDisease,
+                presence: 0,
+                percentageAffection: initialAnimal.anatomicalPercentages?.[location.id] || 0,
+                weight: initialAnimal.anatomicalWeights?.[location.id] || 0,
+                status: false,
+                idProductAnatomicalLocation: location.id,
+              });
+            }
+          });
+        }
+
+        if (subProductsPostmortem.length === 0) {
+          subProductsPostmortem = [
+            {
+              idSpeciesDisease: idSpeciesDisease,
+              presence: 0,
+              percentageAffection: 0,
+              weight: 0,
+              status: false,
+            },
+          ];
+        }
+
+        updatePostmortem(
+          {
+            id: existingPostmortem.id,
+            request: {
+              status: true,
+              subProductsPostmortem,
+            },
+          },
+          {
+            onSuccess: () => {
+              processedCount++;
+              if (processedCount === totalAnimals) {
+                toast.success(
+                  `Se ${
+                    totalAnimals === 1 ? "actualizó" : "actualizaron"
+                  } ${totalAnimals} ${
+                    totalAnimals === 1 ? "animal" : "animales"
+                  } correctamente`
+                );
+                onSave(totalAnimals);
+                onClose();
+              }
+            },
+          }
+        );
+
+        return;
+      }
+
+      // Construir subProductsPostmortem según si hay ubicaciones anatómicas o no
+      let subProductsPostmortem: SubProductPostmortem[] = [];
 
       if (anatomicalLocationsData?.data && anatomicalLocationsData.data.length > 0) {
         // Si hay ubicaciones anatómicas, crear un SubProductPostmortem solo para ubicaciones NUEVAS o MODIFICADAS
@@ -453,8 +581,8 @@ export function AnimalSelectionModal({
               initialAnimal?.anatomicalDiseaseComment?.[location.id] !== animal.anatomicalDiseaseComment?.[location.id]; // Cambió comentario enfermedad
 
             if (hasChanged) {
-              const adverseSituation = animal?.anatomicalAdverseSituations?.[location.id] ?? '';
-              const diseaseComment = animal?.anatomicalDiseaseComment?.[location.id] ?? '';
+              const adverseSituation = (animal?.anatomicalAdverseSituations?.[location.id] ?? "").trim();
+              const diseaseComment = (animal?.anatomicalDiseaseComment?.[location.id] ?? "").trim();
 
               // Validate if patologia is 'OTROS', adverseSituation is required
               if (patologia?.toUpperCase() === 'OTROS' && adverseSituation.length === 0) {
@@ -467,8 +595,8 @@ export function AnimalSelectionModal({
                 presence: 1,
                 percentageAffection: animal.anatomicalPercentages?.[location.id] || 0,
                 weight: animal.anatomicalWeights?.[location.id] || 0,
-                adverseSituation: adverseSituation.length > 0 ? adverseSituation : undefined,
-                diseaseComment: diseaseComment.length > 0 ? diseaseComment : undefined,
+                adverseSituation: adverseSituation,
+                diseaseComment: diseaseComment,
                 status: true,
                 idProductAnatomicalLocation: location.id,
               });
@@ -502,17 +630,20 @@ export function AnimalSelectionModal({
 					return;
 				}
 
-				subProductsPostmortem = [
-					{
-						idSpeciesDisease: idSpeciesDisease,
-						presence: 1,
-						percentageAffection: animal.percentage,
-						weight: animal.weight || 0,
-						adverseSituation: animal.adverseSituation?.length > 0 ? animal.adverseSituation : undefined,
-						diseaseComment: animal.diseaseComment?.length > 0 ? animal.diseaseComment : undefined,
-						status: true,
-					},
-				];
+        const adverseSituation = (animal.adverseSituation ?? "").trim();
+        const diseaseComment = (animal.diseaseComment ?? "").trim();
+
+        subProductsPostmortem = [
+          {
+            idSpeciesDisease: idSpeciesDisease,
+            presence: 1,
+            percentageAffection: animal.percentage,
+            weight: animal.weight || 0,
+            adverseSituation: adverseSituation,
+            diseaseComment: diseaseComment,
+            status: true,
+          },
+        ];
 			}
 
       if (existingPostmortem && existingSubProduct) {
@@ -637,17 +768,79 @@ export function AnimalSelectionModal({
               seleccionados
             </p>
 
-            <div className="flex gap-2">
-              <Button
-                variant={generalPercentage === "100" ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setGeneralPercentage("100");
-                  handleApplyGeneralPercentage(100);
-                }}
-              >
-                100%
-              </Button>
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-2">
+                <Button
+                  variant={generalPercentage === "20" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setGeneralPercentage("20");
+                    handleApplyGeneralPercentage(20);
+                  }}
+                  className={
+                    generalPercentage === "20"
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : ""
+                  }
+                >
+                  20%
+                </Button>
+                <Button
+                  variant={generalPercentage === "40" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setGeneralPercentage("40");
+                    handleApplyGeneralPercentage(40);
+                  }}
+                  className={
+                    generalPercentage === "40"
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : ""
+                  }
+                >
+                  40%
+                </Button>
+                <Button
+                  variant={generalPercentage === "60" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setGeneralPercentage("60");
+                    handleApplyGeneralPercentage(60);
+                  }}
+                  className={
+                    generalPercentage === "60"
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : ""
+                  }
+                >
+                  60%
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 min-w-fit">
+                  Porcentaje personalizado (%)
+                </span>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="Ingrese porcentaje"
+                  className="w-40 h-9"
+                  value={generalPercentage || ""}
+                  onChange={(e) => setGeneralPercentage(e.target.value)}
+                />
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const val = parseInt(generalPercentage);
+                    if (!isNaN(val)) handleApplyGeneralPercentage(val);
+                  }}
+                  className="bg-teal-600 hover:bg-teal-700"
+                >
+                  Aplicar a Seleccionados
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -730,13 +923,47 @@ export function AnimalSelectionModal({
 																			<div className='ml-6 space-y-2'>
 																				<div className='flex items-center gap-1 flex-wrap'>
 																					<Button
-																						variant={selection.percentage === 100 ? 'default' : 'outline'}
+																						variant={selection.anatomicalPercentages?.[location.id] === 20 ? 'default' : 'outline'}
 																						size='sm'
-																						onClick={() => handleAnimalPercentage(animalId, 100)}
+																						onClick={() => handleAnatomicalPercentage(animalId, location.id, 20)}
 																						disabled={!canEdit}
+																						className={`h-7 px-2 text-xs ${
+																							selection.anatomicalPercentages?.[location.id] === 20 ? 'bg-blue-600 hover:bg-blue-700' : ''
+																						}`}
 																					>
-																						100%
+																						20%
 																					</Button>
+																					<Button
+																						variant={selection.anatomicalPercentages?.[location.id] === 40 ? 'default' : 'outline'}
+																						size='sm'
+																						onClick={() => handleAnatomicalPercentage(animalId, location.id, 40)}
+																						disabled={!canEdit}
+																						className={`h-7 px-2 text-xs ${
+																							selection.anatomicalPercentages?.[location.id] === 40 ? 'bg-blue-600 hover:bg-blue-700' : ''
+																						}`}
+																					>
+																						40%
+																					</Button>
+																					<Button
+																						variant={selection.anatomicalPercentages?.[location.id] === 60 ? 'default' : 'outline'}
+																						size='sm'
+																						onClick={() => handleAnatomicalPercentage(animalId, location.id, 60)}
+																						disabled={!canEdit}
+																						className={`h-7 px-2 text-xs ${
+																							selection.anatomicalPercentages?.[location.id] === 60 ? 'bg-blue-600 hover:bg-blue-700' : ''
+																						}`}
+																					>
+																						60%
+																					</Button>
+																					<Input
+																						type='number'
+																						min='0'
+																						max='100'
+																						value={selection.anatomicalPercentages?.[location.id] ?? 0}
+																						onChange={e => handleAnatomicalPercentage(animalId, location.id, parseInt(e.target.value) || 0)}
+																						disabled={!canEdit}
+																						className='w-14 h-7 text-center bg-white text-xs'
+																					/>
 																				</div>
 
 																				{/* Peso por ubicación anatómica */}
@@ -818,14 +1045,42 @@ export function AnimalSelectionModal({
 																	<div className='text-xs font-medium text-gray-700'>Porcentaje de Afectación (%) *</div>
 																	<div className='flex items-center gap-2'>
 																		<Button
-																			variant={selection.percentage === 100 ? 'default' : 'outline'}
+																			variant={selection.percentage === 20 ? 'default' : 'outline'}
 																			size='sm'
-																			onClick={() => handleAnimalPercentage(animalId, 100)}
+																			onClick={() => handleAnimalPercentage(animalId, 20)}
 																			disabled={!canEdit}
+																			className={selection.percentage === 20 ? 'bg-blue-600 hover:bg-blue-700' : ''}
 																		>
-																			100%
+																			20%
 																		</Button>
-																	</div>
+																		<Button
+																			variant={selection.percentage === 40 ? 'default' : 'outline'}
+																			size='sm'
+																			onClick={() => handleAnimalPercentage(animalId, 40)}
+																			disabled={!canEdit}
+																			className={selection.percentage === 40 ? 'bg-blue-600 hover:bg-blue-700' : ''}
+																		>
+																			40%
+																		</Button>
+																		<Button
+																			variant={selection.percentage === 60 ? 'default' : 'outline'}
+																			size='sm'
+																			onClick={() => handleAnimalPercentage(animalId, 60)}
+																			disabled={!canEdit}
+																			className={selection.percentage === 60 ? 'bg-blue-600 hover:bg-blue-700' : ''}
+																		>
+																			60%
+																		</Button>
+																		<Input
+																			type='number'
+																			min='0'
+																			max='100'
+																			value={selection.percentage ?? 0}
+																			onChange={e => handleAnimalPercentage(animalId, parseInt(e.target.value) || 0)}
+																			disabled={!canEdit}
+																			className='w-20 h-8 text-center bg-gray-50'
+																		/>
+																	</div>{' '}
 																</div>
 
 																{/* Peso Aproximado - Solo si hay datos de avgOrgans y NO hay ubicaciones anatómicas */}
@@ -856,13 +1111,13 @@ export function AnimalSelectionModal({
 															</div>
 
 															{/* Inputs de observaciones para cada animal seleccionado */}
-															<div key={selection.animalId} className='space-y-2 w-full'>
+															<div key={selection.animalId} className='space-y-2'>
 																{patologia?.toUpperCase() === 'OTROS' && (
-																	<label className='text-xs font-medium text-gray-700 max-w-md'>
+																	<label className='text-xs font-medium text-gray-700'>
 																		Situación adversa *
 																		<Textarea
 																			placeholder='Situación adversa'
-																			className='w-full bg-white text-xs resize-none break-words'
+																			className='w-full bg-white text-xs'
 																			required
 																			value={selection.adverseSituation ?? ''}
 																			onChange={e => {
@@ -887,9 +1142,8 @@ export function AnimalSelectionModal({
 																				overflow: 'auto',
 																				wordWrap: 'break-word',
 																				whiteSpace: 'pre-wrap',
-																				wordBreak: 'break-word'
+																				wordBreak: 'break-word',
 																			}}
-																			disabled={!canEdit}
 																		/>
 																	</label>
 																)}
@@ -898,7 +1152,7 @@ export function AnimalSelectionModal({
 																	Observación (Opcional)
 																	<Textarea
 																		placeholder='Observación'
-																		className='w-full bg-white text-xs resize-none break-words'
+																		className='w-full bg-white text-xs'
 																		value={selection.diseaseComment ?? ''}
 																		onChange={e => {
 																			if (!canEdit) return;
@@ -922,9 +1176,8 @@ export function AnimalSelectionModal({
 																			overflow: 'auto',
 																			wordWrap: 'break-word',
 																			whiteSpace: 'pre-wrap',
-																			wordBreak: 'break-word'
+																			wordBreak: 'break-word',
 																		}}
-																		disabled={!canEdit}
 																	/>
 																</label>
 															</div>

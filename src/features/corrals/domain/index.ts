@@ -1,5 +1,6 @@
 export type CorralStatus = "disponible" | "ocupado" | "animales";
-export type LineaType = "bovinos" | "porcinos" | "ovinos-caprinos";
+type KnownLineaType = "bovinos" | "porcinos" | "ovinos-caprinos";
+export type LineaType = KnownLineaType | `line-${number}`;
 // ProcessType now uses group IDs instead of hardcoded names for better scalability
 export type ProcessType = number | "todos"; // number = group ID, "todos" = show all
 
@@ -151,6 +152,11 @@ export function getLineaIdFromType(lineaType: LineaType): number {
     case "ovinos-caprinos":
       return 3;
     default:
+      // Dynamic lines are encoded as "line-{id}".
+      if (lineaType.startsWith("line-")) {
+        const parsedId = Number(lineaType.slice(5));
+        if (Number.isFinite(parsedId) && parsedId > 0) return parsedId;
+      }
       return 1;
   }
 }
@@ -190,6 +196,6 @@ export function getLineaTypeFromId(id: number): LineaType {
     case 3:
       return "ovinos-caprinos";
     default:
-      return "bovinos";
+      return `line-${id}`;
   }
 }

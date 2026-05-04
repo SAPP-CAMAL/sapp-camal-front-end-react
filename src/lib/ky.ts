@@ -7,6 +7,34 @@ function normalizeApiBase(raw: string | undefined) {
     return withoutTrailingSlash
 }
 
+function readConfiguredApiBase(): string | undefined {
+    if (typeof window !== "undefined") {
+        const runtime = normalizeApiBase((window as any).__NEXT_PUBLIC_API_URL__)
+        if (runtime) return runtime
+    }
+
+    const fromEnv = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
+    if (fromEnv) return fromEnv
+
+    return undefined
+}
+
+function getClientApiBases(): string[] {
+    const bases: string[] = []
+
+    const configured = readConfiguredApiBase()
+    if (configured) {
+        bases.push(configured)
+    }
+
+    // Fallback por proxy interno de Next para no bloquear llamadas del cliente.
+    if (!bases.includes("/api/proxy")) {
+        bases.push("/api/proxy")
+    }
+
+    return bases
+}
+
 function readCookie(name: string): string | undefined {
     if (typeof document === "undefined") return undefined
     const cookies = document.cookie ? document.cookie.split(";") : []
@@ -51,6 +79,8 @@ function clearAuthData() {
         window.localStorage.removeItem("accessToken")
         window.localStorage.removeItem("refreshToken")
         window.localStorage.removeItem("user")
+        window.localStorage.removeItem("activeRoleId")
+        window.localStorage.removeItem("activeRoleName")
 
         // Borrar cookies (intento con múltiples paths por seguridad)
         const cookiesToClear = ["accessToken", "refreshToken", "user"]
@@ -84,35 +114,36 @@ function isNetworkFailure(error: unknown): boolean {
     )
 }
 
-function getClientApiBases(): string[] {
-    // EN EL CLIENTE: Detectar automáticamente basándose en el hostname
-    // Esta es la forma más confiable porque no depende de variables de entorno
-    if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname
+function looksLikePermissionError(status: number, bodyText: string): boolean {
+    if (status !== 401) return false
 
-        // Si estamos en localhost, usar localhost para desarrollo
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            // En desarrollo, intentar usar la variable de entorno o localhost
-            const devUrl = process.env.NEXT_PUBLIC_API_URL
-            if (devUrl) {
-                return [normalizeApiBase(devUrl)]
-            }
-            return ["http://localhost:3000"]
-        }
+    const normalized = bodyText.toLowerCase()
+    return (
+        normalized.includes("forbidden") ||
+        normalized.includes("permission") ||
+        normalized.includes("permiso") ||
+        normalized.includes("rol") ||
+        normalized.includes("role")
+    )
+}
 
-        // EN PRODUCCIÓN: SIEMPRE usar la URL de producción
-        // No importa qué diga la variable de entorno
-        return ["https://sapp-ruminahui.com"]
-    }
+function looksLikeSessionExpired(status: number, bodyText: string): boolean {
+    if (status !== 401) return false
 
-    // EN EL SERVIDOR (SSR): Usar variable de entorno o fallback a producción
-    const serverUrl = process.env.NEXT_PUBLIC_API_URL
-    if (serverUrl) {
-        return [normalizeApiBase(serverUrl)]
-    }
-
-    // Fallback para SSR: usar producción
-    return ["https://sapp-ruminahui.com"]
+    const normalized = bodyText.toLowerCase()
+    return (
+        normalized.includes("token") ||
+        normalized.includes("expired") ||
+        normalized.includes("expirado") ||
+        normalized.includes("invalid") ||
+        normalized.includes("invalido") ||
+        normalized.includes("inválido") ||
+        normalized.includes("jwt") ||
+        normalized.includes("session") ||
+        normalized.includes("sesion") ||
+        normalized.includes("sesión") ||
+        normalized.includes("unauthorized")
+    )
 }
 
 // IMPORTANTE: No evaluamos API_BASES al cargar el módulo porque la variable global
@@ -140,23 +171,23 @@ function createKyClient(prefixUrl: string): KyInstance {
             ],
             afterResponse: [
                 async (request, options, response) => {
-                    if (!response.ok) {
-                        const method = (options as any)?.method ?? "GET"
-                        const url = (() => {
-                            try {
-                                return request.url
-                            } catch {
-                                return "<unknown>"
-                            }
-                        })()
-
-                        let bodyText = ""
+                    const method = (options as any)?.method ?? "GET"
+                    const url = (() => {
                         try {
-                            bodyText = await response.clone().text()
+                            return request.url
                         } catch {
-                            // ignore
+                            return "<unknown>"
                         }
+                    })()
 
+                    let bodyText = ""
+                    try {
+                        bodyText = await response.clone().text()
+                    } catch {
+                        // ignore
+                    }
+
+                    if (!response.ok) {
                         // No loguear errores esperados
                         const isExpectedEmptyResponse = response.status === 400
                         const isSlaughterhouseInfoNotFound = url.includes("environment-variables/find-camal-info") && response.status === 404
@@ -183,8 +214,33 @@ function createKyClient(prefixUrl: string): KyInstance {
                     }
 
                     if (response.status === 401) {
+                        const permissionError = looksLikePermissionError(response.status, bodyText)
+                        const sessionExpired = looksLikeSessionExpired(response.status, bodyText)
+
+                        if (permissionError) {
+                            console.warn("[HTTP] 401 detected for permission-like response. Session preserved.", {
+                                method,
+                                url,
+                                status: response.status,
+                            })
+                            return response
+                        }
+
+                        if (!sessionExpired) {
+                            console.warn("[HTTP] 401 without clear session-expired signal. Session preserved.", {
+                                method,
+                                url,
+                                status: response.status,
+                            })
+                            return response
+                        }
+
                         // Limpiar datos de sesión antes de redirigir para evitar bucles infinitos
-                        console.warn("[HTTP] 401 Unauthorized detected. Clearing session...")
+                        console.warn("[HTTP] 401 Unauthorized detected. Clearing session...", {
+                            method,
+                            url,
+                            status: response.status,
+                        })
                         clearAuthData()
                         window.location.href = "/auth/login"
                     }
@@ -253,14 +309,7 @@ export const http = {
 
 // Función para obtener las URLs base de la API (útil para fetch directo con fallback)
 export function getApiBases(): string[] {
-    const bases = getClientApiBases()
-    return bases.map((base: string) => {
-        // Si es el proxy de desarrollo, devolver la URL real para fetch directo
-        if (base === '/api/proxy') {
-            return normalizeApiBase(process.env.NEXT_PUBLIC_API_URL) || "http://localhost:3000"
-        }
-        return base
-    })
+    return getClientApiBases()
 }
 
 // Fetch con fallback automático (para descargas de archivos, etc.)

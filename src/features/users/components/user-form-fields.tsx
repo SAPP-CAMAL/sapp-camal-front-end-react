@@ -32,7 +32,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
 	});
 
 	const query = useQuery({
-		queryKey: ['user-roles'],
+		queryKey: ['available-user-roles'],
 		queryFn: () => getUserRolesService(),
 	});
 
@@ -263,6 +263,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
 								placeholder='Seleccionar Roles...'
 								maxCount={2}
 								singleLine={false}
+								modalPopover={true}
 							/>
 						</FormControl>
 						<FormMessage />

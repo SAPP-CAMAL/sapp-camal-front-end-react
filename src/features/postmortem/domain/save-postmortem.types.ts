@@ -8,6 +8,7 @@ export interface ProductPostmortem {
     isTotalConfiscation: boolean;
     status: boolean;
     bodyPartComment?: string;
+    image?: string | null; // Imagen en base64 (opcional)
 }
 
 export interface SubProductPostmortem {
@@ -19,6 +20,7 @@ export interface SubProductPostmortem {
 	adverseSituation?: string;
 	diseaseComment?: string;
 	idProductAnatomicalLocation?: number; // ID de la ubicación anatómica (opcional)
+	image?: string | null; // Imagen en base64 (opcional)
 }
 
 export interface SavePostmortemRequest {
@@ -54,6 +56,7 @@ export interface ProductPostmortemData {
   status: boolean;
   bodyPart: BodyPartData;
   bodyPartComment?: string;
+  urlImage?: string | null;
 }
 
 export interface DiseaseData {
@@ -88,6 +91,7 @@ export interface SubProductPostmortemData {
   percentageAffection: string;
   status: boolean;
   idProductAnatomicalLocation?: number; // ID de la ubicación anatómica
+  urlImage?: string | null; // URL de imagen guardada
   speciesDisease: SpeciesDiseaseData;
 }
 
@@ -96,6 +100,7 @@ export interface PostmortemData {
   idDetailsSpeciesCertificate: number;
   idVeterinarian: number;
   status: boolean;
+  urlImage?: string | null;
   productPostmortem: ProductPostmortemData[];
   subProductPostmortem: SubProductPostmortemData[];
 }
