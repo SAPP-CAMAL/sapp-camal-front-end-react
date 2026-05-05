@@ -36,6 +36,10 @@ export async function reclaimFairTicketByIdService(id: number): Promise<any> {
   return http.patch(`v1/1.0.0/fair-ticket/reclaim-by-id/${id}`).json<any>();
 }
 
+export async function reclaimFairTicketByCodeService(code: string): Promise<any> {
+  return http.patch(`v1/1.0.0/fair-ticket/reclaim/${encodeURIComponent(code)}`).json<any>();
+}
+
 export async function printFairTicketPdfService(code: string): Promise<void> {
   const blob = await http
     .get(`v1/1.0.0/fair-ticket/print/${encodeURIComponent(code)}`)
