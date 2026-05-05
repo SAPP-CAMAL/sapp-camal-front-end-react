@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import {
   saveFairTicketService,
-  reclaimFairTicketByIdService,
+  reclaimFairTicketByCodeService,
   printFairTicketPdfService,
 } from "../server/db/scan-barcode.service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -267,9 +267,8 @@ export function ScanBarcodeManagement() {
     [isVerifying]
   );
 
-  const processVerify = async (rawId: string) => {
-    const id = Number(rawId);
-    if (!rawId || isNaN(id)) {
+  const processVerify = async (rawCode: string) => {
+    if (!rawCode) {
       toast.error("El código escaneado no es válido");
       return;
     }
@@ -278,9 +277,9 @@ export function ScanBarcodeManagement() {
     setVerifyResult(null);
 
     try {
-      await reclaimFairTicketByIdService(id);
+      await reclaimFairTicketByCodeService(rawCode);
       setVerifyResult({
-        id: rawId,
+        id: rawCode,
         status: "validated",
         message: "Ticket validado y reclamado exitosamente.",
       });
@@ -289,17 +288,17 @@ export function ScanBarcodeManagement() {
       const status = error?.response?.status;
       const message = await getBackendMessage(error, "Error al verificar el ticket.");
       if (status === 404) {
-        setVerifyResult({ id: rawId, status: "not_found", message });
+        setVerifyResult({ id: rawCode, status: "not_found", message });
         toast.error("Ticket no encontrado");
       } else if (status === 409) {
         setVerifyResult({
-          id: rawId,
+          id: rawCode,
           status: "already_claimed",
-          message: `El ticket #${rawId} ya fue reclamado anteriormente.`,
+          message: `El ticket ${rawCode} ya fue reclamado anteriormente.`,
         });
         toast.warning("Ticket ya reclamado");
       } else {
-        setVerifyResult({ id: rawId, status: "error", message });
+        setVerifyResult({ id: rawCode, status: "error", message });
         toast.error(message);
       }
     } finally {
@@ -310,6 +309,17 @@ export function ScanBarcodeManagement() {
         setTimeout(() => verifyInputRef.current?.focus(), 100);
       }
     }
+  };
+
+  const handleGenerateCode = async () => {
+    if (!selectedStage) {
+      toast.error("Seleccione una etapa productiva");
+      return;
+    }
+    const code = String(Math.floor(Math.random() * 90000000) + 10000000);
+    setScannedCode(code);
+    if (inputRef.current) inputRef.current.value = code;
+    await processCode(code);
   };
 
   const handleManualVerify = async () => {
@@ -382,18 +392,29 @@ export function ScanBarcodeManagement() {
               <Label className="text-xs text-muted-foreground font-medium">
                 Código del ticket
               </Label>
-              <div className="relative">
-                <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Input
-                  ref={inputRef}
-                  type="text"
-                  className="pl-10 pr-3 w-full h-10"
-                  placeholder="Esperando lectura..."
-                  value={scannedCode}
-                  onChange={(e) => setScannedCode(e.target.value)}
-                  onKeyDown={handleKeyDown}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                  <Input
+                    ref={inputRef}
+                    type="text"
+                    className="pl-10 pr-3 w-full h-10"
+                    placeholder="Esperando lectura..."
+                    value={scannedCode}
+                    onChange={(e) => setScannedCode(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isProcessing || !selectedStage}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 shrink-0"
+                  onClick={handleGenerateCode}
                   disabled={isProcessing || !selectedStage}
-                />
+                >
+                  Generar código
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground">
                 {!selectedStage
@@ -442,44 +463,44 @@ export function ScanBarcodeManagement() {
             <CardTitle>Resultado del Registro</CardTitle>
           </CardHeader>
           <CardContent>
-            <Alert variant="default">
+            <Alert variant="default" style={{ backgroundColor: "#f8f9fa" }} className="border-0 rounded-xl">
               <div className="flex items-center gap-2">
                 {scanResult.status === "success" ? (
                   <CheckCircle className="h-4 w-4 text-green-600" />
                 ) : (
-                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  <AlertCircle className="h-4 w-4 text-slate-400" />
                 )}
-                <AlertTitle>
+                <AlertTitle className="text-sm font-semibold text-slate-700">
                   {scanResult.status === "success" ? "Registrado" : "Aviso"}
                 </AlertTitle>
               </div>
-              <AlertDescription className="mt-2">
-                <p>
-                  <strong>Código:</strong> {scanResult.code}
+              <AlertDescription className="mt-2 space-y-1">
+                <p className="text-xs text-slate-500">
+                  <span className="font-medium text-slate-600">Código:</span> {scanResult.code}
                 </p>
-                <p className="mt-1">{scanResult.message}</p>
+                <p className="text-sm text-slate-700">{scanResult.message}</p>
                 {scanResult.status === "success" && ticketData && (
-                  <div className="mt-4 space-y-3 sm:space-y-4 rounded-xl border bg-background p-3 sm:p-4">
+                  <div className="mt-4 space-y-3 sm:space-y-4 rounded-xl border bg-white p-3 sm:p-4">
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">NRO</p>
                       <p className="text-base sm:text-lg font-bold">
-                        {ticketData.id
-                          ? `${ticketData.date}-${String(ticketData.id).padStart(3, '0')}`
+                        {ticketData.code
+                          ? `${ticketData.date}-${ticketData.code}`
                           : ticketData.date}
                       </p>
                     </div>
 
                     <div className="flex flex-col items-center gap-1">
                       <BarcodeDisplay
-                        value={ticketData.id ? String(ticketData.id) : ""}
+                        value={ticketData.code ?? ""}
                         format="CODE128"
                         width={2}
                         height={50}
                         displayValue={false}
                       />
-                      {ticketData.id && (
+                      {ticketData.code && (
                         <p className="text-sm tracking-widest">
-                          {String(ticketData.id).padStart(3, "0")}
+                          {ticketData.code}
                         </p>
                       )}
                     </div>
@@ -550,7 +571,7 @@ export function ScanBarcodeManagement() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                El lector enviará el ID del ticket y presionará Enter automáticamente
+                El lector enviará el código del ticket y presionará Enter automáticamente
               </p>
             </div>
           </div>
@@ -586,28 +607,25 @@ export function ScanBarcodeManagement() {
           </div>
 
           {verifyResult && (
-            <Alert variant="default">
+            <Alert variant="default" style={{ backgroundColor: "#f8f9fa" }} className="border-0 rounded-xl">
               <div className="flex items-center gap-2">
-                {verifyResult.status === "validated" && (
+                {verifyResult.status === "validated" ? (
                   <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-slate-400" />
                 )}
-                {(verifyResult.status === "already_claimed" ||
-                  verifyResult.status === "not_found" ||
-                  verifyResult.status === "error") && (
-                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                )}
-                <AlertTitle>
+                <AlertTitle className="text-sm font-semibold text-slate-700">
                   {verifyResult.status === "validated" && "Ticket válido"}
                   {verifyResult.status === "already_claimed" && "Ya reclamado"}
                   {verifyResult.status === "not_found" && "No encontrado"}
                   {verifyResult.status === "error" && "Aviso"}
                 </AlertTitle>
               </div>
-              <AlertDescription className="mt-2">
-                <p>
-                  <strong>ID:</strong> {verifyResult.id}
+              <AlertDescription className="mt-2 space-y-1">
+                <p className="text-xs text-slate-500">
+                  <span className="font-medium text-slate-600">Código:</span> {verifyResult.id}
                 </p>
-                <p className="mt-1">{verifyResult.message}</p>
+                <p className="text-sm text-slate-700">{verifyResult.message}</p>
               </AlertDescription>
             </Alert>
           )}
@@ -628,23 +646,23 @@ export function ScanBarcodeManagement() {
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">NRO</p>
                 <p className="text-base sm:text-lg font-bold">
-                  {ticketData.id
-                    ? `${ticketData.date}-${String(ticketData.id).padStart(3, '0')}`
+                  {ticketData.code
+                    ? `${ticketData.date}-${ticketData.code}`
                     : ticketData.date}
                 </p>
               </div>
 
               <div className="flex flex-col items-center gap-1">
                 <BarcodeDisplay
-                  value={ticketData.id ? String(ticketData.id) : ""}
+                  value={ticketData.code ?? ""}
                   format="CODE128"
                   width={2}
                   height={50}
                   displayValue={false}
                 />
-                {ticketData.id && (
+                {ticketData.code && (
                   <p className="text-sm tracking-widest">
-                    {String(ticketData.id).padStart(3, "0")}
+                    {ticketData.code}
                   </p>
                 )}
               </div>
