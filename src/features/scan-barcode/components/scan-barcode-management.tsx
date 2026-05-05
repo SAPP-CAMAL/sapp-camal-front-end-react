@@ -335,7 +335,7 @@ export function ScanBarcodeManagement() {
     <div className="space-y-4 sm:space-y-6">
       <section className="space-y-2">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="font-semibold text-lg sm:text-xl">Registro de Boletos de Feria</h1>
+          <h1 className="font-semibold text-lg sm:text-xl">Registro de Ingreso de Feria</h1>
           <Button
             type="button"
             variant="outline"
