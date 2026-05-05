@@ -311,6 +311,17 @@ export function ScanBarcodeManagement() {
     }
   };
 
+  const handleGenerateCode = async () => {
+    if (!selectedStage) {
+      toast.error("Seleccione una etapa productiva");
+      return;
+    }
+    const code = String(Math.floor(Math.random() * 90000000) + 10000000);
+    setScannedCode(code);
+    if (inputRef.current) inputRef.current.value = code;
+    await processCode(code);
+  };
+
   const handleManualVerify = async () => {
     const id = verifyInput.trim();
     if (!id) {
@@ -381,18 +392,29 @@ export function ScanBarcodeManagement() {
               <Label className="text-xs text-muted-foreground font-medium">
                 Código del ticket
               </Label>
-              <div className="relative">
-                <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Input
-                  ref={inputRef}
-                  type="text"
-                  className="pl-10 pr-3 w-full h-10"
-                  placeholder="Esperando lectura..."
-                  value={scannedCode}
-                  onChange={(e) => setScannedCode(e.target.value)}
-                  onKeyDown={handleKeyDown}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                  <Input
+                    ref={inputRef}
+                    type="text"
+                    className="pl-10 pr-3 w-full h-10"
+                    placeholder="Esperando lectura..."
+                    value={scannedCode}
+                    onChange={(e) => setScannedCode(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isProcessing || !selectedStage}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 shrink-0"
+                  onClick={handleGenerateCode}
                   disabled={isProcessing || !selectedStage}
-                />
+                >
+                  Generar código
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground">
                 {!selectedStage
@@ -549,7 +571,7 @@ export function ScanBarcodeManagement() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                El lector enviará el ID del ticket y presionará Enter automáticamente
+                El lector enviará el código del ticket y presionará Enter automáticamente
               </p>
             </div>
           </div>
