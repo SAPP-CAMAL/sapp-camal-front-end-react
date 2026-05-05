@@ -828,64 +828,9 @@ export function PostmortemManagement() {
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (!selectedSpecieId) {
-                      toast.error("Selecciona una línea de producción");
-                      return;
-                    }
-                    // Extraer año y mes de la fecha seleccionada (YYYY-MM)
-                    const yearMonth = slaughterDate.substring(0, 7);
-                    toast.promise(
-                      downloadMonthlyConfiscationReport({
-                        date: yearMonth,
-                        idSpecies: selectedSpecieId,
-                      }),
-                      {
-                        loading: "Generando reporte mensual...",
-                        success: "Reporte mensual descargado correctamente",
-                        error: (err) =>
-                          err instanceof Error
-                            ? err.message
-                            : "Error al descargar el reporte mensual",
-                      }
-                    );
-                  }}
-                >
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  Reporte Mensual de Decomisos
-                </DropdownMenuItem> 
+ 
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (!selectedSpecieId) {
-                      toast.error("Selecciona una línea de producción");
-                      return;
-                    }
-                    const startDate = slaughterDate;
-                    const tomorrow = new Date(slaughterDate);
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    const endDate = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
-                    toast.promise(
-                      downloadConsolidatedPostmortemReport({
-                        startDate,
-                        endDate,
-                        idSpecies: selectedSpecieId,
-                      }),
-                      {
-                        loading: "Generando reporte consolidado...",
-                        success: "Reporte consolidado descargado correctamente",
-                        error: (err) =>
-                          err instanceof Error
-                            ? err.message
-                            : "Error al descargar el reporte consolidado",
-                      }
-                    );
-                  }}
-                >
-                  <FileBarChart className="h-4 w-4 mr-2" />
-                  Reporte Consolidado
-                </DropdownMenuItem>
+
                 <DropdownMenuItem
                   onClick={() => {
                     if (!selectedSpecieId) {
@@ -910,10 +855,7 @@ export function PostmortemManagement() {
                   <CalendarRange className="h-4 w-4 mr-2" />
                   Reporte Mensual de Agrocalidad
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleOpenMonthlyPathologiesModal}>
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  Patologías por Mes
-                </DropdownMenuItem>
+
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
