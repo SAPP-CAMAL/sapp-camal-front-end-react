@@ -273,15 +273,9 @@ export function NewPeopleFields({
       <FormField
         control={form.control}
         name="mobileNumber"
-        rules={{
-          required: {
-            value: true,
-            message: "El campo número de teléfono es requerido",
-          },
-        }}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Número de Teléfono *</FormLabel>
+            <FormLabel>Número de Teléfono</FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
