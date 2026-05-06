@@ -316,7 +316,7 @@ export function ScanBarcodeManagement() {
       toast.error("Seleccione una etapa productiva");
       return;
     }
-    const code = String(Math.floor(Math.random() * 90000000) + 10000000);
+    const code = "SG" + String(Math.floor(Math.random() * 90000000) + 10000000);
     setScannedCode(code);
     if (inputRef.current) inputRef.current.value = code;
     await processCode(code);
