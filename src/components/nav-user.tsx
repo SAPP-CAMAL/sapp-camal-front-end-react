@@ -6,8 +6,10 @@ import {
   ChevronsUpDown,
   CreditCard,
   LogOut,
+  PowerOff,
   Sparkles,
 } from "lucide-react";
+import { useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -20,6 +22,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -31,11 +43,61 @@ import { LoginResponse } from "@/features/security/domain";
 import { fixUtf8 } from "@/lib/utils";
 
 
+async function performLogout(navigate: ReturnType<typeof useRouter>) {
+  try {
+    await logoutAction();
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("accessToken");
+      window.localStorage.removeItem("refreshToken");
+      window.localStorage.removeItem("user");
+      window.localStorage.removeItem("activeRoleId");
+      window.localStorage.removeItem("activeRoleName");
+      window.dispatchEvent(new CustomEvent("active-role-changed", { detail: { id: null, name: null } }));
+      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+      document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+      document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    }
+    navigate.push("/auth/login");
+  } catch {
+    navigate.push("/auth/login");
+  }
+}
+
 export function NavUser({ user }: { user: LoginResponse }) {
   const { isMobile } = useSidebar();
   const navigate = useRouter();
+  const [showShutdownDialog, setShowShutdownDialog] = useState(false);
 
   return (
+    <>
+    <AlertDialog open={showShutdownDialog} onOpenChange={setShowShutdownDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <PowerOff className="size-5 text-destructive" />
+            Cerrar Sesión y Apagar
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            ¿Está seguro que desea cerrar su sesión y apagar esta computadora?
+            La computadora se apagará en 10 segundos.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-white hover:bg-destructive/90"
+            onClick={async () => {
+              if (typeof window !== "undefined") {
+                window.location.href = "sapp-shutdown://";
+              }
+              await performLogout(navigate);
+            }}
+          >
+            Sí, apagar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal={false}>
@@ -102,43 +164,22 @@ export function NavUser({ user }: { user: LoginResponse }) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator /> */}
-            <DropdownMenuItem
-              onClick={async () => {
-                try {
-                  // Llamar al logout en el servidor (borra cookies del servidor)
-                  await logoutAction();
-                  
-                  // Limpiar también en el cliente
-                  if (typeof window !== "undefined") {
-                    // Borrar localStorage
-                    window.localStorage.removeItem("accessToken");
-                    window.localStorage.removeItem("refreshToken");
-                    window.localStorage.removeItem("user");
-                    window.localStorage.removeItem("activeRoleId");
-                    window.localStorage.removeItem("activeRoleName");
-                    window.dispatchEvent(new CustomEvent("active-role-changed", { detail: { id: null, name: null } }));
-                    
-                    // Borrar cookies del navegador
-                    document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-                    document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-                    document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-                  }
-                  
-                  // Redirigir al login
-                  navigate.push("/auth/login");
-                } catch (error) {
-                  console.error("Logout error:", error);
-                  // Redirigir al login incluso si falla
-                  navigate.push("/auth/login");
-                }
-              }}
-            >
+            <DropdownMenuItem onClick={() => performLogout(navigate)}>
               <LogOut />
               Cerrar Sesión
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => setShowShutdownDialog(true)}
+            >
+              <PowerOff />
+              Cerrar Sesión y Apagar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+    </>
   );
 }
