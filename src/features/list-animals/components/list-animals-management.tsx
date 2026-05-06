@@ -461,6 +461,20 @@ export function ListAnimalsManagement() {
             </Badge>
           </div>
 
+          {/* Etapas Productivas */}
+          {item.productiveStagesSummary && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Etapas Productivas</div>
+              <div className="flex flex-col gap-1 items-start">
+                {item.productiveStagesSummary.split(',').map((stage: string, index: number) => (
+                  <Badge key={index} variant="secondary" className="bg-slate-100 text-slate-700 font-normal text-[10px] leading-tight border-0 text-left">
+                    {stage.trim()}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Corral */}
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-muted-foreground" />
@@ -853,6 +867,14 @@ export function ListAnimalsManagement() {
                     </TableHead>
                     <TableHead className="w-40 whitespace-normal leading-tight text-center">
                       <span className="block text-xs font-semibold">
+                        Etapas
+                      </span>
+                      <span className="block text-xs font-semibold">
+                        Productivas
+                      </span>
+                    </TableHead>
+                    <TableHead className="w-40 whitespace-normal leading-tight text-center">
+                      <span className="block text-xs font-semibold">
                         Identificación del
                       </span>
                       <span className="block text-xs font-semibold">
@@ -869,7 +891,7 @@ export function ListAnimalsManagement() {
                 <TableBody>
                   {apiData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={11} className="text-center py-12">
+                      <TableCell colSpan={12} className="text-center py-12">
                         <div className="flex flex-col items-center gap-3">
                           <div className="rounded-full bg-muted p-3">
                             <Search className="h-6 w-6 text-muted-foreground" />
@@ -944,6 +966,23 @@ export function ListAnimalsManagement() {
                           >
                             {item.species?.name || "N/A"}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-center whitespace-normal">
+                          {item.productiveStagesSummary ? (
+                            <div className="flex flex-col gap-1 items-center">
+                              {item.productiveStagesSummary.split(',').map((stage: string, index: number) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="bg-slate-100 text-slate-700 border-0 font-normal text-[10px] leading-tight text-center"
+                                >
+                                  {stage.trim()}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="whitespace-normal text-center">
                           <div className="flex flex-col items-center gap-1">
