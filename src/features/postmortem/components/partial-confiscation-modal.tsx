@@ -82,6 +82,11 @@ export function PartialConfiscationModal({
     AnimalPartSelection[]
   >([]);
 
+  // Trackear los valores iniciales para detectar cambios
+  const [initialSelections, setInitialSelections] = useState<
+    AnimalPartSelection[]
+  >([]);
+
   // Ordenar partes del cuerpo: primero Miembros, luego Áreas
   const sortedBodyParts = useMemo(() => {
     if (!bodyPartsData?.data) return [];
@@ -138,6 +143,7 @@ export function PartialConfiscationModal({
       });
 
       setAnimalSelections(selections);
+      setInitialSelections(JSON.parse(JSON.stringify(selections))); // Copia profunda
     }
   }, [animalsData, sortedBodyParts, postmortemData]);
 
@@ -227,16 +233,67 @@ export function PartialConfiscationModal({
     onClose();
   };
 
-  const handleSaveAll = () => {
-    const selectedAnimals = animalSelections.filter((a) => a.selected);
+  const selectedCount = animalSelections.filter((a) => a.selected).length;
 
-    if (selectedAnimals.length === 0) {
-      toast.error("Debe seleccionar al menos un animal");
+  const hasModifications = useMemo(() => {
+    if (animalSelections.length === 0 || initialSelections.length === 0) return false;
+
+    return animalSelections.some((current) => {
+      const initial = initialSelections.find(
+        (i) => i.animalId === current.animalId
+      );
+
+      if (!initial && current.selected) return true;
+
+      if (initial && initial.selected !== current.selected) return true;
+
+      // Verificar cambios en las partes
+      if (initial) {
+        for (let i = 0; i < current.bodyParts.length; i++) {
+          const currentPart = current.bodyParts[i];
+          const initialPart = initial.bodyParts.find(p => p.id === currentPart.id);
+
+          if (!initialPart && currentPart.selected) return true;
+          if (initialPart) {
+            if (initialPart.selected !== currentPart.selected) return true;
+            if (currentPart.selected && (initialPart.weight !== currentPart.weight || initialPart.bodyPartComment !== currentPart.bodyPartComment)) return true;
+          }
+        }
+      }
+
+      return false;
+    });
+  }, [animalSelections, initialSelections]);
+
+  const handleSaveAll = () => {
+    // Identificar animales modificados (incluyendo los que se desmarcaron)
+    const modifiedAnimals = animalSelections.filter((current) => {
+      const initial = initialSelections.find((i) => i.animalId === current.animalId);
+      if (!initial) return current.selected;
+      
+      // Si cambió el estado de selección del animal
+      if (initial.selected !== current.selected) return true;
+      
+      // Si el animal sigue seleccionado, verificar si cambiaron sus partes
+      if (current.selected) {
+        return current.bodyParts.some(part => {
+          const initialPart = initial.bodyParts.find(p => p.id === part.id);
+          if (!initialPart) return part.selected;
+          return part.selected !== initialPart.selected || 
+                 (part.selected && (part.weight !== initialPart.weight || part.bodyPartComment !== initialPart.bodyPartComment));
+        });
+      }
+      return false;
+    });
+
+    if (modifiedAnimals.length === 0) {
+      toast.info("No hay cambios para guardar");
       return;
     }
 
-    // Validar que cada animal seleccionado tenga al menos una parte con peso
-    const invalidAnimals = selectedAnimals.filter((animal) => {
+    // Validar que cada animal que se mantiene seleccionado tenga al menos una parte con peso
+    const invalidAnimals = modifiedAnimals.filter((animal) => {
+      if (!animal.selected) return false;
       const partsWithWeight = animal.bodyParts.filter(
         (part) => part.selected && part.weight
       );
@@ -250,27 +307,47 @@ export function PartialConfiscationModal({
       return;
     }
 
-    // Guardar cada animal seleccionado
-    let savedCount = 0;
-    const totalAnimals = selectedAnimals.length;
+    // Guardar cada animal modificado
+    let processedCount = 0;
+    const totalToProcess = modifiedAnimals.length;
 
-    selectedAnimals.forEach((animal) => {
-      const selectedParts = animal.bodyParts.filter(
-        (part) => part.selected && part.weight
+    modifiedAnimals.forEach((animal) => {
+      const existingPostmortem = postmortemData?.data?.find(
+        (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
       );
 
-      const productsPostmortem: ProductPostmortem[] = selectedParts.map(
-        (part) => ({
-          idBodyPart: part.id,
-          weight: parseFloat(part.weight),
-          isTotalConfiscation: false, // Decomiso parcial
-          status: true,
-          bodyPartComment: (part?.bodyPartComment ?? "").trim(),
-        })
-      );
+      // Si se desmarcó el animal completo, desactivar sus decomisos parciales
+      if (!animal.selected) {
+        if (!existingPostmortem) {
+          processedCount++;
+          if (processedCount === totalToProcess) {
+            toast.success(`Se actualizaron ${totalToProcess} animales correctamente`);
+            onSave(selectedCount);
+            onClose();
+          }
+          return;
+        }
 
-      try {
+        const initialAnimal = initialSelections.find(i => i.animalId === animal.animalId);
+        const productsPostmortem: ProductPostmortem[] = (initialAnimal?.bodyParts || [])
+          .filter(p => p.selected)
+          .map(p => ({
+            idBodyPart: p.id,
+            weight: parseFloat(p.weight) || 0,
+            isTotalConfiscation: false,
+            status: false,
+            bodyPartComment: "",
+          }));
 
+        if (productsPostmortem.length === 0) {
+          processedCount++;
+          if (processedCount === totalToProcess) {
+            toast.success(`Se actualizaron ${totalToProcess} animales correctamente`);
+            onSave(selectedCount);
+            onClose();
+          }
+          return;
+        }
 
         savePostmortem(
           {
@@ -280,35 +357,73 @@ export function PartialConfiscationModal({
           },
           {
             onSuccess: () => {
-              savedCount++;
-              if (savedCount === totalAnimals) {
-                toast.success(
-                  `Se guardaron ${totalAnimals} animales correctamente`
-                );
-                onSave(totalAnimals);
+              processedCount++;
+              if (processedCount === totalToProcess) {
+                toast.success(`Se actualizaron ${totalToProcess} animales correctamente`);
+                onSave(selectedCount);
                 onClose();
               }
             },
             onError: (error) => {
-              // const a = error
-              console.log(error.message)
-              if (error instanceof Error && error.message) {
-                toast.error(`Error al guardar animal ${animal.animalId}: ${error.message}`);
-              } else {
-                toast.error(`Error al guardar animal ${animal.animalId}`);
-              }
-              //
-              // toast.error(`Error al guardar animal ${animal.animalId}`);
-            },
+              toast.error(`Error al actualizar animal ${animal.animalId}`);
+              processedCount++;
+            }
           }
-        )
-      } catch (error) {
-        console.log({error})
+        );
+        return;
       }
+
+      // Si el animal está seleccionado, enviar sus partes actuales
+      const selectedParts = animal.bodyParts.filter(
+        (part) => part.selected && part.weight
+      );
+
+      // También debemos incluir las partes que se desmarcaron para este animal
+      const initialAnimal = initialSelections.find(i => i.animalId === animal.animalId);
+      const deselectedParts = (initialAnimal?.bodyParts || [])
+        .filter(p => p.selected && !animal.bodyParts.find(cp => cp.id === p.id)?.selected);
+
+      const productsPostmortem: ProductPostmortem[] = [
+        ...selectedParts.map(part => ({
+          idBodyPart: part.id,
+          weight: parseFloat(part.weight),
+          isTotalConfiscation: false,
+          status: true,
+          bodyPartComment: (part?.bodyPartComment ?? "").trim(),
+        })),
+        ...deselectedParts.map(part => ({
+          idBodyPart: part.id,
+          weight: parseFloat(part.weight) || 0,
+          isTotalConfiscation: false,
+          status: false,
+          bodyPartComment: "",
+        }))
+      ];
+
+      savePostmortem(
+        {
+          idDetailsSpeciesCertificate: parseInt(animal.animalId),
+          status: true,
+          productsPostmortem,
+        },
+        {
+          onSuccess: () => {
+            processedCount++;
+            if (processedCount === totalToProcess) {
+              toast.success(`Se guardaron los cambios correctamente`);
+              onSave(selectedCount);
+              onClose();
+            }
+          },
+          onError: (error: any) => {
+            const msg = error?.response?.data?.message || error?.message;
+            toast.error(`Error al guardar animal ${animal.animalId}${msg ? ': ' + msg : ''}`);
+            processedCount++;
+          },
+        }
+      );
     });
   };
-
-  const selectedCount = animalSelections.filter((a) => a.selected).length;
 
   const getSelectedPartsInfo = (animalId: string) => {
     const animal = animalSelections.find((a) => a.animalId === animalId);
@@ -495,7 +610,7 @@ export function PartialConfiscationModal({
           {canEdit && (
             <Button
               onClick={handleSaveAll}
-              disabled={selectedCount === 0 || isSaving}
+            disabled={!hasModifications || isSaving}
               className="bg-teal-600 hover:bg-teal-700"
             >
               {isSaving ? (
@@ -506,8 +621,7 @@ export function PartialConfiscationModal({
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {hasExistingData ? "Actualizar" : "Guardar"} ({selectedCount}{" "}
-                  animales)
+                  {hasExistingData ? "Actualizar" : "Guardar"}{selectedCount > 0 ? ` (${selectedCount} animales)` : " cambios"}
                 </>
               )}
             </Button>
