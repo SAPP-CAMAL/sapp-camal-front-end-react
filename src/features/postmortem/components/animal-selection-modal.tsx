@@ -550,7 +550,7 @@ export function AnimalSelectionModal({
                     totalAnimals === 1 ? "animal" : "animales"
                   } correctamente`
                 );
-                onSave(totalAnimals);
+                onSave(selectedCount);
                 onClose();
               }
             },
@@ -667,7 +667,7 @@ export function AnimalSelectionModal({
                     totalAnimals === 1 ? "animal" : "animales"
                   } correctamente`
                 );
-                onSave(totalAnimals);
+                onSave(selectedCount);
                 onClose();
               }
             },
@@ -692,7 +692,7 @@ export function AnimalSelectionModal({
                     totalAnimals === 1 ? "animal" : "animales"
                   } correctamente`
                 );
-                onSave(totalAnimals);
+                onSave(selectedCount);
                 onClose();
               }
             },
@@ -721,6 +721,52 @@ export function AnimalSelectionModal({
   };
 
   const selectedCount = animalSelections.filter((a) => a.selected).length;
+
+  // Detectar si hay cambios pendientes (selecciones o deselecciones)
+  const hasModifications = useMemo(() => {
+    if (animalSelections.length === 0 || initialSelections.length === 0) return false;
+
+    return animalSelections.some((current) => {
+      const initial = initialSelections.find(
+        (i) => i.animalId === current.animalId
+      );
+
+      if (!initial && current.selected) return true;
+
+      if (
+        initial &&
+        (initial.selected !== current.selected ||
+          initial.percentage !== current.percentage ||
+          initial.weight !== current.weight ||
+          initial.adverseSituation !== current.adverseSituation ||
+          initial.diseaseComment !== current.diseaseComment)
+      ) {
+        return true;
+      }
+
+      if (initial && anatomicalLocationsData?.data) {
+        for (const location of anatomicalLocationsData.data) {
+          const locationId = location.id;
+          if (
+            initial.selectedAnatomicalLocations?.[locationId] !==
+            current.selectedAnatomicalLocations?.[locationId] ||
+            initial.anatomicalPercentages?.[locationId] !==
+            current.anatomicalPercentages?.[locationId] ||
+            initial.anatomicalWeights?.[locationId] !==
+            current.anatomicalWeights?.[locationId] ||
+            initial.anatomicalAdverseSituations?.[locationId] !==
+            current.anatomicalAdverseSituations?.[locationId] ||
+            initial.anatomicalDiseaseComment?.[locationId] !==
+            current.anatomicalDiseaseComment?.[locationId]
+          ) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    });
+  }, [animalSelections, initialSelections, anatomicalLocationsData]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
@@ -1204,7 +1250,7 @@ export function AnimalSelectionModal({
           {canEdit && (
             <Button
               onClick={handleSave}
-              disabled={selectedCount === 0 || isSavingOrUpdating}
+              disabled={!hasModifications || isSavingOrUpdating}
               className="bg-teal-600 hover:bg-teal-700"
             >
               {isSavingOrUpdating ? (
@@ -1215,8 +1261,7 @@ export function AnimalSelectionModal({
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {hasExistingData ? "Actualizar" : "Guardar"} ({selectedCount}{" "}
-                  {selectedCount === 1 ? "animal" : "animales"})
+                  {hasExistingData ? "Actualizar" : "Guardar"}{selectedCount > 0 ? ` (${selectedCount} ${selectedCount === 1 ? "animal" : "animales"})` : " cambios"}
                 </>
               )}
             </Button>
