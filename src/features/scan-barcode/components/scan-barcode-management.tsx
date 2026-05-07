@@ -46,9 +46,9 @@ import {
 import { BarcodeDisplay } from "./barcode-display";
 import {
   createProductiveStage,
-  getFairProductiveStagesAll,
-  FairProductiveStage,
+  getAllProductiveStages,
 } from "@/features/productive-stage/server/db/productive-stage.service";
+import { ProductiveStage } from "@/features/productive-stage/domain";
 
 async function getBackendMessage(error: any, fallback: string): Promise<string> {
   try {
@@ -75,7 +75,7 @@ export function ScanBarcodeManagement() {
   const queryClient = useQueryClient();
   const [scannedCode, setScannedCode] = useState("");
   const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
-  const [selectedStage, setSelectedStage] = useState<FairProductiveStage | null>(null);
+  const [selectedStage, setSelectedStage] = useState<ProductiveStage | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
@@ -99,9 +99,9 @@ export function ScanBarcodeManagement() {
   const verifyInputRef = useRef<HTMLInputElement>(null);
 
   const productiveStagesQuery = useQuery({
-    queryKey: ["fair-productive-stages"],
+    queryKey: ["productive-stages-all"],
     queryFn: async () => {
-      const resp = await getFairProductiveStagesAll();
+      const resp = await getAllProductiveStages();
       return resp?.data || [];
     },
     staleTime: 5 * 60 * 1000,
@@ -202,7 +202,7 @@ export function ScanBarcodeManagement() {
 
   const handleStageChange = (value: string) => {
     const stage = productiveStagesQuery.data?.find(
-      (item: FairProductiveStage) => item.id.toString() === value
+      (item: ProductiveStage) => item.id.toString() === value
     );
     if (stage) {
       setSelectedStageId(stage.id);
@@ -336,6 +336,7 @@ export function ScanBarcodeManagement() {
       <section className="space-y-2">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="font-semibold text-lg sm:text-xl">Registro de Ingreso de Feria</h1>
+          {/* TODO: quitar cuando confirmen — botón nueva etapa productiva deshabilitado temporalmente
           <Button
             type="button"
             variant="outline"
@@ -344,6 +345,7 @@ export function ScanBarcodeManagement() {
           >
             Nueva etapa productiva
           </Button>
+          */}
         </div>
         <p className="text-sm text-muted-foreground">
           Escanee el código de barras usando el lector físico USB
@@ -378,8 +380,8 @@ export function ScanBarcodeManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   {productiveStagesQuery.data
-                    ?.filter((stage: FairProductiveStage) => stage.status)
-                    .map((stage: FairProductiveStage) => (
+                    ?.filter((stage: ProductiveStage) => stage.status)
+                    .map((stage: ProductiveStage) => (
                       <SelectItem key={stage.id} value={stage.id.toString()}>
                         {stage.name}
                       </SelectItem>
@@ -393,32 +395,37 @@ export function ScanBarcodeManagement() {
                 Código del ticket
               </Label>
               <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                  <Input
-                    ref={inputRef}
-                    type="text"
-                    className="pl-10 pr-3 w-full h-10"
-                    placeholder="Esperando lectura..."
-                    value={scannedCode}
-                    onChange={(e) => setScannedCode(e.target.value)}
-                    onKeyDown={handleKeyDown}
+                {selectedStage?.idSpecies === 4 ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 shrink-0"
+                    onClick={handleGenerateCode}
                     disabled={isProcessing || !selectedStage}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10 shrink-0"
-                  onClick={handleGenerateCode}
-                  disabled={isProcessing || !selectedStage}
-                >
-                  Generar código
-                </Button>
+                  >
+                    Generar código
+                  </Button>
+                ) : (
+                  <div className="relative flex-1">
+                    <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                    <Input
+                      ref={inputRef}
+                      type="text"
+                      className="pl-10 pr-3 w-full h-10"
+                      placeholder="Esperando lectura..."
+                      value={scannedCode}
+                      onChange={(e) => setScannedCode(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      disabled={isProcessing || !selectedStage}
+                    />
+                  </div>
+                )}
               </div>
               <p className="text-xs text-muted-foreground">
                 {!selectedStage
                   ? "Primero seleccione una etapa productiva"
+                  : selectedStage.idSpecies === 4
+                  ? "Presione Generar código para registrar un bovino"
                   : "El lector enviará el código y presionará Enter automáticamente"}
               </p>
             </div>
@@ -480,17 +487,22 @@ export function ScanBarcodeManagement() {
                 </p>
                 <p className="text-sm text-slate-700">{scanResult.message}</p>
                 {scanResult.status === "success" && ticketData && (
-                  <div className="mt-4 space-y-3 sm:space-y-4 rounded-xl border bg-white p-3 sm:p-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">NRO</p>
-                      <p className="text-base sm:text-lg font-bold">
-                        {ticketData.code
-                          ? `${ticketData.date}-${ticketData.code}`
-                          : ticketData.date}
-                      </p>
-                    </div>
+                  <div className="mt-4 flex flex-col items-center gap-0 rounded-xl border bg-white p-4">
 
-                    <div className="flex flex-col items-center gap-1">
+                    <p className="text-base font-bold text-center mt-1">TICKET DE FERIA</p>
+
+                    <p className="text-xs text-center mt-1 leading-tight">
+                      PLAZA DE COMERCIALIZACION DE{"\n"}GANADO EN PIE DEL CANTON RIOBAMBA
+                    </p>
+
+                    <p className="text-xs text-center my-2 tracking-widest">--------------------------------</p>
+
+                    <p className="text-xs text-center">NRO</p>
+                    <p className="text-sm font-bold text-center">
+                      {ticketData.date}-{ticketData.code}
+                    </p>
+
+                    <div className="flex flex-col items-center gap-1 my-2">
                       <BarcodeDisplay
                         value={ticketData.code ?? ""}
                         format="CODE128"
@@ -498,40 +510,35 @@ export function ScanBarcodeManagement() {
                         height={50}
                         displayValue={false}
                       />
-                      {ticketData.code && (
-                        <p className="text-sm tracking-widest">
-                          {ticketData.code}
-                        </p>
+                      <p className="text-xs tracking-widest">{ticketData.code}</p>
+                    </div>
+
+                    <p className="text-xs text-center my-2 tracking-widest">--------------------------------</p>
+
+                    <p className="text-sm font-bold text-center uppercase">{ticketData.species}</p>
+
+                    <p className="text-xs text-center mt-2">FECHA</p>
+                    <p className="text-sm font-bold text-center">{ticketData.date}</p>
+
+                    <p className="text-xs text-center my-2 tracking-widest">--------------------------------</p>
+
+                    <Button
+                      onClick={handlePrint}
+                      disabled={isPrinting}
+                      className="w-full mt-1"
+                    >
+                      {isPrinting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generando PDF...
+                        </>
+                      ) : (
+                        <>
+                          <Printer className="h-4 w-4 mr-2" />
+                          Imprimir Ticket
+                        </>
                       )}
-                    </div>
-
-                    <div className="text-center">
-                      <p className="text-xs sm:text-sm font-semibold">
-                        PLAZA DE COMERCIALIZACION DE GANADO EN PIE DEL CANTON RIOBAMBA
-                      </p>
-                    </div>
-
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Etapa</p>
-                      <p className="text-base sm:text-lg font-semibold">
-                        {ticketData.species}
-                      </p>
-                    </div>
-
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Fecha</p>
-                      <p className="text-base">{ticketData.date}</p>
-                    </div>
-
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Button
-                        onClick={() => setShowTicketModal(true)}
-                        className="w-full"
-                      >
-                        <Printer className="h-4 w-4 mr-2" />
-                        Ver / Imprimir Ticket
-                      </Button>
-                    </div>
+                    </Button>
                   </div>
                 )}
               </AlertDescription>
@@ -635,24 +642,27 @@ export function ScanBarcodeManagement() {
       {/* Modal de Ticket */}
       <Dialog open={showTicketModal} onOpenChange={setShowTicketModal}>
         <DialogContent
-          className="w-[calc(100%-2rem)] sm:max-w-md print-ticket"
+          className="w-[calc(100%-2rem)] sm:max-w-sm print-ticket"
           showCloseButton={false}
         >
-          <DialogHeader className="print-hide">
-            <DialogTitle className="text-center">Ticket de Feria</DialogTitle>
-          </DialogHeader>
           {ticketData && (
-            <div className="print-ticket-body space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg bg-white">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">NRO</p>
-                <p className="text-base sm:text-lg font-bold">
-                  {ticketData.code
-                    ? `${ticketData.date}-${ticketData.code}`
-                    : ticketData.date}
-                </p>
-              </div>
+            <div className="print-ticket-body flex flex-col items-center gap-0 p-4 bg-white">
+              <DialogTitle className="sr-only">Ticket de Feria</DialogTitle>
 
-              <div className="flex flex-col items-center gap-1">
+              <p className="text-base font-bold text-center mt-1">TICKET DE FERIA</p>
+
+              <p className="text-xs text-center mt-1 leading-tight">
+                PLAZA DE COMERCIALIZACION DE{"\n"}GANADO EN PIE DEL CANTON RIOBAMBA
+              </p>
+
+              <p className="text-xs text-center my-2 tracking-widest">--------------------------------</p>
+
+              <p className="text-xs text-center">NRO</p>
+              <p className="text-sm font-bold text-center">
+                {ticketData.date}-{ticketData.code}
+              </p>
+
+              <div className="flex flex-col items-center gap-1 my-2">
                 <BarcodeDisplay
                   value={ticketData.code ?? ""}
                   format="CODE128"
@@ -660,35 +670,22 @@ export function ScanBarcodeManagement() {
                   height={50}
                   displayValue={false}
                 />
-                {ticketData.code && (
-                  <p className="text-sm tracking-widest">
-                    {ticketData.code}
-                  </p>
-                )}
+                <p className="text-xs tracking-widest">{ticketData.code}</p>
               </div>
 
-              <div className="text-center">
-                <p className="text-xs sm:text-sm font-semibold">
-                  PLAZA DE COMERCIALIZACION DE GANADO EN PIE DEL CANTON RIOBAMBA
-                </p>
-              </div>
+              <p className="text-xs text-center my-2 tracking-widest">--------------------------------</p>
 
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">Etapa</p>
-                <p className="text-base sm:text-lg font-semibold">
-                  {ticketData.species}
-                </p>
-              </div>
+              <p className="text-sm font-bold text-center uppercase">{ticketData.species}</p>
 
-              <div className="text-center print-hide">
-                <p className="text-sm text-muted-foreground">Fecha</p>
-                <p className="text-base">{ticketData.date}</p>
-              </div>
+              <p className="text-xs text-center mt-2">FECHA</p>
+              <p className="text-sm font-bold text-center">{ticketData.date}</p>
+
+              <p className="text-xs text-center my-2 tracking-widest">--------------------------------</p>
 
               <Button
                 onClick={handlePrint}
                 disabled={isPrinting}
-                className="w-full print-hide"
+                className="w-full mt-1 print-hide"
               >
                 {isPrinting ? (
                   <>
@@ -707,7 +704,7 @@ export function ScanBarcodeManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal nueva etapa productiva */}
+      {/* TODO: quitar cuando confirmen — modal nueva etapa productiva deshabilitado temporalmente
       <Dialog
         open={showProductiveStageModal}
         onOpenChange={setShowProductiveStageModal}
@@ -747,6 +744,7 @@ export function ScanBarcodeManagement() {
           </div>
         </DialogContent>
       </Dialog>
+      */}
     </div>
   );
 }
