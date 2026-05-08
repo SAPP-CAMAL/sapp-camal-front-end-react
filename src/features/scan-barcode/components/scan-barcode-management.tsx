@@ -396,16 +396,6 @@ export function ScanBarcodeManagement() {
               </Label>
               <div className="flex gap-2">
                 {selectedStage?.idSpecies === 4 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-10 shrink-0"
-                    onClick={handleGenerateCode}
-                    disabled={isProcessing || !selectedStage}
-                  >
-                    Generar código
-                  </Button>
-                ) : (
                   <div className="relative flex-1">
                     <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                     <Input
@@ -416,17 +406,27 @@ export function ScanBarcodeManagement() {
                       value={scannedCode}
                       onChange={(e) => setScannedCode(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      disabled={isProcessing || !selectedStage}
+                      disabled={isProcessing}
                     />
                   </div>
-                )}
+                ) : selectedStage ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 shrink-0"
+                    onClick={handleGenerateCode}
+                    disabled={isProcessing}
+                  >
+                    Generar código
+                  </Button>
+                ) : null}
               </div>
               <p className="text-xs text-muted-foreground">
                 {!selectedStage
                   ? "Primero seleccione una etapa productiva"
                   : selectedStage.idSpecies === 4
-                  ? "Presione Generar código para registrar un bovino"
-                  : "El lector enviará el código y presionará Enter automáticamente"}
+                  ? "El lector enviará el código y presionará Enter automáticamente"
+                  : "Presione Generar código para registrar"}
               </p>
             </div>
           </div>
