@@ -1,10 +1,9 @@
 'use client';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LineaType, ProcessType, CorralGroup, getEspecialesGroupIdByLine } from '../../domain';
+import { ProcessType, CorralGroup } from '../../domain';
 
 interface Props {
-	selectedTab: LineaType;
 	processFilter: ProcessType;
 	onChange: (v: ProcessType) => void;
 	counts?: Record<number, number>; // Changed to use group ID as key
@@ -12,64 +11,7 @@ interface Props {
 	isLoadingGroups?: boolean;
 }
 
-export function ProcessFilterTabs({ selectedTab, processFilter, onChange, counts = {}, lineGroups = [], isLoadingGroups = false }: Props) {
-	// Previously, line 3 (ovinos-caprinos) had a special layout. We now want all lines to behave the same.
-	if (false && selectedTab === 'ovinos-caprinos') {
-		const especialesGroupId = getEspecialesGroupIdByLine(selectedTab);
-		const generalGroupId = 5; // Corrales Generales for ovinos-caprinos
-
-		return (
-			<>
-				{/* Mobile select */}
-				<div className='sm:hidden'>
-					<div className='space-y-2'>
-						<label className='text-sm font-medium text-gray-700'>Filtrar corrales:</label>
-						<Select
-							value={processFilter.toString()}
-							onValueChange={value => {
-								const newValue = value === 'todos' ? 'todos' : parseInt(value);
-								onChange(newValue as ProcessType);
-							}}
-						>
-							<SelectTrigger className='w-full'>
-								<SelectValue placeholder='Selecciona un filtro' />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value='todos'>Todos ({(counts[generalGroupId] || 0) + (counts[especialesGroupId] || 0)})</SelectItem>
-								{/* <SelectItem value={especialesGroupId.toString()}>
-                  Especiales ({counts[especialesGroupId] || 0})
-                </SelectItem> */}
-							</SelectContent>
-						</Select>
-					</div>
-				</div>
-
-				{/* Tablet and Desktop tabs */}
-				<div className='hidden sm:block'>
-					<Tabs
-						value={processFilter.toString()}
-						onValueChange={value => {
-							const newValue = value === 'todos' ? 'todos' : parseInt(value);
-							onChange(newValue as ProcessType);
-						}}
-					>
-						<TabsList className='gap-1'>
-							<TabsTrigger value='todos' className='px-3 py-1 text-sm'>
-								TODOS ({(counts[generalGroupId] || 0) + (counts[especialesGroupId] || 0)})
-							</TabsTrigger>
-							{/* <TabsTrigger
-                value={especialesGroupId.toString()}
-                className="px-3 py-1 text-sm"
-              >
-                ESPECIALES ({counts[especialesGroupId] || 0})
-              </TabsTrigger> */}
-						</TabsList>
-					</Tabs>
-				</div>
-			</>
-		);
-	}
-
+export function ProcessFilterTabs({ processFilter, onChange, counts = {}, lineGroups = [], isLoadingGroups = false }: Props) {
 	// Don't show tabs if no groups available
 	if (lineGroups.length === 0) {
 		return null;
@@ -82,7 +24,6 @@ export function ProcessFilterTabs({ selectedTab, processFilter, onChange, counts
 
 	// Add "Todos" tab if there are multiple groups, plus always add "Especiales"
 	const hasMultipleGroups = validGroups.length > 1;
-	const especialesGroupId = getEspecialesGroupIdByLine(selectedTab);
 
 	// Calculate total count for "Todos" tab based ONLY on the groups actually rendered
 	// This avoids double-counting when "Especiales" is not shown separately
@@ -96,7 +37,7 @@ export function ProcessFilterTabs({ selectedTab, processFilter, onChange, counts
 					<label className='text-sm font-medium text-gray-700'>Filtrar corrales:</label>
 					<div className='relative'>
 						{isLoadingGroups && (
-							<div className='absolute -top-1 left-0 right-0 h-[2px] rounded-full bg-gradient-to-r from-transparent via-teal-500/60 to-transparent animate-pulse' />
+							<div className='absolute -top-1 left-0 right-0 h-0.5 rounded-full bg-linear-to-r from-transparent via-teal-500/60 to-transparent animate-pulse' />
 						)}
 						<Select
 							value={processFilter.toString()}
@@ -115,9 +56,6 @@ export function ProcessFilterTabs({ selectedTab, processFilter, onChange, counts
 										{group.name} ({counts[group.id] || 0})
 									</SelectItem>
 								))}
-								{/* <SelectItem value={especialesGroupId.toString()}>
-                  Especiales ({counts[especialesGroupId] || 0})
-                </SelectItem> */}
 							</SelectContent>
 						</Select>
 					</div>
@@ -135,7 +73,7 @@ export function ProcessFilterTabs({ selectedTab, processFilter, onChange, counts
 				>
 					<div className='relative'>
 						{isLoadingGroups && (
-							<div className='absolute -top-1 left-0 right-0 h-[2px] rounded-full bg-gradient-to-r from-transparent via-teal-500/60 to-transparent animate-pulse' />
+							<div className='absolute -top-1 left-0 right-0 h-0.5 rounded-full bg-linear-to-r from-transparent via-teal-500/60 to-transparent animate-pulse' />
 						)}
 						<TabsList className='w-full justify-start'>
 							<div className='space-x-1'>
@@ -149,13 +87,6 @@ export function ProcessFilterTabs({ selectedTab, processFilter, onChange, counts
 										{group.name} ({counts[group.id] || 0})
 									</TabsTrigger>
 								))}
-								{/* Always add "Especiales" tab for each line */}
-								{/* <TabsTrigger
-                value={especialesGroupId.toString()}
-                className="px-3 py-1 text-sm whitespace-nowrap"
-                >
-                ESPECIALES ({counts[especialesGroupId] || 0})
-                </TabsTrigger> */}
 							</div>
 						</TabsList>
 					</div>

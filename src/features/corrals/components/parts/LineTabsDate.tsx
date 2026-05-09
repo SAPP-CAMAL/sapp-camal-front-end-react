@@ -21,11 +21,20 @@ export function LineTabsDate({ selectedTab, onTabChange, selectedDate, onDateCha
 	// Mapear líneas de la API a valores de LineaType
 	const activeLines = React.useMemo(() => {
 		if (!lines || lines.length === 0) return [];
-		return lines.map(line => ({
-			id: line.id,
-			value: getLineaTypeFromId(line.id),
-			label: `${line.name} (${line.description})`,
-		}));
+
+		const seenIds = new Set<number>();
+		return lines
+			.filter(line => {
+				if (!line || typeof line.id !== 'number') return false;
+				if (seenIds.has(line.id)) return false;
+				seenIds.add(line.id);
+				return true;
+			})
+			.map(line => ({
+				id: line.id,
+				value: getLineaTypeFromId(line.id),
+				label: `${line.name} (${line.description})`,
+			}));
 	}, [lines]);
 
 	return (

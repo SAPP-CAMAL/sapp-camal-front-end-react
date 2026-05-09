@@ -46,6 +46,11 @@ export type AnimalSelection = {
   anatomicalPercentages?: Record<number, number>; // Porcentajes por ubicación anatómica (key: idLocation, value: percentage)
   anatomicalWeights?: Record<number, number>; // Pesos por ubicación anatómica (key: idLocation, value: weight)
   selectedAnatomicalLocations?: Record<number, boolean>; // Ubicaciones seleccionadas (key: idLocation, value: selected)
-  anatomicalAdverseSituations?: Record<number, string>; // Ubicaciones seleccionadas (key: idLocation, value: selected)
-  anatomicalDiseaseComment?: Record<number, string>; // Ubicaciones seleccionadas (key: idLocation, value: selected)
+  anatomicalAdverseSituations?: Record<number, string>; // Situaciones adversas por ubicación anatómica (key: idLocation, value: adverseSituation)
+  anatomicalDiseaseComment?: Record<number, string>; // Comentarios de enfermedad por ubicación anatómica (key: idLocation, value: diseaseComment)
+  anatomicalImageFiles?: Record<number, File | null>; // Archivos de imagen por ubicación anatómica (key: idLocation, value: file)
+  anatomicalImagePreviews?: Record<number, string | null>; // Previews de imagen por ubicación anatómica (key: idLocation, value: preview)
+  imageFile?: File | null;
+  imagePreview?: string | null;
+  existingImageUrl?: string | null;
 };

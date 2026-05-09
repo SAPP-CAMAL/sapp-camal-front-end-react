@@ -18,9 +18,9 @@ export const downloadStatusCorralsReport = async (admissionDate: string, idLine:
 	}
 };
 
-export const downloadAntemortemAgrocalidadReport = async (date: string, idLine: number, type: 'EXCEL' | 'PDF') => {
+export const downloadAntemortemAgrocalidadReport = async (startDate: string, endDate: string, idLine: number, type: 'EXCEL' | 'PDF') => {
 	try {
-		const { blob, filename } = await getAntemortemAgrocalidadReport(date, date, idLine, type);
+		const { blob, filename } = await getAntemortemAgrocalidadReport(startDate, endDate, idLine, type);
 
 		const url = window.URL.createObjectURL(blob);
 		const a = document.createElement('a');

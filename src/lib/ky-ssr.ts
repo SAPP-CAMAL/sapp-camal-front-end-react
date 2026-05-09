@@ -9,16 +9,14 @@ function normalizeApiBase(raw: string | undefined) {
 }
 
 function getSsrApiBases() {
-    const configured = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL)
+    const configured = normalizeApiBase(
+        process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL_LOCAL_FALLBACK
+    )
 
     if (!configured) {
-        // FALLBACK: Si la variable de entorno no está configurada en el servidor,
-        // usar la URL de producción por defecto
-        console.warn("[SSR API] NEXT_PUBLIC_API_URL no está configurado. Usando URL de producción como fallback.");
-        return ["https://sapp-emfi.com"]
+        throw new Error("NEXT_PUBLIC_API_URL o API_URL_LOCAL_FALLBACK no estan configurados.")
     }
 
-    // En servidor, usar SOLO la URL configurada
     return [configured]
 }
 

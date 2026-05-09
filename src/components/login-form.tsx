@@ -24,8 +24,10 @@ export function LoginForm({
   const form = useForm({
     defaultValues: {
       showPassword: false,
-      identifier: "",
-      password: "",
+      identifier_ls: "",
+      password_ls: "",
+      identifier_pt: "",
+      password_pt: "",
       remember: false,
     },
   });
@@ -36,7 +38,8 @@ export function LoginForm({
     if (savedIdentifier) {
       form.reset({
         ...form.getValues(),
-        identifier: savedIdentifier,
+        identifier_ls: savedIdentifier,
+        identifier_pt: savedIdentifier,
         remember: true,
       });
     }
@@ -44,10 +47,12 @@ export function LoginForm({
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      const identifier = data.identifier?.trim(); 
+      const identifierRaw = data.identifier_ls || data.identifier_pt;
+      const passwordRaw = data.password_ls || data.password_pt;
+      const identifier = identifierRaw?.trim(); 
       const resp = await loginAction({
         identifier,
-        password: data.password,
+        password: passwordRaw,
       });
 
       // Manejar la persistencia del identificador si "Recuérdame" está marcado
@@ -64,10 +69,10 @@ export function LoginForm({
       // --- CAMBIO 1: Configuración de cookies más permisiva para evitar bloqueos ---
       // Usamos "Lax" en lugar de "Strict" para asegurar que la cookie viaje en la redirección inmediata.
       const isProduction = typeof window !== "undefined" && !window.location.hostname.includes("localhost");
-      const sameSite = "Lax";
+      const sameSite = "Lax"; 
       const path = "path=/";
       const secure = isProduction ? "; Secure" : "";
-
+      
       // Cookie Store API
       const cookieStore: any = (typeof window !== "undefined")
         ? (window as any).cookieStore
@@ -110,6 +115,8 @@ export function LoginForm({
         window.localStorage.setItem("user", userJson);
         // Limpiar el rol activo para que siempre muestre el primer rol del listado al iniciar sesión
         window.localStorage.removeItem("activeRoleId");
+        window.localStorage.removeItem("activeRoleName");
+        window.dispatchEvent(new CustomEvent("active-role-changed", { detail: { id: null, name: null } }));
       } catch { /* ignore */ }
 
       toast.success("Bienvenido");
@@ -127,7 +134,7 @@ export function LoginForm({
 
       try {
         const statusCode = error?.response?.status;
-
+        
         if (statusCode === 400 || statusCode === 401) {
           errorMessage = "Credenciales incorrectas";
           errorDescription = "El usuario o la contraseña ingresados no son válidos. Verifique sus datos e intente nuevamente.";
@@ -165,11 +172,28 @@ export function LoginForm({
 
   return (
     <div
-      className="h-screen w-screen flex m-0 p-0 overflow-hidden"
+      className="h-full w-full flex m-0 p-0 overflow-hidden fixed inset-0"
       data-login-page
     >
-      {/* Left side - Image (70%) */}
-      <div className="hidden lg:flex lg:w-[70%] relative bg-white items-center justify-center">
+      <style jsx global>{`
+        html, body {
+          overflow: hidden !important;
+          height: 100% !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          scrollbar-width: none !important; /* Firefox */
+        }
+        ::-webkit-scrollbar {
+          display: none !important; /* Safari and Chrome */
+        }
+      `}</style>
+      {/* =====================================================
+          LANDSCAPE LAYOUT (lg+): imagen izquierda 70% | form derecha 30%
+          ===================================================== */}
+
+      {/* Left side - Image (70%) — solo landscape */}
+      <div className="hidden landscape:flex landscape:w-[70%] relative bg-white items-center justify-center">
         <Image
           src="/images/sapp-fondo-ingreso.svg"
           alt="SAPP Login"
@@ -180,12 +204,12 @@ export function LoginForm({
         />
       </div>
 
-      {/* Right side - Form with gradient background (30%) */}
-      <div className="w-full lg:w-[30%] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 xl:p-10 bg-gradient-to-br from-[#0ea38d] via-[#0d9179] to-[#0b7f68] overflow-y-auto">
-        <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6 sm:p-7 lg:p-8">
+      {/* Right side - Form — landscape */}
+      <div className="hidden landscape:flex landscape:w-[30%] flex-col justify-center items-center p-4 xl:p-8 2xl:p-10 bg-gradient-to-br from-[#0ea38d] via-[#0d9179] to-[#0b7f68] overflow-hidden">
+        <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6 xl:p-8">
           {/* Header with logo */}
           <div className="flex flex-col items-center mb-6">
-            <div className="mb-4 bg-gradient-to-br bg-primary p-3 rounded-2xl shadow-lg">
+            <div className="mb-4 bg-primary p-3 rounded-2xl shadow-lg">
               <Image
                 src="/images/sapp-b-vertical.svg"
                 alt="SAPP"
@@ -196,170 +220,246 @@ export function LoginForm({
                 style={{ filter: "brightness(0) invert(1)" }}
               />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-center mb-1 text-black-important">
+            <h1 className="text-xl font-bold text-center mb-1">
               EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO
             </h1>
             <p className="text-xs text-primary text-center font-bold">
-              {/* DE {location.canton} */}
               DEL CANTÓN {location.canton}
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={onSubmit} className="space-y-4">
-            {/* Tabs for identification/email */}
             <div className="space-y-2">
               <Tabs defaultValue="identification">
                 <TabsList className="grid w-full grid-cols-2 mb-3 h-9">
-                  <TabsTrigger
-                    value="identification"
-                    disabled={form.formState.isSubmitting}
-                    className="text-xs"
-                  >
+                  <TabsTrigger value="identification" disabled={form.formState.isSubmitting} className="text-xs">
                     Identificación
                   </TabsTrigger>
-                  <TabsTrigger
-                    value="email"
-                    disabled={form.formState.isSubmitting}
-                    className="text-xs"
-                  >
+                  <TabsTrigger value="email" disabled={form.formState.isSubmitting} className="text-xs">
                     Correo
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent
-                  value="identification"
-                  className="space-y-1.5 mt-0"
-                >
-                  <Label
-                    htmlFor="identification"
-                    className="text-xs font-medium text-slate-700"
-                  >
-                    Usuario
-                  </Label>
-                  <Input
-                    id="identification"
-                    type="text"
-                    disabled={form.formState.isSubmitting}
-                    placeholder="Nombre de usuario"
-                    maxLength={100}
-                    autoComplete="username"
-                    required
-                    className="h-10 text-sm"
-                    {...form.register("identifier")}
-                  />
+                <TabsContent value="identification" className="space-y-1.5 mt-0">
+                  <Label htmlFor="identification-ls" className="text-xs font-medium text-slate-700">Usuario</Label>
+                  <Input id="identification-ls" type="text" disabled={form.formState.isSubmitting} placeholder="Nombre de usuario" maxLength={100} autoComplete="username" required className="h-10 text-sm" {...form.register("identifier_ls")} />
                 </TabsContent>
                 <TabsContent value="email" className="space-y-1.5 mt-0">
-                  <Label
-                    htmlFor="email-input"
-                    className="text-xs font-medium text-slate-700"
-                  >
-                    Correo Electrónico
-                  </Label>
-                  <Input
-                    id="email-input"
-                    type="email"
-                    disabled={form.formState.isSubmitting}
-                    placeholder="usuario@ejemplo.com"
-                    maxLength={100}
-                    autoComplete="email"
-                    required
-                    className="h-10 text-sm"
-                    {...form.register("identifier")}
-                  />
+                  <Label htmlFor="email-input-ls" className="text-xs font-medium text-slate-700">Correo Electrónico</Label>
+                  <Input id="email-input-ls" type="email" disabled={form.formState.isSubmitting} placeholder="usuario@ejemplo.com" maxLength={100} autoComplete="email" required className="h-10 text-sm" {...form.register("identifier_ls")} />
                 </TabsContent>
               </Tabs>
             </div>
 
-            {/* Password field */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label
-                  htmlFor="password"
-                  className="text-xs font-medium text-slate-700"
-                >
-                  Contraseña
-                </Label>
-              </div>
+              <Label htmlFor="password-ls" className="text-xs font-medium text-slate-700">Contraseña</Label>
               <div className="flex items-center">
-                <Input
-                  id="password"
-                  {...form.register("password")}
-                  type={showPassword ? "text" : "password"}
-                  disabled={form.formState.isSubmitting}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  className="h-10 text-sm w-full"
-                  required
-                />
-                <button
-                  type="button"
-                  className="h-10 w-10 flex items-center justify-center hover:bg-transparent transition-colors focus:outline-none"
-                  onClick={() => form.setValue("showPassword", !showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOffIcon className="h-4 w-4 text-slate-500" />
-                  ) : (
-                    <EyeIcon className="h-4 w-4 text-slate-500" />
-                  )}
+                <Input id="password-ls" {...form.register("password_ls")} type={showPassword ? "text" : "password"} disabled={form.formState.isSubmitting} autoComplete="current-password" placeholder="••••••••" className="h-10 text-sm w-full" required />
+                <button type="button" className="h-10 w-10 flex items-center justify-center hover:bg-transparent transition-colors focus:outline-none" onClick={() => form.setValue("showPassword", !showPassword)}>
+                  {showPassword ? <EyeOffIcon className="h-4 w-4 text-slate-500" /> : <EyeIcon className="h-4 w-4 text-slate-500" />}
                 </button>
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              {/* Remember me checkbox */}
               <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  className="border-slate-300 h-4 w-4"
-                  checked={form.watch("remember")}
-                  onCheckedChange={(checked) =>
-                    form.setValue("remember", checked as boolean)
-                  }
-                />
-                <Label
-                  htmlFor="remember"
-                  className="text-xs font-normal text-slate-600 cursor-pointer"
-                >
-                  Recuérdame
-                </Label>
+                <Checkbox id="remember-ls" className="border-slate-300 h-4 w-4" checked={form.watch("remember")} onCheckedChange={(checked) => form.setValue("remember", checked as boolean)} />
+                <Label htmlFor="remember-ls" className="text-xs font-normal text-slate-600 cursor-pointer">Recuérdame</Label>
               </div>
-              <Link
-                href="/auth/forgot-password"
-                className="text-[10px] text-primary hover:underline"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
+              <Link href="/auth/forgot-password" className="text-[10px] text-primary hover:underline">¿Olvidaste tu contraseña?</Link>
             </div>
 
-            {/* Submit button */}
-            <Button
-              type="submit"
-              className="w-full h-11 text-sm text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-60 mt-5"
-              disabled={form.formState.isSubmitting || !form.formState.isDirty}
-            >
+            <Button type="submit" className="w-full h-11 text-sm text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-60 mt-5" disabled={form.formState.isSubmitting || !form.formState.isDirty}>
               {form.formState.isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                   Iniciando...
                 </span>
-              ) : (
-                "INGRESAR"
-              )}
+              ) : "INGRESAR"}
             </Button>
-
-            {/* Registration link */}
-            {/* <div className="text-center pt-3">
-                <p className="text-xs text-slate-600">
-                  ¿Deseas registrarte?{" "}
-                  <Link
-                    href="#"
-                    className="font-medium text-primary hover:underline"
-                  >
-                    Registrarte
-                  </Link>
-                </p>
-              </div> */}
           </form>
+        </div>
+      </div>
+
+      {/* =====================================================
+          PORTRAIT LAYOUT: imagen arriba | form abajo
+          Diseño táctil — pantalla vertical NUC touchscreen
+          ===================================================== */}
+      <div className="flex landscape:hidden w-full h-full flex-col overflow-hidden bg-gradient-to-b from-[#0b7f68] via-[#0d9179] to-[#0ea38d]">
+
+        {/* Hero superior con imagen y overlay */}
+        <div className="relative w-full flex-shrink-0" style={{ height: "38%" }}>
+          {/* Imagen de fondo */}
+          <Image
+            src="/images/sapp-fondo-ingreso.svg"
+            alt="SAPP Login"
+            fill
+            priority
+            className="object-cover object-center"
+          />
+          {/* Overlay degradado para que el form se integre visualmente */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0b7f6822] via-[#0b7f6866] to-[#0b7f68ee]" />
+
+          {/* Logo encima de la imagen */}
+          <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2">
+            <div className="bg-primary/90 backdrop-blur-sm p-4 rounded-3xl shadow-2xl border border-white/20">
+              <Image
+                src="/images/sapp-b-vertical.svg"
+                alt="SAPP"
+                width={72}
+                height={72}
+                priority
+                className="w-[72px] h-[72px]"
+                style={{ filter: "brightness(0) invert(1)" }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Sección inferior con el formulario */}
+        <div className="flex-1 flex flex-col items-center justify-start px-6 pt-6 pb-8">
+
+          {/* Título institucional */}
+          <div className="text-center mb-6">
+            <div 
+              style={{ color: '#ffffff', fontWeight: '800', fontSize: '1.5rem', lineHeight: '1.2' }}
+              className="drop-shadow-md tracking-wide"
+            >
+              EMPRESA PÚBLICA MUNICIPAL
+            </div>
+            <div 
+              style={{ color: '#ffffff', fontWeight: '600', fontSize: '1.125rem' }}
+            >
+              DE FAENAMIENTO
+            </div>
+            <div 
+              style={{ color: 'rgba(255, 255, 255, 0.8)', fontWeight: '500', fontSize: '0.875rem' }}
+              className="mt-1 tracking-widest uppercase"
+            >
+              DEL CANTÓN {location.canton}
+            </div>
+          </div>
+
+          {/* Tarjeta del formulario */}
+          <div className="w-full max-w-lg bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl py-10 px-8 border border-white/30">
+
+            {/* Divider label */}
+            <p className="text-center text-sm font-semibold text-slate-400 uppercase tracking-widest mb-8">
+              Iniciar Sesión
+            </p>
+
+            <form onSubmit={onSubmit} className="space-y-7">
+              {/* Tabs */}
+              <div>
+                <Tabs defaultValue="identification">
+                  <TabsList className="grid w-full grid-cols-2 mb-4 h-11">
+                    <TabsTrigger value="identification" disabled={form.formState.isSubmitting} className="text-sm font-medium">
+                      Identificación
+                    </TabsTrigger>
+                    <TabsTrigger value="email" disabled={form.formState.isSubmitting} className="text-sm font-medium">
+                      Correo
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="identification" className="space-y-2 mt-0">
+                    <Label htmlFor="identification-pt" className="text-sm font-semibold text-slate-600">
+                      Usuario
+                    </Label>
+                    <Input
+                      id="identification-pt"
+                      type="text"
+                      disabled={form.formState.isSubmitting}
+                      placeholder="Nombre de usuario"
+                      maxLength={100}
+                      autoComplete="username"
+                      required
+                      className="h-14 text-base rounded-2xl border-slate-200 focus:border-primary px-4"
+                      {...form.register("identifier_pt")}
+                    />
+                  </TabsContent>
+                  <TabsContent value="email" className="space-y-2 mt-0">
+                    <Label htmlFor="email-input-pt" className="text-sm font-semibold text-slate-600">
+                      Correo Electrónico
+                    </Label>
+                    <Input
+                      id="email-input-pt"
+                      type="email"
+                      disabled={form.formState.isSubmitting}
+                      placeholder="usuario@ejemplo.com"
+                      maxLength={100}
+                      autoComplete="email"
+                      required
+                      className="h-14 text-base rounded-2xl border-slate-200 focus:border-primary px-4"
+                      {...form.register("identifier_pt")}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
+
+              {/* Contraseña */}
+              <div className="space-y-2">
+                <Label htmlFor="password-pt" className="text-sm font-semibold text-slate-600">
+                  Contraseña
+                </Label>
+                <div className="flex items-center rounded-2xl border border-slate-200 overflow-hidden focus-within:border-primary transition-colors">
+                  <Input
+                    id="password-pt"
+                    {...form.register("password_pt")}
+                    type={showPassword ? "text" : "password"}
+                    disabled={form.formState.isSubmitting}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    className="h-14 text-base flex-1 border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 rounded-none"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="h-14 w-14 flex items-center justify-center text-slate-400 hover:text-primary transition-colors focus:outline-none flex-shrink-0"
+                    onClick={() => form.setValue("showPassword", !showPassword)}
+                  >
+                    {showPassword ? <EyeOffIcon className="h-6 w-6" /> : <EyeIcon className="h-6 w-6" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Recuérdame + Olvidaste */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="remember-pt"
+                    className="border-slate-300 h-5 w-5"
+                    checked={form.watch("remember")}
+                    onCheckedChange={(checked) => form.setValue("remember", checked as boolean)}
+                  />
+                  <Label htmlFor="remember-pt" className="text-sm font-medium text-slate-600 cursor-pointer">
+                    Recuérdame
+                  </Label>
+                </div>
+                <Link href="/auth/forgot-password" className="text-xs text-primary font-medium hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
+
+              {/* Botón ingresar — grande y táctil */}
+              <Button
+                type="submit"
+                className="w-full h-14 text-base text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-200 disabled:opacity-60 rounded-2xl mt-2 tracking-widest"
+                disabled={form.formState.isSubmitting || !form.formState.isDirty}
+              >
+                {form.formState.isSubmitting ? (
+                  <span className="flex items-center gap-3">
+                    <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Iniciando sesión...
+                  </span>
+                ) : (
+                  "INGRESAR"
+                )}
+              </Button>
+            </form>
+          </div>
+
+          {/* Footer branding */}
+          <p className="text-white/80 text-sm font-medium mt-8 text-center px-4 leading-relaxed drop-shadow-sm">
+            © {new Date().getFullYear()} SAPP - Sistema de Automatización de Procesos Productivos
+          </p>
         </div>
       </div>
     </div>

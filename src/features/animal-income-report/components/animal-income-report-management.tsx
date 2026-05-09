@@ -22,18 +22,17 @@ import { SpeciesDetailModal } from "./species-detail-modal";
 import * as XLSX from "xlsx";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 
-// Mapeo de nombres de especies a idSpecie
-const SPECIES_ID_MAP: Record<string, number> = {
-  BOVINO: 4,
-  PORCINO: 3,
-  "OVINO/CAPRINO": 5,
-};
-
 export function AnimalIncomeReportManagement() {
   const { dateRange, reportData, isLoading, fetchReport } = useAnimalIncomeReport();
   const { getFullCompanyName } = useSlaughterhouseInfo();
   const [chartType, setChartType] = useState<"2d" | "3d">("2d");
-  const [startDate, setStartDate] = useState<Date>(dateRange.from || new Date("2023-02-03"));
+  const [startDate, setStartDate] = useState<Date>(() => {
+    if (dateRange.from) return dateRange.from;
+    const date = new Date();
+    date.setDate(date.getDate() - 6);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  });
   const [endDate, setEndDate] = useState<Date>(dateRange.to || new Date());
   const [show3D, setShow3D] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
@@ -43,8 +42,7 @@ export function AnimalIncomeReportManagement() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSpecies, setSelectedSpecies] = useState<{ name: string; id: number } | null>(null);
 
-  const handleSpeciesClick = (speciesName: string) => {
-    const idSpecie = SPECIES_ID_MAP[speciesName];
+  const handleSpeciesClick = (speciesName: string, idSpecie: number) => {
     if (idSpecie) {
       setSelectedSpecies({ name: speciesName, id: idSpecie });
       setModalOpen(true);
@@ -128,17 +126,26 @@ export function AnimalIncomeReportManagement() {
   };
 
   const handleDownloadXLS = () => {
-    const dataToExport = reportData.data.map(item => ({
+    const dataToExport: Array<{
+      ID: string | number;
+      Especie: string;
+      Cantidad: number;
+      Porcentaje: number;
+    }> = [...reportData.data]
+      .sort((a, b) => b.quantity - a.quantity)
+      .map(item => ({
+      ID: item.idSpecies,
       Especie: item.species,
       Cantidad: item.quantity,
-      Porcentaje: `${item.percentage.toFixed(1)}%`
+      Porcentaje: Number(item.percentage.toFixed(1))
     }));
     
     // Añadir fila de total
     dataToExport.push({
+      ID: "",
       Especie: 'TOTAL',
       Cantidad: reportData.total.quantity,
-      Porcentaje: '100%'
+      Porcentaje: 100
     });
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -207,7 +214,7 @@ export function AnimalIncomeReportManagement() {
               <CardTitle className="text-xs sm:text-sm font-medium text-slate-600">
                 Total Animales
               </CardTitle>
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-sky-500 flex-shrink-0" />
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-sky-500 shrink-0" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl sm:text-3xl font-bold text-slate-900">
@@ -224,7 +231,7 @@ export function AnimalIncomeReportManagement() {
               <CardTitle className="text-xs sm:text-sm font-medium text-slate-600">
                 Período
               </CardTitle>
-              <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 flex-shrink-0" />
+              <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 shrink-0" />
             </CardHeader>
             <CardContent>
               <div className="text-base sm:text-lg font-bold text-slate-900">
@@ -313,7 +320,7 @@ export function AnimalIncomeReportManagement() {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleDownloadXLS} className="cursor-pointer text-sm">
                         <FileSpreadsheet className="mr-2 h-4 w-4" />
-                        <span>Descargar en XLS</span>
+                        <span>Descargar en EXCEL</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleFullScreen} className="cursor-pointer text-sm">
                         <Maximize2 className="mr-2 h-4 w-4" />
@@ -326,7 +333,7 @@ export function AnimalIncomeReportManagement() {
             </CardHeader>
             <CardContent className="p-3 sm:p-6">
               {isLoading ? (
-                <div className="h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center">
+                <div className="h-75 sm:h-100 lg:h-125 flex items-center justify-center">
                   <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-2 border-b-2 border-sky-500"></div>
                 </div>
               ) : (
@@ -364,14 +371,14 @@ export function AnimalIncomeReportManagement() {
                   <TableBody>
                     {reportData.data.map((item, index) => (
                       <TableRow
-                        key={item.species}
+                        key={`${item.idSpecies}-${item.species}`}
                         className="border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
-                        onClick={() => handleSpeciesClick(item.species)}
+                        onClick={() => handleSpeciesClick(item.species, item.idSpecies)}
                       >
                         <TableCell className="font-medium text-slate-900 text-xs sm:text-sm">
                           <div className="flex items-center gap-2 sm:gap-3">
                             <div
-                              className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                              className="w-2 h-2 sm:w-3 sm:h-3 rounded-full shrink-0"
                               style={{
                                 backgroundColor: [
                                   "#0f766e",
@@ -394,7 +401,7 @@ export function AnimalIncomeReportManagement() {
                             <span className="whitespace-nowrap">{item.percentage.toFixed(1)}%</span>
                             <div className="w-12 sm:w-16 h-2 bg-slate-200 rounded-full overflow-hidden hidden md:block">
                               <div
-                                className="h-full bg-gradient-to-r from-sky-500 to-primary rounded-full transition-all duration-500"
+                                className="h-full bg-linear-to-r from-sky-500 to-primary rounded-full transition-all duration-500"
                                 style={{ width: `${item.percentage}%` }}
                               />
                             </div>
