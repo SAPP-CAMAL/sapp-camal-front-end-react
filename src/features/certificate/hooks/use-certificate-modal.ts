@@ -111,7 +111,7 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 					identification: data.identification!,
 					identificationTypeId: Number(data.identificationType),
 					genderId: Number(data.genderId),
-					mobileNumber: data.mobileNumber?.trim() ? data.mobileNumber.trim() : null,
+					mobileNumber: data.mobileNumber?.trim() ? data.mobileNumber.trim() : undefined,
 					firstName: data.firstName!,
 					lastName: data.lastName!,
 					fullName: `${data.firstName ?? ''} ${data.lastName ?? ''}`,
