@@ -86,13 +86,13 @@ export const QrCertificateModal = ({ extraSuccessInfoCard, btnText = 'Escanear Q
 					{btnText}
 				</Button>
 			</DialogTrigger>
-			<DialogContent className='min-w-xl max-h-[98vh] overflow-y-auto gap-0'>
+			<DialogContent className='w-[95vw] max-w-3xl max-h-[98vh] overflow-y-auto gap-0 p-4 sm:p-6'>
 				{/* Step-1 */}
 				{currentTab === 1 && (
 					<>
 						<DialogHeader>
 							<DialogTitle>Escaneando Código QR</DialogTitle>
-							<div className='flex'>
+							<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
 								<DialogDescription>
 									Posicione el código QR dentro del marco de escaneo. El sistema detectará automáticamente el código cuando esté enfocado
 									correctamente.
@@ -172,19 +172,19 @@ export const QrCertificateModal = ({ extraSuccessInfoCard, btnText = 'Escanear Q
 								</div>
 							)}
 
-							<div className='flex justify-between pt-4'>
-								<Button variant='secondary' onClick={() => setIsModalOpen(false)}>
+							<div className='flex flex-col sm:flex-row sm:justify-between gap-2 pt-4'>
+								<Button variant='secondary' className='w-full sm:w-auto' onClick={() => setIsModalOpen(false)}>
 									<XIcon />
 									Cancelar
 								</Button>
 
-								<div className='flex justify-end gap-2'>
-									<Button className=' hover:bg-primary' onClick={setDefaultValues} disabled={!isInvalid && !qrData}>
+								<div className='flex flex-col sm:flex-row justify-end gap-2'>
+									<Button className='w-full sm:w-auto hover:bg-primary' onClick={setDefaultValues} disabled={!isInvalid && !qrData}>
 										Volver a escanear
 										<RotateCcw />
 									</Button>
 
-									<Button className=' hover:bg-primary' onClick={handleSaveWithOperator}>
+									<Button className='w-full sm:w-auto hover:bg-primary' onClick={handleSaveWithOperator}>
 										{isSaving ? 'Guardando...' : 'Guardar y Continuar'}
 										<MoveRight />
 									</Button>
@@ -199,7 +199,7 @@ export const QrCertificateModal = ({ extraSuccessInfoCard, btnText = 'Escanear Q
 					<>
 						<DialogHeader>
 							<DialogTitle>Procesando Información</DialogTitle>
-							<div className='flex'>
+							<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
 								<DialogDescription>
 									Procesando la información del certificado y actualizando el formulario con los datos detectados.
 								</DialogDescription>
@@ -229,14 +229,14 @@ export const QrCertificateModal = ({ extraSuccessInfoCard, btnText = 'Escanear Q
 							{/* Extra success info card */}
 							{extraSuccessInfoCard}
 
-							<div className='flex justify-between pt-4'>
-								<Button className=' hover:bg-green-700' onClick={() => setCurrentTab(1)}>
+							<div className='flex flex-col sm:flex-row sm:justify-between gap-2 pt-4'>
+								<Button className='w-full sm:w-auto hover:bg-green-700' onClick={() => setCurrentTab(1)}>
 									<Edit />
 									Editar
 								</Button>
 
-								<div className='flex justify-between gap-2'>
-									<Button variant='secondary' onClick={() => setIsModalOpen(false)}>
+								<div className='flex flex-col sm:flex-row justify-between gap-2'>
+									<Button variant='secondary' className='w-full sm:w-auto' onClick={() => setIsModalOpen(false)}>
 										<XIcon />
 										Cerrar
 									</Button>

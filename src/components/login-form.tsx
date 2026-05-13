@@ -172,20 +172,37 @@ export function LoginForm({
 
   return (
     <div
-      className="h-full w-full flex m-0 p-0 overflow-hidden fixed inset-0"
+      className="h-full w-full flex m-0 p-0 landscape:fixed landscape:inset-0"
       data-login-page
     >
       <style jsx global>{`
+        /* Base: allow scrolling on small screens (portrait/mobile) */
         html, body {
-          overflow: hidden !important;
-          height: 100% !important;
-          width: 100% !important;
           margin: 0 !important;
           padding: 0 !important;
           scrollbar-width: none !important; /* Firefox */
         }
         ::-webkit-scrollbar {
           display: none !important; /* Safari and Chrome */
+        }
+        /* Only lock overflow for landscape / larger viewports where the fixed layout is used */
+        @media (orientation: landscape) and (min-width: 768px) {
+          html, body {
+            overflow: hidden !important;
+            height: 100% !important;
+            width: 100% !important;
+          }
+        }
+        @keyframes softHalo {
+          0%, 100% {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.25), 0 0 24px rgba(255, 255, 255, 0.18);
+          }
+          50% {
+            text-shadow: 0 0 14px rgba(255, 255, 255, 0.4), 0 0 36px rgba(255, 255, 255, 0.22);
+          }
+        }
+        .mobile-hero-title {
+          animation: softHalo 3.6s ease-in-out infinite;
         }
       `}</style>
       {/* =====================================================
@@ -284,11 +301,13 @@ export function LoginForm({
           PORTRAIT LAYOUT: imagen arriba | form abajo
           Diseño táctil — pantalla vertical NUC touchscreen
           ===================================================== */}
-      <div className="flex landscape:hidden w-full h-full flex-col overflow-hidden bg-gradient-to-b from-[#0b7f68] via-[#0d9179] to-[#0ea38d]">
+      <div
+        className="flex landscape:hidden w-full min-h-screen flex-col overflow-y-auto bg-gradient-to-b from-[#0b7f68] via-[#0d9179] to-[#0ea38d]"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
 
-        {/* Hero superior con imagen y overlay */}
-        <div className="relative w-full flex-shrink-0" style={{ height: "38%" }}>
-          {/* Imagen de fondo */}
+        {/* Nuevo hero móvil: imagen con badge centrado y título dentro del overlay */}
+        <div className="relative w-full flex-shrink-0" style={{ height: "42%" }}>
           <Image
             src="/images/sapp-fondo-ingreso.svg"
             alt="SAPP Login"
@@ -296,48 +315,21 @@ export function LoginForm({
             priority
             className="object-cover object-center"
           />
-          {/* Overlay degradado para que el form se integre visualmente */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#0b7f6822] via-[#0b7f6866] to-[#0b7f68ee]" />
 
-          {/* Logo encima de la imagen */}
-          <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2">
-            <div className="bg-primary/90 backdrop-blur-sm p-4 rounded-3xl shadow-2xl border border-white/20">
-              <Image
-                src="/images/sapp-b-vertical.svg"
-                alt="SAPP"
-                width={72}
-                height={72}
-                priority
-                className="w-[72px] h-[72px]"
-                style={{ filter: "brightness(0) invert(1)" }}
-              />
+          <div className="absolute inset-0 flex flex-col items-center justify-end px-6 pb-8">
+            <div className="mobile-hero-title text-center text-white">
+              <div className="text-base sm:text-lg font-bold tracking-wide leading-snug">EMPRESA PÚBLICA MUNICIPAL</div>
+              <div className="text-sm font-semibold mt-1 tracking-wide">DE FAENAMIENTO</div>
+              <div className="text-xs text-white/90 mt-1 uppercase tracking-[0.2em]">DEL CANTÓN {location.canton}</div>
             </div>
           </div>
         </div>
 
         {/* Sección inferior con el formulario */}
-        <div className="flex-1 flex flex-col items-center justify-start px-6 pt-6 pb-8">
+        <div className="flex-1 flex flex-col items-center justify-start px-6 pt-6 pb-28">
 
-          {/* Título institucional */}
-          <div className="text-center mb-6">
-            <div 
-              style={{ color: '#ffffff', fontWeight: '800', fontSize: '1.5rem', lineHeight: '1.2' }}
-              className="drop-shadow-md tracking-wide"
-            >
-              EMPRESA PÚBLICA MUNICIPAL
-            </div>
-            <div 
-              style={{ color: '#ffffff', fontWeight: '600', fontSize: '1.125rem' }}
-            >
-              DE FAENAMIENTO
-            </div>
-            <div 
-              style={{ color: 'rgba(255, 255, 255, 0.8)', fontWeight: '500', fontSize: '0.875rem' }}
-              className="mt-1 tracking-widest uppercase"
-            >
-              DEL CANTÓN {location.canton}
-            </div>
-          </div>
+          
 
           {/* Tarjeta del formulario */}
           <div className="w-full max-w-lg bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl py-10 px-8 border border-white/30">
@@ -421,7 +413,7 @@ export function LoginForm({
               </div>
 
               {/* Recuérdame + Olvidaste */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center space-x-3">
                   <Checkbox
                     id="remember-pt"
@@ -433,7 +425,7 @@ export function LoginForm({
                     Recuérdame
                   </Label>
                 </div>
-                <Link href="/auth/forgot-password" className="text-xs text-primary font-medium hover:underline">
+                <Link href="/auth/forgot-password" className="text-xs text-primary font-medium hover:underline whitespace-nowrap">
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
@@ -441,7 +433,7 @@ export function LoginForm({
               {/* Botón ingresar — grande y táctil */}
               <Button
                 type="submit"
-                className="w-full h-14 text-base text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-200 disabled:opacity-60 rounded-2xl mt-2 tracking-widest"
+                className="lg:static fixed lg:bottom-auto bottom-4 left-1/2 transform -translate-x-1/2 lg:translate-x-0 z-40 w-[calc(100%-32px)] max-w-lg h-14 text-base text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-200 disabled:opacity-60 rounded-2xl lg:mt-2 mt-0 tracking-widest"
                 disabled={form.formState.isSubmitting || !form.formState.isDirty}
               >
                 {form.formState.isSubmitting ? (
