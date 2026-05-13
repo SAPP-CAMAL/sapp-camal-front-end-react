@@ -218,14 +218,14 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 		const subTotal = resetTotalAnimals + total;
 		const isBovineSpecie = selectedSpecie?.id === 4;
 		const normalizedRings =
-			data.numberRings === undefined || data.numberRings === null ? null : +data.numberRings;
+			data.numberRings === undefined || data.numberRings === null ? 0 : +data.numberRings;
 
 		if (!selectedSpecie) return toast.error('Debe seleccionar una especie');
 		if (total < 1) return toast.error('Debe ingresar al menos un animal');
 		if (subTotal < 1) return;
 		if (!data?.brand?.id) return;
 		if (subTotal > +(selectedCertificate?.quantity || 0)) return;
-		if (isBovineSpecie && (normalizedRings === null || Number.isNaN(normalizedRings) || normalizedRings < 0))
+		if (isBovineSpecie && (Number.isNaN(normalizedRings) || normalizedRings < 0))
 			return toast.error('Debe ingresar un número de argollas válido para bovino');
 		if (isBovineSpecie && normalizedRings! > total)
 			return toast.error(`El número de argollas no puede ser mayor al total de animales (${total})`);
@@ -328,14 +328,12 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 
 	const totalFormAnimals = +form.watch('females') + +form.watch('males');
 	const isBovineSpecie = selectedSpecie?.id === 4;
-	const isInvalidRingsForBovine =
-		isBovineSpecie &&
-		(form.formState.touchedFields.numberRings || form.formState.isSubmitted) &&
-		(selectedNumberRings === null ||
-			selectedNumberRings === undefined ||
-			Number.isNaN(+selectedNumberRings) ||
-			+selectedNumberRings < 0 ||
-			+selectedNumberRings > totalFormAnimals);
+		const isInvalidRingsForBovine =
+			isBovineSpecie &&
+			(form.formState.touchedFields.numberRings || form.formState.isSubmitted) &&
+			(Number.isNaN(+selectedNumberRings) ||
+				+selectedNumberRings < 0 ||
+				+selectedNumberRings > totalFormAnimals);
 
 	useEffect(() => {
 		if (!isBovineSpecie) {
