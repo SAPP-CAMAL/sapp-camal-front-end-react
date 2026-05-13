@@ -38,7 +38,7 @@ export const DatePicker = ({
 			portal.style.top = '0';
 			portal.style.left = '0';
 			portal.style.zIndex = '99999';
-			portal.style.pointerEvents = 'none';
+			portal.style.pointerEvents = 'auto';
 			document.body.appendChild(portal);
 		}
 	}, []);

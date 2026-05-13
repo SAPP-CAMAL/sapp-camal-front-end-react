@@ -208,7 +208,7 @@ export const CertificateFields = () => {
 						<FormLabel>Fecha de Vigencia</FormLabel>
 						<FormControl>
 							<DatePicker
-								inputClassName='bg-secondary'
+								inputClassName='w-full bg-secondary text-sm sm:text-base h-10'
 								selected={field.value ? parseISO(field.value) : null}
 								onChange={date => {
 									if (date) {
@@ -289,6 +289,7 @@ export const CertificateFields = () => {
 						<CardTitle className='text-md flex items-center gap-2'>
 							<User size={18} />
 							Asignar operador al certificado
+							<span className='text-red-500 text-sm'>*</span>
 						</CardTitle>
 						{!selectedPerson && (
 							<Button
@@ -310,6 +311,21 @@ export const CertificateFields = () => {
 					<CardDescription>Indique la persona autorizada por este certificado.</CardDescription>
 				</CardHeader>
 				<CardContent className='space-y-4'>
+					<FormField
+						control={form.control}
+						name='savedPerson'
+						rules={{
+							validate: value => {
+								const isNewPersonValue = form.getValues('isNewPerson');
+								return isNewPersonValue || !!value || 'Debe asignar un operador.';
+							},
+						}}
+						render={() => (
+							<FormItem>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 					{isCreatingPerson ? (
 						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 							<NewPeopleFields isUpdateVisitorLog={true} />
