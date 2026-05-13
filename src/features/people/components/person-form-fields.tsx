@@ -108,7 +108,7 @@ export function NewPeopleFields({
   ];
 
   return (
-    <>
+    <div className="space-y-4">
       <FormField
         control={form.control}
         name="identificationType"
@@ -119,7 +119,7 @@ export function NewPeopleFields({
           },
         }}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="space-y-2">
             <FormLabel>Tipo de Identificación *</FormLabel>
             <Select
               onValueChange={(value) => {
@@ -129,7 +129,7 @@ export function NewPeopleFields({
               defaultValue={field.value}
             >
               <FormControl>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-10">
                   <SelectValue placeholder="Seleccione un tipo de identificación" />
                 </SelectTrigger>
               </FormControl>
@@ -190,10 +190,10 @@ export function NewPeopleFields({
           },
         }}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="space-y-2">
             <FormLabel>Número de Documento *</FormLabel>
             <FormControl>
-              <Input {...field} className="border-gray-200" />
+              <Input {...field} className="border-gray-200 h-10" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -210,10 +210,10 @@ export function NewPeopleFields({
           },
         }}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="space-y-2">
             <FormLabel>Nombres *</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} className="h-10" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -229,10 +229,10 @@ export function NewPeopleFields({
           },
         }}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="space-y-2">
             <FormLabel>Apellidos *</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} className="h-10" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -250,11 +250,11 @@ export function NewPeopleFields({
           },
         }}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="space-y-2">
             <FormLabel>Género *</FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-10">
                   <SelectValue placeholder="Seleccione un género" />
                 </SelectTrigger>
               </FormControl>
@@ -273,11 +273,17 @@ export function NewPeopleFields({
       <FormField
         control={form.control}
         name="mobileNumber"
+        rules={{
+          required: {
+            value: false,
+            message: "",
+          },
+        }}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="space-y-2">
             <FormLabel>Número de Teléfono</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} className="h-10" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -294,11 +300,11 @@ export function NewPeopleFields({
           },
         }}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="space-y-2">
             <FormLabel>Estado *</FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-10">
                   <SelectValue placeholder="Seleccione un Estado" />
                 </SelectTrigger>
               </FormControl>
@@ -316,7 +322,7 @@ export function NewPeopleFields({
         control={form.control}
         name="address"
         render={({ field }) => (
-          <FormItem className="col-span-2">
+          <FormItem className="sm:col-span-2">
             <FormLabel>Dirección Domiciliaria</FormLabel>
             <FormControl>
               <Textarea {...field} />
@@ -330,13 +336,13 @@ export function NewPeopleFields({
 
       {
         !isUpdateVisitorLog &&
-        <div className="border-t border-gray-200 col-span-2">
+        <div className="border-t border-gray-200 sm:col-span-2">
           <div className="flex gap-x-2 mt-4">
             <FormField
               control={form.control}
               name="slaughterhouse"
               render={({ field }) => (
-                <FormItem className="col-span-2 flex gap-x-2">
+                <FormItem className="sm:col-span-2 flex gap-x-2">
                   <FormControl>
                     <Checkbox
                       id="camal-1"
@@ -372,7 +378,6 @@ export function NewPeopleFields({
                       })
                     }
                   >
-                    <PlusIcon />
                     Agregar Cargo
                   </Button>
                 )}
@@ -487,7 +492,7 @@ export function NewPeopleFields({
                               },
                             }}
                             render={({ field }) => (
-                              <FormItem className="col-span-2">
+                              <FormItem className="sm:col-span-2">
                                 <FormLabel>Apto con Limitaciones</FormLabel>
                                 <FormControl>
                                   <Textarea {...field} />
@@ -507,7 +512,7 @@ export function NewPeopleFields({
                               },
                             }}
                             render={({ field }) => (
-                              <FormItem className="col-span-2">
+                              <FormItem className="sm:col-span-2">
                                 <FormLabel>Observaciones de Aptitud</FormLabel>
                                 <FormControl>
                                   <Textarea {...field} />
@@ -544,6 +549,6 @@ export function NewPeopleFields({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }
