@@ -328,12 +328,13 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 
 	const totalFormAnimals = +form.watch('females') + +form.watch('males');
 	const isBovineSpecie = selectedSpecie?.id === 4;
+		const normalizedSelectedRings = selectedNumberRings ?? 0;
 		const isInvalidRingsForBovine =
 			isBovineSpecie &&
 			(form.formState.touchedFields.numberRings || form.formState.isSubmitted) &&
-			(Number.isNaN(+selectedNumberRings) ||
-				+selectedNumberRings < 0 ||
-				+selectedNumberRings > totalFormAnimals);
+			(Number.isNaN(+normalizedSelectedRings) ||
+				+normalizedSelectedRings < 0 ||
+				+normalizedSelectedRings > totalFormAnimals);
 
 	useEffect(() => {
 		if (!isBovineSpecie) {
