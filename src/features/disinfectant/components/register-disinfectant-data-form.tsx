@@ -87,7 +87,7 @@ export function RegisterDisinfectantDataForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleRegisterDisinfectantData)}>
-        <div className="px-2 py-4 flex justify-between items-center">
+        <div className="px-2 py-4 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
           <h2 className="text-lg">Datos de Desinfección</h2>
         </div>
 
@@ -111,7 +111,7 @@ export function RegisterDisinfectantDataForm() {
         {/* Vehicle/Shipper Selection */}
         <div className="px-2 py-4">
           {/* Create New Shipper Modal */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
             <label className="flex items-center gap-2">
               <Search className="w-5 h-5" />
               Seleccionar Vehículo/Transportista
@@ -130,7 +130,7 @@ export function RegisterDisinfectantDataForm() {
               }}
               onSetShipper={handleSetShipper}
               triggerButton={
-                <Button>
+                <Button className="w-full sm:w-auto">
                   <Plus />
                   Crear Nuevo
                 </Button>
@@ -148,7 +148,7 @@ export function RegisterDisinfectantDataForm() {
           {/* Search shippers input */}
           {!selectedShipper && (
             <SearchShippersInput
-              className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-2"
               fullName={{
                 value: form.watch("fullName"),
                 onChange: (text: string) =>

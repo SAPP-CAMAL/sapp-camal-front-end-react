@@ -126,6 +126,12 @@ export const useCertificateModal = ({ certificate = {}, onSetCertificate }: Prop
 				idOperator = Number(data.savedPerson.id);
 			}
 
+			if (!idOperator) {
+				form.setError('savedPerson', { type: 'manual', message: 'Debe asignar un operador.' });
+				toast.error('Debe asignar un operador antes de guardar el certificado.');
+				return;
+			}
+
 			if (createOrUpdateType === 'create') {
 				const response = await saveScannedCertificateService({
 					idOrigin: placeOrigin ? +placeOrigin.id : 0,
