@@ -15,7 +15,7 @@ interface Props {
 }
 
 const defaultBtnStyle =
-	'size-6 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-md border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none';
+	'size-8 inline-flex justify-center items-center rounded-md border-2 border-emerald-600 bg-white text-emerald-700 shadow-sm hover:bg-emerald-50 focus:outline-hidden focus:bg-emerald-50 disabled:opacity-50 disabled:pointer-events-none';
 
 export const QuantitySelector = ({ quantity, onQuantityChanged, className = '', title, subtitle = '', subtitleClassName, titleClassName }: Props) => {
 	const handleQuantity = (value: number) => {
@@ -29,18 +29,18 @@ export const QuantitySelector = ({ quantity, onQuantityChanged, className = '', 
 	};
 
 	return (
-		<div className={cn('py-2 px-3 bg-white border border-gray-200 rounded-lg min-w-0', className)} data-hs-input-number=''>
-			<div className='flex justify-between items-center gap-x-3 min-w-0'>
-				<div className='flex-shrink-0 min-w-0'>
-					<span className={cn('block font-medium text-sm truncate', titleClassName)}>{title}</span>
-					<span className={cn('block text-xs truncate', subtitleClassName)}>{subtitle}</span>
+		<div className={cn('py-2 px-2 bg-white border border-gray-200 rounded-lg min-w-0', className)} data-hs-input-number=''>
+			<div className='flex justify-between items-center gap-x-2 min-w-0'>
+				<div className='flex-1 min-w-0 pr-1'>
+					<span className={cn('block font-semibold text-xs sm:text-sm truncate', titleClassName)}>{title}</span>
+					<span className={cn('block text-[11px] sm:text-xs truncate', subtitleClassName)}>{subtitle}</span>
 				</div>
-				<div className='flex items-center gap-x-1.5'>
+				<div className='flex items-center gap-x-1.5 shrink-0'>
 					<button type='button' className={defaultBtnStyle} aria-label='Decrease' onClick={() => handleQuantity(-1)}>
-						<Minus className='w-3 h-3' />
+						<span className='text-xl font-extrabold leading-none'>−</span>
 					</button>
 					<input
-						className='p-0 w-10 md:w-14 bg-transparent border-0 text-gray-800 text-center focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+						className='p-0 w-9 sm:w-12 bg-transparent border-0 text-gray-800 text-center text-sm sm:text-base font-semibold focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
 						type='number'
 						aria-roledescription='Number field'
 						value={quantity}
@@ -52,7 +52,7 @@ export const QuantitySelector = ({ quantity, onQuantityChanged, className = '', 
 						}}
 					/>
 					<button type='button' className={defaultBtnStyle} aria-label='Increase' onClick={() => handleQuantity(1)}>
-						<Plus className='w-3 h-3' />
+						<span className='text-xl font-extrabold leading-none'>+</span>
 					</button>
 				</div>
 			</div>
