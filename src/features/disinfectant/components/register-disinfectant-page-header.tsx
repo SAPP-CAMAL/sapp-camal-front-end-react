@@ -113,6 +113,7 @@ export const RegisterDisinfectantPageHeader = () => {
               type="button"
               variant="default"
               size="sm"
+              className="w-full xs:w-auto"
               onClick={() => handleSuccessButton(qrData, closeModal)}
             >
               <CircleCheckBig className="h-4 w-4 mr-1.5" />

@@ -18,7 +18,7 @@ export const ShipperModal = ({ triggerButton, shipperData = {}, onSetShipper }: 
 	return (
 		<Dialog open={form.watch('open')} onOpenChange={open => form.setValue('open', open)}>
 			<DialogTrigger asChild>{triggerButton}</DialogTrigger>
-			<DialogContent className='min-w-xl max-h-[95vh] overflow-y-auto'>
+			<DialogContent className='w-[95vw] max-w-2xl max-h-[95vh] overflow-y-auto p-4 sm:p-6'>
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription>{description}</DialogDescription>
@@ -34,12 +34,12 @@ export const ShipperModal = ({ triggerButton, shipperData = {}, onSetShipper }: 
 					>
 						<ShipperFields />
 
-						<div className='flex gap-2'>
-							<Button type='submit' className='flex-1' disabled={form.formState.isSubmitting}>
+						<div className='flex flex-col sm:flex-row gap-2'>
+							<Button type='submit' className='w-full sm:flex-1' disabled={form.formState.isSubmitting}>
 								<Save />
 								{btnMessage}
 							</Button>
-							<Button type='button' variant='outline' disabled={form.formState.isSubmitting} onClick={() => form.setValue('open', false)}>
+							<Button type='button' variant='outline' className='w-full sm:w-auto' disabled={form.formState.isSubmitting} onClick={() => form.setValue('open', false)}>
 								Cancelar
 							</Button>
 						</div>
