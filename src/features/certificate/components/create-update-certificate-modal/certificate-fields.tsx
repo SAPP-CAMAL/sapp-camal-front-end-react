@@ -127,7 +127,6 @@ export const CertificateFields = () => {
 			'firstName',
 			'lastName',
 			'genderId',
-			'mobileNumber',
 			'status',
 		]);
 		if (!valid) return;
@@ -140,7 +139,7 @@ export const CertificateFields = () => {
 				identification: data.identification,
 				identificationTypeId: Number(data.identificationType),
 				genderId: Number(data.genderId),
-				mobileNumber: data.mobileNumber,
+				mobileNumber: data.mobileNumber?.trim() ? data.mobileNumber.trim() : null,
 				firstName: data.firstName,
 				lastName: data.lastName,
 				fullName: `${data.firstName ?? ''} ${data.lastName ?? ''}`,
@@ -327,19 +326,20 @@ export const CertificateFields = () => {
 						)}
 					/>
 					{isCreatingPerson ? (
-						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+						<div className='space-y-4'>
 							<NewPeopleFields isUpdateVisitorLog={true} />
-							<div className='col-span-1 md:col-span-2 flex justify-end gap-2 mt-4'>
+							<div className='flex flex-col sm:flex-row sm:justify-end gap-2 mt-4'>
 								<Button
 									type='button'
 									variant='outline'
+									className='w-full sm:w-auto'
 									onClick={() => {
 										form.setValue('isNewPerson', false);
 									}}
 								>
 									Cancelar
 								</Button>
-								<Button type='button' onClick={handleCreatePerson} disabled={isSubmittingPerson}>
+								<Button type='button' className='w-full sm:w-auto' onClick={handleCreatePerson} disabled={isSubmittingPerson}>
 									{isSubmittingPerson ? (
 										<>
 											<Loader2 className='mr-2 h-4 w-4 animate-spin' />
