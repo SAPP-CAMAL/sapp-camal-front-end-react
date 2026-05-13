@@ -351,7 +351,7 @@ export const CreateUpdateAnimalAdmissionForm = ({ animalAdmissionData, className
 									name='numberRings'
 									rules={{
 										validate: value => {
-											const rings = value === null || value === undefined || value === '' ? 0 : +value;
+											const rings = value === null || value === undefined ? 0 : +value;
 											if (Number.isNaN(rings) || rings < 0) return 'Ingrese un número de argollas válido';
 											if (rings > totalAnimalsForRings) return `No puede superar el total de animales (${totalAnimalsForRings})`;
 											return true;
