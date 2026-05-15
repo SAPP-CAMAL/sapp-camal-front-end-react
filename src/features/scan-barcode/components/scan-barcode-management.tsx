@@ -395,20 +395,33 @@ export function ScanBarcodeManagement() {
                 Código del ticket
               </Label>
               <div className="flex gap-2">
-                {selectedStage?.idSpecies === 4 ? (
-                  <div className="relative flex-1">
-                    <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                    <Input
-                      ref={inputRef}
-                      type="text"
-                      className="pl-10 pr-3 w-full h-10"
-                      placeholder="Esperando lectura..."
-                      value={scannedCode}
-                      onChange={(e) => setScannedCode(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      disabled={isProcessing}
-                    />
-                  </div>
+                {selectedStage && (selectedStage.idSpecies === 3 || selectedStage.idSpecies === 4) ? (
+                  <>
+                    <div className="relative flex-1">
+                      <BarcodeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                      <Input
+                        ref={inputRef}
+                        type="text"
+                        className="pl-10 pr-3 w-full h-10"
+                        placeholder="Esperando lectura..."
+                        value={scannedCode}
+                        onChange={(e) => setScannedCode(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={isProcessing}
+                      />
+                    </div>
+                    {selectedStage.idSpecies === 3 ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 shrink-0"
+                        onClick={handleGenerateCode}
+                        disabled={isProcessing}
+                      >
+                        Generar código
+                      </Button>
+                    ) : null}
+                  </>
                 ) : selectedStage ? (
                   <Button
                     type="button"
@@ -424,6 +437,8 @@ export function ScanBarcodeManagement() {
               <p className="text-xs text-muted-foreground">
                 {!selectedStage
                   ? "Primero seleccione una etapa productiva"
+                  : selectedStage.idSpecies === 3
+                  ? "Puede escanear el código o generarlo para registrar"
                   : selectedStage.idSpecies === 4
                   ? "El lector enviará el código y presionará Enter automáticamente"
                   : "Presione Generar código para registrar"}
