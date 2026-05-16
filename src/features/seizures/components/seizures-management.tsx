@@ -55,7 +55,6 @@ import {
   getAnimalSeizuresService,
   getAnimalConfiscationReportService,
   downloadAnimalSeizuresReport,
-  downloadGeneralConfiscationActReportService,
 } from "../server/seizures.service";
 import { toast } from "sonner";
 import {
@@ -63,7 +62,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { IntroducerReportModal } from "./introducer-report-modal";
 
 export function SeizuresManagement() {
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
@@ -72,7 +70,6 @@ export function SeizuresManagement() {
     url: string | null | undefined;
     title: string;
   }>({ url: null, title: "" });
-  const [introducerReportModalOpen, setIntroducerReportModalOpen] = useState(false);
   
   const { data: speciesData } = useAllSpecies();
 
@@ -152,24 +149,6 @@ export function SeizuresManagement() {
     );
   };
 
-  const handleDownloadGeneralActReport = async () => {
-    if (!searchParams.startDate || !searchParams.endDate) {
-      toast.error("Seleccione un rango de fechas en los filtros principales");
-      return;
-    }
-
-    toast.promise(
-      downloadGeneralConfiscationActReportService(
-        searchParams.startDate,
-        searchParams.endDate
-      ),
-      {
-        loading: "Generando acta general...",
-        success: "Acta general descargada correctamente",
-        error: "Error al descargar el acta general",
-      }
-    );
-  };
 
   return (
     <div>
@@ -325,20 +304,6 @@ export function SeizuresManagement() {
               >
                 <FileText className="h-4 w-4 mr-2 text-red-600" />
                 <span>Descargar PDF</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setIntroducerReportModalOpen(true)}
-                className="cursor-pointer"
-              >
-                <User className="h-4 w-4 mr-2 text-blue-600" />
-                <span>Acta Introductor</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDownloadGeneralActReport}
-                className="cursor-pointer"
-              >
-                <FileText className="h-4 w-4 mr-2 text-slate-600" />
-                <span>Acta General</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -564,12 +529,6 @@ export function SeizuresManagement() {
         title={selectedImage.title}
       />
 
-      <IntroducerReportModal
-        open={introducerReportModalOpen}
-        onOpenChange={setIntroducerReportModalOpen}
-        startDate={searchParams.startDate}
-        endDate={searchParams.endDate}
-      />
     </div>
   );
 }
