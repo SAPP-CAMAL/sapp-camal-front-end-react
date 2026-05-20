@@ -1,7 +1,7 @@
 import { http } from "@/lib/ky";
 
-const normalizeSpeciesName = (name: string) =>
-  name.trim().replace(/\s+/g, " ").toUpperCase();
+const normalizeSpeciesName = (name?: string | null) =>
+  (name ?? "").trim().replace(/\s+/g, " ").toUpperCase();
 
 export interface ManagerReportTotalsResponse {
   code: number;
@@ -9,7 +9,7 @@ export interface ManagerReportTotalsResponse {
   data: {
     totals: Array<{
       idSpecies: number;
-      name: string;
+      name?: string | null;
       total: number;
     }>;
     data: Array<{
@@ -73,6 +73,35 @@ export const getManagerReportTotals = async (
     console.error("Error fetching manager report totals:", error);
     throw error;
   }
+};
+
+export interface YearlyAnimalAuditingReportFile {
+  blob: Blob;
+  filename: string;
+  contentType: string;
+}
+
+export const getYearlyAnimalAuditingReport = async (
+  year: number | string
+): Promise<YearlyAnimalAuditingReportFile> => {
+  const response = await http.get("v1/1.0.0/setting-cert-brand/yearly-animal-auditing-report", {
+    searchParams: {
+      year: year.toString(),
+    },
+  });
+
+  const blob = await response.blob();
+  const contentType = response.headers.get("content-type") || "";
+  const contentDisposition = response.headers.get("content-disposition") || "";
+  const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+  const extension = contentType.includes("pdf")
+    ? "pdf"
+    : contentType.includes("spreadsheet") || contentType.includes("excel")
+      ? "xlsx"
+      : "xlsx";
+  const filename = filenameMatch?.[1]?.replace(/["']/g, "") || `reporte-faenamiento-${year}.${extension}`;
+
+  return { blob, filename, contentType };
 };
 
 /**
