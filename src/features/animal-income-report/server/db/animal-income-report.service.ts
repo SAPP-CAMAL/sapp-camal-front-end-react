@@ -9,6 +9,7 @@ export interface ManagerReportTotalsResponse {
   data: {
     totals: Array<{
       idSpecies: number;
+      specieName?: string | null;
       name?: string | null;
       total: number;
     }>;
@@ -114,10 +115,15 @@ export const processReportData = (
 ): ProcessedReportData => {
   const { totals, data } = response.data;
   const speciesById = new Map<number, string>(
-    totals.map((item) => [item.idSpecies, normalizeSpeciesName(item.name)])
+    totals.map((item) => [item.idSpecies, normalizeSpeciesName(item.specieName ?? item.name)])
   );
 
-  const getSpeciesName = (idSpecies: number, fallbackName?: string) => {
+  const getSpeciesName = (
+    idSpecies: number,
+    fallbackName?: string | null,
+    specieName?: string | null
+  ) => {
+    if (specieName) return normalizeSpeciesName(specieName);
     if (fallbackName) return normalizeSpeciesName(fallbackName);
     return speciesById.get(idSpecies) || `ESPECIE ${idSpecies}`;
   };
@@ -128,7 +134,7 @@ export const processReportData = (
   // Transformar los totales al formato esperado
   const speciesData: AnimalIncomeReportData[] = totals.map((item) => ({
     idSpecies: item.idSpecies,
-    species: getSpeciesName(item.idSpecies, item.name),
+    species: getSpeciesName(item.idSpecies, item.name, item.specieName),
     quantity: item.total,
     percentage: totalQuantity > 0 ? Number(((item.total / totalQuantity) * 100).toFixed(1)) : 0,
   }));
@@ -152,7 +158,8 @@ export const processReportData = (
     }
 
     const monthData = historyMap.get(monthKey)!;
-    const speciesName = getSpeciesName(idSpecies, detailSpeciesName);
+    const totalSpecieName = totals.find((total) => total.idSpecies === idSpecies)?.specieName;
+    const speciesName = getSpeciesName(idSpecies, detailSpeciesName, totalSpecieName);
     monthData[speciesName] = (monthData[speciesName] || 0) + 1;
   });
 
