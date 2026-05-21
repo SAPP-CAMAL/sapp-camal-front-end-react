@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   EditIcon,
   Trash2,
   Shield,
@@ -52,6 +59,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { fetchWithFallback } from "@/lib/ky";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { mapCategoryKey } from "../lib/normalize-category-key";
+import { capitalizeText } from "@/lib/utils";
+import { getAllBiosecurityLinesService } from "@/features/locker-room-control/server/db/biosecurity-line.service";
 
 // Componente para mostrar vestuario y lencería
 function VestuarioPopover({ items }: { items: string[] }) {
@@ -194,6 +203,7 @@ export function HygieneControlManagement() {
   const [fecha, setFecha] = useState<Date>(today);
   const [startDate, setStartDate] = useState<Date>(today);
   const [endDate, setEndDate] = useState<Date>(today);
+  const [selectedLine, setSelectedLine] = useState("1");
 
   const [floatingPosition, setFloatingPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -241,11 +251,20 @@ export function HygieneControlManagement() {
   }, [isDragging]);
 
   const { data: lockerRoomData = [], isLoading: isLoadingData } = useQuery({
-    queryKey: ["locker-room-data", startDate, endDate],
+    queryKey: ["hygiene-control-data", startDate, endDate, selectedLine],
     queryFn: async () => {
-      const data = await getHygieneControlByDateService({ startDate: format(startDate, "yyyy-MM-dd"), endDate: format(endDate, "yyyy-MM-dd") });
+      const data = await getHygieneControlByDateService({
+        startDate: format(startDate, "yyyy-MM-dd"),
+        endDate: format(endDate, "yyyy-MM-dd"),
+        idLine: Number(selectedLine),
+      });
       return data ?? [];
     },
+  });
+
+  const biosecurityLinesList = useQuery({
+    queryKey: ["biosecurity-lines"],
+    queryFn: getAllBiosecurityLinesService,
   });
 
   const handleDelete = async (id: number) => {
@@ -265,7 +284,7 @@ export function HygieneControlManagement() {
 
   const handleRefresh = () => {
     setFecha(today);
-    queryClient.invalidateQueries({ queryKey: ["locker-room-data"] });
+    queryClient.invalidateQueries({ queryKey: ["hygiene-control-data"] });
   };
 
   const handleDownloadReport = async (type: 'EXCEL' | 'PDF') => {
@@ -284,9 +303,12 @@ export function HygieneControlManagement() {
       const initDate = format(startDate, "yyyy-MM-dd");
       const finishDate = format(endDate, "yyyy-MM-dd");
       const token = await window.cookieStore.get("accessToken");
+      const lineParam = Number(selectedLine) > 0
+        ? `&idBiosecurityLine=${selectedLine}`
+        : "";
 
       const response = await fetchWithFallback(
-        `/v1/1.0.0/hygiene-control/by-date-register-report?startDate=${initDate}&endDate=${finishDate}&reportType=${type}`,
+        `/v1/1.0.0/hygiene-control/by-date-register-report?startDate=${initDate}&endDate=${finishDate}&reportType=${type}${lineParam}`,
         {
           method: "GET",
           headers: {
@@ -318,22 +340,23 @@ export function HygieneControlManagement() {
 
   return (
     <div className="space-y-4">
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="mx-auto max-w-screen-xl px-3 md:px-4 py-3 md:py-4">
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b">
+        <div className="mx-auto max-w-7xl px-3 md:px-4 py-3 md:py-4">
           <div className="text-center">
             <h1 className="text-2xl font-normal">INGRESO CONTROL DE HIGIENE</h1>
+            <div className="mx-auto mt-2 h-1 w-28 rounded-full bg-primary/70" />
             {/* <p className="text-sm text-muted-foreground">
               Registros generados para:{" "}
               {format(fecha, "dd 'de' MMMM 'de' yyyy", { locale: es })}
             </p> */}
           </div>
 
-          <div className="mt-3 flex flex-col lg:flex-row gap-3 lg:gap-4 lg:items-center lg:justify-between">
-          <div className="space-y-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto] lg:items-end lg:gap-4">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Rango de fechas:
               </label>
-              <div className="flex gap-2 items-start sm:items-end justify-start sm:flex-row flex-col">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                 <div className="flex flex-col gap-1">
                   <span className="text-xs text-gray-500">Desde:</span>
                   <DatePicker
@@ -350,20 +373,38 @@ export function HygieneControlManagement() {
                     onChange={(newDate) => newDate && setEndDate(newDate)}
                   />
                 </div>
+                <div className="flex items-end gap-3">
                   <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleTodayClick}
-                      className="whitespace-nowrap"
-                      title="Filtrar solo hoy"
-                    >
-                      <CalendarIcon className="h-4 w-4 mr-1" />
-                      Hoy
-                    </Button>
-              </div>
-          </div>
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTodayClick}
+                    className="whitespace-nowrap"
+                    title="Filtrar solo hoy"
+                  >
+                    <CalendarIcon className="h-4 w-4 mr-1" />
+                    Hoy
+                  </Button>
 
-            <div className="flex justify-end gap-2">
+                  <div className="flex flex-col gap-1 sm:ml-2">
+                    <span className="text-sm font-semibold text-black whitespace-nowrap">Línea:</span>
+                    <Select value={selectedLine} onValueChange={setSelectedLine}>
+                      <SelectTrigger className="h-10 w-44 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary/50">
+                        <SelectValue placeholder="Seleccione una línea" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {biosecurityLinesList.data?.data.map((line, index) => (
+                          <SelectItem key={index} value={String(line.id)}>
+                            {capitalizeText(line.name)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-start lg:justify-end gap-2 lg:pl-2">
               {lockerRoomData.length > 0 && (
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
@@ -450,9 +491,6 @@ export function HygieneControlManagement() {
                 <TableHead className="text-center border font-bold text-xs px-2 py-1.5 whitespace-nowrap">
                   RESPONSABLE
                 </TableHead>
-                <TableHead className="text-center border font-bold text-xs px-2 py-1.5 whitespace-nowrap">
-                  UNIFORMES
-                </TableHead>
                 <TableHead className="text-center border font-bold text-xs px-2 py-1.5">
                   EQUIPO DE<br/>PROTECCIÓN
                 </TableHead>
@@ -479,14 +517,6 @@ export function HygieneControlManagement() {
                   </TableCell>
                   <TableCell className="font-semibold border text-xs px-2 py-1.5">
                     {row.responsibleFullName}
-                  </TableCell>
-                  <TableCell className="text-center border px-2 py-1.5">
-                    <VestuarioPopover
-                      items={
-                        row.detailsHygieneGrouped?.[categoryKeys.uniforms] ??
-                        []
-                      }
-                    />
                   </TableCell>
                   <TableCell className="text-center border px-2 py-1.5">
                     <div className="flex items-center justify-center">
