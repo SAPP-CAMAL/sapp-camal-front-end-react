@@ -165,13 +165,25 @@ export function AnimalWeighingManagement() {
 
   const queryClient = useQueryClient();
 
-  // Verificar si la fecha seleccionada es hoy o mañana
-  const isToday = useMemo(() => {
-    const today = getLocalDateString();
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = getLocalDateString(tomorrow);
-    return slaughterDate === today || slaughterDate === tomorrowStr;
+  // Verificar si la fecha seleccionada es hoy o dentro de los ultimos 3 dias
+  const isWithinLastThreeDays = useMemo(() => {
+    const selected = parseLocalDateString(slaughterDate);
+    const startOfSelected = new Date(
+      selected.getFullYear(),
+      selected.getMonth(),
+      selected.getDate(),
+    );
+    const today = new Date();
+    const startOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    );
+
+    const diffMs = startOfToday.getTime() - startOfSelected.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    return diffDays >= 0 && diffDays <= 2;
   }, [slaughterDate]);
 
   // Hook de balanza serial
@@ -1702,6 +1714,11 @@ export function AnimalWeighingManagement() {
                 lastCapturedWeightRef.current = null;
               }}
             />
+            {!isWithinLastThreeDays && (
+              <span className="text-xs text-red-600">
+                Solo se permite pesar en los ultimos 3 dias.
+              </span>
+            )}
           </div>
 
           {/* Etapa de Pesaje a la derecha */}
@@ -2142,7 +2159,7 @@ export function AnimalWeighingManagement() {
                                 })}
                               </div>
                             </div>
-                            {sortedRows[0].idAnimalWeighing && isToday && (
+                            {sortedRows[0].idAnimalWeighing && isWithinLastThreeDays && (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -2210,7 +2227,7 @@ export function AnimalWeighingManagement() {
                                     </div>
                                   </div>
                                 )}
-                                {isToday && (
+                                {isWithinLastThreeDays && (
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -2226,7 +2243,7 @@ export function AnimalWeighingManagement() {
                               </div>
                             </div>
                           ) : (
-                            isToday && (
+                            isWithinLastThreeDays && (
                               <div className="p-2 bg-teal-50/20 rounded border border-teal-200/30 text-center">
                                 <Button
                                   size="sm"
@@ -2330,13 +2347,13 @@ export function AnimalWeighingManagement() {
                                       resetWeight();
                                     }
                                   }}
-                                  disabled={!isConnected || !isToday}
+                                  disabled={!isConnected || !isWithinLastThreeDays}
                                 >
                                   {selectedRowId === row.id
                                     ? "CAPTURADO"
                                     : "CAPTURAR"}
                                 </Button>
-                                {selectedRowId === row.id && isToday && (
+                                {selectedRowId === row.id && isWithinLastThreeDays && (
                                   <Button
                                     size="sm"
                                     className="bg-blue-600 text-[10px] whitespace-nowrap h-6 px-1.5"
@@ -2672,7 +2689,7 @@ export function AnimalWeighingManagement() {
                                             </span>
                                           </div>
                                         )}
-                                        {isToday && (
+                                        {isWithinLastThreeDays && (
                                           <Button
                                             size="sm"
                                             variant="ghost"
@@ -2689,7 +2706,7 @@ export function AnimalWeighingManagement() {
                                         )}
                                       </div>
                                     ) : (
-                                      isToday && (
+                                      isWithinLastThreeDays && (
                                         <div className="flex justify-center">
                                           <Button
                                             size="sm"
@@ -2795,13 +2812,13 @@ export function AnimalWeighingManagement() {
                                           resetWeight();
                                         }
                                       }}
-                                      disabled={!isConnected || !isToday}
+                                      disabled={!isConnected || !isWithinLastThreeDays}
                                     >
                                       {selectedRowId === row.id
                                         ? "CAPTURADO"
                                         : "CAPTURAR"}
                                     </Button>
-                                    {selectedRowId === row.id && isToday && (
+                                    {selectedRowId === row.id && isWithinLastThreeDays && (
                                       <Button
                                         size="sm"
                                         className="bg-blue-600 text-[9px] whitespace-nowrap h-6 px-1.5 rounded-l-none border-l-0"
@@ -2866,7 +2883,7 @@ export function AnimalWeighingManagement() {
                                     rowSpan={rowSpan}
                                   >
                                     <div className="flex flex-col items-center justify-center gap-1">
-                                      {row.idAnimalWeighing && isToday && (
+                                      {row.idAnimalWeighing && isWithinLastThreeDays && (
                                         <TooltipProvider>
                                           <Tooltip>
                                             <TooltipTrigger asChild>
