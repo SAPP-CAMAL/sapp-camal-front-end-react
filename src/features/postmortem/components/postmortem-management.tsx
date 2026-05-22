@@ -72,7 +72,7 @@ import { useLines } from "../hooks/use-lines";
 import { useSpeciesDisease } from "../hooks/use-species-disease";
 import { usePostmortemByFilters } from "../hooks/use-postmortem-by-filters";
 import { useCertificates } from "../hooks/use-certificates";
-import { isTodayOrTomorrow } from "@/lib/date-utils";
+import { isWithinLastThreeDays } from "@/lib/date-utils";
 import { groupDiseasesByProduct } from "../server/db/species-disease.service";
 import { getIntroductoresFromCertificates } from "../server/db/certificates.service";
 import {
@@ -118,8 +118,8 @@ export function PostmortemManagement() {
   const [corralTypeFilter, setCorralTypeFilter] =
     useState<CorralTypeFilter>("TODOS");
 
-  // Verificar si la fecha seleccionada es hoy o mañana (se puede editar hoy y mañana)
-  const canEdit = isTodayOrTomorrow(slaughterDate);
+  // Verificar si la fecha seleccionada esta dentro de los ultimos 3 dias (incluyendo hoy)
+  const canEdit = isWithinLastThreeDays(slaughterDate);
 
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
@@ -554,25 +554,6 @@ export function PostmortemManagement() {
         <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 justify-start">
             <Label className="sm:min-w-34 text-sm">Fecha de Inspección</Label>
-            {/* <div className="relative w-full sm:w-[200px]">
-              <CalendarIcon
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 cursor-pointer"
-                onClick={() => {
-                  const input = document.getElementById(
-                    "fecha-postmortem"
-                  ) as HTMLInputElement;
-                  if (input) input.showPicker();
-                }}
-              />
-              <Input
-                id="fecha-postmortem"
-                type="date"
-                className="w-full bg-white transition-colors focus:bg-white pl-8 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                value={slaughterDate}
-                onChange={(e) => setSlaughterDate(e.target.value)}
-              />
-            </div> */}
-
             <DatePicker
 						  inputClassName='bg-secondary'
 						  selected={parseISO(slaughterDate)}
@@ -582,6 +563,11 @@ export function PostmortemManagement() {
 						  	setSlaughterDate(formattedDate);
 						  }}
 					  />
+            {!canEdit && (
+              <span className="text-xs text-red-600">
+                Solo se permite editar en los ultimos 3 dias.
+              </span>
+            )}
 
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
