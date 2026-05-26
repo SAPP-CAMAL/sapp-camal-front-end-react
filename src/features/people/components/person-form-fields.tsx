@@ -108,7 +108,7 @@ export function NewPeopleFields({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="contents">
       <FormField
         control={form.control}
         name="identificationType"
@@ -222,15 +222,9 @@ export function NewPeopleFields({
       <FormField
         control={form.control}
         name="lastName"
-        rules={{
-          required: {
-            value: true,
-            message: "El campo apellidos es requerido",
-          },
-        }}
         render={({ field }) => (
           <FormItem className="space-y-2">
-            <FormLabel>Apellidos *</FormLabel>
+            <FormLabel>Apellidos</FormLabel>
             <FormControl>
               <Input {...field} className="h-10" />
             </FormControl>
@@ -322,7 +316,7 @@ export function NewPeopleFields({
         control={form.control}
         name="address"
         render={({ field }) => (
-          <FormItem className="sm:col-span-2">
+          <FormItem className="lg:col-span-2">
             <FormLabel>Dirección Domiciliaria</FormLabel>
             <FormControl>
               <Textarea {...field} />
@@ -336,7 +330,7 @@ export function NewPeopleFields({
 
       {
         !isUpdateVisitorLog &&
-        <div className="border-t border-gray-200 sm:col-span-2">
+        <div className="border-t border-gray-200 lg:col-span-2">
           <div className="flex gap-x-2 mt-4">
             <FormField
               control={form.control}

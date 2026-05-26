@@ -160,12 +160,12 @@ export function NewPerson({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4"
           >
             <NewPeopleFields
               isUpdateVisitorLog={isUpdateVisitorLog}
             />
-            <div className="flex justify-end col-span-2">
+            <div className="flex justify-end lg:col-span-2">
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Guardando..." : "Guardar"}
               </Button>
