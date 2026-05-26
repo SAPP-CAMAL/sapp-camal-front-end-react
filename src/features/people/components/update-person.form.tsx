@@ -326,13 +326,13 @@ export function UpdatePerson({ person }: { person: any }) {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form className="gap-4 grid grid-cols-1 md:grid-cols-2 mt-4">
+          <form className="gap-4 grid grid-cols-1 lg:grid-cols-2 mt-4">
             <NewPeopleFields
               isUpdate
               onDeleteEmployee={deleteEmployeeService}
               onSlaughterhouseChange={handleSlaughterhouseChange}
               updatePersonButton={
-                <div className="col-span-2 border-t pt-4 flex justify-end">
+                <div className="lg:col-span-2 border-t pt-4 flex justify-end">
                   <Button
                     type="button"
                     onClick={form.handleSubmit(onSubmitPersonInfo)}
@@ -361,7 +361,7 @@ export function UpdatePerson({ person }: { person: any }) {
               updatePositionsButton={
                 form.watch("slaughterhouse") &&
                 form.watch("positions")?.length > 0 ? (
-                  <div className="col-span-2 mt-4 flex justify-end">
+                  <div className="lg:col-span-2 mt-4 flex justify-end">
                     <Button
                       type="button"
                       onClick={form.handleSubmit(onSubmitPositions)}
