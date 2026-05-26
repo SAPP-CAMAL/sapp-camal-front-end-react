@@ -13,6 +13,12 @@ export const mapCategoryKey = (value: string) => {
   if (normalized.includes("UNIFORM")) return "UNIFORMES";
   if (normalized.includes("ASEO")) return "ASEO PERSONAL";
   if (normalized.includes("PROTECCION")) return "EQUIPO DE PROTECCION";
+  if (normalized.includes("HIGUIEN") || normalized.includes("HIGIENE")) {
+    return "ASEO PERSONAL";
+  }
+  if (normalized.includes("COMPORTAMIENTO")) {
+    return "EQUIPO DE PROTECCION";
+  }
 
   return normalized;
 };

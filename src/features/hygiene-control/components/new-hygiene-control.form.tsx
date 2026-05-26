@@ -67,7 +67,7 @@ export default function NewHygieneControlForm({
     setSelectedPerson(person);
     setFilterFullName(data.employeeFullName);
     setFilterIdentification("");
-    setSelectedObservations(data.commentary);
+    setSelectedObservations(data.commentary ?? "");
   };
 
   const updateDebouncedFullName = useDebouncedCallback((value: string) => {

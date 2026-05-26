@@ -52,6 +52,7 @@ export interface MappedHygieneControl {
   id:number;
   employeeId: number;
   responsibleId: number;
+    idLine?: number;
   employeeFullName: string;
   responsibleFullName: string;
   timeRegister: Date;
@@ -119,6 +120,8 @@ export interface HygieneControl {
     id:             number;
     idEmployee:     number;
     idVeterinarian: number;
+    idLine?:        number;
+    idBiosecurityLine?: number;
     commentary:     string;
     status:         boolean;
     detailsHygiene: DetailsHygiene[];
@@ -127,6 +130,7 @@ export interface HygieneControl {
     createdAt:Date
     employee:EmployeeHygieneControl
     veterinarian:Responsible
+    biosecurityLines?: BiosecurityLine;
 }
 
 export interface DetailsHygiene {

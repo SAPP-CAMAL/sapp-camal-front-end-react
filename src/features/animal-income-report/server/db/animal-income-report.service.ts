@@ -1,7 +1,7 @@
 import { http } from "@/lib/ky";
 
-const normalizeSpeciesName = (name: string) =>
-  name.trim().replace(/\s+/g, " ").toUpperCase();
+const normalizeSpeciesName = (name?: string | null) =>
+  (name ?? "").trim().replace(/\s+/g, " ").toUpperCase();
 
 export interface ManagerReportTotalsResponse {
   code: number;
@@ -9,7 +9,8 @@ export interface ManagerReportTotalsResponse {
   data: {
     totals: Array<{
       idSpecies: number;
-      name: string;
+      specieName?: string | null;
+      name?: string | null;
       total: number;
     }>;
     data: Array<{
@@ -75,6 +76,35 @@ export const getManagerReportTotals = async (
   }
 };
 
+export interface YearlyAnimalAuditingReportFile {
+  blob: Blob;
+  filename: string;
+  contentType: string;
+}
+
+export const getYearlyAnimalAuditingReport = async (
+  year: number | string
+): Promise<YearlyAnimalAuditingReportFile> => {
+  const response = await http.get("v1/1.0.0/setting-cert-brand/yearly-animal-auditing-report", {
+    searchParams: {
+      year: year.toString(),
+    },
+  });
+
+  const blob = await response.blob();
+  const contentType = response.headers.get("content-type") || "";
+  const contentDisposition = response.headers.get("content-disposition") || "";
+  const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+  const extension = contentType.includes("pdf")
+    ? "pdf"
+    : contentType.includes("spreadsheet") || contentType.includes("excel")
+      ? "xlsx"
+      : "xlsx";
+  const filename = filenameMatch?.[1]?.replace(/["']/g, "") || `reporte-faenamiento-${year}.${extension}`;
+
+  return { blob, filename, contentType };
+};
+
 /**
  * Procesa la respuesta de la API y la transforma al formato esperado por el componente
  */
@@ -85,10 +115,15 @@ export const processReportData = (
 ): ProcessedReportData => {
   const { totals, data } = response.data;
   const speciesById = new Map<number, string>(
-    totals.map((item) => [item.idSpecies, normalizeSpeciesName(item.name)])
+    totals.map((item) => [item.idSpecies, normalizeSpeciesName(item.specieName ?? item.name)])
   );
 
-  const getSpeciesName = (idSpecies: number, fallbackName?: string) => {
+  const getSpeciesName = (
+    idSpecies: number,
+    fallbackName?: string | null,
+    specieName?: string | null
+  ) => {
+    if (specieName) return normalizeSpeciesName(specieName);
     if (fallbackName) return normalizeSpeciesName(fallbackName);
     return speciesById.get(idSpecies) || `ESPECIE ${idSpecies}`;
   };
@@ -99,7 +134,7 @@ export const processReportData = (
   // Transformar los totales al formato esperado
   const speciesData: AnimalIncomeReportData[] = totals.map((item) => ({
     idSpecies: item.idSpecies,
-    species: getSpeciesName(item.idSpecies, item.name),
+    species: getSpeciesName(item.idSpecies, item.name, item.specieName),
     quantity: item.total,
     percentage: totalQuantity > 0 ? Number(((item.total / totalQuantity) * 100).toFixed(1)) : 0,
   }));
@@ -123,7 +158,8 @@ export const processReportData = (
     }
 
     const monthData = historyMap.get(monthKey)!;
-    const speciesName = getSpeciesName(idSpecies, detailSpeciesName);
+    const totalSpecieName = totals.find((total) => total.idSpecies === idSpecies)?.specieName;
+    const speciesName = getSpeciesName(idSpecies, detailSpeciesName, totalSpecieName);
     monthData[speciesName] = (monthData[speciesName] || 0) + 1;
   });
 

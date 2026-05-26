@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { format } from "date-fns";
-import { TrendingUp, PieChart as PieChartIcon, CalendarIcon, Table2, Menu, Printer, FileSpreadsheet, Maximize2 } from "lucide-react";
+import { TrendingUp, PieChart as PieChartIcon, CalendarIcon, Table2, Menu, Printer, FileSpreadsheet, Maximize2, FileDown } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -19,6 +19,7 @@ import { ChartModern } from "./chart-modern";
 import { Chart3D } from "./chart-3d";
 import { ChartHistory } from "./chart-history";
 import { SpeciesDetailModal } from "./species-detail-modal";
+import { YearlyAnimalAuditingReportModal } from "./yearly-animal-auditing-report-modal";
 import * as XLSX from "xlsx";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 
@@ -35,6 +36,7 @@ export function AnimalIncomeReportManagement() {
   });
   const [endDate, setEndDate] = useState<Date>(dateRange.to || new Date());
   const [show3D, setShow3D] = useState(false);
+  const [yearlyReportOpen, setYearlyReportOpen] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -204,6 +206,14 @@ export function AnimalIncomeReportManagement() {
                 }}
               />
             </div>
+            <Button
+              type="button"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => setYearlyReportOpen(true)}
+            >
+              <FileDown className="mr-2 h-4 w-4" />
+              Reporte anual
+            </Button>
           </div>
         </div>
 
@@ -446,6 +456,11 @@ export function AnimalIncomeReportManagement() {
           endDate={format(endDate, "yyyy-MM-dd")}
         />
       )}
+
+      <YearlyAnimalAuditingReportModal
+        isOpen={yearlyReportOpen}
+        onClose={() => setYearlyReportOpen(false)}
+      />
     </div>
   );
 }

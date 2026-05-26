@@ -33,22 +33,31 @@ export const mapHygieneControlData = (
 
     item.detailsHygiene.forEach((detail: any) => {
       const equipmentType =
-        detail.settingHygiene.equipment.equipmentType.description;
+        detail.settingHygiene?.equipment?.equipmentType?.description ?? "";
       const equipmentDescription =
-        detail.settingHygiene.equipment.description;
+        detail.settingHygiene?.equipment?.description ?? "";
       const normalizedType = mapCategoryKey(equipmentType);
 
       if (!grouped[normalizedType]) {
         grouped[normalizedType] = [];
       }
 
-      grouped[normalizedType].push(equipmentDescription);
+      if (equipmentDescription) {
+        grouped[normalizedType].push(equipmentDescription);
+      }
     });
+
+    const resolvedLineId =
+      item.idLine ??
+      item.idBiosecurityLine ??
+      item.biosecurityLines?.idLine ??
+      item.biosecurityLines?.id;
 
     return {
       id: item.id,
       employeeId: item.idEmployee,
       responsibleId: item.idVeterinarian,
+      idLine: resolvedLineId,
       employeeFullName: item.employee.person.fullName ?? "—",
       responsibleFullName: item.veterinarian.user.person.fullName ?? "—",
       timeRegister: item.createdAt,
@@ -63,12 +72,18 @@ export const mapHygieneControlData = (
 
 
 export const getHygieneControlByDateService = async (
-rangeDate: {  startDate: string, endDate: string}
+rangeDate: {  startDate: string, endDate: string, idLine?: number}
 ): Promise<MappedHygieneControl[]> => {
   try {
     const response = await http
       .get(`v1/1.0.0/hygiene-control/by-date-register`, {
-        searchParams: rangeDate
+        searchParams: {
+          startDate: rangeDate.startDate,
+          endDate: rangeDate.endDate,
+          ...(rangeDate.idLine
+            ? { idBiosecurityLine: rangeDate.idLine.toString() }
+            : {}),
+        }
       })
       .json<HygieneControlResponse>();
     return mapHygieneControlData(response.data ?? []);
