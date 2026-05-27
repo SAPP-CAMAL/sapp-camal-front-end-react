@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, Upload, X, ZoomIn, Image as ImageIcon } from "lucide-react";
 import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
 import { useSavePostmortem, useUpdatePostmortem } from "../hooks/use-save-postmortem";
 import { usePostmortemByBrand } from "../hooks/use-postmortem-by-brand";
@@ -26,6 +26,8 @@ type AnimalWeight = {
   selected: boolean;
   weight: string;
   bodyPartComment?: string;
+  imagePreview?: string | null;
+  existingImageUrl?: string | null;
 };
 
 type TotalConfiscationModalProps = {
@@ -63,7 +65,27 @@ export function TotalConfiscationModal({
   const [isUpdatingAll, setIsUpdatingAll] = useState(false);
   const updateAllRemainingRef = useRef(0);
 
+  const imageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
   const [animalWeights, setAnimalWeights] = useState<AnimalWeight[]>([]);
+
+  const isDataUrlImage = (value?: string | null) =>
+    typeof value === "string" && value.startsWith("data:image/");
+
+  const computePayloadImage = (params: {
+    currentPreview?: string | null;
+    currentExistingUrl?: string | null;
+    savedExistingUrl?: string | null;
+  }): string | null | undefined => {
+    const { currentPreview, currentExistingUrl, savedExistingUrl } = params;
+
+    if (isDataUrlImage(currentPreview)) return currentPreview;
+    // Si había una imagen guardada y ahora se limpió, enviar null para eliminar
+    if (!currentExistingUrl && !!savedExistingUrl) return null;
+    // Caso normal: no enviar nada para mantener lo existente
+    return undefined;
+  };
 
   useEffect(() => {
     if (animalsData?.data) {
@@ -82,7 +104,9 @@ export function TotalConfiscationModal({
           animalId: animal.id.toString(),
           selected: !!savedTotalConfiscation,
           weight: savedTotalConfiscation ? String(savedTotalConfiscation.weight) : "",
-          bodyPartComment: savedTotalConfiscation?.bodyPartComment
+          bodyPartComment: savedTotalConfiscation?.bodyPartComment,
+          imagePreview: null,
+          existingImageUrl: savedTotalConfiscation?.urlImage || null,
         };
       });
 
@@ -116,6 +140,33 @@ export function TotalConfiscationModal({
     );
   };
 
+  const handleAnimalImage = (animalId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAnimalWeights((prev) =>
+        prev.map((animal) =>
+          animal.animalId === animalId
+            ? { ...animal, imagePreview: reader.result as string }
+            : animal
+        )
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearImage = (animalId: string) => {
+    setAnimalWeights((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? { ...animal, imagePreview: null, existingImageUrl: null }
+          : animal
+      )
+    );
+
+    const input = imageInputRefs.current[animalId];
+    if (input) input.value = "";
+  };
+
   const hasAnimalChanges = (animal: AnimalWeight) => {
     const savedData = postmortemData?.data?.find(
       (item) => item.idDetailsSpeciesCertificate === parseInt(animal.animalId)
@@ -132,8 +183,16 @@ export function TotalConfiscationModal({
     const savedComment = (savedTotal?.bodyPartComment ?? "").trim();
     const currentComment = (animal.bodyPartComment ?? "").trim();
 
+    const savedImageUrl = savedTotal?.urlImage || null;
+    const currentExisting = animal.existingImageUrl || null;
+    const currentPreview = animal.imagePreview || null;
+
     if (String(animal.weight ?? "") !== savedWeight) return true;
     if (currentComment !== savedComment) return true;
+
+    // Si se subió una nueva imagen o se limpió una existente
+    if (!!currentPreview) return true;
+    if (savedImageUrl !== currentExisting) return true;
 
     return false;
   };
@@ -162,6 +221,7 @@ export function TotalConfiscationModal({
           isTotalConfiscation: true,
           status: false,
           bodyPartComment: "",
+          image: existingTotal.urlImage ? null : undefined,
         },
       ];
 
@@ -200,6 +260,11 @@ export function TotalConfiscationModal({
     }
 
     const bodyPartComment = (animal.bodyPartComment ?? "").trim();
+    const image = computePayloadImage({
+      currentPreview: animal.imagePreview,
+      currentExistingUrl: animal.existingImageUrl,
+      savedExistingUrl: existingTotal?.urlImage || null,
+    });
     // Para decomiso total, no se especifica idBodyPart, solo el peso total
     const productsPostmortem: ProductPostmortem[] = [
       {
@@ -208,6 +273,7 @@ export function TotalConfiscationModal({
         isTotalConfiscation: true,
         status: true,
         bodyPartComment: bodyPartComment,
+        image,
       },
     ];
 
@@ -314,6 +380,7 @@ export function TotalConfiscationModal({
             isTotalConfiscation: true,
             status: false,
             bodyPartComment: "",
+            image: existingTotal.urlImage ? null : undefined,
           },
         ];
 
@@ -343,6 +410,11 @@ export function TotalConfiscationModal({
 
       const weight = parseFloat(animal.weight);
       const bodyPartComment = (animal.bodyPartComment ?? "").trim();
+      const image = computePayloadImage({
+        currentPreview: animal.imagePreview,
+        currentExistingUrl: animal.existingImageUrl,
+        savedExistingUrl: existingTotal.urlImage || null,
+      });
       const productsPostmortem: ProductPostmortem[] = [
         {
           idBodyPart: 0,
@@ -350,6 +422,7 @@ export function TotalConfiscationModal({
           isTotalConfiscation: true,
           status: true,
           bodyPartComment: bodyPartComment,
+          image,
         },
       ];
 
@@ -383,6 +456,9 @@ export function TotalConfiscationModal({
           animalId: animal.id.toString(),
           selected: false,
           weight: "",
+          bodyPartComment: "",
+          imagePreview: null,
+          existingImageUrl: null,
         }))
       );
     }
@@ -393,6 +469,7 @@ export function TotalConfiscationModal({
   const hasChanges = animalWeights.some((animal) => hasAnimalChanges(animal));
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
@@ -530,6 +607,95 @@ export function TotalConfiscationModal({
                               }}
                             />
                           </label>
+
+                          {/* Imagen */}
+                          <div className="shrink-0 flex flex-col items-center gap-1 self-start">
+                            <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
+                              <ImageIcon className="h-3 w-3 text-teal-600" />
+                              <span>Imagen</span>
+                            </div>
+                            <input
+                              ref={(el) => {
+                                imageInputRefs.current[animalId] = el;
+                              }}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleAnimalImage(animalId, file);
+                              }}
+                            />
+                            {(animalWeight.imagePreview || animalWeight.existingImageUrl) ? (
+                              <div className="flex flex-col items-center gap-1">
+                                <div
+                                  className="w-16 h-16 rounded-lg overflow-hidden border bg-gray-50 cursor-pointer relative"
+                                  onClick={() => {
+                                    const url = animalWeight.imagePreview || animalWeight.existingImageUrl;
+                                    if (url) setPreviewImageUrl(url);
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    const overlay = e.currentTarget.querySelector(
+                                      "[data-overlay]"
+                                    ) as HTMLElement | null;
+                                    if (overlay) overlay.style.opacity = "1";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    const overlay = e.currentTarget.querySelector(
+                                      "[data-overlay]"
+                                    ) as HTMLElement | null;
+                                    if (overlay) overlay.style.opacity = "0";
+                                  }}
+                                  title="Ver imagen completa"
+                                >
+                                  <img
+                                    src={animalWeight.imagePreview || animalWeight.existingImageUrl || ""}
+                                    alt="Vista previa"
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div
+                                    data-overlay="true"
+                                    className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-lg transition-opacity"
+                                    style={{ opacity: 0 }}
+                                  >
+                                    <ZoomIn className="h-4 w-4 text-white" />
+                                  </div>
+                                </div>
+                                <div className="flex gap-1">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-6 px-2"
+                                    onClick={() => imageInputRefs.current[animalId]?.click()}
+                                    disabled={!canEdit}
+                                  >
+                                    <Upload className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-6 px-2 text-red-600 border-red-200 hover:bg-red-50"
+                                    onClick={() => handleClearImage(animalId)}
+                                    disabled={!canEdit}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => canEdit && imageInputRefs.current[animalId]?.click()}
+                                disabled={!canEdit}
+                                className="w-16 h-16 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:border-teal-400 hover:text-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Upload className="h-4 w-4" />
+                                <span>Imagen</span>
+                              </button>
+                            )}
+                          </div>
                           {canEdit && (
                             <Button
                               size="sm"
@@ -576,5 +742,20 @@ export function TotalConfiscationModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Visor de imagen */}
+    <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Imagen</DialogTitle>
+        </DialogHeader>
+        {previewImageUrl ? (
+          <div className="w-full flex items-center justify-center">
+            <img src={previewImageUrl} alt="Imagen" className="max-h-[70vh] w-auto object-contain rounded" />
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
