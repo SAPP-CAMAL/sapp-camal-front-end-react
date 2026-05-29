@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Loader2, Info, Save } from "lucide-react";
+import { Loader2, Info, Save, Upload, X, ZoomIn, Image as ImageIcon } from "lucide-react";
 import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
 import { useBodyParts } from "../hooks/use-body-parts";
 import { useSavePostmortem } from "../hooks/use-save-postmortem";
@@ -28,6 +28,8 @@ type BodyPartSelection = {
   selected: boolean;
   weight: string;
   bodyPartComment?: string;
+  imagePreview?: string | null;
+  existingImageUrl?: string | null;
 };
 
 type AnimalPartSelection = {
@@ -68,6 +70,24 @@ export function PartialConfiscationModal({
   const { data: unitMeasureData } = useUnitMeasure();
   const unitSymbol = unitMeasureData?.data?.symbol || "kg";
   const isSavingOrUpdating = isSaving;
+
+  const imageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
+  const isDataUrlImage = (value?: string | null) =>
+    typeof value === "string" && value.startsWith("data:image/");
+
+  const computePayloadImage = (params: {
+    currentPreview?: string | null;
+    currentExistingUrl?: string | null;
+    initialExistingUrl?: string | null;
+  }): string | null | undefined => {
+    const { currentPreview, currentExistingUrl, initialExistingUrl } = params;
+
+    if (isDataUrlImage(currentPreview)) return currentPreview;
+    if (!currentExistingUrl && !!initialExistingUrl) return null;
+    return undefined;
+  };
 
   // Verificar si ya existen datos guardados de decomiso parcial
   const hasExistingData = useMemo(() => {
@@ -131,6 +151,8 @@ export function PartialConfiscationModal({
             selected: !!savedPart,
             bodyPartComment: savedPart?.bodyPartComment || "",
             weight: savedPart ? String(savedPart.weight) : "",
+            imagePreview: null,
+            existingImageUrl: savedPart?.urlImage || null,
           };
         });
 
@@ -214,6 +236,48 @@ export function PartialConfiscationModal({
     );
   };
 
+  const handleBodyPartImage = (animalId: string, partId: number, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAnimalSelections((prev) =>
+        prev.map((animal) =>
+          animal.animalId === animalId
+            ? {
+                ...animal,
+                bodyParts: animal.bodyParts.map((part) =>
+                  part.id === partId
+                    ? { ...part, imagePreview: reader.result as string }
+                    : part
+                ),
+              }
+            : animal
+        )
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearBodyPartImage = (animalId: string, partId: number) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? {
+              ...animal,
+              bodyParts: animal.bodyParts.map((part) =>
+                part.id === partId
+                  ? { ...part, imagePreview: null, existingImageUrl: null }
+                  : part
+              ),
+            }
+          : animal
+      )
+    );
+
+    const key = `${animalId}-${partId}`;
+    const input = imageInputRefs.current[key];
+    if (input) input.value = "";
+  };
+
   const handleCancel = () => {
     if (animalsData?.data && sortedBodyParts.length > 0) {
       setAnimalSelections(
@@ -226,6 +290,9 @@ export function PartialConfiscationModal({
             description: part.description,
             selected: false,
             weight: "",
+            bodyPartComment: "",
+            imagePreview: null,
+            existingImageUrl: null,
           })),
         }))
       );
@@ -256,7 +323,16 @@ export function PartialConfiscationModal({
           if (!initialPart && currentPart.selected) return true;
           if (initialPart) {
             if (initialPart.selected !== currentPart.selected) return true;
-            if (currentPart.selected && (initialPart.weight !== currentPart.weight || initialPart.bodyPartComment !== currentPart.bodyPartComment)) return true;
+            if (
+              currentPart.selected &&
+              (initialPart.weight !== currentPart.weight ||
+                initialPart.bodyPartComment !== currentPart.bodyPartComment)
+            )
+              return true;
+
+            const initialImg = initialPart.imagePreview || initialPart.existingImageUrl || null;
+            const currentImg = currentPart.imagePreview || currentPart.existingImageUrl || null;
+            if (currentPart.selected && initialImg !== currentImg) return true;
           }
         }
       }
@@ -280,7 +356,8 @@ export function PartialConfiscationModal({
           const initialPart = initial.bodyParts.find(p => p.id === part.id);
           if (!initialPart) return part.selected;
           return part.selected !== initialPart.selected || 
-                 (part.selected && (part.weight !== initialPart.weight || part.bodyPartComment !== initialPart.bodyPartComment));
+                 (part.selected && (part.weight !== initialPart.weight || part.bodyPartComment !== initialPart.bodyPartComment)) ||
+                 (part.selected && ((part.imagePreview || part.existingImageUrl || null) !== (initialPart.imagePreview || initialPart.existingImageUrl || null)));
         });
       }
       return false;
@@ -337,6 +414,7 @@ export function PartialConfiscationModal({
             isTotalConfiscation: false,
             status: false,
             bodyPartComment: "",
+            image: p.existingImageUrl ? null : undefined,
           }));
 
         if (productsPostmortem.length === 0) {
@@ -384,20 +462,36 @@ export function PartialConfiscationModal({
         .filter(p => p.selected && !animal.bodyParts.find(cp => cp.id === p.id)?.selected);
 
       const productsPostmortem: ProductPostmortem[] = [
-        ...selectedParts.map(part => ({
-          idBodyPart: part.id,
-          weight: parseFloat(part.weight),
-          isTotalConfiscation: false,
-          status: true,
-          bodyPartComment: (part?.bodyPartComment ?? "").trim(),
-        })),
-        ...deselectedParts.map(part => ({
-          idBodyPart: part.id,
-          weight: parseFloat(part.weight) || 0,
-          isTotalConfiscation: false,
-          status: false,
-          bodyPartComment: "",
-        }))
+        ...selectedParts.map(part => {
+          const initialPart = initialAnimal?.bodyParts?.find(p => p.id === part.id);
+          const image = computePayloadImage({
+            currentPreview: part.imagePreview,
+            currentExistingUrl: part.existingImageUrl,
+            initialExistingUrl: initialPart?.existingImageUrl || null,
+          });
+
+          return {
+            idBodyPart: part.id,
+            weight: parseFloat(part.weight),
+            isTotalConfiscation: false,
+            status: true,
+            bodyPartComment: (part?.bodyPartComment ?? "").trim(),
+            image,
+          };
+        }),
+        ...deselectedParts.map(part => {
+          const initialPart = initialAnimal?.bodyParts?.find(p => p.id === part.id);
+          const hadImage = !!initialPart?.existingImageUrl;
+
+          return {
+            idBodyPart: part.id,
+            weight: parseFloat(part.weight) || 0,
+            isTotalConfiscation: false,
+            status: false,
+            bodyPartComment: "",
+            image: hadImage ? null : undefined,
+          };
+        })
       ];
 
       savePostmortem(
@@ -572,6 +666,92 @@ export function PartialConfiscationModal({
 																	style={{ minHeight: '20px', overflow: 'hidden' }}
 																/>
 															</label>
+
+                                                  {/* Imagen */}
+                                                  <div className="mt-2 flex items-start justify-between gap-2">
+                                                    <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
+                                                      <ImageIcon className="h-3 w-3 text-teal-600" />
+                                                      <span>Imagen</span>
+                                                    </div>
+
+                                                    <div className="shrink-0 flex flex-col items-end gap-1">
+                                                      <input
+                                                        ref={(el) => {
+                                                          imageInputRefs.current[`${animalId}-${part.id}`] = el;
+                                                        }}
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => {
+                                                          const file = e.target.files?.[0];
+                                                          if (file) handleBodyPartImage(animalId, part.id, file);
+                                                        }}
+                                                      />
+
+                                                      {(part.imagePreview || part.existingImageUrl) ? (
+                                                        <div className="flex items-center gap-2">
+                                                          <div
+                                                            className="w-16 h-16 rounded-lg overflow-hidden border bg-white cursor-pointer relative"
+                                                            onClick={() => {
+                                                              const url = part.imagePreview || part.existingImageUrl;
+                                                              if (url) setPreviewImageUrl(url);
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                              const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+                                                              if (overlay) overlay.style.opacity = '1';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                              const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+                                                              if (overlay) overlay.style.opacity = '0';
+                                                            }}
+                                                            title="Ver imagen completa"
+                                                          >
+                                                            <img
+                                                              src={part.imagePreview || part.existingImageUrl || ""}
+                                                                alt="Vista previa"
+                                                                className="w-full h-full object-cover"
+                                                              />
+                                                            <div data-overlay="true" className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-lg transition-opacity" style={{ opacity: 0 }}>
+                                                              <ZoomIn className="h-4 w-4 text-white" />
+                                                            </div>
+                                                          </div>
+
+                                                          <div className="flex flex-col gap-1">
+                                                            <Button
+                                                              type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="h-6 px-2"
+                                                                onClick={() => imageInputRefs.current[`${animalId}-${part.id}`]?.click()}
+                                                                disabled={!canEdit}
+                                                              >
+                                                                <Upload className="h-3 w-3" />
+                                                              </Button>
+                                                              <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="h-6 px-2 text-red-600 border-red-200 hover:bg-red-50"
+                                                                onClick={() => handleClearBodyPartImage(animalId, part.id)}
+                                                                disabled={!canEdit}
+                                                              >
+                                                                <X className="h-3 w-3" />
+                                                              </Button>
+                                                            </div>
+                                                        </div>
+                                                      ) : (
+                                                        <button
+                                                          type="button"
+                                                          onClick={() => canEdit && imageInputRefs.current[`${animalId}-${part.id}`]?.click()}
+                                                          disabled={!canEdit}
+                                                          className="w-16 h-16 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:border-teal-400 hover:text-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                          <Upload className="h-4 w-4" />
+                                                          <span>Imagen</span>
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  </div>
 														</div>
 													))}
 												</div>

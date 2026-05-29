@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, Image as ImageIcon, Upload, X, ZoomIn } from "lucide-react";
 import type { AnimalSelection } from "../domain/postmortem.types";
 import { useAnimalsByBrand } from "../hooks/use-animals-by-brand";
 import {
@@ -87,6 +87,9 @@ export function AnimalSelectionModal({
     []
   );
 
+  const imageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
   // Verificar si ya existen datos guardados para ESTA enfermedad específica
   const hasExistingData = useMemo(() => {
     if (!postmortemData?.data || !idSpeciesDisease) return false;
@@ -125,6 +128,8 @@ export function AnimalSelectionModal({
         const anatomicalAdverseSituations: Record<number, string> = {};
         const anatomicalDiseaseComment: Record<number, string> = {};
         const selectedAnatomicalLocations: Record<number, boolean> = {};
+        const anatomicalImageFiles: Record<number, File | null> = {};
+        const anatomicalImagePreviews: Record<number, string | null> = {};
 
         if (anatomicalLocationsData?.data) {
           anatomicalLocationsData.data.forEach((location) => {
@@ -144,6 +149,8 @@ export function AnimalSelectionModal({
               selectedAnatomicalLocations[location.id] = true; // Marcar como seleccionado
               anatomicalAdverseSituations[location.id] = savedForLocation.adverseSituation || "";
               anatomicalDiseaseComment[location.id] = savedForLocation.diseaseComment || "";
+              anatomicalImageFiles[location.id] = null;
+              anatomicalImagePreviews[location.id] = savedForLocation.urlImage || null;
             } else {
               // Valores por defecto
               anatomicalPercentages[location.id] = 40;
@@ -153,6 +160,8 @@ export function AnimalSelectionModal({
               selectedAnatomicalLocations[location.id] = false;
               anatomicalAdverseSituations[location.id] = "";
               anatomicalDiseaseComment[location.id] = "";
+              anatomicalImageFiles[location.id] = null;
+              anatomicalImagePreviews[location.id] = null;
             }
           });
         }
@@ -182,6 +191,11 @@ export function AnimalSelectionModal({
           adverseSituation: savedSubProduct?.adverseSituation || "",
           diseaseComment: savedSubProduct?.diseaseComment || "",
           selectedAnatomicalLocations,
+          anatomicalImageFiles,
+          anatomicalImagePreviews,
+          imageFile: null,
+          imagePreview: null,
+          existingImageUrl: savedSubProduct?.urlImage || null,
         };
       });
 
@@ -227,6 +241,12 @@ export function AnimalSelectionModal({
         const resetSelectedAnatomicalLocations: Record<number, boolean> = {
           ...animal.selectedAnatomicalLocations,
         };
+        const resetAnatomicalImageFiles: Record<number, File | null> = {
+          ...(animal.anatomicalImageFiles ?? {}),
+        };
+        const resetAnatomicalImagePreviews: Record<number, string | null> = {
+          ...(animal.anatomicalImagePreviews ?? {}),
+        };
 
         if (anatomicalLocationsData?.data) {
           anatomicalLocationsData.data.forEach((location) => {
@@ -235,6 +255,8 @@ export function AnimalSelectionModal({
             resetAnatomicalAdverseSituations[location.id] = "";
             resetAnatomicalDiseaseComment[location.id] = "";
             resetSelectedAnatomicalLocations[location.id] = false;
+            resetAnatomicalImageFiles[location.id] = null;
+            resetAnatomicalImagePreviews[location.id] = null;
           });
         }
 
@@ -250,9 +272,75 @@ export function AnimalSelectionModal({
           anatomicalAdverseSituations: resetAnatomicalAdverseSituations,
           anatomicalDiseaseComment: resetAnatomicalDiseaseComment,
           selectedAnatomicalLocations: resetSelectedAnatomicalLocations,
+          anatomicalImageFiles: resetAnatomicalImageFiles,
+          anatomicalImagePreviews: resetAnatomicalImagePreviews,
+          imageFile: null,
+          imagePreview: null,
+          existingImageUrl: null,
         };
       })
     );
+  };
+
+  const handleAnimalImage = (animalId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAnimalSelections((prev) =>
+        prev.map((animal) =>
+          animal.animalId === animalId
+            ? { ...animal, imageFile: file, imagePreview: reader.result as string }
+            : animal
+        )
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearImage = (animalId: string) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? { ...animal, imageFile: null, imagePreview: null, existingImageUrl: null }
+          : animal
+      )
+    );
+    const input = imageInputRefs.current[animalId];
+    if (input) input.value = "";
+  };
+
+  const handleAnatomicalImage = (animalId: string, locationId: number, file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAnimalSelections((prev) =>
+        prev.map((animal) =>
+          animal.animalId === animalId
+            ? {
+                ...animal,
+                anatomicalImageFiles: { ...(animal.anatomicalImageFiles ?? {}), [locationId]: file },
+                anatomicalImagePreviews: { ...(animal.anatomicalImagePreviews ?? {}), [locationId]: reader.result as string },
+              }
+            : animal
+        )
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearAnatomicalImage = (animalId: string, locationId: number) => {
+    setAnimalSelections((prev) =>
+      prev.map((animal) =>
+        animal.animalId === animalId
+          ? {
+              ...animal,
+              anatomicalImageFiles: { ...(animal.anatomicalImageFiles ?? {}), [locationId]: null },
+              anatomicalImagePreviews: { ...(animal.anatomicalImagePreviews ?? {}), [locationId]: null },
+            }
+          : animal
+      )
+    );
+    const key = `${animalId}-loc-${locationId}`;
+    const input = imageInputRefs.current[key];
+    if (input) input.value = "";
   };
 
   const handleAnimalPercentage = (animalId: string, percentage: number) => {
@@ -395,7 +483,9 @@ export function AnimalSelectionModal({
           initial.percentage !== current.percentage ||
           initial.weight !== current.weight ||
           initial.adverseSituation !== current.adverseSituation ||
-          initial.diseaseComment !== current.diseaseComment)
+          initial.diseaseComment !== current.diseaseComment ||
+          initial.imagePreview !== current.imagePreview ||
+          initial.existingImageUrl !== current.existingImageUrl)
       ) {
         return true;
       }
@@ -441,6 +531,14 @@ export function AnimalSelectionModal({
           if (
             initial.anatomicalDiseaseComment?.[locationId] !==
             current.anatomicalDiseaseComment?.[locationId]
+          ) {
+            return true;
+          }
+
+          // Verificar si cambió la imagen de la ubicación
+          if (
+            initial.anatomicalImagePreviews?.[locationId] !==
+            current.anatomicalImagePreviews?.[locationId]
           ) {
             return true;
           }
@@ -578,7 +676,8 @@ export function AnimalSelectionModal({
               initialAnimal?.anatomicalPercentages?.[location.id] !== animal.anatomicalPercentages?.[location.id] || // Cambió porcentaje
               initialAnimal?.anatomicalWeights?.[location.id] !== animal.anatomicalWeights?.[location.id] || // Cambió peso
               initialAnimal?.anatomicalAdverseSituations?.[location.id] !== animal.anatomicalAdverseSituations?.[location.id] || // Cambió situación adversa
-              initialAnimal?.anatomicalDiseaseComment?.[location.id] !== animal.anatomicalDiseaseComment?.[location.id]; // Cambió comentario enfermedad
+              initialAnimal?.anatomicalDiseaseComment?.[location.id] !== animal.anatomicalDiseaseComment?.[location.id] || // Cambió comentario enfermedad
+              initialAnimal?.anatomicalImagePreviews?.[location.id] !== animal.anatomicalImagePreviews?.[location.id]; // Cambió imagen
 
             if (hasChanged) {
               const adverseSituation = (animal?.anatomicalAdverseSituations?.[location.id] ?? "").trim();
@@ -599,6 +698,7 @@ export function AnimalSelectionModal({
                 diseaseComment: diseaseComment,
                 status: true,
                 idProductAnatomicalLocation: location.id,
+                image: animal.anatomicalImagePreviews?.[location.id] ?? undefined,
               });
             }
           }
@@ -642,6 +742,7 @@ export function AnimalSelectionModal({
             adverseSituation: adverseSituation,
             diseaseComment: diseaseComment,
             status: true,
+            image: animal.imagePreview || undefined,
           },
         ];
 			}
@@ -739,7 +840,9 @@ export function AnimalSelectionModal({
           initial.percentage !== current.percentage ||
           initial.weight !== current.weight ||
           initial.adverseSituation !== current.adverseSituation ||
-          initial.diseaseComment !== current.diseaseComment)
+          initial.diseaseComment !== current.diseaseComment ||
+          initial.imagePreview !== current.imagePreview ||
+          initial.existingImageUrl !== current.existingImageUrl)
       ) {
         return true;
       }
@@ -757,7 +860,9 @@ export function AnimalSelectionModal({
             initial.anatomicalAdverseSituations?.[locationId] !==
             current.anatomicalAdverseSituations?.[locationId] ||
             initial.anatomicalDiseaseComment?.[locationId] !==
-            current.anatomicalDiseaseComment?.[locationId]
+            current.anatomicalDiseaseComment?.[locationId] ||
+            initial.anatomicalImagePreviews?.[locationId] !==
+            current.anatomicalImagePreviews?.[locationId]
           ) {
             return true;
           }
@@ -769,6 +874,7 @@ export function AnimalSelectionModal({
   }, [animalSelections, initialSelections, anatomicalLocationsData]);
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
@@ -909,7 +1015,7 @@ export function AnimalSelectionModal({
               No hay animales disponibles para esta marca
             </div>
           ) : (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-hide">
+            <div className="space-y-2 max-h-100 overflow-y-auto scrollbar-hide">
               {animalsData.data.map((animal) => {
                 const animalId = animal.id.toString();
                 const selection = animalSelections.find(
@@ -1076,6 +1182,67 @@ export function AnimalSelectionModal({
 																							style={{ minHeight: '20px', overflow: 'hidden' }}
 																						/>
 																					</label>
+
+                                          {/* Imagen (anatómica) */}
+                                          <div className="flex flex-col items-start gap-1 mt-2">
+                                            <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
+                                              <ImageIcon className="h-3 w-3 text-teal-600" />
+                                              <span>Imagen</span>
+                                            </div>
+                                            <input
+                                              ref={(el) => { imageInputRefs.current[`${animalId}-loc-${location.id}`] = el; }}
+                                              type="file"
+                                              accept="image/*"
+                                              className="hidden"
+                                              onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) handleAnatomicalImage(animalId, location.id, file);
+                                              }}
+                                            />
+                                            {selection.anatomicalImagePreviews?.[location.id] ? (
+                                              <div className="flex items-center gap-2">
+                                                <div
+                                                  className="w-16 h-16 rounded-lg overflow-hidden border bg-white cursor-pointer relative"
+                                                  onClick={() => {
+                                                    const url = selection.anatomicalImagePreviews?.[location.id];
+                                                    if (url) setPreviewImageUrl(url);
+                                                  }}
+                                                  onMouseEnter={e => {
+                                                    const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+                                                    if (overlay) overlay.style.opacity = '1';
+                                                  }}
+                                                  onMouseLeave={e => {
+                                                    const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+                                                    if (overlay) overlay.style.opacity = '0';
+                                                  }}
+                                                  title="Ver imagen completa"
+                                                >
+                                                  <img src={selection.anatomicalImagePreviews?.[location.id] || ""} alt="Vista previa" className="w-full h-full object-cover" />
+                                                  <div data-overlay="true" className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-lg transition-opacity" style={{ opacity: 0 }}>
+                                                    <ZoomIn className="h-4 w-4 text-white" />
+                                                  </div>
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                  <Button type="button" variant="outline" size="sm" className="h-6 px-2" onClick={() => imageInputRefs.current[`${animalId}-loc-${location.id}`]?.click()} disabled={!canEdit}>
+                                                    <Upload className="h-3 w-3" />
+                                                  </Button>
+                                                  <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleClearAnatomicalImage(animalId, location.id)} disabled={!canEdit}>
+                                                    <X className="h-3 w-3" />
+                                                  </Button>
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              <button
+                                                type="button"
+                                                onClick={() => canEdit && imageInputRefs.current[`${animalId}-loc-${location.id}`]?.click()}
+                                                disabled={!canEdit}
+                                                className="w-16 h-16 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:border-teal-400 hover:text-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                              >
+                                                <Upload className="h-4 w-4" />
+                                                <span>Imagen</span>
+                                              </button>
+                                            )}
+                                          </div>
 																				</div>
 																			</div>
 																		)}
@@ -1227,6 +1394,67 @@ export function AnimalSelectionModal({
 																	/>
 																</label>
 															</div>
+
+                              {/* Imagen (No anatómica) */}
+                              <div className="shrink-0 flex flex-col items-center gap-1 self-start">
+                                <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
+                                  <ImageIcon className="h-3 w-3 text-teal-600" />
+                                  <span>Imagen</span>
+                                </div>
+                                <input
+                                  ref={(el) => { imageInputRefs.current[animalId] = el; }}
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleAnimalImage(animalId, file);
+                                  }}
+                                />
+                                {(selection.imagePreview || selection.existingImageUrl) ? (
+                                  <div className="flex flex-col items-center gap-1">
+                                    <div
+                                      className="w-16 h-16 rounded-lg overflow-hidden border bg-gray-50 cursor-pointer relative"
+                                      onClick={() => {
+                                        const url = selection.imagePreview || selection.existingImageUrl;
+                                        if (url) setPreviewImageUrl(url);
+                                      }}
+                                      onMouseEnter={e => {
+                                        const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+                                        if (overlay) overlay.style.opacity = '1';
+                                      }}
+                                      onMouseLeave={e => {
+                                        const overlay = e.currentTarget.querySelector('[data-overlay]') as HTMLElement | null;
+                                        if (overlay) overlay.style.opacity = '0';
+                                      }}
+                                      title="Ver imagen completa"
+                                    >
+                                      <img src={selection.imagePreview || selection.existingImageUrl || ""} alt="Vista previa" className="w-full h-full object-cover" />
+                                      <div data-overlay="true" className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-lg transition-opacity" style={{ opacity: 0 }}>
+                                        <ZoomIn className="h-4 w-4 text-white" />
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <Button type="button" variant="outline" size="sm" className="h-6 px-2" onClick={() => imageInputRefs.current[animalId]?.click()} disabled={!canEdit}>
+                                        <Upload className="h-3 w-3" />
+                                      </Button>
+                                      <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleClearImage(animalId)} disabled={!canEdit}>
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => canEdit && imageInputRefs.current[animalId]?.click()}
+                                    disabled={!canEdit}
+                                    className="w-16 h-16 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:border-teal-400 hover:text-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    <span>Imagen</span>
+                                  </button>
+                                )}
+                              </div>
 														</div>
 													)}
 												</div>
@@ -1269,5 +1497,39 @@ export function AnimalSelectionModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Lightbox */}
+    <Dialog open={!!previewImageUrl} onOpenChange={() => setPreviewImageUrl(null)}>
+      <DialogContent className="max-w-7xl w-full sm:w-[95vw] max-h-[95vh] sm:max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-2.5 border-b bg-white shrink-0">
+          <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+          <DialogTitle className="text-xs sm:text-sm font-semibold m-0 truncate">Vista previa</DialogTitle>
+        </div>
+        {previewImageUrl && (
+          <div
+            className="flex-1 min-h-0 overflow-auto p-3 sm:p-6 bg-gray-50/50 scrollbar-hide"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            <style jsx>{`
+              .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+            <div className="w-full h-full flex items-center justify-center">
+              <img
+                src={previewImageUrl}
+                alt="Imagen completa"
+                className="max-w-full h-auto object-contain shadow-lg rounded-lg"
+                style={{ maxHeight: 'calc(95vh - 80px)', minHeight: '200px' }}
+              />
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

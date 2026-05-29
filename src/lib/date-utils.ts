@@ -37,21 +37,26 @@ export function isTodayOrTomorrow(date: Date | string): boolean {
 }
 
 /**
- * Verifica si una fecha es hoy o dentro de los ultimos 3 dias (incluyendo hoy)
+ * Verifica si una fecha es editable: mañana, hoy, o dentro de los 2 dias anteriores.
+ * Rango permitido: desde hace 2 dias hasta mañana (inclusive).
  * @param date - Fecha a verificar (puede ser Date o string en formato YYYY-MM-DD)
- * @returns true si la fecha esta dentro de los ultimos 3 dias, false en caso contrario
+ * @returns true si la fecha esta dentro del rango permitido, false en caso contrario
  */
 export function isWithinLastThreeDays(date: Date | string): boolean {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // Forzar parseo en zona horaria local agregando 'T00:00:00' a strings planos YYYY-MM-DD
   const compareDate = typeof date === 'string' ? new Date(date + 'T00:00:00') : new Date(date);
   compareDate.setHours(0, 0, 0, 0);
 
+  // diffDays > 0  → fecha pasada  (ej: ayer = 1, hace 2 días = 2)
+  // diffDays = 0  → hoy
+  // diffDays < 0  → fecha futura  (ej: mañana = -1)
   const diffMs = today.getTime() - compareDate.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  return diffDays >= 0 && diffDays <= 2;
+  return diffDays >= -1 && diffDays <= 2;
 }
 
 /**
