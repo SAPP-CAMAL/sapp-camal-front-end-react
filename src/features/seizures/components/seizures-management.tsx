@@ -161,7 +161,8 @@ export function SeizuresManagement() {
     toast.promise(
       downloadGeneralConfiscationActReportService(
         searchParams.startDate,
-        searchParams.endDate
+        searchParams.endDate,
+        searchParams.specieId
       ),
       {
         loading: "Generando acta general...",
