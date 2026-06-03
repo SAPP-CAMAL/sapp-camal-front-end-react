@@ -102,7 +102,7 @@ export function NewVisitorLogForm() {
           Nueva Visita
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
+      <DialogContent className="max-h-[95vh] sm:max-h-[90vh] overflow-y-auto max-w-2xl w-[95vw] sm:w-[85vw] flex flex-col">
         <DialogHeader>
           <div className="flex gap-x-2 justify-between items-center">
             <div>
@@ -114,7 +114,7 @@ export function NewVisitorLogForm() {
             </div>
           </div>
         </DialogHeader>
-        <div className="flex justify-end">
+        <div className="flex flex-wrap gap-2 justify-end">
           <NewPerson isUpdateVisitorLog />
           <NewCompany />
         </div>

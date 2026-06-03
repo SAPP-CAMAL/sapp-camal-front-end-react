@@ -157,7 +157,7 @@ export function UpdateVisitorLogDialog({ visitor }: { visitor: any }) {
           Editar Registro de Visita
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
+      <DialogContent className="max-h-[95vh] sm:max-h-[90vh] overflow-y-auto max-w-2xl w-[95vw] sm:w-[85vw] flex flex-col">
         <DialogHeader>
           <DialogTitle>Nueva Visita</DialogTitle>
           <DialogDescription>

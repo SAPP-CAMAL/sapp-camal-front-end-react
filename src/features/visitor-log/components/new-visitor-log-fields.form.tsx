@@ -100,7 +100,7 @@ export function VisitorLogFormFields() {
             <>
               <label className="font-semibold">Buscar Persona</label>
 
-              <div className="grid grid-cols-2 gap-x-2 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
                 <div className="space-y-2">
                   <FormField
                     control={form.control}
@@ -191,7 +191,7 @@ export function VisitorLogFormFields() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="idCompany"
@@ -338,7 +338,7 @@ export function VisitorLogFormFields() {
           control={form.control}
           name="observation"
           render={({ field }) => (
-            <FormItem className="col-span-2">
+            <FormItem className="col-span-1 sm:col-span-2">
               <FormLabel>Observación</FormLabel>
               <FormControl>
                 <Textarea {...field} />
