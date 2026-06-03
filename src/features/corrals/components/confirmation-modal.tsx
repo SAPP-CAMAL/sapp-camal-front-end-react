@@ -125,7 +125,7 @@ export function ConfirmationModal({
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-2 bg-blue-50 rounded-lg border border-blue-200 text-center">
                     <div className="flex items-center justify-center mb-1">
-                      <Venus className="h-3 w-3 text-blue-600" />
+                      <Mars className="h-3 w-3 text-blue-600" />
                     </div>
                     <p className="text-lg font-bold text-blue-700">{confirmationModal.selectedMales ?? 0}</p>
                     <p className="text-xs text-blue-600">Machos</p>
@@ -133,7 +133,7 @@ export function ConfirmationModal({
                   
                   <div className="p-2 bg-pink-50 rounded-lg border border-pink-200 text-center">
                     <div className="flex items-center justify-center mb-1">
-                      <Mars className="h-3 w-3 text-pink-600" />
+                      <Venus className="h-3 w-3 text-pink-600" />
                     </div>
                     <p className="text-lg font-bold text-pink-700">{confirmationModal.selectedFemales ?? 0}</p>
                     <p className="text-xs text-pink-600">Hembras</p>
