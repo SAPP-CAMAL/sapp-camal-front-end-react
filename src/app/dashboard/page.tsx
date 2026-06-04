@@ -66,7 +66,7 @@ export default async function Page() {
 
   // Si no hay imágenes, usar imágenes por defecto
   const finalImages = carouselImages.length > 0 ? carouselImages : [
-    { src: "/images/sapp-fondo-ingreso.svg", alt: "SAPP Sistema 1" },
+    { src: "/images/sapp-fondo-ingreso.webp", alt: "SAPP Sistema 1" },
     { src: "/images/corrals-color.png", alt: "SAPP Sistema 2" },
     { src: "/images/sapp-loggin.png", alt: "SAPP Sistema 3" },
   ];
