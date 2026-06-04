@@ -168,14 +168,14 @@ export function NavUser({ user }: { user: LoginResponse }) {
               <LogOut />
               Cerrar Sesión
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            {/* <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onClick={() => setShowShutdownDialog(true)}
             >
               <PowerOff />
               Cerrar Sesión y Apagar
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
