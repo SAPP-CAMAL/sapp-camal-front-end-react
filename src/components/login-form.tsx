@@ -212,7 +212,7 @@ export function LoginForm({
       {/* Left side - Image (70%) — solo landscape */}
       <div className="hidden landscape:flex landscape:w-[70%] relative bg-white items-center justify-center">
         <Image
-          src="/images/sapp-fondo-ingreso.svg"
+          src="/images/sapp-fondo-ingreso.webp"
           alt="SAPP Login"
           width={1200}
           height={1200}
@@ -309,7 +309,7 @@ export function LoginForm({
         {/* Nuevo hero móvil: imagen con badge centrado y título dentro del overlay */}
         <div className="relative w-full flex-shrink-0" style={{ height: "42%" }}>
           <Image
-            src="/images/sapp-fondo-ingreso.svg"
+            src="/images/sapp-fondo-ingreso.webp"
             alt="SAPP Login"
             fill
             priority
