@@ -216,7 +216,7 @@ export function IntroducerReportModal({
                               <Tag className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                               <span className="text-muted-foreground">Marcas:</span>
                               <div className="flex flex-wrap gap-1 flex-1">
-                                {introducer.brands.map((brand, idx) => (
+                                {introducer.brands.map((brand: any, idx: number) => (
                                   <Badge key={idx} variant="secondary" className="text-xs">
                                     {brand.name}
                                   </Badge>
