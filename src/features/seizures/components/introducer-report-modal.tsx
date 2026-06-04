@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { SearchIntroducersInput } from "@/features/introducer/components/search-introducers-input";
-import { useIntroducersPaginatedList } from "@/features/introducer/hooks/use-introducers-paginated-list";
 import { FileText, Loader2, User, Check, Mail, IdCard, Tag, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { downloadIntroducerReportService } from "../server/seizures.service";
@@ -24,21 +23,42 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   startDate: string;
   endDate: string;
+  introducersList: any[];
+  isLoading?: boolean;
 }
 
-export function IntroducerReportModal({ open, onOpenChange, startDate, endDate }: Props) {
-  const [filters, setFilters] = useState({
+export function IntroducerReportModal({
+  open,
+  onOpenChange,
+  startDate,
+  endDate,
+  introducersList,
+  isLoading = false,
+}: Props) {
+  const [searchQuery, setSearchQuery] = useState({
     fullName: "",
     identification: "",
     brandName: "",
-    page: 1,
-    limit: 10,
   });
   const [selectedIntroducer, setSelectedIntroducer] = useState<number | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const { data: introducersData, isLoading } = useIntroducersPaginatedList(filters);
-  const introducers = introducersData?.data?.items ?? [];
+  const filteredIntroducers = useMemo(() => {
+    return introducersList.filter((introducer) => {
+      const matchFullName =
+        !searchQuery.fullName ||
+        introducer.fullName.toLowerCase().includes(searchQuery.fullName.toLowerCase());
+      const matchIdentification =
+        !searchQuery.identification ||
+        introducer.identification.toLowerCase().includes(searchQuery.identification.toLowerCase());
+      const matchBrand =
+        !searchQuery.brandName ||
+        introducer.brands.some((brand: any) =>
+          brand.name.toLowerCase().includes(searchQuery.brandName.toLowerCase())
+        );
+      return matchFullName && matchIdentification && matchBrand;
+    });
+  }, [introducersList, searchQuery]);
 
   const formatAppliedDate = (value: string) => {
     if (!value) return "-";
@@ -68,12 +88,10 @@ export function IntroducerReportModal({ open, onOpenChange, startDate, endDate }
       toast.success("Reporte generado correctamente");
       onOpenChange(false);
       setSelectedIntroducer(null);
-      setFilters({
+      setSearchQuery({
         fullName: "",
         identification: "",
         brandName: "",
-        page: 1,
-        limit: 10,
       });
     } catch (error: any) {
       const errorMessage = error?.message || "Error al generar el reporte";
@@ -117,19 +135,19 @@ export function IntroducerReportModal({ open, onOpenChange, startDate, endDate }
               label: "Nombre Completo",
               placeholder: "Buscar por nombre...",
               onChange: (value) =>
-                setFilters((prev) => ({ ...prev, fullName: value, page: 1 })),
+                setSearchQuery((prev) => ({ ...prev, fullName: value })),
             }}
             identification={{
               label: "Identificación",
               placeholder: "Buscar por identificación...",
               onChange: (value) =>
-                setFilters((prev) => ({ ...prev, identification: value, page: 1 })),
+                setSearchQuery((prev) => ({ ...prev, identification: value })),
             }}
             brand={{
               label: "Marca",
               placeholder: "Buscar por marca...",
               onChange: (value) =>
-                setFilters((prev) => ({ ...prev, brandName: value, page: 1 })),
+                setSearchQuery((prev) => ({ ...prev, brandName: value })),
             }}
             showLabel={true}
             showInputIcon={true}
@@ -140,7 +158,7 @@ export function IntroducerReportModal({ open, onOpenChange, startDate, endDate }
               <div className="flex justify-center items-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : introducers.length === 0 ? (
+            ) : filteredIntroducers.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <User className="h-16 w-16 mx-auto mb-3 opacity-30" />
                 <p className="font-medium text-base">No se encontraron introductores</p>
@@ -149,10 +167,10 @@ export function IntroducerReportModal({ open, onOpenChange, startDate, endDate }
             ) : (
               <>
                 <div className="text-sm text-muted-foreground px-1">
-                  {introducers.length} {introducers.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+                  {filteredIntroducers.length} {filteredIntroducers.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
                 </div>
                 <div className="space-y-2 max-h-100 overflow-y-auto pr-2">
-                  {introducers.map((introducer) => (
+                  {filteredIntroducers.map((introducer) => (
                     <Card
                       key={introducer.id}
                       className={`p-3 sm:p-4 cursor-pointer transition-all hover:shadow-md relative ${

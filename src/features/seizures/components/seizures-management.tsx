@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -108,6 +108,67 @@ export function SeizuresManagement() {
       }),
     enabled: searchParams.specieId > 0,
   });
+
+  const allSeizuresQuery = useQuery({
+    queryKey: [
+      "animal-seizures-all",
+      searchParams.startDate,
+      searchParams.endDate,
+      searchParams.specieId,
+    ],
+    queryFn: () =>
+      getAnimalSeizuresService({
+        page: 1,
+        limit: 1000,
+        idSpecie: searchParams.specieId,
+        ...(searchParams.startDate && { startDate: searchParams.startDate }),
+        ...(searchParams.endDate && { endDate: searchParams.endDate }),
+      }),
+    enabled: searchParams.specieId > 0 && introducerReportModalOpen,
+  });
+
+  const allSeizures = allSeizuresQuery.data?.data?.items ?? [];
+
+  const uniqueIntroducers = useMemo(() => {
+    const map = new Map<number, {
+      id: number;
+      fullName: string;
+      identification: string;
+      email: string;
+      brands: { name: string }[];
+    }>();
+
+    allSeizures.forEach((item) => {
+      const brand = item.detailCertificateBrands?.detailsCertificateBrand?.brand;
+      const introducer = brand?.introducer;
+      if (introducer) {
+        const id = introducer.id;
+        const fullName = introducer.user?.person?.fullName || "";
+        const identification = introducer.user?.person?.identification || "";
+        const email = (introducer.user as any)?.email || "";
+
+        if (!map.has(id)) {
+          map.set(id, {
+            id,
+            fullName,
+            identification,
+            email,
+            brands: [],
+          });
+        }
+
+        const existing = map.get(id)!;
+        if (brand && brand.name) {
+          const hasBrand = existing.brands.some((b) => b.name === brand.name);
+          if (!hasBrand) {
+            existing.brands.push({ name: brand.name });
+          }
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [allSeizures]);
 
   const isLoading = animalSeizuresQuery.isLoading;
   const seizuresData: AnimalSeizureItem[] = animalSeizuresQuery.data?.data?.items ?? [];
@@ -570,6 +631,8 @@ export function SeizuresManagement() {
         onOpenChange={setIntroducerReportModalOpen}
         startDate={searchParams.startDate}
         endDate={searchParams.endDate}
+        introducersList={uniqueIntroducers}
+        isLoading={allSeizuresQuery.isLoading}
       />
     </div>
   );
