@@ -186,8 +186,9 @@ export function UpdatePerson({ person }: { person: any }) {
       await updatePersonService(person.id, {
         ...(form.formState.dirtyFields.identification && {
           identification: data.identification,
+          identificationTypeId: Number(data.identificationType),
         }),
-        ...(form.formState.dirtyFields.identificationType && {
+        ...(!form.formState.dirtyFields.identification && form.formState.dirtyFields.identificationType && {
           identificationTypeId: Number(data.identificationType),
         }),
         ...(form.formState.dirtyFields.genderId && {
