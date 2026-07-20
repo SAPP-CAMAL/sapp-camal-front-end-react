@@ -106,7 +106,8 @@ export async function downloadIntroducerReportService(
 
 export async function downloadGeneralConfiscationActReportService(
   startDate: string,
-  endDate: string
+  endDate: string,
+  idSpecie?: number
 ): Promise<void> {
   try {
     const response = await http.post(
@@ -115,6 +116,7 @@ export async function downloadGeneralConfiscationActReportService(
         json: {
           startDate,
           endDate,
+          idSpecie,
         },
       }
     );
