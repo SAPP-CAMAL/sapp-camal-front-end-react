@@ -90,6 +90,21 @@ export function AnimalSelectionModal({
   const imageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
+  const isDataUrlImage = (value?: string | null) =>
+    typeof value === "string" && value.startsWith("data:image/");
+
+  const computePayloadImage = (params: {
+    currentPreview?: string | null;
+    currentExistingUrl?: string | null;
+    initialExistingUrl?: string | null;
+  }): string | null | undefined => {
+    const { currentPreview, currentExistingUrl, initialExistingUrl } = params;
+
+    if (isDataUrlImage(currentPreview)) return currentPreview;
+    if (!currentExistingUrl && !!initialExistingUrl) return null;
+    return undefined;
+  };
+
   // Verificar si ya existen datos guardados para ESTA enfermedad específica
   const hasExistingData = useMemo(() => {
     if (!postmortemData?.data || !idSpeciesDisease) return false;
@@ -594,7 +609,7 @@ export function AnimalSelectionModal({
                 totalAnimals === 1 ? "animal" : "animales"
               } correctamente`
             );
-            onSave(totalAnimals);
+            onSave(selectedCount);
             onClose();
           }
           return;
@@ -698,7 +713,11 @@ export function AnimalSelectionModal({
                 diseaseComment: diseaseComment,
                 status: true,
                 idProductAnatomicalLocation: location.id,
-                image: animal.anatomicalImagePreviews?.[location.id] ?? undefined,
+                image: computePayloadImage({
+                  currentPreview: animal.anatomicalImagePreviews?.[location.id],
+                  currentExistingUrl: animal.anatomicalImagePreviews?.[location.id],
+                  initialExistingUrl: initialAnimal?.anatomicalImagePreviews?.[location.id],
+                }),
               });
             }
           }
@@ -742,7 +761,11 @@ export function AnimalSelectionModal({
             adverseSituation: adverseSituation,
             diseaseComment: diseaseComment,
             status: true,
-            image: animal.imagePreview || undefined,
+            image: computePayloadImage({
+              currentPreview: animal.imagePreview,
+              currentExistingUrl: animal.existingImageUrl,
+              initialExistingUrl: initialAnimal?.existingImageUrl,
+            }),
           },
         ];
 			}
