@@ -21,3 +21,22 @@ export const getAllOrigins = async (): Promise<CommonHttpResponse<Origin>> => {
 		throw error;
 	}
 };
+
+export type CreateOriginBody = {
+	description: string;
+	status?: boolean;
+};
+
+export type UpdateOriginBody = Partial<CreateOriginBody>;
+
+export function createOriginService(body: CreateOriginBody) {
+	return http.post('v1/1.0.0/origin', { json: body }).json();
+}
+
+export function updateOriginService(id: number, body: UpdateOriginBody) {
+	return http.patch(`v1/1.0.0/origin/${id}`, { json: body }).json();
+}
+
+export function deleteOriginService(id: number) {
+	return http.delete(`v1/1.0.0/origin/${id}`);
+}
