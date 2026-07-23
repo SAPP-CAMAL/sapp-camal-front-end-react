@@ -67,7 +67,7 @@ export function TableModules<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="first:pl-4 last:pr-4">
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -87,7 +87,9 @@ export function TableModules<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} className="hover:bg-gray-50/50 transition-colors">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    <TableCell key={cell.id} className="first:pl-4 last:pr-4">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))
@@ -113,26 +115,54 @@ export function TableModules<TData, TValue>({
             ))}
           </div>
         ) : table.getRowModel().rows?.length ? (
-          <div className="grid grid-cols-1 gap-4">
-            {table.getRowModel().rows.map((row) => (
-              <Card key={row.id} className="overflow-hidden border-gray-200 py-0">
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    {row.getVisibleCells().map((cell) => {
-                      const header = cell.column.columnDef.header as string;
-                      const hasLabel = typeof header === "string" && !header.includes("Acciones");
+          <div className="grid grid-cols-1 gap-3">
+            {table.getRowModel().rows.map((row) => {
+              const cellsById = Object.fromEntries(
+                row.getVisibleCells().map((cell) => [cell.column.id, cell])
+              );
 
-                      return (
-                        <div key={cell.id} className="flex flex-col gap-1">
-                          {hasLabel && <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{header}</span>}
-                          <div className="text-sm">{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>
+              return (
+                <Card key={row.id} className="overflow-hidden border-gray-200 py-0 gap-0">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-semibold text-sm min-w-0 truncate">
+                        {cellsById.name &&
+                          flexRender(
+                            cellsById.name.column.columnDef.cell,
+                            cellsById.name.getContext()
+                          )}
+                      </div>
+                      {cellsById.status && (
+                        <div className="shrink-0">
+                          {flexRender(
+                            cellsById.status.column.columnDef.cell,
+                            cellsById.status.getContext()
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      )}
+                    </div>
+
+                    {cellsById.description && (
+                      <div className="text-sm text-gray-500 line-clamp-2">
+                        {flexRender(
+                          cellsById.description.column.columnDef.cell,
+                          cellsById.description.getContext()
+                        )}
+                      </div>
+                    )}
+
+                    {cellsById.actions && (
+                      <div className="flex justify-end gap-2 pt-2 mt-2 border-t">
+                        {flexRender(
+                          cellsById.actions.column.columnDef.cell,
+                          cellsById.actions.getContext()
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <div className="py-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed">

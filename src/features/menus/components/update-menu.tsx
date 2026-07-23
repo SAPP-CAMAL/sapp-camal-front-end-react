@@ -89,7 +89,7 @@ export function UpdateMenu({
           Editar Menú
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[60vw]">
+      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
         <DialogHeader>
           <DialogTitle>Editar Menú</DialogTitle>
           <DialogDescription>

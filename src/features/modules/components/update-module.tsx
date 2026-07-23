@@ -83,7 +83,7 @@ export function UpdateModule({ module }: { module: Module }) {
           Editar Módulo
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[60vw]">
+      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
         <DialogHeader>
           <DialogTitle>Editar Módulo del Sistema</DialogTitle>
           <DialogDescription>

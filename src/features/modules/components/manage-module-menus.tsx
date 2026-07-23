@@ -36,7 +36,7 @@ export function ManageModuleMenus({ module }: { module: Module }) {
           Gestionar menús
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[90vw] lg:min-w-[75vw]">
+      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
         <DialogHeader>
           <DialogTitle>Menús de {module.name}</DialogTitle>
           <DialogDescription>

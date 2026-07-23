@@ -66,7 +66,7 @@ export function NewCompany() {
           Nueva Empresa
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[45vw]">
+      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[45vw]">
         <DialogHeader>
           <DialogTitle>Nueva Empresa</DialogTitle>
           <DialogDescription>

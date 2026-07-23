@@ -86,7 +86,7 @@ export function NewMenu({ fixedModuleId }: { fixedModuleId?: number } = {}) {
           Crear menú
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[60vw]">
+      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
         <DialogHeader>
           <DialogTitle>Nuevo Menú</DialogTitle>
           <DialogDescription>
