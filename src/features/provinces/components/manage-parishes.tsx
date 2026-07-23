@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ListTreeIcon } from "lucide-react";
+import { LandPlotIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,10 +16,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MenusManagement } from "@/features/menus/menus-management";
-import { Module } from "../domain/module.domain";
+import { ParishesManagement } from "@/features/provinces/parishes-management";
+import { Canton } from "../domain/locations-admin.domain";
 
-export function ManageModuleMenus({ module }: { module: Module }) {
+export function ManageParishes({ canton }: { canton: Canton }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -28,24 +28,22 @@ export function ManageModuleMenus({ module }: { module: Module }) {
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
             <Button variant="outline">
-              <ListTreeIcon />
+              <LandPlotIcon />
             </Button>
           </DialogTrigger>
         </TooltipTrigger>
         <TooltipContent side="top" align="center" sideOffset={5} avoidCollisions>
-          Gestionar menús
+          Gestionar parroquias
         </TooltipContent>
       </Tooltip>
       <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
         <DialogHeader>
-          <DialogTitle>Menús de {module.name}</DialogTitle>
-          <DialogDescription>
-            Crea y edita los ítems de menú de este módulo.
-          </DialogDescription>
+          <DialogTitle>Parroquias de {canton.name}</DialogTitle>
+          <DialogDescription>Crea y edita las parroquias de este cantón.</DialogDescription>
         </DialogHeader>
         {open && (
           <div className="min-w-0 w-full">
-            <MenusManagement fixedModuleId={module.id} />
+            <ParishesManagement fixedCantonId={canton.id} />
           </div>
         )}
       </DialogContent>

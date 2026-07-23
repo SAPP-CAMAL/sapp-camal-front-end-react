@@ -16,10 +16,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MenusManagement } from "@/features/menus/menus-management";
-import { Module } from "../domain/module.domain";
+import { CatalogueValuesManagement } from "@/features/catalogues/catalogue-values-management";
+import { CatalogueType } from "../domain/catalogue-management.domain";
 
-export function ManageModuleMenus({ module }: { module: Module }) {
+export function ManageCatalogueValues({ catalogueType }: { catalogueType: CatalogueType }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,19 +33,19 @@ export function ManageModuleMenus({ module }: { module: Module }) {
           </DialogTrigger>
         </TooltipTrigger>
         <TooltipContent side="top" align="center" sideOffset={5} avoidCollisions>
-          Gestionar menús
+          Gestionar catálogo
         </TooltipContent>
       </Tooltip>
       <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
         <DialogHeader>
-          <DialogTitle>Menús de {module.name}</DialogTitle>
+          <DialogTitle>Catálogo de {catalogueType.description}</DialogTitle>
           <DialogDescription>
-            Crea y edita los ítems de menú de este módulo.
+            Crea y edita los valores de este tipo de catálogo.
           </DialogDescription>
         </DialogHeader>
         {open && (
           <div className="min-w-0 w-full">
-            <MenusManagement fixedModuleId={module.id} />
+            <CatalogueValuesManagement fixedCatalogueTypeId={catalogueType.id} />
           </div>
         )}
       </DialogContent>
