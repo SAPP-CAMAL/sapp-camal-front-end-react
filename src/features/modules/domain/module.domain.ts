@@ -1,11 +1,24 @@
 import { Menu } from "@/features/menus/domain/menus.domain";
 import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
-type Module = {
+export type Module = {
     id: number;
     name: string;
     description: string;
     status: boolean;
+}
+
+export type CreateModuleBody = {
+    name: string
+    description?: string
+    status?: boolean
+}
+
+export type SearchParamsModule = {
+    page?: number
+    limit?: number
+    name?: string
+    status?: string
 }
 
 export type ResponseModule = CommonHttpResponsePagination<Module>
