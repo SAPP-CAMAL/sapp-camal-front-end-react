@@ -36,13 +36,14 @@ export type AdministrationMenu = {
     children: Child[];
 }
 
-type Child = {
+export type Child = {
     id: number;
     menuName: string;
     url: string | null;
     icon: string | null;
     sequence: number;
     permissions: string[];
+    children?: Child[];
 }
 
 export type ResponseMenuService = CommonHttpResponse<AdministrationMenu>

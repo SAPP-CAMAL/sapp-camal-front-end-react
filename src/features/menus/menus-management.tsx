@@ -26,10 +26,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDebouncedCallback } from "use-debounce";
+import { getMenuDepth } from "./utils/menu-tree.utils";
 
 export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = {}) {
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const limit = fixedModuleId ? 500 : 10;
   const [menuName, setMenuName] = useState("");
   const [moduleId, setModuleId] = useState<string>("*");
   const [status, setStatus] = useState<string>("*");
@@ -53,6 +54,8 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
         ...(status !== "*" && { status }),
       }),
   });
+
+  const menusById = new Map((query.data?.data.items ?? []).map((menu) => [menu.id, menu]));
 
   const debounceName = useDebouncedCallback((text: string) => {
     setMenuName(text);
@@ -176,14 +179,18 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
                 Nombre
               </div>
             ),
-            cell: ({ row }) => (
-              <div className="flex items-center gap-x-2">
-                {row.original.parentId && (
-                  <span className="text-gray-300">└</span>
-                )}
-                {row.original.menuName}
-              </div>
-            ),
+            cell: ({ row }) => {
+              const depth = getMenuDepth(row.original, menusById);
+              return (
+                <div
+                  className="flex items-center gap-x-2"
+                  style={{ paddingLeft: `${(depth - 1) * 20}px` }}
+                >
+                  {depth > 1 && <span className="text-gray-300">└</span>}
+                  {row.original.menuName}
+                </div>
+              );
+            },
           },
           ...(fixedModuleId
             ? []

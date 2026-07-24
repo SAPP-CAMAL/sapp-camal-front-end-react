@@ -28,6 +28,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getModulesService } from "@/features/modules/server/db/modules.service";
 import { getMenusAdminService } from "../server/db/menus.service";
 import { NewMenuForm } from "./new-menu";
+import { getMenuDepth, isDescendantOf, MAX_MENU_DEPTH } from "../utils/menu-tree.utils";
 
 export function NewMenuFields({
   excludeMenuId,
@@ -48,13 +49,18 @@ export function NewMenuFields({
   const parentMenusQuery = useQuery({
     queryKey: ["menus-admin", "for-select", moduleId],
     queryFn: () =>
-      getMenusAdminService({ page: 1, limit: 100, moduleId: Number(moduleId) }),
+      getMenusAdminService({ page: 1, limit: 500, moduleId: Number(moduleId) }),
     enabled: !!moduleId,
   });
 
-  const parentOptions = (parentMenusQuery.data?.data.items ?? []).filter(
-    (menu) => menu.id !== excludeMenuId
-  );
+  const allModuleMenus = parentMenusQuery.data?.data.items ?? [];
+  const menusById = new Map(allModuleMenus.map((menu) => [menu.id, menu]));
+
+  const parentOptions = allModuleMenus
+    .filter((menu) => menu.id !== excludeMenuId)
+    .filter((menu) => getMenuDepth(menu, menusById) < MAX_MENU_DEPTH)
+    .filter((menu) => !excludeMenuId || !isDescendantOf(menu, excludeMenuId, menusById))
+    .map((menu) => ({ menu, depth: getMenuDepth(menu, menusById) }));
 
   return (
     <div className="space-y-4">
@@ -119,8 +125,9 @@ export function NewMenuFields({
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="none">Sin padre (raíz)</SelectItem>
-                    {parentOptions.map((menu) => (
+                    {parentOptions.map(({ menu, depth }) => (
                       <SelectItem key={menu.id} value={String(menu.id)}>
+                        {"— ".repeat(depth - 1)}
                         {menu.menuName}
                       </SelectItem>
                     ))}

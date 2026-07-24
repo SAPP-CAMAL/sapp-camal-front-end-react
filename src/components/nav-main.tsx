@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import DynamicLucideIcon from "@/lib/lucide-icon-dynamic";
-import { AdministrationMenu } from "@/features/modules/domain/module.domain";
+import { AdministrationMenu, Child } from "@/features/modules/domain/module.domain";
 import { fixUtf8 } from "@/lib/utils";
 
 
@@ -45,21 +45,121 @@ function normalizeMenuUrl(url: string | null): string {
   return `/dashboard${cleanUrl}`;
 }
 
+function containsActivePath(item: Child, pathname: string): boolean {
+  if (pathname === normalizeMenuUrl(item.url)) return true;
+  return (item.children ?? []).some((child) => containsActivePath(child, pathname));
+}
+
+function NavSubItem({
+  item,
+  pathname,
+  onItemClick,
+  index,
+}: {
+  item: Child;
+  pathname: string;
+  onItemClick: () => void;
+  index: number;
+}) {
+  const [open, setOpen] = useState(() => containsActivePath(item, pathname));
+  const hasChildren = !!item.children?.length;
+  const normalizedUrl = normalizeMenuUrl(item.url);
+  const isActive = pathname === normalizedUrl;
+
+  useEffect(() => {
+    if (containsActivePath(item, pathname)) {
+      setOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const itemStyle = {
+    animationDelay: `${index * 40}ms`,
+    animationDuration: "300ms",
+    animationFillMode: "backwards" as const,
+  };
+
+  if (!hasChildren) {
+    return (
+      <SidebarMenuSubItem className="animate-in fade-in slide-in-from-left-2" style={itemStyle}>
+        <SidebarMenuSubButton
+          asChild
+          isActive={isActive}
+          data-active={isActive}
+          className="transition-all duration-200 hover:translate-x-1 hover:scale-[1.01] active:scale-[0.98]"
+        >
+          <Link
+            href={normalizedUrl}
+            className="no-underline group/subitem"
+            prefetch={false}
+            onClick={onItemClick}
+          >
+            <DynamicLucideIcon
+              name={(item?.icon as any) ?? "badge-info"}
+              className="mr h-4 w-4 transition-all duration-300 group-hover/subitem:scale-110 group-hover/subitem:rotate-3"
+            />
+            <span className="font-semibold text-xs leading-normal py-0.5 transition-all duration-200">
+              {fixUtf8(item.menuName)}
+            </span>
+          </Link>
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
+    );
+  }
+
+  return (
+    <Collapsible
+      asChild
+      open={open}
+      onOpenChange={setOpen}
+      className="group/subcollapsible animate-in fade-in slide-in-from-left-2"
+      style={itemStyle}
+    >
+      <SidebarMenuSubItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuSubButton className="transition-all duration-200 cursor-pointer">
+            <DynamicLucideIcon
+              name={(item?.icon as any) ?? "badge-info"}
+              className="mr h-4 w-4 transition-all duration-300"
+            />
+            <span className="font-semibold text-xs leading-normal py-0.5 transition-all duration-200">
+              {fixUtf8(item.menuName)}
+            </span>
+            <ChevronRight className="ml-auto transition-all duration-300 group-data-[state=open]/subcollapsible:rotate-90" />
+          </SidebarMenuSubButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="animate-in slide-in-from-top-2 duration-300">
+          <SidebarMenuSub>
+            {(item.children ?? []).map((child, childIndex) => (
+              <NavSubItem
+                key={child.id}
+                item={child}
+                pathname={pathname}
+                onItemClick={onItemClick}
+                index={childIndex}
+              />
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuSubItem>
+    </Collapsible>
+  );
+}
+
 export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
   const [openMenus, setOpenMenus] = useState<Record<number, boolean>>({});
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Después de la hidratación, abrir los menús que tienen hijos activos
+  // Después de la hidratación, abrir los menús que tienen hijos o nietos activos
   useEffect(() => {
     setIsHydrated(true);
     const newOpenMenus: Record<number, boolean> = {};
     menus.forEach((menu) => {
-      const hasActiveChild = menu.children?.some((child) => {
-        const normalizedUrl = normalizeMenuUrl(child.url);
-        return pathname === normalizedUrl;
-      });
+      const hasActiveChild = menu.children?.some((child) =>
+        containsActivePath(child, pathname)
+      );
       if (hasActiveChild) {
         newOpenMenus[menu.id] = true;
       }
@@ -114,45 +214,15 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="animate-in slide-in-from-top-2 duration-300">
                   <SidebarMenuSub>
-                    {menu.children?.map((subItem, subIndex) => {
-                      const normalizedUrl = normalizeMenuUrl(subItem.url);
-                      const isActive = pathname === normalizedUrl;
-                      
-                      return (
-                        <SidebarMenuSubItem 
-                          key={subItem.id}
-                          className="animate-in fade-in slide-in-from-left-2"
-                          style={{ 
-                            animationDelay: `${subIndex * 40}ms`,
-                            animationDuration: '300ms',
-                            animationFillMode: 'backwards'
-                          }}
-                        >
-                          <SidebarMenuSubButton 
-                            asChild 
-                            isActive={isActive}
-                            data-active={isActive}
-                            className="transition-all duration-200 hover:translate-x-1 hover:scale-[1.01] active:scale-[0.98]"
-                          >
-                            <Link 
-                              href={normalizedUrl} 
-                              className="no-underline group/subitem" 
-                              prefetch={false}
-                              onClick={handleItemClick}
-                            >
-                              <DynamicLucideIcon
-                                name={(subItem?.icon as any) ?? "badge-info"}
-                                className="mr h-4 w-4 transition-all duration-300 group-hover/subitem:scale-110 group-hover/subitem:rotate-3"
-                              />
-
-                              <span className="font-semibold text-xs leading-normal py-0.5 transition-all duration-200">
-                                {fixUtf8(subItem.menuName)}
-                              </span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      );
-                    })}
+                    {menu.children?.map((subItem, subIndex) => (
+                      <NavSubItem
+                        key={subItem.id}
+                        item={subItem}
+                        pathname={pathname}
+                        onItemClick={handleItemClick}
+                        index={subIndex}
+                      />
+                    ))}
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
