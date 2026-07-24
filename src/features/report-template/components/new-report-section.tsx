@@ -1,0 +1,105 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { PlusIcon } from "lucide-react";
+import { HTTPError } from "ky";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { NewReportSectionFields } from "./report-section-form-fields";
+import { createReportSectionService } from "../server/db/report-template-admin.service";
+import { useEffect, useState } from "react";
+
+export type NewReportSectionForm = {
+    sectionName: string;
+    orderIndex: number;
+    status: string;
+};
+
+export function NewReportSection({ fixedTemplateId }: { fixedTemplateId: number }) {
+    const queryClient = useQueryClient();
+    const [open, setOpen] = useState(false);
+
+    const defaultValues: NewReportSectionForm = {
+        sectionName: "",
+        orderIndex: 0,
+        status: "true",
+    };
+
+    const form = useForm<NewReportSectionForm>({ defaultValues });
+
+    useEffect(() => {
+        if (open) {
+            form.reset(defaultValues);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, form]);
+
+    const onSubmit = form.handleSubmit(async (data) => {
+        try {
+            await createReportSectionService({
+                idTemplate: fixedTemplateId,
+                sectionName: data.sectionName,
+                orderIndex: data.orderIndex,
+                status: true,
+            });
+
+            form.reset(defaultValues);
+
+            await queryClient.invalidateQueries({ queryKey: ["report-sections-admin", fixedTemplateId] });
+
+            toast.success("Sección creada exitosamente");
+        } catch (error) {
+            if (error instanceof HTTPError) {
+                const { data } = await error.response.json<{ data: string }>();
+                toast.error(data);
+            } else {
+                toast.error("No se pudo crear la sección");
+            }
+        }
+    });
+
+    return (
+        <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusIcon />
+                    Crear sección
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
+                <DialogHeader>
+                    <DialogTitle>Nueva Sección</DialogTitle>
+                    <DialogDescription>Registra una nueva sección para esta plantilla.</DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
+                        <NewReportSectionFields />
+                        <div className="flex justify-end col-span-2 gap-x-2">
+                            <Button
+                                type="button"
+                                variant={"outline"}
+                                disabled={form.formState.isSubmitting}
+                                onClick={() => setOpen(false)}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={form.formState.isSubmitting || form.formState.isLoading}>
+                                {form.formState.isSubmitting ? "Guardando..." : "Guardar"}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
