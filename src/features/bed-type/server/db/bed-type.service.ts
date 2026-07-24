@@ -10,3 +10,15 @@ export const getAllBedTypes = () => {
 		})
 		.json<CommonHttpResponse<BedType>>();
 };
+
+export const createBedType = (body: { description: string }) => {
+	return http.post('v1/1.0.0/bed-type', { json: body }).json();
+};
+
+export const updateBedType = (id: number, body: Partial<{ description: string; status: boolean }>) => {
+	return http.patch(`v1/1.0.0/bed-type/${id}`, { json: body }).json();
+};
+
+export const deleteBedType = (id: number) => {
+	return http.delete(`v1/1.0.0/bed-type/${id}`).json();
+};
