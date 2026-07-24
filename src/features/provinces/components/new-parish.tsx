@@ -22,12 +22,14 @@ export type NewParishForm = {
   cantonId: number;
   code: string;
   name: string;
+  status: string;
 };
 
 const baseDefaultValues: NewParishForm = {
   cantonId: 0,
   code: "",
   name: "",
+  status: "true",
 };
 
 export function NewParish({ fixedCantonId }: { fixedCantonId?: number } = {}) {

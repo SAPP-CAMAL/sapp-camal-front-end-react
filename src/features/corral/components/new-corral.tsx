@@ -14,56 +14,56 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { NewCantonFields } from "./canton-form-fields";
-import { createCantonService } from "../server/db/locations-admin.service";
+import { NewCorralFields } from "./corral-form-fields";
+import { createCorralAdminService } from "../server/db/corral-admin.service";
 import { useEffect, useState } from "react";
 
-export type NewCantonForm = {
-  provinceId: number;
-  code: string;
+export type NewCorralForm = {
+  idCorralType: number;
   name: string;
+  description: string;
+  minimumQuantity: number;
+  maximumQuantity: number;
   status: string;
 };
 
-const baseDefaultValues: NewCantonForm = {
-  provinceId: 0,
-  code: "",
+const defaultValues: NewCorralForm = {
+  idCorralType: 0,
   name: "",
+  description: "",
+  minimumQuantity: 1,
+  maximumQuantity: 1,
   status: "true",
 };
 
-export function NewCanton({ fixedProvinceId }: { fixedProvinceId?: number } = {}) {
+export function NewCorral() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const defaultValues: NewCantonForm = {
-    ...baseDefaultValues,
-    ...(fixedProvinceId && { provinceId: fixedProvinceId }),
-  };
-
-  const form = useForm<NewCantonForm>({ defaultValues });
+  const form = useForm<NewCorralForm>({ defaultValues });
 
   useEffect(() => {
     if (open) {
       form.reset(defaultValues);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, form]);
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      await createCantonService({
-        provinceId: data.provinceId,
-        code: data.code,
+      await createCorralAdminService({
+        idCorralType: data.idCorralType,
         name: data.name,
+        description: data.description || undefined,
+        minimumQuantity: data.minimumQuantity,
+        maximumQuantity: data.maximumQuantity,
         status: true,
       });
 
       form.reset(defaultValues);
 
-      await queryClient.invalidateQueries({ queryKey: ["cantons-admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["corrals-admin"] });
 
-      toast.success("Cantón creado exitosamente");
+      toast.success("Corral creado exitosamente");
     } catch (error: any) {
       const { data } = await error.response.json();
       toast.error(data);
@@ -75,17 +75,17 @@ export function NewCanton({ fixedProvinceId }: { fixedProvinceId?: number } = {}
       <DialogTrigger asChild>
         <Button>
           <PlusIcon />
-          Crear cantón
+          Crear corral
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
         <DialogHeader>
-          <DialogTitle>Nuevo Cantón</DialogTitle>
-          <DialogDescription>Define un nuevo cantón.</DialogDescription>
+          <DialogTitle>Nuevo Corral</DialogTitle>
+          <DialogDescription>Registra un nuevo corral del camal.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
-            <NewCantonFields fixedProvinceId={fixedProvinceId} />
+            <NewCorralFields />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

@@ -36,7 +36,7 @@ export function UpdateParish({
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const form = useForm<NewParishForm & { status: string }>();
+  const form = useForm<NewParishForm>();
 
   useEffect(() => {
     if (open) {

@@ -16,53 +16,49 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { NewCantonFields } from "./canton-form-fields";
-import { updateCantonService } from "../server/db/locations-admin.service";
-import { NewCantonForm } from "./new-canton";
-import { Canton } from "../domain/locations-admin.domain";
+import { NewCollectionValueFields } from "./collection-value-form-fields";
+import { updateCollectionValueService } from "../server/db/collection-value-admin.service";
+import { NewCollectionValueForm } from "./new-collection-value";
+import { CollectionValueAdmin } from "../domain/collection-value.domain";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function UpdateCanton({
-  canton,
-  fixedProvinceId,
-}: {
-  canton: Canton;
-  fixedProvinceId?: number;
-}) {
+export function UpdateCollectionValue({ collectionValue }: { collectionValue: CollectionValueAdmin }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const form = useForm<NewCantonForm>();
+  const form = useForm<NewCollectionValueForm>();
 
   useEffect(() => {
     if (open) {
       form.reset({
-        provinceId: canton.province?.id,
-        code: canton.code,
-        name: canton.name,
-        status: String(canton.status),
+        idSpecie: collectionValue.idSpecie,
+        name: collectionValue.name,
+        code: collectionValue.code,
+        price: collectionValue.price,
+        status: String(collectionValue.status),
       });
     }
-  }, [open, form, canton]);
+  }, [open, form, collectionValue]);
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      await updateCantonService(canton.id, {
-        ...(form.formState.dirtyFields.provinceId && { provinceId: data.provinceId }),
-        ...(form.formState.dirtyFields.code && { code: data.code }),
+      await updateCollectionValueService(collectionValue.id, {
+        ...(form.formState.dirtyFields.idSpecie && { idSpecie: data.idSpecie }),
         ...(form.formState.dirtyFields.name && { name: data.name }),
+        ...(form.formState.dirtyFields.code && { code: data.code }),
+        ...(form.formState.dirtyFields.price && { price: data.price }),
         ...(form.formState.dirtyFields.status && { status: data.status === "true" }),
       });
 
       form.reset(form.formState.defaultValues);
 
-      await queryClient.invalidateQueries({ queryKey: ["cantons-admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["collection-values-admin"] });
 
-      toast.success("Cantón actualizado exitosamente");
+      toast.success("Tarifa actualizada exitosamente");
     } catch (error: any) {
       const { data } = await error.response.json();
       toast.error(data);
@@ -80,17 +76,17 @@ export function UpdateCanton({
           </DialogTrigger>
         </TooltipTrigger>
         <TooltipContent side="top" align="center" sideOffset={5} avoidCollisions>
-          Editar Cantón
+          Editar Tarifa
         </TooltipContent>
       </Tooltip>
       <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
         <DialogHeader>
-          <DialogTitle>Editar Cantón</DialogTitle>
-          <DialogDescription>Modifica la información del cantón seleccionado.</DialogDescription>
+          <DialogTitle>Editar Tarifa por Especie</DialogTitle>
+          <DialogDescription>Modifica la información de la tarifa seleccionada.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
-            <NewCantonFields showStatus fixedProvinceId={fixedProvinceId} />
+            <NewCollectionValueFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

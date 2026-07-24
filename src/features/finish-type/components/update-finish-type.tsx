@@ -16,53 +16,47 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { NewCantonFields } from "./canton-form-fields";
-import { updateCantonService } from "../server/db/locations-admin.service";
-import { NewCantonForm } from "./new-canton";
-import { Canton } from "../domain/locations-admin.domain";
+import { NewFinishTypeFields } from "./finish-type-form-fields";
+import { updateFinishTypeService } from "../server/db/finish-type-admin.service";
+import { NewFinishTypeForm } from "./new-finish-type";
+import { FinishTypeAdmin } from "../domain/finish-type-admin.domain";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function UpdateCanton({
-  canton,
-  fixedProvinceId,
-}: {
-  canton: Canton;
-  fixedProvinceId?: number;
-}) {
+export function UpdateFinishType({ finishType }: { finishType: FinishTypeAdmin }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const form = useForm<NewCantonForm>();
+  const form = useForm<NewFinishTypeForm>();
 
   useEffect(() => {
     if (open) {
       form.reset({
-        provinceId: canton.province?.id,
-        code: canton.code,
-        name: canton.name,
-        status: String(canton.status),
+        idSpecie: finishType.idSpecie,
+        name: finishType.name,
+        code: finishType.code,
+        status: String(finishType.status),
       });
     }
-  }, [open, form, canton]);
+  }, [open, form, finishType]);
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      await updateCantonService(canton.id, {
-        ...(form.formState.dirtyFields.provinceId && { provinceId: data.provinceId }),
-        ...(form.formState.dirtyFields.code && { code: data.code }),
+      await updateFinishTypeService(finishType.id, {
+        ...(form.formState.dirtyFields.idSpecie && { idSpecie: data.idSpecie }),
         ...(form.formState.dirtyFields.name && { name: data.name }),
+        ...(form.formState.dirtyFields.code && { code: data.code }),
         ...(form.formState.dirtyFields.status && { status: data.status === "true" }),
       });
 
       form.reset(form.formState.defaultValues);
 
-      await queryClient.invalidateQueries({ queryKey: ["cantons-admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["finish-types-admin"] });
 
-      toast.success("Cantón actualizado exitosamente");
+      toast.success("Tipo de acabado actualizado exitosamente");
     } catch (error: any) {
       const { data } = await error.response.json();
       toast.error(data);
@@ -80,17 +74,17 @@ export function UpdateCanton({
           </DialogTrigger>
         </TooltipTrigger>
         <TooltipContent side="top" align="center" sideOffset={5} avoidCollisions>
-          Editar Cantón
+          Editar Tipo de Acabado
         </TooltipContent>
       </Tooltip>
       <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
         <DialogHeader>
-          <DialogTitle>Editar Cantón</DialogTitle>
-          <DialogDescription>Modifica la información del cantón seleccionado.</DialogDescription>
+          <DialogTitle>Editar Tipo de Acabado</DialogTitle>
+          <DialogDescription>Modifica la información del tipo de acabado seleccionado.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
-            <NewCantonFields showStatus fixedProvinceId={fixedProvinceId} />
+            <NewFinishTypeFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

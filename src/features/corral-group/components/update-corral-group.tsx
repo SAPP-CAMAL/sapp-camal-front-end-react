@@ -16,53 +16,51 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { NewCantonFields } from "./canton-form-fields";
-import { updateCantonService } from "../server/db/locations-admin.service";
-import { NewCantonForm } from "./new-canton";
-import { Canton } from "../domain/locations-admin.domain";
+import { NewCorralGroupFields } from "./corral-group-form-fields";
+import { updateCorralGroupService } from "../server/db/corral-group-admin.service";
+import { NewCorralGroupForm } from "./new-corral-group";
+import { CorralGroupAdmin } from "../domain/corral-group-admin.domain";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function UpdateCanton({
-  canton,
-  fixedProvinceId,
-}: {
-  canton: Canton;
-  fixedProvinceId?: number;
-}) {
+export function UpdateCorralGroup({ corralGroup }: { corralGroup: CorralGroupAdmin }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const form = useForm<NewCantonForm>();
+  const form = useForm<NewCorralGroupForm>();
 
   useEffect(() => {
     if (open) {
       form.reset({
-        provinceId: canton.province?.id,
-        code: canton.code,
-        name: canton.name,
-        status: String(canton.status),
+        name: corralGroup.name,
+        description: corralGroup.description ?? "",
+        idLine: corralGroup.idLine,
+        idFinishType: corralGroup.idFinishType ?? null,
+        order: corralGroup.order,
+        status: String(corralGroup.status),
       });
     }
-  }, [open, form, canton]);
+  }, [open, form, corralGroup]);
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      await updateCantonService(canton.id, {
-        ...(form.formState.dirtyFields.provinceId && { provinceId: data.provinceId }),
-        ...(form.formState.dirtyFields.code && { code: data.code }),
+      await updateCorralGroupService(corralGroup.id, {
         ...(form.formState.dirtyFields.name && { name: data.name }),
+        ...(form.formState.dirtyFields.description && { description: data.description }),
+        ...(form.formState.dirtyFields.idLine && { idLine: data.idLine }),
+        ...(form.formState.dirtyFields.idFinishType && { idFinishType: data.idFinishType }),
+        ...(form.formState.dirtyFields.order && { order: data.order }),
         ...(form.formState.dirtyFields.status && { status: data.status === "true" }),
       });
 
       form.reset(form.formState.defaultValues);
 
-      await queryClient.invalidateQueries({ queryKey: ["cantons-admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["corral-groups-admin"] });
 
-      toast.success("Cantón actualizado exitosamente");
+      toast.success("Grupo de corrales actualizado exitosamente");
     } catch (error: any) {
       const { data } = await error.response.json();
       toast.error(data);
@@ -80,17 +78,17 @@ export function UpdateCanton({
           </DialogTrigger>
         </TooltipTrigger>
         <TooltipContent side="top" align="center" sideOffset={5} avoidCollisions>
-          Editar Cantón
+          Editar Grupo
         </TooltipContent>
       </Tooltip>
       <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
         <DialogHeader>
-          <DialogTitle>Editar Cantón</DialogTitle>
-          <DialogDescription>Modifica la información del cantón seleccionado.</DialogDescription>
+          <DialogTitle>Editar Grupo de Corrales</DialogTitle>
+          <DialogDescription>Modifica la información del grupo seleccionado.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
-            <NewCantonFields showStatus fixedProvinceId={fixedProvinceId} />
+            <NewCorralGroupFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

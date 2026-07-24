@@ -14,56 +14,50 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { NewCantonFields } from "./canton-form-fields";
-import { createCantonService } from "../server/db/locations-admin.service";
+import { NewFinishTypeFields } from "./finish-type-form-fields";
+import { createFinishTypeService } from "../server/db/finish-type-admin.service";
 import { useEffect, useState } from "react";
 
-export type NewCantonForm = {
-  provinceId: number;
-  code: string;
+export type NewFinishTypeForm = {
+  idSpecie: number;
   name: string;
+  code: string;
   status: string;
 };
 
-const baseDefaultValues: NewCantonForm = {
-  provinceId: 0,
-  code: "",
+const defaultValues: NewFinishTypeForm = {
+  idSpecie: 0,
   name: "",
+  code: "",
   status: "true",
 };
 
-export function NewCanton({ fixedProvinceId }: { fixedProvinceId?: number } = {}) {
+export function NewFinishType() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const defaultValues: NewCantonForm = {
-    ...baseDefaultValues,
-    ...(fixedProvinceId && { provinceId: fixedProvinceId }),
-  };
-
-  const form = useForm<NewCantonForm>({ defaultValues });
+  const form = useForm<NewFinishTypeForm>({ defaultValues });
 
   useEffect(() => {
     if (open) {
       form.reset(defaultValues);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, form]);
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      await createCantonService({
-        provinceId: data.provinceId,
-        code: data.code,
+      await createFinishTypeService({
+        idSpecie: data.idSpecie,
         name: data.name,
+        code: data.code,
         status: true,
       });
 
       form.reset(defaultValues);
 
-      await queryClient.invalidateQueries({ queryKey: ["cantons-admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["finish-types-admin"] });
 
-      toast.success("Cantón creado exitosamente");
+      toast.success("Tipo de acabado creado exitosamente");
     } catch (error: any) {
       const { data } = await error.response.json();
       toast.error(data);
@@ -75,17 +69,17 @@ export function NewCanton({ fixedProvinceId }: { fixedProvinceId?: number } = {}
       <DialogTrigger asChild>
         <Button>
           <PlusIcon />
-          Crear cantón
+          Crear tipo de acabado
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
         <DialogHeader>
-          <DialogTitle>Nuevo Cantón</DialogTitle>
-          <DialogDescription>Define un nuevo cantón.</DialogDescription>
+          <DialogTitle>Nuevo Tipo de Acabado</DialogTitle>
+          <DialogDescription>Registra un nuevo tipo de acabado para una especie.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
-            <NewCantonFields fixedProvinceId={fixedProvinceId} />
+            <NewFinishTypeFields />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"
