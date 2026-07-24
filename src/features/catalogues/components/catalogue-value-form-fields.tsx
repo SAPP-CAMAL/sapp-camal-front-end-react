@@ -86,11 +86,13 @@ export function NewCatalogueValueFields({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {(typesQuery.data?.data ?? []).map((type) => (
-                        <SelectItem key={type.id} value={String(type.id)}>
-                          {type.description}
-                        </SelectItem>
-                      ))}
+                      {(typesQuery.data?.data ?? [])
+                        .filter((type) => type.status)
+                        .map((type) => (
+                          <SelectItem key={type.id} value={String(type.id)}>
+                            {type.description}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
