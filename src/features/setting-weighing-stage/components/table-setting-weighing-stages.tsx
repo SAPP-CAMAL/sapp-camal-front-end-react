@@ -16,6 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Search } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -36,7 +38,13 @@ export function TableSettingWeighingStages<TData, TValue>({
 
   return (
     <div className="bg-white border rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="py-4 px-4 flex flex-col border-b">
+        <Label className="font-semibold text-lg lg:text-base">
+          Etapas de Pesaje Configuradas
+        </Label>
+      </div>
+
+      <div className="hidden lg:block overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -89,6 +97,54 @@ export function TableSettingWeighingStages<TData, TValue>({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="lg:hidden p-4">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse h-32" />
+            ))}
+          </div>
+        ) : table.getRowModel().rows?.length ? (
+          <div className="grid grid-cols-1 gap-4">
+            {table.getRowModel().rows.map((row) => (
+              <Card key={row.id} className="overflow-hidden border-gray-200">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    {row.getVisibleCells().map((cell) => {
+                      const header = cell.column.columnDef.header as string;
+                      const hasLabel =
+                        typeof header === "string" &&
+                        !header.includes("Acciones");
+
+                      return (
+                        <div key={cell.id} className="flex flex-col gap-1">
+                          {hasLabel && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                              {header}
+                            </span>
+                          )}
+                          <div className="text-sm">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="py-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed">
+            <Search className="h-8 w-8 mx-auto mb-2 opacity-20" />
+            <p>No hay datos disponibles</p>
+          </div>
+        )}
       </div>
     </div>
   );
