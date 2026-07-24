@@ -22,12 +22,14 @@ export type NewCantonForm = {
   provinceId: number;
   code: string;
   name: string;
+  status: string;
 };
 
 const baseDefaultValues: NewCantonForm = {
   provinceId: 0,
   code: "",
   name: "",
+  status: "true",
 };
 
 export function NewCanton({ fixedProvinceId }: { fixedProvinceId?: number } = {}) {

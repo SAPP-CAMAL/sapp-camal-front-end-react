@@ -12,6 +12,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import { loginAction } from "@/features/security/server/actions/security.actions";
+import { revalidatePathAction } from "@/features/security/server/actions/revalidate.action";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 import { useEffect } from "react";
 
@@ -121,9 +122,15 @@ export function LoginForm({
 
       toast.success("Bienvenido");
 
+      // Invalida el router cache de Next para /dashboard: si el usuario navega dentro de la
+      // misma pestaña (logout -> login sin recarga completa), evita que se reutilice el layout
+      // con los menús del login/rol anterior.
+      await revalidatePathAction("/dashboard");
+
       // Redirigir al dashboard después de guardar cookies
       setTimeout(() => {
         router.push("/dashboard");
+        router.refresh();
       }, 500);
 
     } catch (error: any) {

@@ -20,14 +20,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import {
-  getUserRolesService,
-  setUserRoleService,
-} from "@/features/security/server/db/security.queries";
+import { getUserRolesService } from "@/features/security/server/db/security.queries";
+import { setUserRoleAction } from "@/features/security/server/actions/security.actions";
 import { revalidatePathAction } from "@/features/security/server/actions/revalidate.action";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
+import { Role } from "@/features/roles/domain/roles.domain";
 
 function persistActiveRole(role: { id: number; name: string }) {
   localStorage.setItem('activeRoleId', role.id.toString());
@@ -40,10 +39,13 @@ function persistActiveRole(role: { id: number; name: string }) {
   );
 }
 
-export function RoleSwitcher() {
+export function RoleSwitcher({ activeRole }: { activeRole?: { id: number; name: string } }) {
   const { isMobile } = useSidebar();
   const [open, setOpen] = React.useState(false);
-  const [activeRoleId, setActiveRoleId] = React.useState<number | null>(null);
+  // Fuente de verdad: el rol activo real de la sesión (viene del cookie "user" leído en el
+  // servidor). No se deriva de localStorage ni del primer rol de la lista: eso podía mostrar
+  // "Administrador" seleccionado mientras los menús cargados correspondían a otro rol.
+  const [activeRoleId, setActiveRoleId] = React.useState<number | null>(activeRole?.id ?? null);
   const [isMounted, setIsMounted] = React.useState(false);
   const { location } = useSlaughterhouseInfo(); // Usar location.canton en el menú
 
@@ -52,41 +54,20 @@ export function RoleSwitcher() {
     setIsMounted(true);
   }, []);
 
+  // Si el rol activo de la sesión cambia (ej. tras un cambio de rol y recarga), sincronizar.
+  React.useEffect(() => {
+    if (activeRole?.id) {
+      setActiveRoleId(activeRole.id);
+      persistActiveRole({ id: activeRole.id, name: activeRole.name });
+    }
+  }, [activeRole?.id, activeRole?.name]);
+
   const query = useQuery({
     queryKey: ["user-roles"],
     queryFn: () => getUserRolesService(),
     retry: 1,
     enabled: isMounted, // Solo ejecutar cuando esté montado en el cliente
   });
-
-  // Cargar el rol activo desde localStorage o usar el primer rol del listado
-  React.useEffect(() => {
-    if (!isMounted || !query.data?.data || query.data.data.length === 0 || activeRoleId !== null) {
-      return;
-    }
-
-    // Intentar obtener el rol guardado en localStorage (cuando el usuario cambió de rol manualmente)
-    const savedRoleId = localStorage.getItem('activeRoleId');
-    
-    if (savedRoleId) {
-      const roleId = parseInt(savedRoleId);
-      // Verificar que el rol guardado existe en la lista de roles del usuario
-      const roleExists = query.data.data.some((role: any) => role.id === roleId);
-      if (roleExists) {
-        setActiveRoleId(roleId);
-        const matchedRole = query.data.data.find((role: any) => role.id === roleId);
-        if (matchedRole?.name) {
-          persistActiveRole({ id: matchedRole.id, name: matchedRole.name });
-        }
-        return;
-      }
-    }
-    
-    // Si no hay rol guardado en localStorage, SIEMPRE usar el primer rol del listado
-    // Esto asegura que al iniciar sesión siempre se muestre el primer rol
-    setActiveRoleId(query.data.data[0].id);
-    persistActiveRole({ id: query.data.data[0].id, name: query.data.data[0].name });
-  }, [query.data, activeRoleId, isMounted]);
 
   // No renderizar hasta que esté montado en el cliente
   if (!isMounted) {
@@ -158,7 +139,7 @@ export function RoleSwitcher() {
                 Error al cargar roles
               </DropdownMenuItem>
             ) : (
-              query.data?.data?.map((role: any) => (
+              query.data?.data?.map((role: Role) => (
                 <RoleItem 
                   key={role.id} 
                   role={role} 
@@ -185,7 +166,7 @@ export function RoleSwitcher() {
   );
 }
 
-function RoleItem({ role, isActive, onSelect }: { role: any; isActive: boolean; onSelect: () => void }) {
+function RoleItem({ role, isActive, onSelect }: { role: Role; isActive: boolean; onSelect: () => void }) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
@@ -195,20 +176,19 @@ function RoleItem({ role, isActive, onSelect }: { role: any; isActive: boolean; 
       onClick={(e) => {
         e.preventDefault();
         startTransition(async () => {
-          const resp = await setUserRoleService(role.id);
+          try {
+            // Cookies seteadas server-side (Set-Cookie), no dependen de la Cookie Store API del navegador.
+            await setUserRoleAction(role.id);
 
-          await Promise.all([
-            window.cookieStore.set("accessToken", resp.data.accessToken),
-            window.cookieStore.set("refreshToken", resp.data.refreshToken),
-            window.cookieStore.set("user", JSON.stringify(resp.data)),
-          ]);
+            await revalidatePathAction("/dashboard");
 
-          await revalidatePathAction("/dashboard");
+            router.push("/dashboard");
 
-          router.push("/dashboard");
-
-          toast.success("Cambio de rol exitoso");
-          onSelect();
+            toast.success("Cambio de rol exitoso");
+            onSelect();
+          } catch (error) {
+            toast.error("No se pudo cambiar de rol. Intente nuevamente.");
+          }
         });
       }}
       className={cn(

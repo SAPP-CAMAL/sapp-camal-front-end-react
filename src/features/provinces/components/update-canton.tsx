@@ -36,7 +36,7 @@ export function UpdateCanton({
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const form = useForm<NewCantonForm & { status: string }>();
+  const form = useForm<NewCantonForm>();
 
   useEffect(() => {
     if (open) {
