@@ -106,100 +106,220 @@ export function SpeciesProductManagement() {
           <CardDescription>Listado de productos por especie.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Especie</TableHead>
-                <TableHead>Tipo de producto</TableHead>
-                <TableHead>Sexo</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Producto</TableHead>
-                <TableHead>Orden</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-center">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {query.isLoading ? (
+          <div className="hidden lg:block">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="h-32 text-center animate-pulse">
-                    Cargando datos...
-                  </TableCell>
+                  <TableHead>Especie</TableHead>
+                  <TableHead>Tipo de producto</TableHead>
+                  <TableHead>Sexo</TableHead>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Producto</TableHead>
+                  <TableHead>Orden</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-center">Acciones</TableHead>
                 </TableRow>
-              ) : items.length ? (
-                items.map((speciesProduct) => (
-                  <TableRow key={speciesProduct.id}>
-                    <TableCell>
-                      {speciesById.get(speciesProduct.idSpecies) ?? "-"}
-                    </TableCell>
-                    <TableCell>
-                      {speciesProduct.productType?.typeName ?? "-"}
-                    </TableCell>
-                    <TableCell>
-                      {speciesProduct.idAnimalSex
-                        ? animalSexById.get(speciesProduct.idAnimalSex) ?? "-"
-                        : "Todos"}
-                    </TableCell>
-                    <TableCell>{speciesProduct.productCode}</TableCell>
-                    <TableCell>{speciesProduct.productName}</TableCell>
-                    <TableCell>{speciesProduct.displayOrder}</TableCell>
-                    <TableCell>
-                      <Badge variant={speciesProduct.status ? "default" : "secondary"}>
-                        {speciesProduct.status ? "Activo" : "Inactivo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-center gap-2">
-                        <UpdateSpeciesProduct speciesProduct={speciesProduct} />
-                        {speciesProduct.status ? (
-                          <ConfirmationDialog
-                            title="¿Desactivar este registro?"
-                            description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                            onConfirm={() => handleDeactivate(speciesProduct.id)}
-                            triggerBtn={
-                              <Button variant="outline" size="icon">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            }
-                            cancelBtn={
-                              <Button variant="outline" size="lg">
-                                <XIcon className="h-4 w-4 mr-1" />
-                                No
-                              </Button>
-                            }
-                            confirmBtn={
-                              <Button
-                                variant="ghost"
-                                className="hover:bg-red-600 hover:text-white"
-                                size="lg"
-                              >
-                                <Check className="h-4 w-4 mr-1" />
-                                Sí
-                              </Button>
-                            }
-                          />
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleReactivate(speciesProduct.id)}
-                          >
-                            <RotateCcw className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {query.isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-32 text-center animate-pulse">
+                      Cargando datos...
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-32 text-center text-gray-500">
-                    No se ha registrado ningún producto por especie
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                ) : items.length ? (
+                  items.map((speciesProduct) => (
+                    <TableRow key={speciesProduct.id}>
+                      <TableCell>
+                        {speciesById.get(speciesProduct.idSpecies) ?? "-"}
+                      </TableCell>
+                      <TableCell>
+                        {speciesProduct.productType?.typeName ?? "-"}
+                      </TableCell>
+                      <TableCell>
+                        {speciesProduct.idAnimalSex
+                          ? animalSexById.get(speciesProduct.idAnimalSex) ?? "-"
+                          : "Todos"}
+                      </TableCell>
+                      <TableCell>{speciesProduct.productCode}</TableCell>
+                      <TableCell>{speciesProduct.productName}</TableCell>
+                      <TableCell>{speciesProduct.displayOrder}</TableCell>
+                      <TableCell>
+                        <Badge variant={speciesProduct.status ? "default" : "secondary"}>
+                          {speciesProduct.status ? "Activo" : "Inactivo"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-center gap-2">
+                          <UpdateSpeciesProduct speciesProduct={speciesProduct} />
+                          {speciesProduct.status ? (
+                            <ConfirmationDialog
+                              title="¿Desactivar este registro?"
+                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
+                              onConfirm={() => handleDeactivate(speciesProduct.id)}
+                              triggerBtn={
+                                <Button variant="outline" size="icon">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              }
+                              cancelBtn={
+                                <Button variant="outline" size="lg">
+                                  <XIcon className="h-4 w-4 mr-1" />
+                                  No
+                                </Button>
+                              }
+                              confirmBtn={
+                                <Button
+                                  variant="ghost"
+                                  className="hover:bg-red-600 hover:text-white"
+                                  size="lg"
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Sí
+                                </Button>
+                              }
+                            />
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleReactivate(speciesProduct.id)}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-32 text-center text-gray-500">
+                      No se ha registrado ningún producto por especie
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="lg:hidden p-4">
+            {query.isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="animate-pulse h-24" />
+                ))}
+              </div>
+            ) : items.length ? (
+              <div className="grid grid-cols-1 gap-4">
+                {items.map((speciesProduct) => (
+                  <Card key={speciesProduct.id} className="overflow-hidden border-gray-200">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            Especie
+                          </span>
+                          <div className="text-sm">
+                            {speciesById.get(speciesProduct.idSpecies) ?? "-"}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            Tipo de producto
+                          </span>
+                          <div className="text-sm">
+                            {speciesProduct.productType?.typeName ?? "-"}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            Sexo
+                          </span>
+                          <div className="text-sm">
+                            {speciesProduct.idAnimalSex
+                              ? animalSexById.get(speciesProduct.idAnimalSex) ?? "-"
+                              : "Todos"}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            Código
+                          </span>
+                          <div className="text-sm">{speciesProduct.productCode}</div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            Producto
+                          </span>
+                          <div className="text-sm">{speciesProduct.productName}</div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            Orden
+                          </span>
+                          <div className="text-sm">{speciesProduct.displayOrder}</div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            Estado
+                          </span>
+                          <div>
+                            <Badge variant={speciesProduct.status ? "default" : "secondary"}>
+                              {speciesProduct.status ? "Activo" : "Inactivo"}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex justify-center gap-2 pt-2">
+                          <UpdateSpeciesProduct speciesProduct={speciesProduct} />
+                          {speciesProduct.status ? (
+                            <ConfirmationDialog
+                              title="¿Desactivar este registro?"
+                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
+                              onConfirm={() => handleDeactivate(speciesProduct.id)}
+                              triggerBtn={
+                                <Button variant="outline" size="icon">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              }
+                              cancelBtn={
+                                <Button variant="outline" size="lg">
+                                  <XIcon className="h-4 w-4 mr-1" />
+                                  No
+                                </Button>
+                              }
+                              confirmBtn={
+                                <Button
+                                  variant="ghost"
+                                  className="hover:bg-red-600 hover:text-white"
+                                  size="lg"
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Sí
+                                </Button>
+                              }
+                            />
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleReactivate(speciesProduct.id)}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed">
+                <p>No se ha registrado ningún producto por especie</p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
