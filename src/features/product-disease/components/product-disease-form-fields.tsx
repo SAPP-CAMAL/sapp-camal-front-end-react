@@ -8,6 +8,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -76,7 +77,7 @@ export function ProductDiseaseFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Producto *</FormLabel>
+                <FormLabel>Producto <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value ? String(field.value) : undefined}
@@ -109,7 +110,7 @@ export function ProductDiseaseFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Enfermedad *</FormLabel>
+                <FormLabel>Enfermedad <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value ? String(field.value) : undefined}
@@ -142,7 +143,7 @@ export function ProductDiseaseFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Grupo de Enfermedad *</FormLabel>
+                <FormLabel>Grupo de Enfermedad <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value ? String(field.value) : undefined}

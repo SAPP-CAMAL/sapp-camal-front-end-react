@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
   Card,
@@ -49,7 +50,7 @@ export function OpinionFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Código *</FormLabel>
+                <FormLabel>Código <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} maxLength={100} />
                 </FormControl>
@@ -72,7 +73,7 @@ export function OpinionFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre *</FormLabel>
+                <FormLabel>Nombre <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} maxLength={100} />
                 </FormControl>

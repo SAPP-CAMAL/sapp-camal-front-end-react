@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
   Card,
@@ -58,7 +59,7 @@ export function NewCorralGroupFields({ showStatus = false }: { showStatus?: bool
             rules={{ required: { value: true, message: "La línea es requerida" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Línea *</FormLabel>
+                <FormLabel>Línea <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value ? String(field.value) : undefined}
@@ -118,7 +119,7 @@ export function NewCorralGroupFields({ showStatus = false }: { showStatus?: bool
             rules={{ required: { value: true, message: "El nombre es requerido" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre *</FormLabel>
+                <FormLabel>Nombre <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -133,7 +134,7 @@ export function NewCorralGroupFields({ showStatus = false }: { showStatus?: bool
             rules={{ required: { value: true, message: "El orden es requerido" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Orden *</FormLabel>
+                <FormLabel>Orden <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -164,9 +165,10 @@ export function NewCorralGroupFields({ showStatus = false }: { showStatus?: bool
             <FormField
               control={form.control}
               name="status"
+              rules={{ required: { value: true, message: "El estado es requerido" } }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Estado *</FormLabel>
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full">

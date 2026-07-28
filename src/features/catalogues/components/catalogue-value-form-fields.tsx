@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext, useWatch } from "react-hook-form";
 import {
   Card,
@@ -75,7 +76,7 @@ export function NewCatalogueValueFields({
               rules={{ required: { value: true, message: "El tipo de catálogo es requerido" } }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo de catálogo *</FormLabel>
+                  <FormLabel>Tipo de catálogo <RequiredMark /></FormLabel>
                   <Select
                     onValueChange={(value) => field.onChange(Number(value))}
                     value={field.value ? String(field.value) : undefined}
@@ -137,7 +138,7 @@ export function NewCatalogueValueFields({
             rules={{ required: { value: true, message: "El código es requerido" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Código *</FormLabel>
+                <FormLabel>Código <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -152,7 +153,7 @@ export function NewCatalogueValueFields({
             rules={{ required: { value: true, message: "El nombre es requerido" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre *</FormLabel>
+                <FormLabel>Nombre <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>

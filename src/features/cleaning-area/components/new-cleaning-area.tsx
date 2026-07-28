@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import {
   Select,
   SelectContent,
@@ -114,7 +115,7 @@ export function NewCleaningArea({
               rules={{ required: { value: true, message: "El área es requerida" } }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Área *</FormLabel>
+                  <FormLabel>Área <RequiredMark /></FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full">

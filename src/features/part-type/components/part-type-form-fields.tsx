@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
   Card,
@@ -50,7 +51,7 @@ export function PartTypeFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Descripción *</FormLabel>
+                <FormLabel>Descripción <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} maxLength={20} />
                 </FormControl>

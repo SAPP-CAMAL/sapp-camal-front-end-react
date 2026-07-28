@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -65,7 +66,7 @@ export function AvgOrgansSpeciesFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Especie *</FormLabel>
+                <FormLabel>Especie <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value ? String(field.value) : undefined}
@@ -98,7 +99,7 @@ export function AvgOrgansSpeciesFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Producto *</FormLabel>
+                <FormLabel>Producto <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value ? String(field.value) : undefined}

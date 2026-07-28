@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
   Select,
@@ -71,7 +72,7 @@ export function ProductFormFields({
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Descripción *</FormLabel>
+                <FormLabel>Descripción <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} maxLength={100} />
                 </FormControl>
@@ -109,7 +110,7 @@ export function ProductFormFields({
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tipo *</FormLabel>
+                <FormLabel>Tipo <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(value === "true")}
                   value={

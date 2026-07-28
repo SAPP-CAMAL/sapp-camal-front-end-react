@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
   Card,
@@ -57,7 +58,7 @@ export function EquipmentFormFields() {
             rules={{ required: { value: true, message: "El tipo es requerido" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tipo de Equipo *</FormLabel>
+                <FormLabel>Tipo de Equipo <RequiredMark /></FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -92,7 +93,7 @@ export function EquipmentFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Descripción *</FormLabel>
+                <FormLabel>Descripción <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} maxLength={100} />
                 </FormControl>

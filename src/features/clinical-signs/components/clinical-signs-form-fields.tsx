@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
   Select,
@@ -57,7 +58,7 @@ export function ClinicalSignsFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Descripción *</FormLabel>
+                <FormLabel>Descripción <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} maxLength={20} />
                 </FormControl>
@@ -76,7 +77,7 @@ export function ClinicalSignsFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Grupo *</FormLabel>
+                <FormLabel>Grupo <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value ? String(field.value) : undefined}

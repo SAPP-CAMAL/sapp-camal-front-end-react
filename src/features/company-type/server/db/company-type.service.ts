@@ -9,6 +9,10 @@ export function getCompanyTypesService(): Promise<ResponseCompanyTypeService> {
     return http.get("v1/1.0.0/company-type/all").json()
 }
 
+export function getActiveCompanyTypesService(): Promise<ResponseCompanyTypeService> {
+    return http.get("v1/1.0.0/company-type/all-active").json()
+}
+
 export function updateCompanyTypeService(id: number, body: Partial<CreateCompanyTypeBody>) {
     return http.patch(`v1/1.0.0/company-type/${id}`, { json: body }).json()
 }

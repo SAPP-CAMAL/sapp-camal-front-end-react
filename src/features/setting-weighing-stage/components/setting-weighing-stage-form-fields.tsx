@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
   Card,
@@ -64,7 +65,7 @@ export function SettingWeighingStageFormFields({
             rules={{ required: { value: true, message: "La etapa de pesaje es requerida" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Etapa de Pesaje *</FormLabel>
+                <FormLabel>Etapa de Pesaje <RequiredMark /></FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-full">

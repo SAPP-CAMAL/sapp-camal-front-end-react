@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
   Card,
@@ -49,7 +50,7 @@ export function DiseaseGroupFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre *</FormLabel>
+                <FormLabel>Nombre <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} maxLength={50} />
                 </FormControl>
@@ -68,7 +69,7 @@ export function DiseaseGroupFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Número de Grupo *</FormLabel>
+                <FormLabel>Número de Grupo <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -98,7 +99,7 @@ export function DiseaseGroupFormFields() {
             }}
             render={({ field }) => (
               <FormItem className="col-span-2">
-                <FormLabel>Código *</FormLabel>
+                <FormLabel>Código <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} maxLength={100} />
                 </FormControl>

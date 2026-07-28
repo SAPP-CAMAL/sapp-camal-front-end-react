@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { RequiredMark } from "@/components/ui/required-mark";
 import {
   Select,
   SelectContent,
@@ -105,7 +106,7 @@ export function NewSettingEquipmentLine({
               rules={{ required: { value: true, message: "El equipo es requerido" } }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Equipo *</FormLabel>
+                  <FormLabel>Equipo <RequiredMark /></FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}

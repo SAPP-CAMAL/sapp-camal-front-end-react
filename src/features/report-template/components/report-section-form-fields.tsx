@@ -9,6 +9,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
     Card,
@@ -45,7 +46,7 @@ export function NewReportSectionFields({ showStatus = false }: { showStatus?: bo
                         rules={{ required: { value: true, message: "El nombre es requerido" } }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Nombre *</FormLabel>
+                                <FormLabel>Nombre <RequiredMark /></FormLabel>
                                 <FormControl>
                                     <Input maxLength={50} {...field} />
                                 </FormControl>
@@ -76,9 +77,10 @@ export function NewReportSectionFields({ showStatus = false }: { showStatus?: bo
                         <FormField
                             control={form.control}
                             name="status"
+                            rules={{ required: { value: true, message: "El estado es requerido" } }}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Estado *</FormLabel>
+                                    <FormLabel>Estado <RequiredMark /></FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger className="w-full">

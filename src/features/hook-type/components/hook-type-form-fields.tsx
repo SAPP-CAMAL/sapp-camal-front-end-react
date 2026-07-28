@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -61,7 +62,7 @@ export function HookTypeFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre *</FormLabel>
+                <FormLabel>Nombre <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} maxLength={100} />
                 </FormControl>
@@ -80,7 +81,7 @@ export function HookTypeFormFields() {
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Peso de Referencia *</FormLabel>
+                <FormLabel>Peso de Referencia <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -106,7 +107,7 @@ export function HookTypeFormFields() {
             }}
             render={({ field }) => (
               <FormItem className="col-span-2">
-                <FormLabel>Especie *</FormLabel>
+                <FormLabel>Especie <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                   value={field.value ? String(field.value) : undefined}

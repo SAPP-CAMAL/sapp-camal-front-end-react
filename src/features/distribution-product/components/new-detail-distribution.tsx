@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import {
   Select,
   SelectContent,
@@ -105,7 +106,7 @@ export function NewDetailDistribution({
               rules={{ required: { value: true, message: "El producto es requerido" } }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Producto *</FormLabel>
+                  <FormLabel>Producto <RequiredMark /></FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -134,7 +135,7 @@ export function NewDetailDistribution({
               }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cantidad *</FormLabel>
+                  <FormLabel>Cantidad <RequiredMark /></FormLabel>
                   <FormControl>
                     <Input
                       {...field}

@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
   Card,
@@ -60,7 +61,7 @@ export function DistributionProductFormFields() {
             rules={{ required: { value: true, message: "El envío es requerido" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Envío *</FormLabel>
+                <FormLabel>Envío <RequiredMark /></FormLabel>
                 <FormControl>
                   <ShippingCombobox value={field.value} onChange={field.onChange} />
                 </FormControl>
@@ -75,7 +76,7 @@ export function DistributionProductFormFields() {
             rules={{ required: { value: true, message: "El introductor es requerido" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Introductor *</FormLabel>
+                <FormLabel>Introductor <RequiredMark /></FormLabel>
                 <FormControl>
                   <IntroducerCombobox
                     value={field.value}
@@ -93,7 +94,7 @@ export function DistributionProductFormFields() {
             rules={{ required: { value: true, message: "El origen es requerido" } }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Origen *</FormLabel>
+                <FormLabel>Origen <RequiredMark /></FormLabel>
                 <Select
                   onValueChange={(v) => field.onChange(Number(v))}
                   value={field.value ? String(field.value) : ""}
@@ -123,7 +124,7 @@ export function DistributionProductFormFields() {
               rules={{ required: { value: true, message: "La hora de inicio es requerida" } }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Hora de inicio *</FormLabel>
+                  <FormLabel>Hora de inicio <RequiredMark /></FormLabel>
                   <FormControl>
                     <Input {...field} type="time" />
                   </FormControl>

@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { RequiredMark } from "@/components/ui/required-mark";
 import {
   Select,
   SelectContent,
@@ -98,7 +99,7 @@ export function NewOrderType({
               rules={{ required: { value: true, message: "El rol es requerido" } }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rol *</FormLabel>
+                  <FormLabel>Rol <RequiredMark /></FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full">

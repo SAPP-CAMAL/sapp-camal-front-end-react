@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -57,7 +58,7 @@ export function NewModuleFields({
             }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre *</FormLabel>
+                <FormLabel>Nombre <RequiredMark /></FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -90,7 +91,7 @@ export function NewModuleFields({
               }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Estado *</FormLabel>
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full">

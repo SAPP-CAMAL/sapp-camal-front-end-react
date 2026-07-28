@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -86,7 +87,7 @@ export function NewBiosecurityLine({ idLine }: { idLine: number }) {
               }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre *</FormLabel>
+                  <FormLabel>Nombre <RequiredMark /></FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>

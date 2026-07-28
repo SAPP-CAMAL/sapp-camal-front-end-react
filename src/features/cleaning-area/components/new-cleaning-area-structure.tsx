@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/ui/required-mark";
 import {
   Select,
   SelectContent,
@@ -116,7 +117,7 @@ export function NewCleaningAreaStructure({
               rules={{ required: { value: true, message: "La estructura es requerida" } }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Estructura/Material *</FormLabel>
+                  <FormLabel>Estructura/Material <RequiredMark /></FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full">

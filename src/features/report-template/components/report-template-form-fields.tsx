@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { useFormContext } from "react-hook-form";
 import {
     Card,
@@ -55,7 +56,7 @@ export function NewReportTemplateFields({ showStatus = false }: { showStatus?: b
                         rules={{ required: { value: true, message: "El código es requerido" } }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Código *</FormLabel>
+                                <FormLabel>Código <RequiredMark /></FormLabel>
                                 <Select
                                     onValueChange={(value) => field.onChange(Number(value))}
                                     value={field.value ? String(field.value) : undefined}
@@ -89,7 +90,7 @@ export function NewReportTemplateFields({ showStatus = false }: { showStatus?: b
                         rules={{ required: { value: true, message: "El tipo es requerido" } }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Tipo *</FormLabel>
+                                <FormLabel>Tipo <RequiredMark /></FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger className="w-full">
@@ -113,7 +114,7 @@ export function NewReportTemplateFields({ showStatus = false }: { showStatus?: b
                         rules={{ required: { value: true, message: "El nombre es requerido" } }}
                         render={({ field }) => (
                             <FormItem className="sm:col-span-2">
-                                <FormLabel>Nombre *</FormLabel>
+                                <FormLabel>Nombre <RequiredMark /></FormLabel>
                                 <FormControl>
                                     <Input maxLength={100} {...field} />
                                 </FormControl>
@@ -140,9 +141,10 @@ export function NewReportTemplateFields({ showStatus = false }: { showStatus?: b
                         <FormField
                             control={form.control}
                             name="status"
+                            rules={{ required: { value: true, message: "El estado es requerido" } }}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Estado *</FormLabel>
+                                    <FormLabel>Estado <RequiredMark /></FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger className="w-full">
