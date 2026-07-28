@@ -8,11 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { CleaningAreaGrouped } from "../domain/cleaning-area.domain";
 import { NewCleaningAreaStructure } from "./new-cleaning-area-structure";
 import { DeleteCleaningAreaStructure } from "./delete-cleaning-area-structure";
 import { DeleteCleaningArea } from "./delete-cleaning-area";
+import { CLEANING_CATALOG_TYPES } from "@/features/cleaning-catalog/domain/cleaning-catalog.domain";
+
+const normalizedType = (type?: string | null) => (type ?? "").toUpperCase().trim();
 
 export function CleaningAreaCard({
   area,
@@ -21,6 +23,19 @@ export function CleaningAreaCard({
   area: CleaningAreaGrouped;
   idLine: number;
 }) {
+  const groupedStructures = [...CLEANING_CATALOG_TYPES, "OTROS" as const]
+    .map((type) => ({
+      type,
+      items: area.structures.filter((structure) =>
+        type === "OTROS"
+          ? !CLEANING_CATALOG_TYPES.includes(
+              normalizedType(structure.catalogType) as (typeof CLEANING_CATALOG_TYPES)[number]
+            )
+          : normalizedType(structure.catalogType) === type
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
+
   return (
     <Card>
       <CardHeader>
@@ -54,25 +69,31 @@ export function CleaningAreaCard({
             No hay estructuras/materiales asignados a esta área
           </p>
         ) : (
-          <ul className="divide-y border rounded-md">
-            {area.structures.map((structure) => (
-              <li
-                key={structure.id}
-                className="flex items-center justify-between px-3 py-2"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                  <span className="text-sm break-words">{structure.catalogName}</span>
-                  {structure.catalogType && (
-                    <Badge variant="secondary">{structure.catalogType}</Badge>
-                  )}
-                </div>
-                <DeleteCleaningAreaStructure
-                  idStructure={structure.id}
-                  idLine={idLine}
-                />
-              </li>
+          <div className="space-y-3">
+            {groupedStructures.map((group) => (
+              <div key={group.type}>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  {group.type}
+                </span>
+                <ul className="divide-y border rounded-md mt-1">
+                  {group.items.map((structure) => (
+                    <li
+                      key={structure.id}
+                      className="flex items-center justify-between px-3 py-2"
+                    >
+                      <span className="text-sm break-words min-w-0">
+                        {structure.catalogName}
+                      </span>
+                      <DeleteCleaningAreaStructure
+                        idStructure={structure.id}
+                        idLine={idLine}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </CardContent>
     </Card>
