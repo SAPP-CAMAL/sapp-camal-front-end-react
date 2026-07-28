@@ -32,4 +32,42 @@ export function isDescendantOf(
     return false;
 }
 
+export type MenuTreeNode = MenuAdmin & { depth: number; hasChildren: boolean };
+
+export function sortMenusAsTree(menus: MenuAdmin[]): MenuTreeNode[] {
+    const idsInSet = new Set(menus.map((menu) => menu.id));
+    const childrenByParent = new Map<number, MenuAdmin[]>();
+
+    for (const menu of menus) {
+        if (menu.parentId != null && idsInSet.has(menu.parentId)) {
+            if (!childrenByParent.has(menu.parentId)) childrenByParent.set(menu.parentId, []);
+            childrenByParent.get(menu.parentId)!.push(menu);
+        }
+    }
+
+    const byOrder = (a: MenuAdmin, b: MenuAdmin) =>
+        (a.orderIndex ?? a.sequence ?? 0) - (b.orderIndex ?? b.sequence ?? 0);
+
+    for (const children of childrenByParent.values()) children.sort(byOrder);
+
+    const result: MenuTreeNode[] = [];
+    const visited = new Set<number>();
+
+    function visit(menu: MenuAdmin, depth: number) {
+        if (visited.has(menu.id)) return;
+        visited.add(menu.id);
+        const children = childrenByParent.get(menu.id) ?? [];
+        result.push({ ...menu, depth, hasChildren: children.length > 0 });
+        for (const child of children) visit(child, depth + 1);
+    }
+
+    const roots = menus
+        .filter((menu) => menu.parentId == null || !idsInSet.has(menu.parentId))
+        .sort(byOrder);
+
+    for (const root of roots) visit(root, 1);
+
+    return result;
+}
+
 export { MAX_MENU_DEPTH };

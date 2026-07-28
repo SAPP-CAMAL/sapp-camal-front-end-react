@@ -37,7 +37,7 @@ export function ManageSpeciesDisease({
           Gestionar Especies
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
+      <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
         <DialogHeader>
           <DialogTitle>
             Especies de la Regla: {productDisease.product?.description} -{" "}
@@ -47,7 +47,9 @@ export function ManageSpeciesDisease({
             Administra en qué especies aplica esta regla producto-enfermedad.
           </DialogDescription>
         </DialogHeader>
-        <SpeciesDiseaseManagement idProductDisease={productDisease.id} />
+        <div className="min-w-0 w-full">
+          <SpeciesDiseaseManagement idProductDisease={productDisease.id} />
+        </div>
       </DialogContent>
     </Dialog>
   );

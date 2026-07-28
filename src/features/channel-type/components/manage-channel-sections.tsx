@@ -33,7 +33,7 @@ export function ManageChannelSections({ channelType }: { channelType: ChannelTyp
           Gestionar Secciones
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
+      <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
         <DialogHeader>
           <DialogTitle>
             Secciones del Tipo de Canal: {channelType.name}
@@ -43,7 +43,9 @@ export function ManageChannelSections({ channelType }: { channelType: ChannelTyp
             canal (cantidad de ganchos configurados: {channelType.hooksQuantity}).
           </DialogDescription>
         </DialogHeader>
-        <ChannelSectionsManagement idChannelType={channelType.id} />
+        <div className="min-w-0 w-full">
+          <ChannelSectionsManagement idChannelType={channelType.id} />
+        </div>
       </DialogContent>
     </Dialog>
   );

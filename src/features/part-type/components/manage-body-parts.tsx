@@ -33,7 +33,7 @@ export function ManageBodyParts({ partType }: { partType: PartType }) {
           Gestionar Partes del Cuerpo
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
+      <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
         <DialogHeader>
           <DialogTitle>
             Partes del Cuerpo del Tipo: {partType.description}
@@ -43,7 +43,9 @@ export function ManageBodyParts({ partType }: { partType: PartType }) {
             parte anatómica.
           </DialogDescription>
         </DialogHeader>
-        <BodyPartsManagement idPartType={partType.id} />
+        <div className="min-w-0 w-full">
+          <BodyPartsManagement idPartType={partType.id} />
+        </div>
       </DialogContent>
     </Dialog>
   );

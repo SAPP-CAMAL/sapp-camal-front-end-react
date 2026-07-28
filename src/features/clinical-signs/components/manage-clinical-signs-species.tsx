@@ -37,7 +37,7 @@ export function ManageClinicalSignsSpecies({
           Gestionar Especies
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
+      <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
         <DialogHeader>
           <DialogTitle>
             Especies del Signo Clínico: {clinicalSign.description}
@@ -46,7 +46,9 @@ export function ManageClinicalSignsSpecies({
             Administra las especies en las que aplica este signo clínico.
           </DialogDescription>
         </DialogHeader>
-        <ClinicalSignsSpeciesManagement idClinicalSigns={clinicalSign.id} />
+        <div className="min-w-0 w-full">
+          <ClinicalSignsSpeciesManagement idClinicalSigns={clinicalSign.id} />
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -37,7 +37,7 @@ export function ManageSettingSignsBody({
           Gestionar Partes del Cuerpo
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
+      <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
         <DialogHeader>
           <DialogTitle>
             Partes del Cuerpo del Signo Clínico: {clinicalSign.description}
@@ -47,7 +47,9 @@ export function ManageSettingSignsBody({
             clínico.
           </DialogDescription>
         </DialogHeader>
-        <SettingSignsBodyManagement idClinicalSigns={clinicalSign.id} />
+        <div className="min-w-0 w-full">
+          <SettingSignsBodyManagement idClinicalSigns={clinicalSign.id} />
+        </div>
       </DialogContent>
     </Dialog>
   );

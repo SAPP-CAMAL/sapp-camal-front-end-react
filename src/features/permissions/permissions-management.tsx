@@ -31,6 +31,29 @@ import {
   getRolePermissionsService,
   togglePermissionService,
 } from "./server/db/permissions.service";
+import { RolePermissionMenuItem } from "./domain/permissions.domain";
+
+function groupMenusByParent(menus: RolePermissionMenuItem[]) {
+  const byId = new Map(menus.map((menu) => [menu.menuId, menu]));
+  const childrenByParent = new Map<number, RolePermissionMenuItem[]>();
+
+  for (const menu of menus) {
+    if (menu.parentId != null && byId.has(menu.parentId)) {
+      if (!childrenByParent.has(menu.parentId)) childrenByParent.set(menu.parentId, []);
+      childrenByParent.get(menu.parentId)!.push(menu);
+    }
+  }
+
+  const topLevel = menus.filter(
+    (menu) => menu.parentId == null || !byId.has(menu.parentId)
+  );
+
+  return {
+    groups: topLevel.filter((menu) => childrenByParent.has(menu.menuId)),
+    ungrouped: topLevel.filter((menu) => !childrenByParent.has(menu.menuId)),
+    childrenByParent,
+  };
+}
 
 /**
  * Pantalla de administración de permisos: para cada rol, permite otorgar o
@@ -137,29 +160,84 @@ export function PermissionsManagement() {
                       Este módulo no tiene menús configurados.
                     </p>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-2">
-                      {module.menus.map((menu) => (
-                        <div
-                          key={menu.menuId}
-                          className="flex items-center gap-2 border rounded-md p-2"
-                        >
-                          <Checkbox
-                            id={`menu-${menu.menuId}`}
-                            checked={menu.assigned}
-                            disabled={pendingMenuId === menu.menuId}
-                            onCheckedChange={(checked) =>
-                              handleToggle(menu.menuId, checked === true)
-                            }
-                          />
-                          <Label
-                            htmlFor={`menu-${menu.menuId}`}
-                            className="text-sm font-normal cursor-pointer"
-                          >
-                            {menu.menuName}
-                          </Label>
+                    (() => {
+                      const { groups, ungrouped, childrenByParent } = groupMenusByParent(
+                        module.menus
+                      );
+                      return (
+                        <div className="space-y-4 pb-2">
+                          {groups.map((group) => (
+                            <div key={group.menuId} className="border rounded-md p-3 bg-gray-50/50">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Checkbox
+                                  id={`menu-${group.menuId}`}
+                                  checked={group.assigned}
+                                  disabled={pendingMenuId === group.menuId}
+                                  onCheckedChange={(checked) =>
+                                    handleToggle(group.menuId, checked === true)
+                                  }
+                                />
+                                <Label
+                                  htmlFor={`menu-${group.menuId}`}
+                                  className="text-sm font-semibold cursor-pointer"
+                                >
+                                  {group.menuName}
+                                </Label>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pl-6">
+                                {(childrenByParent.get(group.menuId) ?? []).map((menu) => (
+                                  <div
+                                    key={menu.menuId}
+                                    className="flex items-center gap-2 border rounded-md p-2 bg-white"
+                                  >
+                                    <Checkbox
+                                      id={`menu-${menu.menuId}`}
+                                      checked={menu.assigned}
+                                      disabled={pendingMenuId === menu.menuId}
+                                      onCheckedChange={(checked) =>
+                                        handleToggle(menu.menuId, checked === true)
+                                      }
+                                    />
+                                    <Label
+                                      htmlFor={`menu-${menu.menuId}`}
+                                      className="text-sm font-normal cursor-pointer"
+                                    >
+                                      {menu.menuName}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+
+                          {ungrouped.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {ungrouped.map((menu) => (
+                                <div
+                                  key={menu.menuId}
+                                  className="flex items-center gap-2 border rounded-md p-2"
+                                >
+                                  <Checkbox
+                                    id={`menu-${menu.menuId}`}
+                                    checked={menu.assigned}
+                                    disabled={pendingMenuId === menu.menuId}
+                                    onCheckedChange={(checked) =>
+                                      handleToggle(menu.menuId, checked === true)
+                                    }
+                                  />
+                                  <Label
+                                    htmlFor={`menu-${menu.menuId}`}
+                                    className="text-sm font-normal cursor-pointer"
+                                  >
+                                    {menu.menuName}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })()
                   )}
                 </AccordionContent>
               </AccordionItem>

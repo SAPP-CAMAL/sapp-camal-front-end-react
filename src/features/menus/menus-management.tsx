@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ListTreeIcon, LinkIcon, Activity, Settings } from "lucide-react";
+import {
+  ListTreeIcon,
+  LinkIcon,
+  Activity,
+  Settings,
+  ChevronRightIcon,
+  ChevronDownIcon,
+  FolderIcon,
+  FileIcon,
+} from "lucide-react";
 import { TableMenus } from "./table-menus";
 import { useQuery } from "@tanstack/react-query";
 import { getMenusAdminService } from "./server/db/menus.service";
@@ -26,7 +35,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDebouncedCallback } from "use-debounce";
-import { getMenuDepth } from "./utils/menu-tree.utils";
+import { getMenuDepth, sortMenusAsTree } from "./utils/menu-tree.utils";
+import { MenuAdmin } from "./domain/menus.domain";
 
 export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = {}) {
   const [page, setPage] = useState(1);
@@ -34,6 +44,16 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
   const [menuName, setMenuName] = useState("");
   const [moduleId, setModuleId] = useState<string>("*");
   const [status, setStatus] = useState<string>("*");
+  const [collapsedIds, setCollapsedIds] = useState<Set<number>>(new Set());
+
+  const toggleCollapse = (id: number) => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const effectiveModuleId = fixedModuleId ?? (moduleId !== "*" ? Number(moduleId) : undefined);
 
@@ -55,7 +75,29 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
       }),
   });
 
-  const menusById = new Map((query.data?.data.items ?? []).map((menu) => [menu.id, menu]));
+  const rawItems = query.data?.data.items ?? [];
+  const menusById = new Map(rawItems.map((menu) => [menu.id, menu]));
+
+  const treeNodes = fixedModuleId
+    ? sortMenusAsTree(rawItems)
+    : rawItems.map((menu) => ({
+        ...menu,
+        depth: getMenuDepth(menu, menusById),
+        hasChildren: rawItems.some((m) => m.parentId === menu.id),
+      }));
+
+  const isVisible = (node: MenuAdmin) => {
+    let current = node;
+    while (current.parentId) {
+      if (collapsedIds.has(current.parentId)) return false;
+      const parent = menusById.get(current.parentId);
+      if (!parent) break;
+      current = parent;
+    }
+    return true;
+  };
+
+  const visibleNodes = treeNodes.filter(isVisible);
 
   const debounceName = useDebouncedCallback((text: string) => {
     setMenuName(text);
@@ -180,14 +222,38 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
               </div>
             ),
             cell: ({ row }) => {
-              const depth = getMenuDepth(row.original, menusById);
+              const node = row.original as (typeof treeNodes)[number];
+              const { depth, hasChildren } = node;
+              const isCollapsed = collapsedIds.has(node.id);
               return (
                 <div
-                  className="flex items-center gap-x-2"
-                  style={{ paddingLeft: `${(depth - 1) * 20}px` }}
+                  className="flex items-center gap-x-1"
+                  style={{ paddingLeft: `${(depth - 1) * 24}px` }}
                 >
-                  {depth > 1 && <span className="text-gray-300">└</span>}
-                  {row.original.menuName}
+                  {depth > 1 && <span className="text-gray-300 select-none">└─</span>}
+                  {hasChildren ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleCollapse(node.id)}
+                      className="p-0.5 rounded hover:bg-gray-100 shrink-0"
+                    >
+                      {isCollapsed ? (
+                        <ChevronRightIcon className="h-3.5 w-3.5 text-gray-500" />
+                      ) : (
+                        <ChevronDownIcon className="h-3.5 w-3.5 text-gray-500" />
+                      )}
+                    </button>
+                  ) : (
+                    <span className="w-4 shrink-0" />
+                  )}
+                  {hasChildren ? (
+                    <FolderIcon className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                  ) : (
+                    <FileIcon className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                  )}
+                  <span className={hasChildren ? "font-medium" : ""}>
+                    {node.menuName}
+                  </span>
                 </div>
               );
             },
@@ -244,7 +310,7 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
             ),
           },
         ]}
-        data={query.data?.data.items ?? []}
+        data={visibleNodes}
         meta={{
           ...query.data?.data.meta,
           onChangePage: (p) => setPage(p),

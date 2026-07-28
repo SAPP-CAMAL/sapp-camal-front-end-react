@@ -37,7 +37,7 @@ export function ManageProductAnatomicalLocations({
           Gestionar Ubicaciones Anatómicas
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
+      <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-[90vw] lg:max-w-[75vw]">
         <DialogHeader>
           <DialogTitle>
             Ubicaciones Anatómicas del Producto: {product.description}
@@ -46,7 +46,9 @@ export function ManageProductAnatomicalLocations({
             Administra las ubicaciones anatómicas asociadas a este producto.
           </DialogDescription>
         </DialogHeader>
-        <ProductAnatomicalLocationManagement idProduct={product.id} />
+        <div className="min-w-0 w-full">
+          <ProductAnatomicalLocationManagement idProduct={product.id} />
+        </div>
       </DialogContent>
     </Dialog>
   );

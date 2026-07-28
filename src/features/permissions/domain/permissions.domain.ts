@@ -5,6 +5,7 @@ export type RolePermissionMenuItem = {
     menuName: string;
     url: string | null;
     icon: string | null;
+    parentId: number | null;
     assigned: boolean;
 }
 
