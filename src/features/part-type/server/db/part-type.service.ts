@@ -16,3 +16,7 @@ export function updatePartTypeService(id: number, body: Partial<CreatePartTypeBo
 export function deletePartTypeService(id: number) {
     return http.delete(`v1/1.0.0/part-type/${id}`).json()
 }
+
+export function deletePartTypePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/part-type/${id}/permanent`).json()
+}

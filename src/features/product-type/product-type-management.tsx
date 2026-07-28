@@ -27,7 +27,7 @@ import { NewProductType } from "./components/new-product-type";
 import { UpdateProductType } from "./components/update-product-type";
 import { PRODUCT_TYPE_LIST_TAG } from "./constants";
 import {
-  deleteProductTypeService,
+  deleteProductTypePermanentlyService,
   getAllProductTypesService,
   updateProductTypeService,
 } from "./server/db/product-type.service";
@@ -43,10 +43,10 @@ export function ProductTypeManagement() {
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: [PRODUCT_TYPE_LIST_TAG] });
 
-  const handleDeactivate = async (id: number) => {
+  const handleDelete = async (id: number) => {
     try {
-      await deleteProductTypeService(id);
-      toast.success("Registro desactivado exitosamente");
+      await deleteProductTypePermanentlyService(id);
+      toast.success("Registro eliminado permanentemente");
       invalidate();
     } catch (error: any) {
       const { data } = await error.response.json();
@@ -127,16 +127,16 @@ export function ProductTypeManagement() {
                           <UpdateProductType productType={productType} />
                           {productType.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar este registro?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(productType.id)}
+                              title="¿Eliminar este registro?"
+                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(productType.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
                               cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button
@@ -207,16 +207,16 @@ export function ProductTypeManagement() {
                           <UpdateProductType productType={productType} />
                           {productType.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar este registro?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(productType.id)}
+                              title="¿Eliminar este registro?"
+                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(productType.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
                               cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button

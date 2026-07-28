@@ -31,3 +31,7 @@ export function updateSpeciesProductService(id: number, body: UpdateSpeciesProdu
 export function deleteSpeciesProductService(id: number) {
   return http.delete(`v1/1.0.0/specie-product/${id}`);
 }
+
+export function deleteSpeciesProductPermanentlyService(id: number) {
+  return http.delete(`v1/1.0.0/specie-product/${id}/permanent`);
+}

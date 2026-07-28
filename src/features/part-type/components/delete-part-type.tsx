@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deletePartTypeService } from "../server/db/part-type.service";
+import { deletePartTypePermanentlyService } from "../server/db/part-type.service";
 import { PartType } from "../domain/part-type.domain";
 import { PART_TYPE_TAG } from "../constants/part-type.constants";
 
@@ -15,7 +15,7 @@ export function DeletePartType({ partType }: { partType: PartType }) {
 
   const handleDelete = async () => {
     try {
-      await deletePartTypeService(partType.id);
+      await deletePartTypePermanentlyService(partType.id);
 
       await queryClient.invalidateQueries({
         queryKey: [PART_TYPE_TAG],

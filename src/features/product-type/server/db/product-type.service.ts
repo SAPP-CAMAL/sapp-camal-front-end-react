@@ -28,3 +28,7 @@ export function updateProductTypeService(id: number, body: UpdateProductTypeBody
 export function deleteProductTypeService(id: number) {
   return http.delete(`v1/1.0.0/product-type/${id}`);
 }
+
+export function deleteProductTypePermanentlyService(id: number) {
+  return http.delete(`v1/1.0.0/product-type/${id}/permanent`);
+}

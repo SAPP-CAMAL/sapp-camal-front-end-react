@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCauseDeathService } from "../server/db/causes-death.service";
+import { deleteCauseDeathPermanentlyService } from "../server/db/causes-death.service";
 import { CauseDeath } from "../domain/causes-death.domain";
 import { CAUSES_DEATH_TAG } from "../constants/causes-death.constants";
 
@@ -15,7 +15,7 @@ export function DeleteCauseDeath({ causeDeath }: { causeDeath: CauseDeath }) {
 
   const handleDelete = async () => {
     try {
-      await deleteCauseDeathService(causeDeath.id);
+      await deleteCauseDeathPermanentlyService(causeDeath.id);
 
       await queryClient.invalidateQueries({
         queryKey: [CAUSES_DEATH_TAG],
