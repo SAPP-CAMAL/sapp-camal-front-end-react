@@ -17,6 +17,8 @@ import { NewSettingEquipmentLine } from "./new-setting-equipment-line";
 import { DeleteSettingEquipmentLine } from "./delete-setting-equipment-line";
 import { DeleteBiosecurityLine } from "./delete-biosecurity-line";
 
+const NO_TYPE_GROUP = "SIN TIPO";
+
 export function BiosecurityLineCard({
   biosecurityLine,
 }: {
@@ -29,6 +31,16 @@ export function BiosecurityLineCard({
   });
 
   const equipments = equipmentsQuery.data?.data ?? [];
+
+  const groupedEquipments = Object.entries(
+    equipments.reduce<Record<string, typeof equipments>>((groups, item) => {
+      const groupName = item.equipment?.equipmentType?.description ?? NO_TYPE_GROUP;
+      (groups[groupName] ??= []).push(item);
+      return groups;
+    }, {})
+  )
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([type, items]) => ({ type, items }));
 
   return (
     <Card>
@@ -66,27 +78,31 @@ export function BiosecurityLineCard({
             No hay equipos asignados a esta línea
           </p>
         ) : (
-          <ul className="divide-y border rounded-md">
-            {equipments.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center justify-between px-3 py-2"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                  <span className="text-sm break-words">{item.equipment?.description}</span>
-                  {item.equipment?.equipmentType && (
-                    <Badge variant="secondary">
-                      {item.equipment.equipmentType.description}
-                    </Badge>
-                  )}
-                </div>
-                <DeleteSettingEquipmentLine
-                  id={item.id}
-                  idBiosecurityLine={biosecurityLine.id}
-                />
-              </li>
+          <div className="space-y-3">
+            {groupedEquipments.map((group) => (
+              <div key={group.type}>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  {group.type}
+                </span>
+                <ul className="divide-y border rounded-md mt-1">
+                  {group.items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center justify-between px-3 py-2"
+                    >
+                      <span className="text-sm break-words min-w-0">
+                        {item.equipment?.description}
+                      </span>
+                      <DeleteSettingEquipmentLine
+                        id={item.id}
+                        idBiosecurityLine={biosecurityLine.id}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </CardContent>
     </Card>

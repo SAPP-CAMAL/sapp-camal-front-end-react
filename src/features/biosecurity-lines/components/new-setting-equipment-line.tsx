@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  PlusIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,12 +19,19 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RequiredMark } from "@/components/ui/required-mark";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +39,8 @@ import { createSettingEquipmentLineService } from "../server/db/biosecurity-line
 import { getEquipmentsService } from "@/features/equipment/server/db/equipment.service";
 import { SETTING_EQUIPMENT_LINES_TAG } from "../constants/biosecurity-lines.constants";
 import { SettingEquipmentLine } from "../domain/biosecurity-lines.domain";
+
+const NO_TYPE_GROUP = "SIN TIPO";
 
 type NewSettingEquipmentLineForm = {
   idEquipment: string;
@@ -41,6 +55,7 @@ export function NewSettingEquipmentLine({
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [itemPickerOpen, setItemPickerOpen] = useState(false);
 
   const equipmentsQuery = useQuery({
     queryKey: ["equipments"],
@@ -62,6 +77,19 @@ export function NewSettingEquipmentLine({
     (eq) => eq.status && !existingIds.has(eq.id)
   );
   const noAvailableEquipments = !equipmentsQuery.isLoading && availableEquipments.length === 0;
+
+  const groupedEquipments = Object.entries(
+    availableEquipments.reduce<Record<string, typeof availableEquipments>>(
+      (groups, eq) => {
+        const groupName = eq.equipmentType?.description ?? NO_TYPE_GROUP;
+        (groups[groupName] ??= []).push(eq);
+        return groups;
+      },
+      {}
+    )
+  )
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([type, items]) => ({ type, items }));
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
@@ -104,34 +132,76 @@ export function NewSettingEquipmentLine({
               control={form.control}
               name="idEquipment"
               rules={{ required: { value: true, message: "El equipo es requerido" } }}
-              render={({ field }) => (
-                <FormItem>
+              render={({ field }) => {
+                const selectedEquipment = availableEquipments.find(
+                  (eq) => String(eq.id) === field.value
+                );
+
+                return (
+                <FormItem className="flex flex-col">
                   <FormLabel>Equipo <RequiredMark /></FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={noAvailableEquipments}
+                  <Popover
+                    open={itemPickerOpen}
+                    onOpenChange={setItemPickerOpen}
                   >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue
-                          placeholder={
-                            noAvailableEquipments
-                              ? "No hay equipos disponibles"
-                              : "Seleccione un equipo"
-                          }
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {availableEquipments.map((eq) => (
-                        <SelectItem key={eq.id} value={String(eq.id)}>
-                          {eq.description}
-                          {eq.equipmentType ? ` (${eq.equipmentType.description})` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={itemPickerOpen}
+                          className="w-full justify-between font-normal"
+                          disabled={noAvailableEquipments}
+                        >
+                          <span className="truncate">
+                            {selectedEquipment
+                              ? `${selectedEquipment.description}${
+                                  selectedEquipment.equipmentType
+                                    ? ` (${selectedEquipment.equipmentType.description})`
+                                    : ""
+                                }`
+                              : noAvailableEquipments
+                                ? "No hay equipos disponibles"
+                                : "Seleccione un equipo"}
+                          </span>
+                          <ChevronsUpDown className="opacity-50 shrink-0" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command>
+                        <CommandInput placeholder="Buscar por nombre..." />
+                        <CommandList>
+                          <CommandEmpty>Sin resultados.</CommandEmpty>
+                          {groupedEquipments.map((group) => (
+                            <CommandGroup key={group.type} heading={group.type}>
+                              {group.items.map((eq) => (
+                                <CommandItem
+                                  key={eq.id}
+                                  value={eq.description}
+                                  onSelect={() => {
+                                    field.onChange(String(eq.id));
+                                    setItemPickerOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === String(eq.id)
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {eq.description}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   {noAvailableEquipments && (
                     <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 text-amber-800 px-3 py-2 text-sm">
                       <TriangleAlertIcon className="h-4 w-4 mt-0.5 shrink-0" />
@@ -143,7 +213,8 @@ export function NewSettingEquipmentLine({
                   )}
                   <FormMessage />
                 </FormItem>
-              )}
+                );
+              }}
             />
 
             <div className="flex justify-end gap-x-2">
