@@ -113,19 +113,6 @@ export function EnvironmentVariableFormFields() {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="url"
-            render={({ field }) => (
-              <FormItem className="col-span-2">
-                <FormLabel>URL relacionada</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Opcional" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </CardContent>
       </Card>
     </div>

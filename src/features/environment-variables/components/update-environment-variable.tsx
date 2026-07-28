@@ -43,7 +43,6 @@ export function UpdateEnvironmentVariable({
         name: environmentVariable.name,
         token: environmentVariable.token,
         typeData: environmentVariable.typeData,
-        url: environmentVariable.url ?? "",
       });
     }
   }, [open, form, environmentVariable]);
@@ -56,7 +55,6 @@ export function UpdateEnvironmentVariable({
         ...(form.formState.dirtyFields.typeData && {
           typeData: data.typeData,
         }),
-        ...(form.formState.dirtyFields.url && { url: data.url }),
       });
 
       form.reset(form.formState.defaultValues);

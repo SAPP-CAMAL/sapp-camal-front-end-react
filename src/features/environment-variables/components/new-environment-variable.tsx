@@ -23,14 +23,12 @@ export type NewEnvironmentVariableForm = {
   name: string;
   token: string;
   typeData: string;
-  url: string;
 };
 
 const defaultValues: NewEnvironmentVariableForm = {
   name: "",
   token: "",
   typeData: "",
-  url: "",
 };
 
 export function NewEnvironmentVariable() {
@@ -51,7 +49,6 @@ export function NewEnvironmentVariable() {
         name: data.name,
         token: data.token,
         typeData: data.typeData,
-        url: data.url || undefined,
         status: true,
       });
 

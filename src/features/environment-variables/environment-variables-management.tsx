@@ -30,6 +30,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 import { NewEnvironmentVariable } from "./components/new-environment-variable";
@@ -41,17 +47,25 @@ import {
   updateEnvironmentVariableService,
 } from "./server/db/environment-variables.service";
 
+const LONG_VALUE_THRESHOLD = 60;
+
 function MaskedToken({ value }: { value: string }) {
   const [visible, setVisible] = useState(false);
+  const [open, setOpen] = useState(false);
+  const isLong = value.length > LONG_VALUE_THRESHOLD;
+
+  const displayValue = visible
+    ? isLong
+      ? `${value.slice(0, LONG_VALUE_THRESHOLD)}…`
+      : value
+    : "•".repeat(Math.min(value.length, 16) || 8);
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="font-mono text-sm">
-        {visible ? value : "•".repeat(Math.min(value.length, 16) || 8)}
-      </span>
+    <div className="flex items-center gap-2 max-w-[260px]">
+      <span className="font-mono text-sm truncate">{displayValue}</span>
       <button
         type="button"
-        className="text-gray-500"
+        className="text-gray-500 shrink-0"
         onClick={() => setVisible((prev) => !prev)}
       >
         {visible ? (
@@ -60,6 +74,27 @@ function MaskedToken({ value }: { value: string }) {
           <EyeIcon className="h-4 w-4" />
         )}
       </button>
+      {visible && isLong && (
+        <>
+          <button
+            type="button"
+            className="text-gray-500 shrink-0 text-xs underline whitespace-nowrap"
+            onClick={() => setOpen(true)}
+          >
+            Ver completo
+          </button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className="max-h-[80vh] overflow-y-auto max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Valor completo</DialogTitle>
+              </DialogHeader>
+              <pre className="whitespace-pre-wrap break-all text-sm font-mono bg-gray-50 p-3 rounded-md">
+                {value}
+              </pre>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
     </div>
   );
 }
@@ -133,7 +168,6 @@ export function EnvironmentVariablesManagement() {
                   <TableHead>Nombre</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>URL</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-center">Acciones</TableHead>
                 </TableRow>
@@ -141,7 +175,7 @@ export function EnvironmentVariablesManagement() {
               <TableBody>
                 {query.isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center animate-pulse">
+                    <TableCell colSpan={5} className="h-32 text-center animate-pulse">
                       Cargando datos...
                     </TableCell>
                   </TableRow>
@@ -153,9 +187,6 @@ export function EnvironmentVariablesManagement() {
                         <MaskedToken value={environmentVariable.token} />
                       </TableCell>
                       <TableCell>{environmentVariable.typeData}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {environmentVariable.url || "-"}
-                      </TableCell>
                       <TableCell>
                         <Badge variant={environmentVariable.status ? "default" : "secondary"}>
                           {environmentVariable.status ? "Activo" : "Inactivo"}
@@ -208,7 +239,7 @@ export function EnvironmentVariablesManagement() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-gray-500">
+                    <TableCell colSpan={5} className="h-32 text-center text-gray-500">
                       No se ha registrado ninguna variable de entorno
                     </TableCell>
                   </TableRow>
@@ -249,12 +280,6 @@ export function EnvironmentVariablesManagement() {
                             Tipo
                           </span>
                           <div className="text-sm">{environmentVariable.typeData}</div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                            URL
-                          </span>
-                          <div className="text-sm">{environmentVariable.url || "-"}</div>
                         </div>
                         <div className="flex flex-col gap-1">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">

@@ -8,7 +8,6 @@ export type CreateEnvironmentVariableBody = {
   name: string;
   token: string;
   typeData: string;
-  url?: string;
   status?: boolean;
 };
 
