@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { Check, ChevronsUpDown, PlusIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,12 +15,19 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { RequiredMark } from "@/components/ui/required-mark";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +35,7 @@ import { createCleaningAreaStructureService } from "../server/db/cleaning-area.s
 import { getCleaningCatalogService } from "@/features/cleaning-catalog/server/db/cleaning-catalog.service";
 import { CLEANING_AREA_BY_LINE_TAG } from "../constants/cleaning-area.constants";
 import { CleaningAreaStructureItem } from "../domain/cleaning-area.domain";
+import { CLEANING_CATALOG_TYPES } from "@/features/cleaning-catalog/domain/cleaning-catalog.domain";
 
 type NewCleaningAreaStructureForm = {
   idCatalog: string;
@@ -45,6 +53,7 @@ export function NewCleaningAreaStructure({
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [itemPickerOpen, setItemPickerOpen] = useState(false);
 
   const catalogQuery = useQuery({
     queryKey: ["cleaning-catalog"],
@@ -69,6 +78,25 @@ export function NewCleaningAreaStructure({
   const availableItems = (catalogQuery.data?.data ?? []).filter(
     (item) => item.status && !existingIds.has(item.id)
   );
+
+  const normalizedType = (type?: string | null) =>
+    (type ?? "").toUpperCase().trim();
+
+  const groupedItems = [
+    ...CLEANING_CATALOG_TYPES,
+    "OTROS" as const,
+  ]
+    .map((type) => ({
+      type,
+      items: availableItems.filter((item) =>
+        type === "OTROS"
+          ? !CLEANING_CATALOG_TYPES.includes(
+              normalizedType(item.type) as (typeof CLEANING_CATALOG_TYPES)[number]
+            )
+          : normalizedType(item.type) === type
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
@@ -115,33 +143,83 @@ export function NewCleaningAreaStructure({
               control={form.control}
               name="idCatalog"
               rules={{ required: { value: true, message: "La estructura es requerida" } }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estructura/Material <RequiredMark /></FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccione un ítem" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {availableItems.length === 0 ? (
-                        <div className="px-2 py-1.5 text-sm text-gray-500">
-                          No hay ítems disponibles
-                        </div>
-                      ) : (
-                        availableItems.map((item) => (
-                          <SelectItem key={item.id} value={String(item.id)}>
-                            {item.name}
-                            {item.type ? ` (${item.type})` : ""}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const selectedItem = availableItems.find(
+                  (item) => String(item.id) === field.value
+                );
+
+                return (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Estructura/Material <RequiredMark /></FormLabel>
+                    <Popover
+                      open={itemPickerOpen}
+                      onOpenChange={setItemPickerOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={itemPickerOpen}
+                            className="w-full justify-between font-normal"
+                            disabled={availableItems.length === 0}
+                          >
+                            <span className="truncate">
+                              {selectedItem
+                                ? `${selectedItem.name}${
+                                    selectedItem.type
+                                      ? ` (${selectedItem.type})`
+                                      : ""
+                                  }`
+                                : availableItems.length === 0
+                                  ? "No hay ítems disponibles"
+                                  : "Seleccione un ítem"}
+                            </span>
+                            <ChevronsUpDown className="opacity-50 shrink-0" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                        <Command>
+                          <CommandInput placeholder="Buscar por nombre..." />
+                          <CommandList>
+                            <CommandEmpty>Sin resultados.</CommandEmpty>
+                            {groupedItems.map((group) => (
+                              <CommandGroup
+                                key={group.type}
+                                heading={group.type}
+                              >
+                                {group.items.map((item) => (
+                                  <CommandItem
+                                    key={item.id}
+                                    value={item.name}
+                                    onSelect={() => {
+                                      field.onChange(String(item.id));
+                                      setItemPickerOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value === String(item.id)
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {item.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            ))}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField
