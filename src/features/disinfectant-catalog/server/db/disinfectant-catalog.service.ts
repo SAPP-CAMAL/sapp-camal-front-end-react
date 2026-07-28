@@ -19,3 +19,7 @@ export function updateDisinfectantCatalogService(id: number, body: Partial<Creat
 export function deleteDisinfectantCatalogService(id: number) {
     return http.delete(`v1/1.0.0/disinfectant/${id}`).json();
 }
+
+export function deleteDisinfectantCatalogPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/disinfectant/${id}/permanent`).json();
+}

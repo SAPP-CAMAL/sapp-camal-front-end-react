@@ -16,3 +16,7 @@ export function updateOpinionService(id: number, body: Partial<CreateOpinionBody
 export function deleteOpinionService(id: number) {
     return http.delete(`v1/1.0.0/opinion/${id}`).json()
 }
+
+export function deleteOpinionPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/opinion/${id}/permanent`).json()
+}

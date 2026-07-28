@@ -21,6 +21,10 @@ export function deleteFinishTypeService(id: number) {
     return http.delete(`v1/1.0.0/finish-type/${id}`).json();
 }
 
+export function deleteFinishTypePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/finish-type/${id}/permanent`).json();
+}
+
 export function getSpeciesAllService(): Promise<ResponseSpeciesAll> {
     return http.get("v1/1.0.0/specie/all").json();
 }

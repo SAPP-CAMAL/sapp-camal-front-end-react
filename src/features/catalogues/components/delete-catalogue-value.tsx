@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCatalogueValueService } from "../server/db/catalogue-management.service";
+import { deleteCatalogueValuePermanentlyService } from "../server/db/catalogue-management.service";
 import { CatalogueValue } from "../domain/catalogue-management.domain";
 
 export function DeleteCatalogueValue({ value }: { value: CatalogueValue }) {
@@ -14,7 +14,7 @@ export function DeleteCatalogueValue({ value }: { value: CatalogueValue }) {
 
   const handleDelete = async () => {
     try {
-      await deleteCatalogueValueService(value.id);
+      await deleteCatalogueValuePermanentlyService(value.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["catalogue-values"],

@@ -27,6 +27,10 @@ export function deleteProvinceService(id: number) {
     return http.delete(`v1/1.0.0/provinces/${id}`).json();
 }
 
+export function deleteProvincePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/provinces/${id}/permanent`).json();
+}
+
 export function getCantonsAdminService(searchParams: SearchParamsCanton): Promise<ResponseCantonsAdmin> {
     return http.get("v1/1.0.0/cantons/admin", { searchParams }).json();
 }
@@ -43,6 +47,10 @@ export function deleteCantonService(id: number) {
     return http.delete(`v1/1.0.0/cantons/${id}`).json();
 }
 
+export function deleteCantonPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/cantons/${id}/permanent`).json();
+}
+
 export function getParishesAdminService(searchParams: SearchParamsParish): Promise<ResponseParishesAdmin> {
     return http.get("v1/1.0.0/parishes/admin", { searchParams }).json();
 }
@@ -57,4 +65,8 @@ export function updateParishService(id: number, body: Partial<CreateParishBody>)
 
 export function deleteParishService(id: number) {
     return http.delete(`v1/1.0.0/parishes/${id}`).json();
+}
+
+export function deleteParishPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/parishes/${id}/permanent`).json();
 }

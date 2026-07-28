@@ -23,6 +23,10 @@ export function deleteCatalogueTypeService(catalogueTypeId: number) {
     return http.delete(`v1/1.0.0/catalogues/catalogue-type/${catalogueTypeId}`).json();
 }
 
+export function deleteCatalogueTypePermanentlyService(catalogueTypeId: number) {
+    return http.delete(`v1/1.0.0/catalogues/catalogue-type/${catalogueTypeId}/permanent`).json();
+}
+
 export function getCatalogueValuesService(searchParams: SearchParamsCatalogueValue): Promise<ResponseCatalogueValues> {
     return http.get("v1/1.0.0/catalogues/catalogue", { searchParams }).json();
 }
@@ -37,4 +41,8 @@ export function updateCatalogueValueService(catalogueId: number, body: Partial<C
 
 export function deleteCatalogueValueService(catalogueId: number) {
     return http.delete(`v1/1.0.0/catalogues/catalogue/${catalogueId}`).json();
+}
+
+export function deleteCatalogueValuePermanentlyService(catalogueId: number) {
+    return http.delete(`v1/1.0.0/catalogues/catalogue/${catalogueId}/permanent`).json();
 }

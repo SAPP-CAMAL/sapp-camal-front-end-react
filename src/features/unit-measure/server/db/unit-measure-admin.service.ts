@@ -19,3 +19,7 @@ export function updateUnitMeasureService(id: number, body: Partial<CreateUnitMea
 export function deleteUnitMeasureService(id: number) {
     return http.delete(`v1/1.0.0/unit-measure/${id}`).json();
 }
+
+export function deleteUnitMeasurePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/unit-measure/${id}/permanent`).json();
+}

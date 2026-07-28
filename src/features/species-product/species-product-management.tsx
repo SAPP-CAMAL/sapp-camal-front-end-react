@@ -1,6 +1,6 @@
 "use client";
 
-import { PackageSearch, RotateCcw, Trash2, XIcon, Check } from "lucide-react";
+import { PackageSearch, RotateCcw, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -29,7 +29,7 @@ import { NewSpeciesProduct } from "./components/new-species-product";
 import { UpdateSpeciesProduct } from "./components/update-species-product";
 import { SPECIES_PRODUCT_LIST_TAG } from "./constants";
 import {
-  deleteSpeciesProductService,
+  deleteSpeciesProductPermanentlyService,
   getAllSpeciesProductsService,
   updateSpeciesProductService,
 } from "./server/db/species-product.service";
@@ -58,10 +58,10 @@ export function SpeciesProductManagement() {
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: [SPECIES_PRODUCT_LIST_TAG] });
 
-  const handleDeactivate = async (id: number) => {
+  const handleDelete = async (id: number) => {
     try {
-      await deleteSpeciesProductService(id);
-      toast.success("Registro desactivado exitosamente");
+      await deleteSpeciesProductPermanentlyService(id);
+      toast.success("Registro eliminado permanentemente");
       invalidate();
     } catch (error: any) {
       const { data } = await error.response.json();
@@ -154,30 +154,16 @@ export function SpeciesProductManagement() {
                           <UpdateSpeciesProduct speciesProduct={speciesProduct} />
                           {speciesProduct.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar este registro?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(speciesProduct.id)}
+                              title="¿Eliminar este registro?"
+                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(speciesProduct.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
-                              cancelBtn={
-                                <Button variant="outline" size="lg">
-                                  <XIcon className="h-4 w-4 mr-1" />
-                                  No
-                                </Button>
-                              }
-                              confirmBtn={
-                                <Button
-                                  variant="ghost"
-                                  className="hover:bg-red-600 hover:text-white"
-                                  size="lg"
-                                >
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Sí
-                                </Button>
-                              }
+                              cancelBtn={<Button variant="outline">Cancelar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button
@@ -274,30 +260,16 @@ export function SpeciesProductManagement() {
                           <UpdateSpeciesProduct speciesProduct={speciesProduct} />
                           {speciesProduct.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar este registro?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(speciesProduct.id)}
+                              title="¿Eliminar este registro?"
+                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(speciesProduct.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
-                              cancelBtn={
-                                <Button variant="outline" size="lg">
-                                  <XIcon className="h-4 w-4 mr-1" />
-                                  No
-                                </Button>
-                              }
-                              confirmBtn={
-                                <Button
-                                  variant="ghost"
-                                  className="hover:bg-red-600 hover:text-white"
-                                  size="lg"
-                                >
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Sí
-                                </Button>
-                              }
+                              cancelBtn={<Button variant="outline">Cancelar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button

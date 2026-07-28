@@ -16,3 +16,7 @@ export function updateWeighingStageService(id: number, body: Partial<CreateWeigh
 export function deleteWeighingStageService(id: number) {
     return http.delete(`v1/1.0.0/weighing-stage/${id}`).json()
 }
+
+export function deleteWeighingStagePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/weighing-stage/${id}/permanent`).json()
+}

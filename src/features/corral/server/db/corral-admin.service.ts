@@ -16,3 +16,7 @@ export function updateCorralAdminService(id: number, body: Partial<CreateCorralB
 export function deleteCorralAdminService(id: number) {
     return http.delete(`v1/1.0.0/corral/${id}`).json();
 }
+
+export function deleteCorralPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/corral/${id}/permanent`).json();
+}

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCollectionValueService } from "../server/db/collection-value-admin.service";
+import { deleteCollectionValuePermanentlyService } from "../server/db/collection-value-admin.service";
 import { CollectionValueAdmin } from "../domain/collection-value.domain";
 
 export function DeleteCollectionValue({ collectionValue }: { collectionValue: CollectionValueAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteCollectionValue({ collectionValue }: { collectionValue: Co
 
   const handleDelete = async () => {
     try {
-      await deleteCollectionValueService(collectionValue.id);
+      await deleteCollectionValuePermanentlyService(collectionValue.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["collection-values-admin"],

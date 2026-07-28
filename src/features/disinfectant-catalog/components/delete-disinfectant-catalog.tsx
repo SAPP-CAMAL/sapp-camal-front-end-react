@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteDisinfectantCatalogService } from "../server/db/disinfectant-catalog.service";
+import { deleteDisinfectantCatalogPermanentlyService } from "../server/db/disinfectant-catalog.service";
 import { DisinfectantCatalog } from "../domain/disinfectant-catalog.domain";
 
 export function DeleteDisinfectantCatalog({ disinfectant }: { disinfectant: DisinfectantCatalog }) {
@@ -14,7 +14,7 @@ export function DeleteDisinfectantCatalog({ disinfectant }: { disinfectant: Disi
 
   const handleDelete = async () => {
     try {
-      await deleteDisinfectantCatalogService(disinfectant.id);
+      await deleteDisinfectantCatalogPermanentlyService(disinfectant.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["disinfectants-catalog"],

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteHookTypeService } from "../server/db/hook-type.service";
+import { deleteHookTypePermanentlyService } from "../server/db/hook-type.service";
 import { HookType } from "../domain/hook-type.domain";
 import { HOOK_TYPE_TAG } from "../constants/hook-type.constants";
 
@@ -15,7 +15,7 @@ export function DeleteHookType({ hookType }: { hookType: HookType }) {
 
   const handleDelete = async () => {
     try {
-      await deleteHookTypeService(hookType.id);
+      await deleteHookTypePermanentlyService(hookType.id);
 
       await queryClient.invalidateQueries({
         queryKey: [HOOK_TYPE_TAG],

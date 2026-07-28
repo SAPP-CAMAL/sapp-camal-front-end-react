@@ -16,3 +16,7 @@ export function updateSpecieService(id: number, body: Partial<CreateSpecieBody>)
 export function deleteSpecieService(id: number) {
     return http.delete(`v1/1.0.0/specie/${id}`).json();
 }
+
+export function deleteSpeciePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/specie/${id}/permanent`).json();
+}

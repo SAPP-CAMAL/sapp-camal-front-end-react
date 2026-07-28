@@ -16,3 +16,7 @@ export function updateCauseDeathService(id: number, body: Partial<CreateCauseDea
 export function deleteCauseDeathService(id: number) {
     return http.delete(`v1/1.0.0/causes-death/${id}`).json()
 }
+
+export function deleteCauseDeathPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/causes-death/${id}/permanent`).json()
+}

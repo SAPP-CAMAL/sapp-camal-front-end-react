@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteProvinceService } from "../server/db/locations-admin.service";
+import { deleteProvincePermanentlyService } from "../server/db/locations-admin.service";
 import { Province } from "../domain/locations-admin.domain";
 
 export function DeleteProvince({ province }: { province: Province }) {
@@ -14,7 +14,7 @@ export function DeleteProvince({ province }: { province: Province }) {
 
   const handleDelete = async () => {
     try {
-      await deleteProvinceService(province.id);
+      await deleteProvincePermanentlyService(province.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["provinces-admin"],

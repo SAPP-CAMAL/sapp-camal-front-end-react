@@ -25,6 +25,10 @@ export function deleteCorralGroupService(id: number) {
     return http.delete(`v1/1.0.0/corral-group/${id}`).json();
 }
 
+export function deleteCorralGroupPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/corral-group/${id}/permanent`).json();
+}
+
 export function getCorralGroupDetailsAdminService(): Promise<ResponseCorralGroupDetailsAll> {
     return http.get("v1/1.0.0/corral-group-detail/all").json();
 }

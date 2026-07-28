@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteWeighingStageService } from "../server/db/weighing-stage.service";
+import { deleteWeighingStagePermanentlyService } from "../server/db/weighing-stage.service";
 import { WeighingStage } from "../domain/weighing-stage.domain";
 import { WEIGHING_STAGE_TAG } from "../constants/weighing-stage.constants";
 
@@ -19,7 +19,7 @@ export function DeleteWeighingStage({
 
   const handleDelete = async () => {
     try {
-      await deleteWeighingStageService(weighingStage.id);
+      await deleteWeighingStagePermanentlyService(weighingStage.id);
 
       await queryClient.invalidateQueries({
         queryKey: [WEIGHING_STAGE_TAG],
