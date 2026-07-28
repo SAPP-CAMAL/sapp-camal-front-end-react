@@ -25,3 +25,7 @@ export function updateCorralTypeService(id: number, body: Partial<CreateCorralTy
 export function deleteCorralTypeService(id: number) {
     return http.delete(`v1/1.0.0/corral-type/${id}`).json();
 }
+
+export function deleteCorralTypePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/corral-type/${id}/permanent`).json();
+}

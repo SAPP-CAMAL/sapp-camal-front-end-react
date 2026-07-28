@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteLineService } from "../server/db/line-admin.service";
+import { deleteLinePermanentlyService } from "../server/db/line-admin.service";
 import { Line } from "../domain";
 
 export function DeleteLine({ line }: { line: Line }) {
@@ -14,7 +14,7 @@ export function DeleteLine({ line }: { line: Line }) {
 
   const handleDelete = async () => {
     try {
-      await deleteLineService(line.id);
+      await deleteLinePermanentlyService(line.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["lines-admin"],

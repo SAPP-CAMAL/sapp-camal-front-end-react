@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteChannelTypeService } from "../server/db/channel-type.service";
+import { deleteChannelTypePermanentlyService } from "../server/db/channel-type.service";
 import { ChannelType } from "../domain/channel-type.domain";
 import { CHANNEL_TYPE_TAG } from "../constants/channel-type.constants";
 
@@ -15,7 +15,7 @@ export function DeleteChannelType({ channelType }: { channelType: ChannelType })
 
   const handleDelete = async () => {
     try {
-      await deleteChannelTypeService(channelType.id);
+      await deleteChannelTypePermanentlyService(channelType.id);
 
       await queryClient.invalidateQueries({
         queryKey: [CHANNEL_TYPE_TAG],

@@ -16,3 +16,7 @@ export function updateHookTypeService(id: number, body: Partial<CreateHookTypeBo
 export function deleteHookTypeService(id: number) {
     return http.delete(`v1/1.0.0/hook-type/${id}`).json()
 }
+
+export function deleteHookTypePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/hook-type/${id}/permanent`).json()
+}

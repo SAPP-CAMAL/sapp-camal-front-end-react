@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCorralTypeService } from "../server/db/corral-type-admin.service";
+import { deleteCorralTypePermanentlyService } from "../server/db/corral-type-admin.service";
 import { CorralType } from "../domain";
 
 export function DeleteCorralType({ corralType }: { corralType: CorralType }) {
@@ -14,7 +14,7 @@ export function DeleteCorralType({ corralType }: { corralType: CorralType }) {
 
   const handleDelete = async () => {
     try {
-      await deleteCorralTypeService(corralType.id);
+      await deleteCorralTypePermanentlyService(corralType.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["corral-types-admin"],

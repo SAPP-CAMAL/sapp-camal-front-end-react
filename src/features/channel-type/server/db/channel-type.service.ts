@@ -16,3 +16,7 @@ export function updateChannelTypeService(id: number, body: Partial<CreateChannel
 export function deleteChannelTypeService(id: number) {
     return http.delete(`v1/1.0.0/channel-type/${id}`).json()
 }
+
+export function deleteChannelTypePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/channel-type/${id}/permanent`).json()
+}
