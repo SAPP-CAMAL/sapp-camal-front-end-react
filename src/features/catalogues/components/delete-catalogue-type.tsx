@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCatalogueTypeService } from "../server/db/catalogue-management.service";
+import { deleteCatalogueTypePermanentlyService } from "../server/db/catalogue-management.service";
 import { CatalogueType } from "../domain/catalogue-management.domain";
 
 export function DeleteCatalogueType({ catalogueType }: { catalogueType: CatalogueType }) {
@@ -14,7 +14,7 @@ export function DeleteCatalogueType({ catalogueType }: { catalogueType: Catalogu
 
   const handleDelete = async () => {
     try {
-      await deleteCatalogueTypeService(catalogueType.id);
+      await deleteCatalogueTypePermanentlyService(catalogueType.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["catalogue-types"],

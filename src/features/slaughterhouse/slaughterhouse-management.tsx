@@ -26,7 +26,7 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { NewSlaughterhouse } from "./components/new-slaughterhouse";
 import { UpdateSlaughterhouse } from "./components/update-slaughterhouse";
 import {
-  deleteSlaughterhouseService,
+  deleteSlaughterhousePermanentlyService,
   getAllSlaughterhouseService,
   updateSlaughterhouseService,
 } from "./server/db/slaughterhouse.service";
@@ -42,10 +42,10 @@ export function SlaughterhouseManagement() {
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["slaughterhouse"] });
 
-  const handleDeactivate = async (id: number) => {
+  const handleDelete = async (id: number) => {
     try {
-      await deleteSlaughterhouseService(id);
-      toast.success("Configuración desactivada exitosamente");
+      await deleteSlaughterhousePermanentlyService(id);
+      toast.success("Configuración eliminada permanentemente");
       invalidate();
     } catch (error: any) {
       const { data } = await error.response.json();
@@ -131,16 +131,16 @@ export function SlaughterhouseManagement() {
                           <UpdateSlaughterhouse slaughterhouse={slaughterhouse} />
                           {slaughterhouse.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar esta configuración?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(slaughterhouse.id)}
+                              title="¿Eliminar esta configuración?"
+                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(slaughterhouse.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
                               cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button
@@ -217,16 +217,16 @@ export function SlaughterhouseManagement() {
                           <UpdateSlaughterhouse slaughterhouse={slaughterhouse} />
                           {slaughterhouse.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar esta configuración?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(slaughterhouse.id)}
+                              title="¿Eliminar esta configuración?"
+                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(slaughterhouse.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
                               cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button

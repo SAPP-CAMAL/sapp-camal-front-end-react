@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteUnitMeasureService } from "../server/db/unit-measure-admin.service";
+import { deleteUnitMeasurePermanentlyService } from "../server/db/unit-measure-admin.service";
 import { UnitMeasureAdmin } from "../domain/unit-measure-admin.domain";
 
 export function DeleteUnitMeasure({ unitMeasure }: { unitMeasure: UnitMeasureAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteUnitMeasure({ unitMeasure }: { unitMeasure: UnitMeasureAdm
 
   const handleDelete = async () => {
     try {
-      await deleteUnitMeasureService(unitMeasure.id);
+      await deleteUnitMeasurePermanentlyService(unitMeasure.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["unit-measures-admin"],

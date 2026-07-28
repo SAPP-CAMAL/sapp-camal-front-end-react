@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteParishService } from "../server/db/locations-admin.service";
+import { deleteParishPermanentlyService } from "../server/db/locations-admin.service";
 import { Parish } from "../domain/locations-admin.domain";
 
 export function DeleteParish({ parish }: { parish: Parish }) {
@@ -14,7 +14,7 @@ export function DeleteParish({ parish }: { parish: Parish }) {
 
   const handleDelete = async () => {
     try {
-      await deleteParishService(parish.id);
+      await deleteParishPermanentlyService(parish.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["parishes-admin"],

@@ -20,3 +20,7 @@ export function updateSlaughterhouseService(id: number, body: UpdateSlaughterhou
 export function deleteSlaughterhouseService(id: number) {
     return http.delete(`v1/1.0.0/slaughterhouse/${id}`);
 }
+
+export function deleteSlaughterhousePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/slaughterhouse/${id}/permanent`);
+}

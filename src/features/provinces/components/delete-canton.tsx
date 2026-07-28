@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCantonService } from "../server/db/locations-admin.service";
+import { deleteCantonPermanentlyService } from "../server/db/locations-admin.service";
 import { Canton } from "../domain/locations-admin.domain";
 
 export function DeleteCanton({ canton }: { canton: Canton }) {
@@ -14,7 +14,7 @@ export function DeleteCanton({ canton }: { canton: Canton }) {
 
   const handleDelete = async () => {
     try {
-      await deleteCantonService(canton.id);
+      await deleteCantonPermanentlyService(canton.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["cantons-admin"],
