@@ -1,6 +1,6 @@
 "use client";
 
-import { PackageSearch, RotateCcw, Trash2, XIcon, Check } from "lucide-react";
+import { PackageSearch, RotateCcw, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -162,22 +162,8 @@ export function SpeciesProductManagement() {
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
-                              cancelBtn={
-                                <Button variant="outline" size="lg">
-                                  <XIcon className="h-4 w-4 mr-1" />
-                                  No
-                                </Button>
-                              }
-                              confirmBtn={
-                                <Button
-                                  variant="ghost"
-                                  className="hover:bg-red-600 hover:text-white"
-                                  size="lg"
-                                >
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Sí
-                                </Button>
-                              }
+                              cancelBtn={<Button variant="outline">Cancelar</Button>}
+                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
                             />
                           ) : (
                             <Button
@@ -282,22 +268,8 @@ export function SpeciesProductManagement() {
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
-                              cancelBtn={
-                                <Button variant="outline" size="lg">
-                                  <XIcon className="h-4 w-4 mr-1" />
-                                  No
-                                </Button>
-                              }
-                              confirmBtn={
-                                <Button
-                                  variant="ghost"
-                                  className="hover:bg-red-600 hover:text-white"
-                                  size="lg"
-                                >
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Sí
-                                </Button>
-                              }
+                              cancelBtn={<Button variant="outline">Cancelar</Button>}
+                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
                             />
                           ) : (
                             <Button
