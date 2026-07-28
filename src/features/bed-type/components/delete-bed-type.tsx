@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteBedType } from "../server/db/bed-type.service";
+import { deleteBedTypePermanently } from "../server/db/bed-type.service";
 import { BedType } from "../domain";
 import { BED_TYPE_LIST_TAG } from "../constants";
 
@@ -15,7 +15,7 @@ export function DeleteBedType({ bedType }: { bedType: BedType }) {
 
   const handleDelete = async () => {
     try {
-      await deleteBedType(bedType.id);
+      await deleteBedTypePermanently(bedType.id);
 
       await queryClient.invalidateQueries({
         queryKey: [BED_TYPE_LIST_TAG],

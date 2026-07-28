@@ -40,3 +40,7 @@ export function updateOriginService(id: number, body: UpdateOriginBody) {
 export function deleteOriginService(id: number) {
 	return http.delete(`v1/1.0.0/origin/${id}`);
 }
+
+export function deleteOriginPermanentlyService(id: number) {
+	return http.delete(`v1/1.0.0/origin/${id}/permanent`);
+}

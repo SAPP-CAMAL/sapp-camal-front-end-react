@@ -26,3 +26,7 @@ export function updateAnimalSexService(id: number, body: UpdateAnimalSexBody) {
 export function deleteAnimalSexService(id: number) {
 	return http.delete(`v1/1.0.0/animal-sex/${id}`);
 }
+
+export function deleteAnimalSexPermanentlyService(id: number) {
+	return http.delete(`v1/1.0.0/animal-sex/${id}/permanent`);
+}

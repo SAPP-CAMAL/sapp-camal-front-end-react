@@ -22,3 +22,7 @@ export const updateArrivalCondition = (id: number, body: Partial<{ description: 
 export const deleteArrivalCondition = (id: number) => {
 	return http.delete(`v1/1.0.0/conditions-arrival/${id}`).json();
 };
+
+export const deleteArrivalConditionPermanently = (id: number) => {
+	return http.delete(`v1/1.0.0/conditions-arrival/${id}/permanent`).json();
+};

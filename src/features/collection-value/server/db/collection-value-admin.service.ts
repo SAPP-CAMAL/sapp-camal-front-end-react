@@ -21,6 +21,10 @@ export function deleteCollectionValueService(id: number) {
     return http.delete(`v1/1.0.0/collection-values/${id}`).json();
 }
 
+export function deleteCollectionValuePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/collection-values/${id}/permanent`).json();
+}
+
 export function getSpeciesAllService(): Promise<ResponseSpeciesAll> {
     return http.get("v1/1.0.0/specie/all").json();
 }

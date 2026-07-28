@@ -22,3 +22,7 @@ export const updateBedType = (id: number, body: Partial<{ description: string; s
 export const deleteBedType = (id: number) => {
 	return http.delete(`v1/1.0.0/bed-type/${id}`).json();
 };
+
+export const deleteBedTypePermanently = (id: number) => {
+	return http.delete(`v1/1.0.0/bed-type/${id}/permanent`).json();
+};

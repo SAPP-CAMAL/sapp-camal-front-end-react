@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteOpinionService } from "../server/db/opinion.service";
+import { deleteOpinionPermanentlyService } from "../server/db/opinion.service";
 import { Opinion } from "../domain/opinion.domain";
 import { OPINION_TAG } from "../constants/opinion.constants";
 
@@ -15,7 +15,7 @@ export function DeleteOpinion({ opinion }: { opinion: Opinion }) {
 
   const handleDelete = async () => {
     try {
-      await deleteOpinionService(opinion.id);
+      await deleteOpinionPermanentlyService(opinion.id);
 
       await queryClient.invalidateQueries({
         queryKey: [OPINION_TAG],

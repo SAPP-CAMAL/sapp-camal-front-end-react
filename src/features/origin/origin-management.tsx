@@ -27,7 +27,7 @@ import { NewOrigin } from "./components/new-origin";
 import { UpdateOrigin } from "./components/update-origin";
 import { useAllOrigins } from "./hooks/use-all-origin";
 import { ORIGIN_LIST_TAG } from "./constants";
-import { deleteOriginService, updateOriginService } from "./server/db/origin.service";
+import { deleteOriginPermanentlyService, updateOriginService } from "./server/db/origin.service";
 
 export function OriginManagement() {
   const queryClient = useQueryClient();
@@ -36,10 +36,10 @@ export function OriginManagement() {
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: [ORIGIN_LIST_TAG] });
 
-  const handleDeactivate = async (id: number) => {
+  const handleDelete = async (id: number) => {
     try {
-      await deleteOriginService(id);
-      toast.success("Registro desactivado exitosamente");
+      await deleteOriginPermanentlyService(id);
+      toast.success("Registro eliminado permanentemente");
       invalidate();
     } catch (error: any) {
       const { data } = await error.response.json();
@@ -116,16 +116,16 @@ export function OriginManagement() {
                           <UpdateOrigin origin={origin} />
                           {origin.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar este registro?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(origin.id)}
+                              title="¿Eliminar este registro?"
+                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(origin.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
                               cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button
@@ -184,16 +184,16 @@ export function OriginManagement() {
                           <UpdateOrigin origin={origin} />
                           {origin.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar este registro?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(origin.id)}
+                              title="¿Eliminar este registro?"
+                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(origin.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
                               cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button

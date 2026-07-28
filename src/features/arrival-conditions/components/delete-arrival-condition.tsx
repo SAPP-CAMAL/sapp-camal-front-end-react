@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteArrivalCondition } from "../server/db/arrival-conditions.service";
+import { deleteArrivalConditionPermanently } from "../server/db/arrival-conditions.service";
 import { ArrivalConditions } from "../domain";
 import { ARRIVAL_CONDITIONS_LIST_TAG } from "../constants";
 
@@ -19,7 +19,7 @@ export function DeleteArrivalCondition({
 
   const handleDelete = async () => {
     try {
-      await deleteArrivalCondition(arrivalCondition.id);
+      await deleteArrivalConditionPermanently(arrivalCondition.id);
 
       await queryClient.invalidateQueries({
         queryKey: [ARRIVAL_CONDITIONS_LIST_TAG],

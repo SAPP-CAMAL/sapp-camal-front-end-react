@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteFinishTypeService } from "../server/db/finish-type-admin.service";
+import { deleteFinishTypePermanentlyService } from "../server/db/finish-type-admin.service";
 import { FinishTypeAdmin } from "../domain";
 
 export function DeleteFinishType({ finishType }: { finishType: FinishTypeAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteFinishType({ finishType }: { finishType: FinishTypeAdmin }
 
   const handleDelete = async () => {
     try {
-      await deleteFinishTypeService(finishType.id);
+      await deleteFinishTypePermanentlyService(finishType.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["finish-types-admin"],

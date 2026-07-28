@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteSpecieService } from "../server/db/specie-admin.service";
+import { deleteSpeciePermanentlyService } from "../server/db/specie-admin.service";
 import { SpecieAdmin } from "../domain/specie-admin.domain";
 
 export function DeleteSpecie({ specie }: { specie: SpecieAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteSpecie({ specie }: { specie: SpecieAdmin }) {
 
   const handleDelete = async () => {
     try {
-      await deleteSpecieService(specie.id);
+      await deleteSpeciePermanentlyService(specie.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["species-admin"],
