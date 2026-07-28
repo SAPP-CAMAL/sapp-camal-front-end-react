@@ -25,9 +25,9 @@ export function CleaningAreaCard({
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Building2Icon className="h-4 w-4" />
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 break-words">
+              <Building2Icon className="h-4 w-4 shrink-0" />
               {area.areaCatalogName}
             </CardTitle>
             {area.areaCatalogDescription && (
@@ -60,8 +60,8 @@ export function CleaningAreaCard({
                 key={structure.id}
                 className="flex items-center justify-between px-3 py-2"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{structure.catalogName}</span>
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                  <span className="text-sm break-words">{structure.catalogName}</span>
                   {structure.catalogType && (
                     <Badge variant="secondary">{structure.catalogType}</Badge>
                   )}

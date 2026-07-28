@@ -34,9 +34,9 @@ export function BiosecurityLineCard({
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheckIcon className="h-4 w-4" />
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 break-words">
+              <ShieldCheckIcon className="h-4 w-4 shrink-0" />
               {biosecurityLine.name}
             </CardTitle>
             <CardDescription>
@@ -72,8 +72,8 @@ export function BiosecurityLineCard({
                 key={item.id}
                 className="flex items-center justify-between px-3 py-2"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{item.equipment?.description}</span>
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                  <span className="text-sm break-words">{item.equipment?.description}</span>
                   {item.equipment?.equipmentType && (
                     <Badge variant="secondary">
                       {item.equipment.equipmentType.description}
