@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from 'sonner';
 import { ConfirmationDialog } from '@/components/confirmation-dialog';
 
-export interface VideoItem extends VideoValidationResult {}
+export type VideoItem = VideoValidationResult;
 
 interface Props {
 	open: boolean;

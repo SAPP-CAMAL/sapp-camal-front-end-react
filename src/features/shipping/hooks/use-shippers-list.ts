@@ -6,7 +6,8 @@ import { getShippersByFilterService } from '@/features/shipping/server/db/shippi
 const initialData = { data: { items: [] as Shipper[], meta: {} }, code: 200, message: 'initial data' };
 
 export const useShippersList = (params: ShipperFilter) => {
-	let { page, limit, vehicleStatus, shippingStatus, plate = '', fullName = '', transportType = '', identification = '' } = params;
+	const { page, limit, vehicleStatus, shippingStatus, transportType = '' } = params;
+	let { plate = '', fullName = '', identification = '' } = params;
 
 	plate = plate.trim();
 	fullName = fullName.trim();

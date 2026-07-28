@@ -1048,7 +1048,7 @@ export default function NewAddresseesForm({
             <AlertDialogHeader>
               <AlertDialogTitle>¿Está seguro de eliminar la marca?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta acción eliminará la marca <span className="font-bold text-gray-900">"{currentBrandName}"</span> del destinatario. 
+                Esta acción eliminará la marca <span className="font-bold text-gray-900">&quot;{currentBrandName}&quot;</span> del destinatario.
                 Podrá asignar una nueva marca en cualquier momento.
               </AlertDialogDescription>
             </AlertDialogHeader>

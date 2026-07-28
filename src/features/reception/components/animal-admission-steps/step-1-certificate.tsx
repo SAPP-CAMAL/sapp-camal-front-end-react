@@ -444,7 +444,7 @@ export const Step1Certificate = () => {
               ) : shippers.length > 0 ? (
                 <div className="text-center py-6 sm:py-8 border rounded-lg bg-gray-50">
                   <Label className="opacity-50 text-xs sm:text-sm">
-                    No se encontraron transportistas con "{shipperSearch}"
+                    No se encontraron transportistas con &quot;{shipperSearch}&quot;
                   </Label>
                 </div>
               ) : (
