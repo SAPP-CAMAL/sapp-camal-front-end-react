@@ -38,8 +38,11 @@ import { useDebouncedCallback } from "use-debounce";
 import { getMenuDepth, sortMenusAsTree } from "./utils/menu-tree.utils";
 import { MenuAdmin } from "./domain/menus.domain";
 
+const TREE_GROUPS_PER_PAGE = 5;
+
 export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = {}) {
   const [page, setPage] = useState(1);
+  const [treePage, setTreePage] = useState(1);
   const limit = fixedModuleId ? 500 : 10;
   const [menuName, setMenuName] = useState("");
   const [moduleId, setModuleId] = useState<string>("*");
@@ -97,11 +100,46 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
     return true;
   };
 
-  const visibleNodes = treeNodes.filter(isVisible);
+  const treeNodesById = new Map(treeNodes.map((node) => [node.id, node]));
+
+  const rootGroups = fixedModuleId
+    ? treeNodes.filter((node) => node.depth === 2)
+    : [];
+  const treeTotalPages = fixedModuleId
+    ? Math.max(1, Math.ceil(rootGroups.length / TREE_GROUPS_PER_PAGE))
+    : 1;
+  const pageGroupIds = new Set(
+    rootGroups
+      .slice((treePage - 1) * TREE_GROUPS_PER_PAGE, treePage * TREE_GROUPS_PER_PAGE)
+      .map((group) => group.id)
+  );
+
+  const depth2AncestorId = (node: (typeof treeNodes)[number]): number | null => {
+    if (node.depth <= 2) return node.id;
+    let currentId: number | null = node.parentId;
+    while (currentId != null) {
+      const current = treeNodesById.get(currentId);
+      if (!current) return null;
+      if (current.depth === 2) return current.id;
+      currentId = current.parentId;
+    }
+    return null;
+  };
+
+  const nodesForCurrentTreePage = fixedModuleId
+    ? treeNodes.filter((node) => {
+        if (node.depth === 1) return true;
+        const ancestorGroupId = depth2AncestorId(node);
+        return ancestorGroupId != null && pageGroupIds.has(ancestorGroupId);
+      })
+    : treeNodes;
+
+  const visibleNodes = nodesForCurrentTreePage.filter(isVisible);
 
   const debounceName = useDebouncedCallback((text: string) => {
     setMenuName(text);
     setPage(1);
+    setTreePage(1);
   }, 500);
 
   return (
@@ -195,6 +233,7 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
                 onValueChange={(value) => {
                   setStatus(value);
                   setPage(1);
+                  setTreePage(1);
                 }}
                 defaultValue={status}
               >
@@ -311,15 +350,29 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
           },
         ]}
         data={visibleNodes}
-        meta={{
-          ...query.data?.data.meta,
-          onChangePage: (p) => setPage(p),
-          onNextPage: () => setPage((p) => p + 1),
-          disabledNextPage: page >= (query.data?.data.meta.totalPages ?? 0),
-          onPreviousPage: () => setPage((p) => p - 1),
-          disabledPreviousPage: page <= 1,
-          setSearchParams: () => {},
-        }}
+        meta={
+          fixedModuleId
+            ? {
+                ...query.data?.data.meta,
+                currentPage: treePage,
+                totalPages: treeTotalPages,
+                onChangePage: (p) => setTreePage(p),
+                onNextPage: () => setTreePage((p) => p + 1),
+                disabledNextPage: treePage >= treeTotalPages,
+                onPreviousPage: () => setTreePage((p) => p - 1),
+                disabledPreviousPage: treePage <= 1,
+                setSearchParams: () => {},
+              }
+            : {
+                ...query.data?.data.meta,
+                onChangePage: (p) => setPage(p),
+                onNextPage: () => setPage((p) => p + 1),
+                disabledNextPage: page >= (query.data?.data.meta.totalPages ?? 0),
+                onPreviousPage: () => setPage((p) => p - 1),
+                disabledPreviousPage: page <= 1,
+                setSearchParams: () => {},
+              }
+        }
         isLoading={query.isLoading}
       />
     </div>
