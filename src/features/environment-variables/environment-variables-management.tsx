@@ -40,7 +40,7 @@ import { NewEnvironmentVariable } from "./components/new-environment-variable";
 import { UpdateEnvironmentVariable } from "./components/update-environment-variable";
 import { ENVIRONMENT_VARIABLES_LIST_TAG } from "./constants";
 import {
-  deleteEnvironmentVariableService,
+  deleteEnvironmentVariablePermanentlyService,
   getAllEnvironmentVariablesService,
   updateEnvironmentVariableService,
 } from "./server/db/environment-variables.service";
@@ -108,10 +108,10 @@ export function EnvironmentVariablesManagement() {
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: [ENVIRONMENT_VARIABLES_LIST_TAG] });
 
-  const handleDeactivate = async (id: number) => {
+  const handleDelete = async (id: number) => {
     try {
-      await deleteEnvironmentVariableService(id);
-      toast.success("Variable desactivada exitosamente");
+      await deleteEnvironmentVariablePermanentlyService(id);
+      toast.success("Variable eliminada permanentemente");
       invalidate();
     } catch (error: any) {
       const { data } = await error.response.json();
@@ -197,16 +197,16 @@ export function EnvironmentVariablesManagement() {
                           />
                           {environmentVariable.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar esta variable?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(environmentVariable.id)}
+                              title="¿Eliminar esta variable de entorno?"
+                              description="Esta acción no se puede deshacer. La variable se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(environmentVariable.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
                               cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button
@@ -281,16 +281,16 @@ export function EnvironmentVariablesManagement() {
                           />
                           {environmentVariable.status ? (
                             <ConfirmationDialog
-                              title="¿Desactivar esta variable?"
-                              description="El registro dejará de estar activo. Podrás reactivarlo luego si lo necesitas."
-                              onConfirm={() => handleDeactivate(environmentVariable.id)}
+                              title="¿Eliminar esta variable de entorno?"
+                              description="Esta acción no se puede deshacer. La variable se eliminará permanentemente de la base de datos."
+                              onConfirm={() => handleDelete(environmentVariable.id)}
                               triggerBtn={
                                 <Button variant="outline" size="icon">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
                               cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Desactivar</Button>}
+                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
                             />
                           ) : (
                             <Button

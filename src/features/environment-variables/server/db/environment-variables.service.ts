@@ -28,3 +28,7 @@ export function updateEnvironmentVariableService(id: number, body: UpdateEnviron
 export function deleteEnvironmentVariableService(id: number) {
   return http.delete(`v1/1.0.0/environment-variables/${id}`);
 }
+
+export function deleteEnvironmentVariablePermanentlyService(id: number) {
+  return http.delete(`v1/1.0.0/environment-variables/${id}/permanent`);
+}
