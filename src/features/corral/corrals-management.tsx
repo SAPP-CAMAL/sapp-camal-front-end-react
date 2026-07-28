@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCorralsAdminService } from "./server/db/corral-admin.service";
 import { NewCorral } from "./components/new-corral";
 import { UpdateCorral } from "./components/update-corral";
+import { DeleteCorral } from "./components/delete-corral";
 
 export function CorralsManagement() {
   const query = useQuery({
@@ -66,8 +67,9 @@ export function CorralsManagement() {
             id: "actions",
             header: () => <div className="flex items-center justify-center">Acciones</div>,
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateCorral corral={row.original} />
+                <DeleteCorral corral={row.original} />
               </div>
             ),
           },

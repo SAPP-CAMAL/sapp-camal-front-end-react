@@ -73,9 +73,15 @@ export function CleaningCatalogFormFields() {
           <FormField
             control={form.control}
             name="type"
+            rules={{
+              required: {
+                value: true,
+                message: "El tipo es requerido",
+              },
+            }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tipo</FormLabel>
+                <FormLabel>Tipo <RequiredMark /></FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-full">

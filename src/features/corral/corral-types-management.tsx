@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCorralTypesAdminService } from "./server/db/corral-type-admin.service";
 import { NewCorralType } from "./components/new-corral-type";
 import { UpdateCorralType } from "./components/update-corral-type";
+import { DeleteCorralType } from "./components/delete-corral-type";
 
 export function CorralTypesManagement() {
   const query = useQuery({
@@ -57,8 +58,9 @@ export function CorralTypesManagement() {
             id: "actions",
             header: () => <div className="flex items-center justify-center">Acciones</div>,
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateCorralType corralType={row.original} />
+                <DeleteCorralType corralType={row.original} />
               </div>
             ),
           },

@@ -8,6 +8,7 @@ import { getCorralGroupsAdminService } from "./server/db/corral-group-admin.serv
 import { NewCorralGroup } from "./components/new-corral-group";
 import { UpdateCorralGroup } from "./components/update-corral-group";
 import { ManageCorralGroupDetails } from "./components/manage-corral-group-details";
+import { DeleteCorralGroup } from "./components/delete-corral-group";
 
 export function CorralGroupsManagement() {
   const query = useQuery({
@@ -75,6 +76,7 @@ export function CorralGroupsManagement() {
               <div className="flex justify-center gap-x-2">
                 <UpdateCorralGroup corralGroup={row.original} />
                 <ManageCorralGroupDetails corralGroup={row.original} />
+                <DeleteCorralGroup corralGroup={row.original} />
               </div>
             ),
           },

@@ -25,6 +25,7 @@ export type NewMenuForm = {
   icon: string;
   url: string;
   sequence: number;
+  status: string;
 };
 
 const baseDefaultValues: NewMenuForm = {
@@ -34,6 +35,7 @@ const baseDefaultValues: NewMenuForm = {
   icon: "",
   url: "",
   sequence: 1,
+  status: "true",
 };
 
 export function NewMenu({ fixedModuleId }: { fixedModuleId?: number } = {}) {

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getObservationsAdminService } from "./server/db/observation-admin.service";
 import { NewObservation } from "./components/new-observation";
 import { UpdateObservation } from "./components/update-observation";
+import { DeleteObservation } from "./components/delete-observation";
 
 export function ObservationsManagement() {
   const query = useQuery({
@@ -52,8 +53,9 @@ export function ObservationsManagement() {
             id: "actions",
             header: () => <div className="flex items-center justify-center">Acciones</div>,
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateObservation observation={row.original} />
+                <DeleteObservation observation={row.original} />
               </div>
             ),
           },

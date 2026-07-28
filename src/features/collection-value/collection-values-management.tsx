@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCollectionValuesAdminService } from "./server/db/collection-value-admin.service";
 import { NewCollectionValue } from "./components/new-collection-value";
 import { UpdateCollectionValue } from "./components/update-collection-value";
+import { DeleteCollectionValue } from "./components/delete-collection-value";
 
 export function CollectionValuesManagement() {
   const query = useQuery({
@@ -67,8 +68,9 @@ export function CollectionValuesManagement() {
             id: "actions",
             header: () => <div className="flex items-center justify-center">Acciones</div>,
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateCollectionValue collectionValue={row.original} />
+                <DeleteCollectionValue collectionValue={row.original} />
               </div>
             ),
           },

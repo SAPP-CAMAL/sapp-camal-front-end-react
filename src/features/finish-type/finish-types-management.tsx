@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getFinishTypesAdminService } from "./server/db/finish-type-admin.service";
 import { NewFinishType } from "./components/new-finish-type";
 import { UpdateFinishType } from "./components/update-finish-type";
+import { DeleteFinishType } from "./components/delete-finish-type";
 
 export function FinishTypesManagement() {
   const query = useQuery({
@@ -62,8 +63,9 @@ export function FinishTypesManagement() {
             id: "actions",
             header: () => <div className="flex items-center justify-center">Acciones</div>,
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateFinishType finishType={row.original} />
+                <DeleteFinishType finishType={row.original} />
               </div>
             ),
           },

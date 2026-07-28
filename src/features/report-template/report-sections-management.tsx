@@ -8,6 +8,7 @@ import { getReportSectionsByTemplateService } from "./server/db/report-template-
 import { NewReportSection } from "./components/new-report-section";
 import { UpdateReportSection } from "./components/update-report-section";
 import { ManageReportElements } from "./components/manage-report-elements";
+import { DeleteReportSection } from "./components/delete-report-section";
 
 export function ReportSectionsManagement({ fixedTemplateId }: { fixedTemplateId: number }) {
     const query = useQuery({
@@ -50,6 +51,7 @@ export function ReportSectionsManagement({ fixedTemplateId }: { fixedTemplateId:
                             <div className="flex justify-center gap-2">
                                 <ManageReportElements reportSection={row.original} />
                                 <UpdateReportSection reportSection={row.original} />
+                                <DeleteReportSection reportSection={row.original} />
                             </div>
                         ),
                     },

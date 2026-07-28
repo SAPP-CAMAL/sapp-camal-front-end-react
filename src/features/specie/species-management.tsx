@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSpeciesAdminService } from "./server/db/specie-admin.service";
 import { NewSpecie } from "./components/new-specie";
 import { UpdateSpecie } from "./components/update-specie";
+import { DeleteSpecie } from "./components/delete-specie";
 
 export function SpeciesManagement() {
     const query = useQuery({
@@ -62,8 +63,9 @@ export function SpeciesManagement() {
                         id: "actions",
                         header: () => <div className="flex items-center justify-center">Acciones</div>,
                         cell: ({ row }) => (
-                            <div className="flex justify-center">
+                            <div className="flex justify-center gap-x-2">
                                 <UpdateSpecie specie={row.original} />
+                                <DeleteSpecie specie={row.original} />
                             </div>
                         ),
                     },

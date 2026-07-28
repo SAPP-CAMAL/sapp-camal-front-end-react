@@ -9,6 +9,7 @@ import { getProvincesAdminService } from "./server/db/locations-admin.service";
 import { NewProvince } from "./components/new-province";
 import { UpdateProvince } from "./components/update-province";
 import { ManageCantons } from "./components/manage-cantons";
+import { DeleteProvince } from "./components/delete-province";
 import {
   Card,
   CardContent,
@@ -145,6 +146,7 @@ export function ProvincesManagement() {
               <div className="flex justify-center gap-x-2">
                 <UpdateProvince province={row.original} />
                 <ManageCantons province={row.original} />
+                <DeleteProvince province={row.original} />
               </div>
             ),
           },

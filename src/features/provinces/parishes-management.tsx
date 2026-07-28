@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getParishesAdminService } from "./server/db/locations-admin.service";
 import { NewParish } from "./components/new-parish";
 import { UpdateParish } from "./components/update-parish";
+import { DeleteParish } from "./components/delete-parish";
 import {
   Card,
   CardContent,
@@ -129,8 +130,9 @@ export function ParishesManagement({ fixedCantonId }: { fixedCantonId: number })
               </div>
             ),
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateParish parish={row.original} fixedCantonId={fixedCantonId} />
+                <DeleteParish parish={row.original} />
               </div>
             ),
           },

@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCatalogueValuesService } from "./server/db/catalogue-management.service";
 import { NewCatalogueValue } from "./components/new-catalogue-value";
 import { UpdateCatalogueValue } from "./components/update-catalogue-value";
+import { DeleteCatalogueValue } from "./components/delete-catalogue-value";
 import {
   Card,
   CardContent,
@@ -138,8 +139,9 @@ export function CatalogueValuesManagement({ fixedCatalogueTypeId }: { fixedCatal
               </div>
             ),
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateCatalogueValue value={row.original} fixedCatalogueTypeId={fixedCatalogueTypeId} />
+                <DeleteCatalogueValue value={row.original} />
               </div>
             ),
           },

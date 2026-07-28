@@ -9,6 +9,7 @@ import { getCantonsAdminService } from "./server/db/locations-admin.service";
 import { NewCanton } from "./components/new-canton";
 import { UpdateCanton } from "./components/update-canton";
 import { ManageParishes } from "./components/manage-parishes";
+import { DeleteCanton } from "./components/delete-canton";
 import {
   Card,
   CardContent,
@@ -133,6 +134,7 @@ export function CantonsManagement({ fixedProvinceId }: { fixedProvinceId: number
               <div className="flex justify-center gap-x-2">
                 <UpdateCanton canton={row.original} fixedProvinceId={fixedProvinceId} />
                 <ManageParishes canton={row.original} />
+                <DeleteCanton canton={row.original} />
               </div>
             ),
           },

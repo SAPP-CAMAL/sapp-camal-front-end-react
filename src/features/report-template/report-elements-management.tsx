@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getReportElementsBySectionService } from "./server/db/report-template-admin.service";
 import { NewReportElement } from "./components/new-report-element";
 import { UpdateReportElement } from "./components/update-report-element";
+import { DeleteReportElement } from "./components/delete-report-element";
 
 export function ReportElementsManagement({ fixedSectionId }: { fixedSectionId: number }) {
     const query = useQuery({
@@ -56,8 +57,9 @@ export function ReportElementsManagement({ fixedSectionId }: { fixedSectionId: n
                         id: "actions",
                         header: () => <div className="flex items-center justify-center">Acciones</div>,
                         cell: ({ row }) => (
-                            <div className="flex justify-center">
+                            <div className="flex justify-center gap-x-2">
                                 <UpdateReportElement reportElement={row.original} />
+                                <DeleteReportElement reportElement={row.original} />
                             </div>
                         ),
                     },

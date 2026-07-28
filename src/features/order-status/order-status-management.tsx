@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getOrderStatusAllService } from "./server/db/order-status.service";
 import { NewOrderStatus } from "./components/new-order-status";
 import { UpdateOrderStatus } from "./components/update-order-status";
+import { DeleteOrderStatus } from "./components/delete-order-status";
 
 export function OrderStatusManagement() {
     const query = useQuery({
@@ -62,8 +63,9 @@ export function OrderStatusManagement() {
                         id: "actions",
                         header: () => <div className="flex items-center justify-center">Acciones</div>,
                         cell: ({ row }) => (
-                            <div className="flex justify-center">
+                            <div className="flex justify-center gap-x-2">
                                 <UpdateOrderStatus orderStatus={row.original} />
+                                <DeleteOrderStatus orderStatus={row.original} />
                             </div>
                         ),
                     },

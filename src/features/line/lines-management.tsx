@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getLinesAdminService } from "./server/db/line-admin.service";
 import { NewLine } from "./components/new-line";
 import { UpdateLine } from "./components/update-line";
+import { DeleteLine } from "./components/delete-line";
 
 export function LinesManagement() {
     const query = useQuery({
@@ -62,8 +63,9 @@ export function LinesManagement() {
                         id: "actions",
                         header: () => <div className="flex items-center justify-center">Acciones</div>,
                         cell: ({ row }) => (
-                            <div className="flex justify-center">
+                            <div className="flex justify-center gap-x-2">
                                 <UpdateLine line={row.original} />
+                                <DeleteLine line={row.original} />
                             </div>
                         ),
                     },

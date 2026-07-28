@@ -47,6 +47,7 @@ export function UpdateMenu({
         icon: menu.icon ?? "",
         url: menu.url ?? "",
         sequence: menu.sequence,
+        status: String(menu.status),
       });
     }
   }, [open, form, menu]);
@@ -60,6 +61,7 @@ export function UpdateMenu({
         ...(form.formState.dirtyFields.icon && { icon: data.icon }),
         ...(form.formState.dirtyFields.url && { url: data.url }),
         ...(form.formState.dirtyFields.sequence && { sequence: data.sequence }),
+        ...(form.formState.dirtyFields.status && { status: data.status === "true" }),
       });
 
       form.reset(form.formState.defaultValues);
@@ -101,7 +103,7 @@ export function UpdateMenu({
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <NewMenuFields excludeMenuId={menu.id} fixedModuleId={fixedModuleId} />
+            <NewMenuFields excludeMenuId={menu.id} fixedModuleId={fixedModuleId} showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

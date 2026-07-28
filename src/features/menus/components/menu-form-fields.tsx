@@ -34,9 +34,11 @@ import { getMenuDepth, isDescendantOf, MAX_MENU_DEPTH } from "../utils/menu-tree
 export function NewMenuFields({
   excludeMenuId,
   fixedModuleId,
+  showStatus = false,
 }: {
   excludeMenuId?: number;
   fixedModuleId?: number;
+  showStatus?: boolean;
 }) {
   const form = useFormContext<NewMenuForm>();
   const watchedModuleId = useWatch({ control: form.control, name: "moduleId" });
@@ -200,6 +202,36 @@ export function NewMenuFields({
               </FormItem>
             )}
           />
+
+          {showStatus && (
+            <FormField
+              control={form.control}
+              name="status"
+              rules={{
+                required: {
+                  value: true,
+                  message: "El campo de estado es requerido",
+                },
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un estado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUnitMeasuresAdminService } from "./server/db/unit-measure-admin.service";
 import { NewUnitMeasure } from "./components/new-unit-measure";
 import { UpdateUnitMeasure } from "./components/update-unit-measure";
+import { DeleteUnitMeasure } from "./components/delete-unit-measure";
 
 export function UnitMeasuresManagement() {
   const query = useQuery({
@@ -62,8 +63,9 @@ export function UnitMeasuresManagement() {
             id: "actions",
             header: () => <div className="flex items-center justify-center">Acciones</div>,
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateUnitMeasure unitMeasure={row.original} />
+                <DeleteUnitMeasure unitMeasure={row.original} />
               </div>
             ),
           },

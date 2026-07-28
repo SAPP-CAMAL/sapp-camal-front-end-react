@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSettingHygieneAdminService } from "./server/db/setting-hygiene-admin.service";
 import { NewSettingHygiene } from "./components/new-setting-hygiene";
 import { UpdateSettingHygiene } from "./components/update-setting-hygiene";
+import { DeleteSettingHygiene } from "./components/delete-setting-hygiene";
 
 export function SettingHygieneManagement() {
   const query = useQuery({
@@ -60,11 +61,12 @@ export function SettingHygieneManagement() {
             id: "actions",
             header: () => <div className="flex items-center justify-center">Acciones</div>,
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateSettingHygiene
                   settingHygiene={row.original}
                   excludeEquipmentIds={activeEquipmentIds.filter((id) => id !== row.original.idEquipment)}
                 />
+                <DeleteSettingHygiene settingHygiene={row.original} />
               </div>
             ),
           },

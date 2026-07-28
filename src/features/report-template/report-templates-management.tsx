@@ -8,6 +8,7 @@ import { getReportTemplatesAdminService } from "./server/db/report-template-admi
 import { NewReportTemplate } from "./components/new-report-template";
 import { UpdateReportTemplate } from "./components/update-report-template";
 import { ManageReportSections } from "./components/manage-report-sections";
+import { DeleteReportTemplate } from "./components/delete-report-template";
 
 export function ReportTemplatesManagement() {
     const query = useQuery({
@@ -66,6 +67,7 @@ export function ReportTemplatesManagement() {
                             <div className="flex justify-center gap-2">
                                 <ManageReportSections reportTemplate={row.original} />
                                 <UpdateReportTemplate reportTemplate={row.original} />
+                                <DeleteReportTemplate reportTemplate={row.original} />
                             </div>
                         ),
                     },

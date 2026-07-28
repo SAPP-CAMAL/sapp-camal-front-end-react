@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCleaningMaterialsAdminService } from "./server/db/cleaning-material-admin.service";
 import { NewCleaningMaterial } from "./components/new-cleaning-material";
 import { UpdateCleaningMaterial } from "./components/update-cleaning-material";
+import { DeleteCleaningMaterial } from "./components/delete-cleaning-material";
 
 export function CleaningMaterialsManagement() {
   const query = useQuery({
@@ -57,8 +58,9 @@ export function CleaningMaterialsManagement() {
             id: "actions",
             header: () => <div className="flex items-center justify-center">Acciones</div>,
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateCleaningMaterial cleaningMaterial={row.original} />
+                <DeleteCleaningMaterial cleaningMaterial={row.original} />
               </div>
             ),
           },

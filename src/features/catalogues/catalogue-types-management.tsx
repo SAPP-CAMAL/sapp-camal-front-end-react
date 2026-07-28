@@ -8,6 +8,7 @@ import { getCatalogueTypesService } from "./server/db/catalogue-management.servi
 import { NewCatalogueType } from "./components/new-catalogue-type";
 import { UpdateCatalogueType } from "./components/update-catalogue-type";
 import { ManageCatalogueValues } from "./components/manage-catalogue-values";
+import { DeleteCatalogueType } from "./components/delete-catalogue-type";
 
 export function CatalogueTypesManagement() {
   const query = useQuery({
@@ -63,6 +64,7 @@ export function CatalogueTypesManagement() {
               <div className="flex justify-center gap-x-2">
                 <UpdateCatalogueType catalogueType={row.original} />
                 <ManageCatalogueValues catalogueType={row.original} />
+                <DeleteCatalogueType catalogueType={row.original} />
               </div>
             ),
           },

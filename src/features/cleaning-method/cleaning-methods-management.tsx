@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCleaningMethodsAdminService } from "./server/db/cleaning-method-admin.service";
 import { NewCleaningMethod } from "./components/new-cleaning-method";
 import { UpdateCleaningMethod } from "./components/update-cleaning-method";
+import { DeleteCleaningMethod } from "./components/delete-cleaning-method";
 
 export function CleaningMethodsManagement() {
   const query = useQuery({
@@ -57,8 +58,9 @@ export function CleaningMethodsManagement() {
             id: "actions",
             header: () => <div className="flex items-center justify-center">Acciones</div>,
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateCleaningMethod cleaningMethod={row.original} />
+                <DeleteCleaningMethod cleaningMethod={row.original} />
               </div>
             ),
           },

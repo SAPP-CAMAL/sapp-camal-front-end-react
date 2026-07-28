@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDisinfectantsCatalogService } from "./server/db/disinfectant-catalog.service";
 import { NewDisinfectantCatalog } from "./components/new-disinfectant-catalog";
 import { UpdateDisinfectantCatalog } from "./components/update-disinfectant-catalog";
+import { DeleteDisinfectantCatalog } from "./components/delete-disinfectant-catalog";
 
 export function DisinfectantsCatalogManagement() {
     const query = useQuery({
@@ -57,8 +58,9 @@ export function DisinfectantsCatalogManagement() {
                         id: "actions",
                         header: () => <div className="flex items-center justify-center">Acciones</div>,
                         cell: ({ row }) => (
-                            <div className="flex justify-center">
+                            <div className="flex justify-center gap-x-2">
                                 <UpdateDisinfectantCatalog disinfectant={row.original} />
+                                <DeleteDisinfectantCatalog disinfectant={row.original} />
                             </div>
                         ),
                     },
