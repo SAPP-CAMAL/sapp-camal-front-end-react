@@ -23,6 +23,10 @@ export function deleteDistributionProductService(id: number) {
     return http.delete(`v1/1.0.0/distribution-product/${id}`).json()
 }
 
+export function deleteDistributionProductPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/distribution-product/${id}/permanent`).json()
+}
+
 export function createDetailDistributionService(body: CreateDetailDistributionBody) {
     return http.post("v1/1.0.0/detail-distribution", { json: body }).json()
 }
@@ -33,6 +37,10 @@ export function getDetailDistributionsService(): Promise<ResponseDetailDistribut
 
 export function deleteDetailDistributionService(id: number) {
     return http.delete(`v1/1.0.0/detail-distribution/${id}`).json()
+}
+
+export function deleteDetailDistributionPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/detail-distribution/${id}/permanent`).json()
 }
 
 export function getActiveProductsService(): Promise<ResponseProductsService> {

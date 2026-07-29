@@ -12,3 +12,7 @@ export function getOrderTypesService(): Promise<ResponseOrderTypesService> {
 export function deleteOrderTypeService(id: number) {
     return http.delete(`v1/1.0.0/order-types/${id}`).json()
 }
+
+export function deleteOrderTypePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/order-types/${id}/permanent`).json()
+}

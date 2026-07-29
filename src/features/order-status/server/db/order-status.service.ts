@@ -19,3 +19,7 @@ export function updateOrderStatusService(id: number, body: Partial<CreateOrderSt
 export function deleteOrderStatusService(id: number) {
     return http.delete(`v1/1.0.0/order-status/${id}`).json();
 }
+
+export function deleteOrderStatusPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/order-status/${id}/permanent`).json();
+}

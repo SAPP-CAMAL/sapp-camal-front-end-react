@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteDetailDistributionService } from "../server/db/distribution-product.service";
+import { deleteDetailDistributionPermanentlyService } from "../server/db/distribution-product.service";
 import { DETAIL_DISTRIBUTIONS_TAG } from "../constants/distribution-product.constants";
 
 export function DeleteDetailDistribution({
@@ -20,7 +20,7 @@ export function DeleteDetailDistribution({
 
   const handleDelete = async () => {
     try {
-      await deleteDetailDistributionService(id);
+      await deleteDetailDistributionPermanentlyService(id);
 
       await queryClient.invalidateQueries({
         queryKey: [DETAIL_DISTRIBUTIONS_TAG, idDistributionProduct],

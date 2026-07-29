@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteDistributionProductService } from "../server/db/distribution-product.service";
+import { deleteDistributionProductPermanentlyService } from "../server/db/distribution-product.service";
 import { DistributionProduct } from "../domain/distribution-product.domain";
 import { DISTRIBUTION_PRODUCTS_TAG } from "../constants/distribution-product.constants";
 
@@ -19,7 +19,7 @@ export function DeleteDistributionProduct({
 
   const handleDelete = async () => {
     try {
-      await deleteDistributionProductService(distributionProduct.id);
+      await deleteDistributionProductPermanentlyService(distributionProduct.id);
 
       await queryClient.invalidateQueries({
         queryKey: [DISTRIBUTION_PRODUCTS_TAG],
@@ -35,7 +35,7 @@ export function DeleteDistributionProduct({
   return (
     <ConfirmationDialog
       title="¿Estás seguro de que deseas eliminar este despacho?"
-      description="Esta acción no se puede deshacer. Se eliminarán también los productos detallados."
+      description="Esta acción no se puede deshacer. Si tiene productos detallados asignados, no podrá eliminarse hasta quitarlos primero."
       onConfirm={handleDelete}
       triggerBtn={
         <Button variant="outline">

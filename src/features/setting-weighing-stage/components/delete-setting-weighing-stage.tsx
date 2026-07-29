@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteSettingWeighingStageService } from "../server/db/setting-weighing-stage.service";
+import { deleteSettingWeighingStagePermanentlyService } from "../server/db/setting-weighing-stage.service";
 import { SettingWeighingStage } from "../domain/setting-weighing-stage.domain";
 import { SETTING_WEIGHING_STAGES_TAG } from "../constants/setting-weighing-stage.constants";
 
@@ -19,13 +19,13 @@ export function DeleteSettingWeighingStage({
 
   const handleDelete = async () => {
     try {
-      await deleteSettingWeighingStageService(settingWeighingStage.id);
+      await deleteSettingWeighingStagePermanentlyService(settingWeighingStage.id);
 
       await queryClient.invalidateQueries({
         queryKey: [SETTING_WEIGHING_STAGES_TAG],
       });
 
-      toast.success("Etapa de pesaje deshabilitada exitosamente");
+      toast.success("Etapa de pesaje eliminada exitosamente");
     } catch (error: any) {
       const { data } = await error.response.json();
       toast.error(data);
@@ -34,7 +34,7 @@ export function DeleteSettingWeighingStage({
 
   return (
     <ConfirmationDialog
-      title="¿Estás seguro de que deseas deshabilitar esta etapa de pesaje?"
+      title="¿Estás seguro de que deseas eliminar esta etapa de pesaje?"
       description="Esta acción no se puede deshacer."
       onConfirm={handleDelete}
       triggerBtn={

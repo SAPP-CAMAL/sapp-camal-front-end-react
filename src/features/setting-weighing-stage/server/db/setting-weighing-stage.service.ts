@@ -19,3 +19,7 @@ export function updateSettingWeighingStageService(id: number, body: Partial<Crea
 export function deleteSettingWeighingStageService(id: number) {
     return http.delete(`v1/1.0.0/setting-weighing-stage/${id}`).json()
 }
+
+export function deleteSettingWeighingStagePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/setting-weighing-stage/${id}/permanent`).json()
+}

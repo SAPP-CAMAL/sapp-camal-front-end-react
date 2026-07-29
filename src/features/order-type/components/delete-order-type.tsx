@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteOrderTypeService } from "../server/db/order-type.service";
+import { deleteOrderTypePermanentlyService } from "../server/db/order-type.service";
 import { OrderType } from "../domain/order-type.domain";
 import { ORDER_TYPES_TAG } from "../constants/order-type.constants";
 
@@ -15,13 +15,13 @@ export function DeleteOrderType({ orderType }: { orderType: OrderType }) {
 
   const handleDelete = async () => {
     try {
-      await deleteOrderTypeService(orderType.id);
+      await deleteOrderTypePermanentlyService(orderType.id);
 
       await queryClient.invalidateQueries({
         queryKey: [ORDER_TYPES_TAG],
       });
 
-      toast.success("Rol deshabilitado para pedidos exitosamente");
+      toast.success("Rol para pedidos eliminado exitosamente");
     } catch (error: any) {
       const { data } = await error.response.json();
       toast.error(data);
@@ -30,7 +30,7 @@ export function DeleteOrderType({ orderType }: { orderType: OrderType }) {
 
   return (
     <ConfirmationDialog
-      title="¿Estás seguro de que deseas deshabilitar este rol para pedidos?"
+      title="¿Estás seguro de que deseas eliminar este rol para pedidos?"
       description="Esta acción no se puede deshacer."
       onConfirm={handleDelete}
       triggerBtn={

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteOrderStatusService } from "../server/db/order-status.service";
+import { deleteOrderStatusPermanentlyService } from "../server/db/order-status.service";
 import { OrderStatus } from "../domain/order-status.domain";
 
 export function DeleteOrderStatus({ orderStatus }: { orderStatus: OrderStatus }) {
@@ -14,7 +14,7 @@ export function DeleteOrderStatus({ orderStatus }: { orderStatus: OrderStatus })
 
   const handleDelete = async () => {
     try {
-      await deleteOrderStatusService(orderStatus.id);
+      await deleteOrderStatusPermanentlyService(orderStatus.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["order-status-admin"],
