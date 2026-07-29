@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteReportElementService } from "../server/db/report-template-admin.service";
+import { deleteReportElementPermanentlyService } from "../server/db/report-template-admin.service";
 import { ReportElementAdmin } from "../domain/report-template-admin.domain";
 
 export function DeleteReportElement({ reportElement }: { reportElement: ReportElementAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteReportElement({ reportElement }: { reportElement: ReportEl
 
   const handleDelete = async () => {
     try {
-      await deleteReportElementService(reportElement.id);
+      await deleteReportElementPermanentlyService(reportElement.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["report-elements-admin"],

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteReportSectionService } from "../server/db/report-template-admin.service";
+import { deleteReportSectionPermanentlyService } from "../server/db/report-template-admin.service";
 import { ReportSectionAdmin } from "../domain/report-template-admin.domain";
 
 export function DeleteReportSection({ reportSection }: { reportSection: ReportSectionAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteReportSection({ reportSection }: { reportSection: ReportSe
 
   const handleDelete = async () => {
     try {
-      await deleteReportSectionService(reportSection.id);
+      await deleteReportSectionPermanentlyService(reportSection.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["report-sections-admin"],

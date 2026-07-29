@@ -25,6 +25,10 @@ export function deleteReportTemplateService(id: number) {
     return http.delete(`v1/1.0.0/report-template/${id}`).json();
 }
 
+export function deleteReportTemplatePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/report-template/${id}/permanent`).json();
+}
+
 export function getReportCodesAllActiveService(): Promise<ResponseReportCodesAll> {
     return http.get("v1/1.0.0/report-codes/all-active").json();
 }
@@ -45,6 +49,10 @@ export function deleteReportSectionService(id: number) {
     return http.delete(`v1/1.0.0/report-section/${id}`).json();
 }
 
+export function deleteReportSectionPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/report-section/${id}/permanent`).json();
+}
+
 export function getReportElementsBySectionService(idSection: number): Promise<ResponseReportElementsAll> {
     return http.get(`v1/1.0.0/report-element/by-section/${idSection}`).json();
 }
@@ -59,4 +67,8 @@ export function updateReportElementService(id: number, body: Partial<CreateRepor
 
 export function deleteReportElementService(id: number) {
     return http.delete(`v1/1.0.0/report-element/${id}`).json();
+}
+
+export function deleteReportElementPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/report-element/${id}/permanent`).json();
 }

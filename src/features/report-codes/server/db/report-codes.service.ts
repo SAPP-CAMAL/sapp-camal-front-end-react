@@ -16,3 +16,7 @@ export function updateReportCodeService(id: number, body: Partial<CreateReportCo
 export function deleteReportCodeService(id: number) {
     return http.delete(`v1/1.0.0/report-codes/${id}`).json()
 }
+
+export function deleteReportCodePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/report-codes/${id}/permanent`).json()
+}

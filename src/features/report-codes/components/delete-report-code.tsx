@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteReportCodeService } from "../server/db/report-codes.service";
+import { deleteReportCodePermanentlyService } from "../server/db/report-codes.service";
 import { ReportCode } from "../domain/report-codes.domain";
 import { REPORT_CODES_TAG } from "../constants/report-codes.constants";
 
@@ -15,7 +15,7 @@ export function DeleteReportCode({ reportCode }: { reportCode: ReportCode }) {
 
   const handleDelete = async () => {
     try {
-      await deleteReportCodeService(reportCode.id);
+      await deleteReportCodePermanentlyService(reportCode.id);
 
       await queryClient.invalidateQueries({
         queryKey: [REPORT_CODES_TAG],
