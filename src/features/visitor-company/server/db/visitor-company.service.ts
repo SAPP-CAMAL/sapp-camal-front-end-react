@@ -16,3 +16,7 @@ export function updateVisitorCompanyService(id: number, body: Partial<CreateVisi
 export function deleteVisitorCompanyService(id: number) {
     return http.delete(`v1/1.0.0/visitor-company/${id}`).json()
 }
+
+export function deleteVisitorCompanyPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/visitor-company/${id}/permanent`).json()
+}

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCompanyTypeService } from "../server/db/company-type.service";
+import { deleteCompanyTypePermanentlyService } from "../server/db/company-type.service";
 import { CompanyType } from "../domain/company-type.domain";
 import { COMPANY_TYPE_TAG } from "../constants/company-type.constants";
 
@@ -15,7 +15,7 @@ export function DeleteCompanyType({ companyType }: { companyType: CompanyType })
 
   const handleDelete = async () => {
     try {
-      await deleteCompanyTypeService(companyType.id);
+      await deleteCompanyTypePermanentlyService(companyType.id);
 
       await queryClient.invalidateQueries({
         queryKey: [COMPANY_TYPE_TAG],
