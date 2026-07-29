@@ -16,3 +16,7 @@ export function updateCleaningAreaCatalogService(id: number, body: Partial<Creat
 export function deleteCleaningAreaCatalogService(id: number) {
     return http.delete(`v1/1.0.0/cleaning-area-catalog/${id}`).json()
 }
+
+export function deleteCleaningAreaCatalogPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-area-catalog/${id}/permanent`).json()
+}

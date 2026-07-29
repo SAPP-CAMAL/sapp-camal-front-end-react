@@ -19,3 +19,7 @@ export function updateObservationService(id: number, body: Partial<CreateObserva
 export function deleteObservationService(id: number) {
     return http.delete(`v1/1.0.0/observations/${id}`).json();
 }
+
+export function deleteObservationPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/observations/${id}/permanent`).json();
+}

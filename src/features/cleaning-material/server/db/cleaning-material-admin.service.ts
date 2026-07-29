@@ -19,3 +19,7 @@ export function updateCleaningMaterialService(id: number, body: Partial<CreateCl
 export function deleteCleaningMaterialService(id: number) {
     return http.delete(`v1/1.0.0/cleaning-material/${id}`).json();
 }
+
+export function deleteCleaningMaterialPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-material/${id}/permanent`).json();
+}

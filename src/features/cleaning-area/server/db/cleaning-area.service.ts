@@ -20,10 +20,18 @@ export function deleteCleaningAreaService(id: number) {
     return http.delete(`v1/1.0.0/cleaning-area/${id}`).json()
 }
 
+export function deleteCleaningAreaPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-area/${id}/permanent`).json()
+}
+
 export function createCleaningAreaStructureService(body: CreateCleaningAreaStructureBody) {
     return http.post("v1/1.0.0/cleaning-area-structure", { json: body }).json()
 }
 
 export function deleteCleaningAreaStructureService(id: number) {
     return http.delete(`v1/1.0.0/cleaning-area-structure/${id}`).json()
+}
+
+export function deleteCleaningAreaStructurePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-area-structure/${id}/permanent`).json()
 }

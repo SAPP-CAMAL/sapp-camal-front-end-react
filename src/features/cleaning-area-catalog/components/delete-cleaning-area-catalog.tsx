@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCleaningAreaCatalogService } from "../server/db/cleaning-area-catalog.service";
+import { deleteCleaningAreaCatalogPermanentlyService } from "../server/db/cleaning-area-catalog.service";
 import { CleaningAreaCatalog } from "../domain/cleaning-area-catalog.domain";
 import { CLEANING_AREA_CATALOG_TAG } from "../constants/cleaning-area-catalog.constants";
 
@@ -19,7 +19,7 @@ export function DeleteCleaningAreaCatalog({
 
   const handleDelete = async () => {
     try {
-      await deleteCleaningAreaCatalogService(areaCatalog.id);
+      await deleteCleaningAreaCatalogPermanentlyService(areaCatalog.id);
 
       await queryClient.invalidateQueries({
         queryKey: [CLEANING_AREA_CATALOG_TAG],

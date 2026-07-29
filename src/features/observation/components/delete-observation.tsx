@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteObservationService } from "../server/db/observation-admin.service";
+import { deleteObservationPermanentlyService } from "../server/db/observation-admin.service";
 import { ObservationAdmin } from "../domain/observation-admin.domain";
 
 export function DeleteObservation({ observation }: { observation: ObservationAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteObservation({ observation }: { observation: ObservationAdm
 
   const handleDelete = async () => {
     try {
-      await deleteObservationService(observation.id);
+      await deleteObservationPermanentlyService(observation.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["observations-admin"],

@@ -16,3 +16,7 @@ export function updateCleaningCatalogService(id: number, body: Partial<CreateCle
 export function deleteCleaningCatalogService(id: number) {
     return http.delete(`v1/1.0.0/cleaning-catalog/${id}`).json()
 }
+
+export function deleteCleaningCatalogPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-catalog/${id}/permanent`).json()
+}

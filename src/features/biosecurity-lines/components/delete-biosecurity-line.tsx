@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteBiosecurityLineService } from "../server/db/biosecurity-lines.service";
+import { deleteBiosecurityLinePermanentlyService } from "../server/db/biosecurity-lines.service";
 import { BIOSECURITY_LINES_TAG } from "../constants/biosecurity-lines.constants";
 
 export function DeleteBiosecurityLine({ id }: { id: number }) {
@@ -14,7 +14,7 @@ export function DeleteBiosecurityLine({ id }: { id: number }) {
 
   const handleDelete = async () => {
     try {
-      await deleteBiosecurityLineService(id);
+      await deleteBiosecurityLinePermanentlyService(id);
 
       await queryClient.invalidateQueries({
         queryKey: [BIOSECURITY_LINES_TAG],
@@ -30,7 +30,7 @@ export function DeleteBiosecurityLine({ id }: { id: number }) {
   return (
     <ConfirmationDialog
       title="¿Estás seguro de que deseas eliminar esta línea de bioseguridad?"
-      description="Esta acción no se puede deshacer. Se eliminarán también los equipos asignados."
+      description="Esta acción no se puede deshacer. Si tiene equipos asignados, no podrá eliminarse hasta quitarlos primero."
       onConfirm={handleDelete}
       triggerBtn={
         <Button variant="outline" size="sm">

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCleaningAreaStructureService } from "../server/db/cleaning-area.service";
+import { deleteCleaningAreaStructurePermanentlyService } from "../server/db/cleaning-area.service";
 import { CLEANING_AREA_BY_LINE_TAG } from "../constants/cleaning-area.constants";
 
 export function DeleteCleaningAreaStructure({
@@ -20,7 +20,7 @@ export function DeleteCleaningAreaStructure({
 
   const handleDelete = async () => {
     try {
-      await deleteCleaningAreaStructureService(idStructure);
+      await deleteCleaningAreaStructurePermanentlyService(idStructure);
 
       await queryClient.invalidateQueries({
         queryKey: [CLEANING_AREA_BY_LINE_TAG, idLine],

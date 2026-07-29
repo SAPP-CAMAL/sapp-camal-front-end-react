@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCleaningMethodService } from "../server/db/cleaning-method-admin.service";
+import { deleteCleaningMethodPermanentlyService } from "../server/db/cleaning-method-admin.service";
 import { CleaningMethodAdmin } from "../domain/cleaning-method-admin.domain";
 
 export function DeleteCleaningMethod({ cleaningMethod }: { cleaningMethod: CleaningMethodAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteCleaningMethod({ cleaningMethod }: { cleaningMethod: Clean
 
   const handleDelete = async () => {
     try {
-      await deleteCleaningMethodService(cleaningMethod.id);
+      await deleteCleaningMethodPermanentlyService(cleaningMethod.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["cleaning-methods-admin"],

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteSettingHygieneService } from "../server/db/setting-hygiene-admin.service";
+import { deleteSettingHygienePermanentlyService } from "../server/db/setting-hygiene-admin.service";
 import { SettingHygieneAdmin } from "../domain/setting-hygiene-admin.domain";
 
 export function DeleteSettingHygiene({ settingHygiene }: { settingHygiene: SettingHygieneAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteSettingHygiene({ settingHygiene }: { settingHygiene: Setti
 
   const handleDelete = async () => {
     try {
-      await deleteSettingHygieneService(settingHygiene.id);
+      await deleteSettingHygienePermanentlyService(settingHygiene.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["setting-hygiene-admin"],

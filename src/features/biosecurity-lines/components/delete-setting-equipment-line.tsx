@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteSettingEquipmentLineService } from "../server/db/biosecurity-lines.service";
+import { deleteSettingEquipmentLinePermanentlyService } from "../server/db/biosecurity-lines.service";
 import { SETTING_EQUIPMENT_LINES_TAG } from "../constants/biosecurity-lines.constants";
 
 export function DeleteSettingEquipmentLine({
@@ -20,7 +20,7 @@ export function DeleteSettingEquipmentLine({
 
   const handleDelete = async () => {
     try {
-      await deleteSettingEquipmentLineService(id);
+      await deleteSettingEquipmentLinePermanentlyService(id);
 
       await queryClient.invalidateQueries({
         queryKey: [SETTING_EQUIPMENT_LINES_TAG, idBiosecurityLine],

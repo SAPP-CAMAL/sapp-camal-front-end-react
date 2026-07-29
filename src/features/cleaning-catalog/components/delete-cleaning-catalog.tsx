@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCleaningCatalogService } from "../server/db/cleaning-catalog.service";
+import { deleteCleaningCatalogPermanentlyService } from "../server/db/cleaning-catalog.service";
 import { CleaningCatalog } from "../domain/cleaning-catalog.domain";
 import { CLEANING_CATALOG_TAG } from "../constants/cleaning-catalog.constants";
 
@@ -19,7 +19,7 @@ export function DeleteCleaningCatalog({
 
   const handleDelete = async () => {
     try {
-      await deleteCleaningCatalogService(cleaningCatalog.id);
+      await deleteCleaningCatalogPermanentlyService(cleaningCatalog.id);
 
       await queryClient.invalidateQueries({
         queryKey: [CLEANING_CATALOG_TAG],

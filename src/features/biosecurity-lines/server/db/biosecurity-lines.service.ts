@@ -22,6 +22,10 @@ export function deleteBiosecurityLineService(id: number) {
     return http.delete(`v1/1.0.0/biosecurity-lines/${id}`).json()
 }
 
+export function deleteBiosecurityLinePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/biosecurity-lines/${id}/permanent`).json()
+}
+
 export function getSettingEquipmentLinesByBiosecurityLineService(idBiosecurityLine: number): Promise<ResponseSettingEquipmentLinesService> {
     const searchParams = new URLSearchParams();
     searchParams.append("idBiosecurityLine", idBiosecurityLine.toString());
@@ -35,4 +39,8 @@ export function createSettingEquipmentLineService(body: CreateSettingEquipmentLi
 
 export function deleteSettingEquipmentLineService(id: number) {
     return http.delete(`v1/1.0.0/setting-equipment-lines/${id}`).json()
+}
+
+export function deleteSettingEquipmentLinePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/setting-equipment-lines/${id}/permanent`).json()
 }

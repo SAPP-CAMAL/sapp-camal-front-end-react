@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCleaningAreaService } from "../server/db/cleaning-area.service";
+import { deleteCleaningAreaPermanentlyService } from "../server/db/cleaning-area.service";
 import { CLEANING_AREA_BY_LINE_TAG } from "../constants/cleaning-area.constants";
 
 export function DeleteCleaningArea({
@@ -20,7 +20,7 @@ export function DeleteCleaningArea({
 
   const handleDelete = async () => {
     try {
-      await deleteCleaningAreaService(idArea);
+      await deleteCleaningAreaPermanentlyService(idArea);
 
       await queryClient.invalidateQueries({
         queryKey: [CLEANING_AREA_BY_LINE_TAG, idLine],
@@ -36,7 +36,7 @@ export function DeleteCleaningArea({
   return (
     <ConfirmationDialog
       title="¿Estás seguro de que deseas remover esta área de la línea?"
-      description="Esta acción no se puede deshacer. Se eliminarán también las estructuras/materiales asignados a esta área en esta línea."
+      description="Esta acción no se puede deshacer. Si tiene estructuras/materiales asignados, no podrá eliminarse hasta quitarlos primero."
       onConfirm={handleDelete}
       triggerBtn={
         <Button variant="outline" size="sm">

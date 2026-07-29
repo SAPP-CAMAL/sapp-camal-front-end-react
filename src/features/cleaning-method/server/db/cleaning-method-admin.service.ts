@@ -19,3 +19,7 @@ export function updateCleaningMethodService(id: number, body: Partial<CreateClea
 export function deleteCleaningMethodService(id: number) {
     return http.delete(`v1/1.0.0/cleaning-method/${id}`).json();
 }
+
+export function deleteCleaningMethodPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-method/${id}/permanent`).json();
+}

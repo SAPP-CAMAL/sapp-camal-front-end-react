@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteCleaningMaterialService } from "../server/db/cleaning-material-admin.service";
+import { deleteCleaningMaterialPermanentlyService } from "../server/db/cleaning-material-admin.service";
 import { CleaningMaterialAdmin } from "../domain/cleaning-material-admin.domain";
 
 export function DeleteCleaningMaterial({ cleaningMaterial }: { cleaningMaterial: CleaningMaterialAdmin }) {
@@ -14,7 +14,7 @@ export function DeleteCleaningMaterial({ cleaningMaterial }: { cleaningMaterial:
 
   const handleDelete = async () => {
     try {
-      await deleteCleaningMaterialService(cleaningMaterial.id);
+      await deleteCleaningMaterialPermanentlyService(cleaningMaterial.id);
 
       await queryClient.invalidateQueries({
         queryKey: ["cleaning-materials-admin"],

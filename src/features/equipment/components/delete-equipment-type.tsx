@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteEquipmentTypeService } from "../server/db/equipment.service";
+import { deleteEquipmentTypePermanentlyService } from "../server/db/equipment.service";
 import { EquipmentType } from "../domain/equipment.domain";
 import { EQUIPMENT_TYPES_TAG } from "../constants/equipment.constants";
 
@@ -19,7 +19,7 @@ export function DeleteEquipmentType({
 
   const handleDelete = async () => {
     try {
-      await deleteEquipmentTypeService(equipmentType.id);
+      await deleteEquipmentTypePermanentlyService(equipmentType.id);
 
       await queryClient.invalidateQueries({
         queryKey: [EQUIPMENT_TYPES_TAG],

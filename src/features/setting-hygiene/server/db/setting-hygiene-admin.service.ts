@@ -21,6 +21,10 @@ export function deleteSettingHygieneService(id: number) {
     return http.delete(`v1/1.0.0/setting-hygiene/${id}`).json();
 }
 
+export function deleteSettingHygienePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/setting-hygiene/${id}/permanent`).json();
+}
+
 export function getEquipmentAllService(): Promise<ResponseEquipmentAll> {
     return http.get("v1/1.0.0/equipment/all").json();
 }
