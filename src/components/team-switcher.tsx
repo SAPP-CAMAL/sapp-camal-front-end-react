@@ -24,7 +24,6 @@ import { getUserRolesService } from "@/features/security/server/db/security.quer
 import { setUserRoleAction } from "@/features/security/server/actions/security.actions";
 import { revalidatePathAction } from "@/features/security/server/actions/revalidate.action";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 import { Role } from "@/features/roles/domain/roles.domain";
 
@@ -167,7 +166,6 @@ export function RoleSwitcher({ activeRole }: { activeRole?: { id: number; name: 
 }
 
 function RoleItem({ role, isActive, onSelect }: { role: Role; isActive: boolean; onSelect: () => void }) {
-  const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
   return (
@@ -180,12 +178,20 @@ function RoleItem({ role, isActive, onSelect }: { role: Role; isActive: boolean;
             // Cookies seteadas server-side (Set-Cookie), no dependen de la Cookie Store API del navegador.
             await setUserRoleAction(role.id);
 
-            await revalidatePathAction("/dashboard");
-
-            router.push("/dashboard");
+            // type "layout": invalida también la caché server-side del layout compartido de
+            // /dashboard (no solo la página), donde vive el fetch de menús y la validación de
+            // acceso por rol.
+            await revalidatePathAction("/dashboard", "layout");
 
             toast.success("Cambio de rol exitoso");
             onSelect();
+
+            // Navegación completa (no router.push): Next.js reutiliza el layout compartido de
+            // /dashboard entre navegaciones del lado cliente, y revalidatePath no siempre alcanza
+            // a purgar esa copia a tiempo antes de que el router muestre la ruta destino — se veía
+            // "acceso denegado" con el rol nuevo ya activo. Un reload completo elimina el problema
+            // de raíz en vez de perseguir la invalidación parcial de la caché del router.
+            window.location.href = "/dashboard";
           } catch (error) {
             toast.error("No se pudo cambiar de rol. Intente nuevamente.");
           }

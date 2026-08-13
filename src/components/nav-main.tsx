@@ -23,27 +23,8 @@ import {
 import Link from "next/link";
 import DynamicLucideIcon from "@/lib/lucide-icon-dynamic";
 import { AdministrationMenu, Child } from "@/features/modules/domain/module.domain";
+import { normalizeMenuUrl } from "@/features/modules/utils/normalize-menu-url";
 import { fixUtf8 } from "@/lib/utils";
-
-
-// Función helper para normalizar URLs
-function normalizeMenuUrl(url: string | null): string {
-  if (!url) return "#";
-  let cleanUrl = url;
-  if (cleanUrl.startsWith("/dashboard/")) {
-    cleanUrl = cleanUrl.substring(10);
-  } else if (cleanUrl.startsWith("dashboard/")) {
-    cleanUrl = cleanUrl.substring(9);
-  } else if (cleanUrl.startsWith("/dashboard")) {
-    cleanUrl = cleanUrl.substring(10);
-  } else if (cleanUrl.startsWith("dashboard")) {
-    cleanUrl = cleanUrl.substring(9);
-  }
-  if (!cleanUrl.startsWith("/")) {
-    cleanUrl = "/" + cleanUrl;
-  }
-  return `/dashboard${cleanUrl}`;
-}
 
 function containsActivePath(item: Child, pathname: string): boolean {
   if (pathname === normalizeMenuUrl(item.url)) return true;
