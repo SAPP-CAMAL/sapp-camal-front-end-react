@@ -2,6 +2,8 @@ import { http } from "@/lib/ky";
 import {
     CreateSlaughterhouseBody,
     ResponseSlaughterhouseAll,
+    ResponseSlaughterhousePaginated,
+    SearchParamsSlaughterhouse,
     UpdateSlaughterhouseBody,
 } from "@/features/slaughterhouse/domain/slaughterhouse.domain";
 
@@ -11,6 +13,10 @@ export function createSlaughterhouseService(body: CreateSlaughterhouseBody) {
 
 export function getAllSlaughterhouseService(): Promise<ResponseSlaughterhouseAll> {
     return http.get("v1/1.0.0/slaughterhouse/all").json();
+}
+
+export function getSlaughterhousePaginatedService(searchParams: SearchParamsSlaughterhouse): Promise<ResponseSlaughterhousePaginated> {
+    return http.get("v1/1.0.0/slaughterhouse/list", { searchParams }).json();
 }
 
 export function updateSlaughterhouseService(id: number, body: UpdateSlaughterhouseBody) {

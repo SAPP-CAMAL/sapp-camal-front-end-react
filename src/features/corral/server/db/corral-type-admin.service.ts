@@ -1,6 +1,6 @@
 import { http } from "@/lib/ky";
 import { CorralType } from "@/features/corral/domain";
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type CreateCorralTypeBody = {
     description: string;
@@ -8,10 +8,22 @@ export type CreateCorralTypeBody = {
     status?: boolean;
 }
 
+export type SearchParamsCorralType = {
+    page?: number;
+    limit?: number;
+    description?: string;
+    status?: boolean;
+}
+
 export type ResponseCorralTypesAll = CommonHttpResponseSingle<CorralType[]>
+export type ResponseCorralTypesPaginated = CommonHttpResponsePagination<CorralType>
 
 export function getCorralTypesAdminService(): Promise<ResponseCorralTypesAll> {
     return http.get("v1/1.0.0/corral-type/all").json();
+}
+
+export function getCorralTypesPaginatedService(searchParams: SearchParamsCorralType): Promise<ResponseCorralTypesPaginated> {
+    return http.get("v1/1.0.0/corral-type/list", { searchParams }).json();
 }
 
 export function createCorralTypeService(body: CreateCorralTypeBody) {

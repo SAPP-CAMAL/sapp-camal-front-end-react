@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type CauseDeath = {
     id: number;
@@ -10,4 +10,12 @@ export type CreateCauseDeathBody = {
     name: string;
 }
 
+export type SearchParamsCauseDeath = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseCausesDeathService = CommonHttpResponse<CauseDeath>
+export type ResponseCausesDeathPaginated = CommonHttpResponsePagination<CauseDeath>

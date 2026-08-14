@@ -1,8 +1,8 @@
 import { http } from "@/lib/ky";
-import { CreateLineBody, ResponseLinesAdmin } from "@/features/line/domain";
+import { CreateLineBody, ResponseLinesAdmin, SearchParamsLine } from "@/features/line/domain";
 
-export function getLinesAdminService(): Promise<ResponseLinesAdmin> {
-    return http.get("v1/1.0.0/line/admin").json();
+export function getLinesAdminService(searchParams: SearchParamsLine): Promise<ResponseLinesAdmin> {
+    return http.get("v1/1.0.0/line/admin/list", { searchParams }).json();
 }
 
 export function createLineService(body: CreateLineBody) {

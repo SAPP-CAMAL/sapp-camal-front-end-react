@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
 
 export const REPORT_TYPES = ["EXCEL", "PDF"] as const;
 export type ReportType = (typeof REPORT_TYPES)[number];
@@ -85,7 +85,15 @@ export type CreateReportElementBody = {
     status?: boolean;
 }
 
+export type SearchParamsReportTemplate = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseReportTemplatesAll = CommonHttpResponseSingle<ReportTemplateAdmin[]>
+export type ResponseReportTemplatesPaginated = CommonHttpResponsePagination<ReportTemplateAdmin>
 export type ResponseReportSectionsAll = CommonHttpResponseSingle<ReportSectionAdmin[]>
 export type ResponseReportElementsAll = CommonHttpResponseSingle<ReportElementAdmin[]>
 export type ResponseReportCodesAll = CommonHttpResponseSingle<ReportCodeOption[]>

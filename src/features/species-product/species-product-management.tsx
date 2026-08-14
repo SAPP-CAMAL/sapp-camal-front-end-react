@@ -1,8 +1,11 @@
 "use client";
 
-import { PackageSearch, RotateCcw, Trash2 } from "lucide-react";
+import { Activity, PackageSearch, RotateCcw, Settings, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { toast } from "sonner";
+import { useDebouncedCallback } from "use-debounce";
+import { SearchIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,34 +16,61 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { useAllSpecies } from "@/features/specie/hooks";
 import { getAllAnimalSex } from "@/features/animal-sex/server/db/animal-sex.service";
 
 import { NewSpeciesProduct } from "./components/new-species-product";
 import { UpdateSpeciesProduct } from "./components/update-species-product";
+import { TableSpeciesProduct } from "./components/table-species-product";
 import { SPECIES_PRODUCT_LIST_TAG } from "./constants";
 import {
   deleteSpeciesProductPermanentlyService,
-  getAllSpeciesProductsService,
+  getSpeciesProductsPaginatedService,
   updateSpeciesProductService,
 } from "./server/db/species-product.service";
+import { SpeciesProduct } from "./domain";
 
 export function SpeciesProductManagement() {
   const queryClient = useQueryClient();
 
+  const [searchParams, setSearchParams] = useQueryStates(
+    {
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
+      productName: parseAsString.withDefault(""),
+      status: parseAsString.withDefault("*"),
+    },
+    {
+      history: "push",
+    }
+  );
+
   const query = useQuery({
-    queryKey: [SPECIES_PRODUCT_LIST_TAG],
-    queryFn: getAllSpeciesProductsService,
+    queryKey: [SPECIES_PRODUCT_LIST_TAG, searchParams],
+    queryFn: () =>
+      getSpeciesProductsPaginatedService({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        ...(!!searchParams.productName && { productName: searchParams.productName }),
+        ...(searchParams.status !== "*" && {
+          status: searchParams.status === "true",
+        }),
+      }),
   });
+
+  const debounceProductName = useDebouncedCallback(
+    (text: string) => setSearchParams({ productName: text, page: 1 }),
+    500
+  );
 
   const speciesQuery = useAllSpecies();
   const animalSexQuery = useQuery({
@@ -80,11 +110,9 @@ export function SpeciesProductManagement() {
     }
   };
 
-  const items = query.data?.data ?? [];
-
   return (
     <div>
-      <section className="mb-4 flex justify-between">
+      <section className="mb-4 flex flex-col sm:flex-row sm:justify-between gap-2">
         <div>
           <h1 className="flex items-center gap-x-2 font-semibold text-xl">
             <PackageSearch />
@@ -100,200 +128,153 @@ export function SpeciesProductManagement() {
         </div>
       </section>
 
-      <Card>
+      <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Productos registrados</CardTitle>
-          <CardDescription>Listado de productos por especie.</CardDescription>
+          <CardTitle className="flex gap-2 items-center">
+            Filtros de Búsqueda
+          </CardTitle>
+          <CardDescription>
+            Filtre los productos por especie por nombre de producto o estado
+          </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="hidden lg:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Especie</TableHead>
-                  <TableHead>Tipo de producto</TableHead>
-                  <TableHead>Sexo</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Orden</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-center">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {query.isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center animate-pulse">
-                      Cargando datos...
-                    </TableCell>
-                  </TableRow>
-                ) : items.length ? (
-                  items.map((speciesProduct) => (
-                    <TableRow key={speciesProduct.id}>
-                      <TableCell>
-                        {speciesById.get(speciesProduct.idSpecies) ?? "-"}
-                      </TableCell>
-                      <TableCell>
-                        {speciesProduct.productType?.typeName ?? "-"}
-                      </TableCell>
-                      <TableCell>
-                        {speciesProduct.idAnimalSex
-                          ? animalSexById.get(speciesProduct.idAnimalSex) ?? "-"
-                          : "Todos"}
-                      </TableCell>
-                      <TableCell>{speciesProduct.productCode}</TableCell>
-                      <TableCell>{speciesProduct.productName}</TableCell>
-                      <TableCell>{speciesProduct.displayOrder}</TableCell>
-                      <TableCell>
-                        <Badge variant={speciesProduct.status ? "default" : "secondary"}>
-                          {speciesProduct.status ? "Activo" : "Inactivo"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-center gap-2">
-                          <UpdateSpeciesProduct speciesProduct={speciesProduct} />
-                          {speciesProduct.status ? (
-                            <ConfirmationDialog
-                              title="¿Eliminar este registro?"
-                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
-                              onConfirm={() => handleDelete(speciesProduct.id)}
-                              triggerBtn={
-                                <Button variant="outline" size="icon">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              }
-                              cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
-                            />
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleReactivate(speciesProduct.id)}
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center text-gray-500">
-                      No se ha registrado ningún producto por especie
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col w-full">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Buscar por producto
+              </label>
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por producto..."
+                  className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                  defaultValue={searchParams.productName}
+                  onChange={(e) => debounceProductName(e.target.value)}
+                />
+              </div>
+            </div>
 
-          <div className="lg:hidden p-4">
-            {query.isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="animate-pulse h-24" />
-                ))}
-              </div>
-            ) : items.length ? (
-              <div className="grid grid-cols-1 gap-4">
-                {items.map((speciesProduct) => (
-                  <Card key={speciesProduct.id} className="overflow-hidden border-gray-200">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                            Especie
-                          </span>
-                          <div className="text-sm">
-                            {speciesById.get(speciesProduct.idSpecies) ?? "-"}
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                            Tipo de producto
-                          </span>
-                          <div className="text-sm">
-                            {speciesProduct.productType?.typeName ?? "-"}
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                            Sexo
-                          </span>
-                          <div className="text-sm">
-                            {speciesProduct.idAnimalSex
-                              ? animalSexById.get(speciesProduct.idAnimalSex) ?? "-"
-                              : "Todos"}
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                            Código
-                          </span>
-                          <div className="text-sm">{speciesProduct.productCode}</div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                            Producto
-                          </span>
-                          <div className="text-sm">{speciesProduct.productName}</div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                            Orden
-                          </span>
-                          <div className="text-sm">{speciesProduct.displayOrder}</div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                            Estado
-                          </span>
-                          <div>
-                            <Badge variant={speciesProduct.status ? "default" : "secondary"}>
-                              {speciesProduct.status ? "Activo" : "Inactivo"}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex justify-center gap-2 pt-2">
-                          <UpdateSpeciesProduct speciesProduct={speciesProduct} />
-                          {speciesProduct.status ? (
-                            <ConfirmationDialog
-                              title="¿Eliminar este registro?"
-                              description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
-                              onConfirm={() => handleDelete(speciesProduct.id)}
-                              triggerBtn={
-                                <Button variant="outline" size="icon">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              }
-                              cancelBtn={<Button variant="outline">Cancelar</Button>}
-                              confirmBtn={<Button variant="destructive">Eliminar</Button>}
-                            />
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleReactivate(speciesProduct.id)}
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="py-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed">
-                <p>No se ha registrado ningún producto por especie</p>
-              </div>
-            )}
+            <div className="flex flex-col w-full">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Estado
+              </label>
+              <Select
+                onValueChange={(value) => setSearchParams({ status: value, page: 1 })}
+                defaultValue={searchParams.status}
+              >
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Seleccione un estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="*">Todos</SelectItem>
+                  <SelectItem value="true">Activos</SelectItem>
+                  <SelectItem value="false">Inactivos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      <TableSpeciesProduct<SpeciesProduct, unknown>
+        columns={[
+          {
+            accessorKey: "idSpecies",
+            header: () => "Especie",
+            cell: ({ row }) => speciesById.get(row.original.idSpecies) ?? "-",
+          },
+          {
+            accessorKey: "productType",
+            header: () => "Tipo de producto",
+            cell: ({ row }) => row.original.productType?.typeName ?? "-",
+          },
+          {
+            accessorKey: "idAnimalSex",
+            header: () => "Sexo",
+            cell: ({ row }) =>
+              row.original.idAnimalSex
+                ? animalSexById.get(row.original.idAnimalSex) ?? "-"
+                : "Todos",
+          },
+          {
+            accessorKey: "productCode",
+            header: () => "Código",
+            cell: ({ row }) => row.original.productCode,
+          },
+          {
+            accessorKey: "productName",
+            header: () => "Producto",
+            cell: ({ row }) => row.original.productName,
+          },
+          {
+            accessorKey: "displayOrder",
+            header: () => "Orden",
+            cell: ({ row }) => row.original.displayOrder,
+          },
+          {
+            accessorKey: "status",
+            header: () => (
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Estado
+              </div>
+            ),
+            cell: ({ row }) => (
+              <Badge variant={row.original.status ? "default" : "secondary"}>
+                {row.original.status ? "Activo" : "Inactivo"}
+              </Badge>
+            ),
+          },
+          {
+            id: "actions",
+            header: () => (
+              <div className="flex items-center justify-center gap-2">
+                <Settings className="h-4 w-4" />
+                Acciones
+              </div>
+            ),
+            cell: ({ row }) => (
+              <div className="flex justify-center gap-x-2">
+                <UpdateSpeciesProduct speciesProduct={row.original} />
+                {row.original.status ? (
+                  <ConfirmationDialog
+                    title="¿Eliminar este registro?"
+                    description="Esta acción no se puede deshacer. El registro se eliminará permanentemente de la base de datos."
+                    onConfirm={() => handleDelete(row.original.id)}
+                    triggerBtn={
+                      <Button variant="outline" size="icon">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                    cancelBtn={<Button variant="outline">Cancelar</Button>}
+                    confirmBtn={<Button variant="destructive">Eliminar</Button>}
+                  />
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleReactivate(row.original.id)}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ),
+          },
+        ]}
+        data={query.data?.data.items ?? []}
+        meta={{
+          ...query.data?.data.meta,
+          onChangePage: (page) => setSearchParams({ page }),
+          onNextPage: () => setSearchParams({ page: searchParams.page + 1 }),
+          disabledNextPage: searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
+          onPreviousPage: () => setSearchParams({ page: searchParams.page - 1 }),
+          disabledPreviousPage: searchParams.page <= 1,
+          setSearchParams,
+        }}
+        isLoading={query.isLoading}
+      />
     </div>
   );
 }

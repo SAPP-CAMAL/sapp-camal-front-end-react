@@ -3,10 +3,16 @@ import {
     CreateSettingHygieneBody,
     ResponseEquipmentAll,
     ResponseSettingHygieneAdminAll,
+    ResponseSettingHygieneAdminPaginated,
+    SearchParamsSettingHygiene,
 } from "@/features/setting-hygiene/domain/setting-hygiene-admin.domain";
 
 export function getSettingHygieneAdminService(): Promise<ResponseSettingHygieneAdminAll> {
     return http.get("v1/1.0.0/setting-hygiene/all").json();
+}
+
+export function getSettingHygieneAdminPaginatedService(searchParams: SearchParamsSettingHygiene): Promise<ResponseSettingHygieneAdminPaginated> {
+    return http.get("v1/1.0.0/setting-hygiene/list", { searchParams }).json();
 }
 
 export function createSettingHygieneService(body: CreateSettingHygieneBody) {

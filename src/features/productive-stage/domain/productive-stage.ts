@@ -13,3 +13,10 @@ export type CreateProductiveStageBody = {
 	idSpecies: number;
 	idAnimalSex: number;
 }
+
+export type SearchParamsProductiveStage = {
+	page?: number;
+	limit?: number;
+	name?: string;
+	status?: boolean;
+}

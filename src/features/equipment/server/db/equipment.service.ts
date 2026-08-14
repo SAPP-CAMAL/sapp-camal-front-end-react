@@ -2,8 +2,12 @@ import { http } from "@/lib/ky";
 import {
     CreateEquipmentBody,
     CreateEquipmentTypeBody,
+    ResponseEquipmentsPaginated,
     ResponseEquipmentsService,
+    ResponseEquipmentTypesPaginated,
     ResponseEquipmentTypesService,
+    SearchParamsEquipment,
+    SearchParamsEquipmentType,
 } from "@/features/equipment/domain/equipment.domain";
 
 export function createEquipmentTypeService(body: CreateEquipmentTypeBody) {
@@ -12,6 +16,10 @@ export function createEquipmentTypeService(body: CreateEquipmentTypeBody) {
 
 export function getEquipmentTypesService(): Promise<ResponseEquipmentTypesService> {
     return http.get("v1/1.0.0/equipment-type/all").json()
+}
+
+export function getEquipmentTypesPaginatedService(searchParams: SearchParamsEquipmentType): Promise<ResponseEquipmentTypesPaginated> {
+    return http.get("v1/1.0.0/equipment-type/list", { searchParams }).json()
 }
 
 export function updateEquipmentTypeService(id: number, body: Partial<CreateEquipmentTypeBody>) {
@@ -32,6 +40,10 @@ export function createEquipmentService(body: CreateEquipmentBody) {
 
 export function getEquipmentsService(): Promise<ResponseEquipmentsService> {
     return http.get("v1/1.0.0/equipment/all").json()
+}
+
+export function getEquipmentsPaginatedService(searchParams: SearchParamsEquipment): Promise<ResponseEquipmentsPaginated> {
+    return http.get("v1/1.0.0/equipment/list", { searchParams }).json()
 }
 
 export function updateEquipmentService(id: number, body: Partial<CreateEquipmentBody>) {

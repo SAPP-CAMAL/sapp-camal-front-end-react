@@ -47,6 +47,7 @@ export function NewCorralType() {
       await createCorralTypeService({ code: data.code, description: data.description, status: true });
 
       form.reset(defaultValues);
+      setOpen(false);
 
       await queryClient.invalidateQueries({ queryKey: ["corral-types-admin"] });
 

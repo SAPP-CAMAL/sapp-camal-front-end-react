@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type DistributionProduct = {
     id: number;
@@ -63,6 +63,13 @@ export type CreateDetailDistributionBody = {
     adressee?: string | null;
 }
 
+export type SearchParamsDistributionProduct = {
+    page?: number;
+    limit?: number;
+    status?: boolean;
+}
+
 export type ResponseDistributionProductsService = CommonHttpResponse<DistributionProduct>
+export type ResponseDistributionProductsPaginated = CommonHttpResponsePagination<DistributionProduct>
 export type ResponseDetailDistributionsService = CommonHttpResponse<DetailDistribution>
 export type ResponseProductsService = CommonHttpResponse<Product>

@@ -2,10 +2,16 @@ import { http } from "@/lib/ky";
 import {
     CreateOrderStatusBody,
     ResponseOrderStatusAll,
+    ResponseOrderStatusPaginated,
+    SearchParamsOrderStatus,
 } from "@/features/order-status/domain/order-status.domain";
 
 export function getOrderStatusAllService(): Promise<ResponseOrderStatusAll> {
     return http.get("v1/1.0.0/order-status/all").json();
+}
+
+export function getOrderStatusPaginatedService(searchParams: SearchParamsOrderStatus): Promise<ResponseOrderStatusPaginated> {
+    return http.get("v1/1.0.0/order-status/list", { searchParams }).json();
 }
 
 export function createOrderStatusService(body: CreateOrderStatusBody) {

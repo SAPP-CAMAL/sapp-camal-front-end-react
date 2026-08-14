@@ -1,6 +1,7 @@
 export function normalizeMenuUrl(url: string | null): string {
   if (!url) return "#";
-  let cleanUrl = url;
+  let cleanUrl = url.trim();
+  if (!cleanUrl) return "#";
   if (cleanUrl.startsWith("/dashboard/")) {
     cleanUrl = cleanUrl.substring(10);
   } else if (cleanUrl.startsWith("dashboard/")) {

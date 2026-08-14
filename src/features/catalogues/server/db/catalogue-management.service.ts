@@ -3,12 +3,18 @@ import {
     CreateCatalogueTypeBody,
     CreateCatalogueValueBody,
     ResponseCatalogueTypesAll,
+    ResponseCatalogueTypesPaginated,
     ResponseCatalogueValues,
+    SearchParamsCatalogueType,
     SearchParamsCatalogueValue,
 } from "@/features/catalogues/domain/catalogue-management.domain";
 
 export function getCatalogueTypesService(): Promise<ResponseCatalogueTypesAll> {
     return http.get("v1/1.0.0/catalogues/catalogue-type").json();
+}
+
+export function getCatalogueTypesPaginatedService(searchParams: SearchParamsCatalogueType): Promise<ResponseCatalogueTypesPaginated> {
+    return http.get("v1/1.0.0/catalogues/catalogue-type/list", { searchParams }).json();
 }
 
 export function createCatalogueTypeService(body: CreateCatalogueTypeBody) {

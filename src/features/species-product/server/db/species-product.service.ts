@@ -1,5 +1,9 @@
 import { http } from "@/lib/ky";
-import { SpeciesProduct } from "@/features/species-product/domain";
+import {
+  ResponseSpeciesProductPaginated,
+  SearchParamsSpeciesProduct,
+  SpeciesProduct,
+} from "@/features/species-product/domain";
 import { CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type ResponseSpeciesProductAll = CommonHttpResponseSingle<SpeciesProduct[]>;
@@ -18,6 +22,12 @@ export type UpdateSpeciesProductBody = Partial<CreateSpeciesProductBody>;
 
 export function getAllSpeciesProductsService(): Promise<ResponseSpeciesProductAll> {
   return http.get("v1/1.0.0/specie-product/all").json();
+}
+
+export function getSpeciesProductsPaginatedService(
+  searchParams: SearchParamsSpeciesProduct,
+): Promise<ResponseSpeciesProductPaginated> {
+  return http.get("v1/1.0.0/specie-product/list", { searchParams }).json();
 }
 
 export function createSpeciesProductService(body: CreateSpeciesProductBody) {

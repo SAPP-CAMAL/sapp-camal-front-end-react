@@ -2,10 +2,16 @@ import { http } from "@/lib/ky";
 import {
     CreateUnitMeasureBody,
     ResponseUnitMeasuresAdminAll,
+    ResponseUnitMeasuresPaginated,
+    SearchParamsUnitMeasure,
 } from "@/features/unit-measure/domain/unit-measure-admin.domain";
 
 export function getUnitMeasuresAdminService(): Promise<ResponseUnitMeasuresAdminAll> {
     return http.get("v1/1.0.0/unit-measure/all").json();
+}
+
+export function getUnitMeasuresPaginatedService(searchParams: SearchParamsUnitMeasure): Promise<ResponseUnitMeasuresPaginated> {
+    return http.get("v1/1.0.0/unit-measure/list", { searchParams }).json();
 }
 
 export function createUnitMeasureService(body: CreateUnitMeasureBody) {

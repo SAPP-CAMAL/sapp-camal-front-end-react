@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { TruckIcon, Activity, Settings, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { parseAsString, useQueryStates } from "nuqs";
-import { getDistributionProductsService } from "./server/db/distribution-product.service";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { getDistributionProductsPaginatedService } from "./server/db/distribution-product.service";
 import { NewDistributionProduct } from "./components/new-distribution-product";
 import { UpdateDistributionProduct } from "./components/update-distribution-product";
 import { DeleteDistributionProduct } from "./components/delete-distribution-product";
@@ -30,6 +29,8 @@ import { DISTRIBUTION_PRODUCTS_TAG } from "./constants/distribution-product.cons
 export function DistributionProductManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
     {
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
       status: parseAsString.withDefault("*"),
     },
     {
@@ -38,19 +39,16 @@ export function DistributionProductManagement() {
   );
 
   const query = useQuery({
-    queryKey: [DISTRIBUTION_PRODUCTS_TAG],
-    queryFn: getDistributionProductsService,
+    queryKey: [DISTRIBUTION_PRODUCTS_TAG, searchParams],
+    queryFn: () =>
+      getDistributionProductsPaginatedService({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        ...(searchParams.status !== "*" && {
+          status: searchParams.status === "true",
+        }),
+      }),
   });
-
-  const filteredData = useMemo(() => {
-    const items = query.data?.data ?? [];
-
-    return items.filter((item) =>
-      searchParams.status !== "*"
-        ? String(item.status) === searchParams.status
-        : true
-    );
-  }, [query.data, searchParams.status]);
 
   return (
     <div>
@@ -85,7 +83,7 @@ export function DistributionProductManagement() {
                 Estado
               </label>
               <Select
-                onValueChange={(value) => setSearchParams({ status: value })}
+                onValueChange={(value) => setSearchParams({ status: value, page: 1 })}
                 defaultValue={searchParams.status}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -173,7 +171,16 @@ export function DistributionProductManagement() {
             ),
           },
         ]}
-        data={filteredData}
+        data={query.data?.data.items ?? []}
+        meta={{
+          ...query.data?.data.meta,
+          onChangePage: (page) => setSearchParams({ page }),
+          onNextPage: () => setSearchParams({ page: searchParams.page + 1 }),
+          disabledNextPage: searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
+          onPreviousPage: () => setSearchParams({ page: searchParams.page - 1 }),
+          disabledPreviousPage: searchParams.page <= 1,
+          setSearchParams,
+        }}
         isLoading={query.isLoading}
       />
     </div>

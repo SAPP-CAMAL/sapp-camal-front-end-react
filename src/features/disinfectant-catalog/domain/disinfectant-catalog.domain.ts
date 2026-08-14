@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type DisinfectantCatalog = {
     id: number;
@@ -13,4 +13,12 @@ export type CreateDisinfectantCatalogBody = {
     status?: boolean;
 };
 
+export type SearchParamsDisinfectantCatalog = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+};
+
 export type ResponseDisinfectantCatalogAll = CommonHttpResponseSingle<DisinfectantCatalog[]>;
+export type ResponseDisinfectantCatalogPaginated = CommonHttpResponsePagination<DisinfectantCatalog>;

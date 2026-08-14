@@ -1,7 +1,11 @@
 import { http } from '@/lib/ky';
-import { Origin } from '@/features/origin/domain';
+import { Origin, ResponseOriginPaginated, SearchParamsOrigin } from '@/features/origin/domain';
 import { CommonHttpResponse } from '@/features/people/domain';
 import { ORIGIN_LIST_TAG } from '@/features/origin/constants';
+
+export function getOriginsPaginatedService(searchParams: SearchParamsOrigin): Promise<ResponseOriginPaginated> {
+	return http.get('v1/1.0.0/origin/list', { searchParams }).json();
+}
 
 export const getAllOrigins = async (): Promise<CommonHttpResponse<Origin>> => {
 	try {

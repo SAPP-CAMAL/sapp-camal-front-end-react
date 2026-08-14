@@ -7,10 +7,16 @@ import {
     ResponseReportElementsAll,
     ResponseReportSectionsAll,
     ResponseReportTemplatesAll,
+    ResponseReportTemplatesPaginated,
+    SearchParamsReportTemplate,
 } from "@/features/report-template/domain/report-template-admin.domain";
 
 export function getReportTemplatesAdminService(): Promise<ResponseReportTemplatesAll> {
     return http.get("v1/1.0.0/report-template/all").json();
+}
+
+export function getReportTemplatesPaginatedService(searchParams: SearchParamsReportTemplate): Promise<ResponseReportTemplatesPaginated> {
+    return http.get("v1/1.0.0/report-template/list", { searchParams }).json();
 }
 
 export function createReportTemplateService(body: CreateReportTemplateBody) {

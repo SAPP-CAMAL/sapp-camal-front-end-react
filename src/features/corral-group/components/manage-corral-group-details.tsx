@@ -36,7 +36,7 @@ export function ManageCorralGroupDetails({ corralGroup }: { corralGroup: CorralG
           Gestionar corrales del grupo
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-[80vw] lg:max-w-[65vw]">
+      <DialogContent className="max-h-screen overflow-y-auto overflow-x-hidden w-[95vw] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Corrales del grupo {corralGroup.name}</DialogTitle>
           <DialogDescription>Agrega o quita corrales asignados a este grupo.</DialogDescription>

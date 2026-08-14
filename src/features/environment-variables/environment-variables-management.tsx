@@ -4,15 +4,19 @@ import { useState } from "react";
 import {
   KeyRound,
   RotateCcw,
+  SearchIcon,
   Trash2,
   EyeIcon,
   EyeOffIcon,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { useDebouncedCallback } from "use-debounce";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -35,13 +39,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
 
 import { NewEnvironmentVariable } from "./components/new-environment-variable";
 import { UpdateEnvironmentVariable } from "./components/update-environment-variable";
 import { ENVIRONMENT_VARIABLES_LIST_TAG } from "./constants";
 import {
   deleteEnvironmentVariablePermanentlyService,
-  getAllEnvironmentVariablesService,
+  getEnvironmentVariablesService,
   updateEnvironmentVariableService,
 } from "./server/db/environment-variables.service";
 
@@ -100,10 +105,29 @@ function MaskedToken({ value }: { value: string }) {
 export function EnvironmentVariablesManagement() {
   const queryClient = useQueryClient();
 
+  const [searchParams, setSearchParams] = useQueryStates(
+    {
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
+      name: parseAsString.withDefault(""),
+    },
+    { history: "push" }
+  );
+
   const query = useQuery({
-    queryKey: [ENVIRONMENT_VARIABLES_LIST_TAG],
-    queryFn: getAllEnvironmentVariablesService,
+    queryKey: [ENVIRONMENT_VARIABLES_LIST_TAG, searchParams],
+    queryFn: () =>
+      getEnvironmentVariablesService({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        ...(!!searchParams.name && { name: searchParams.name }),
+      }),
   });
+
+  const debounceName = useDebouncedCallback(
+    (text: string) => setSearchParams({ name: text, page: 1 }),
+    500
+  );
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: [ENVIRONMENT_VARIABLES_LIST_TAG] });
@@ -130,7 +154,8 @@ export function EnvironmentVariablesManagement() {
     }
   };
 
-  const items = query.data?.data ?? [];
+  const items = query.data?.data.items ?? [];
+  const meta = query.data?.data.meta;
 
   return (
     <div>
@@ -149,6 +174,31 @@ export function EnvironmentVariablesManagement() {
           <NewEnvironmentVariable />
         </div>
       </section>
+
+      <Card className="mb-4 py-3 gap-2">
+        <CardHeader className="px-4 gap-0.5">
+          <CardTitle className="flex gap-2 items-center text-sm">
+            Filtros de Búsqueda
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4">
+          <div className="flex flex-col w-full sm:max-w-sm">
+            <label className="mb-1 text-sm font-medium text-gray-700">
+              Buscar por nombre
+            </label>
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 h-5 w-5" />
+              <Input
+                type="text"
+                placeholder="Buscar por nombre..."
+                className="pl-10 pr-3 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2"
+                defaultValue={searchParams.name}
+                onChange={(e) => debounceName(e.target.value)}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -313,6 +363,20 @@ export function EnvironmentVariablesManagement() {
               </div>
             )}
           </div>
+
+          <PaginationFooter
+            meta={{
+              ...meta,
+              onChangePage: (page) => setSearchParams({ page }),
+              setSearchParams,
+            }}
+            isLoading={query.isLoading}
+            hasData={!!items.length}
+            onPreviousPage={() => setSearchParams({ page: searchParams.page - 1 })}
+            onNextPage={() => setSearchParams({ page: searchParams.page + 1 })}
+            disabledPreviousPage={searchParams.page <= 1}
+            disabledNextPage={searchParams.page >= (meta?.totalPages ?? 0)}
+          />
         </CardContent>
       </Card>
     </div>

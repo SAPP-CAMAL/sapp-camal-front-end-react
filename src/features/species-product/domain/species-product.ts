@@ -1,3 +1,5 @@
+import { CommonHttpResponsePagination } from "@/features/people/domain";
+
 export interface SpeciesProduct {
   id: number;
   idSpecies: number;
@@ -13,3 +15,12 @@ export interface SpeciesProduct {
   displayOrder: number;
   status: boolean;
 }
+
+export type SearchParamsSpeciesProduct = {
+  page?: number;
+  limit?: number;
+  productName?: string;
+  status?: boolean;
+};
+
+export type ResponseSpeciesProductPaginated = CommonHttpResponsePagination<SpeciesProduct>;

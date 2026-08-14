@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type HookType = {
     id: number;
@@ -16,4 +16,12 @@ export type CreateHookTypeBody = {
     idSpecie: number;
 }
 
-export type ResponseHookTypeService = CommonHttpResponse<HookType>
+export type SearchParamsHookType = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    idSpecie?: number;
+    status?: string;
+}
+
+export type ResponseHookTypePaginated = CommonHttpResponsePagination<HookType>

@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type Opinion = {
     id: number;
@@ -12,4 +12,12 @@ export type CreateOpinionBody = {
     code: string;
 }
 
+export type SearchParamsOpinion = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseOpinionService = CommonHttpResponse<Opinion>
+export type ResponseOpinionPaginated = CommonHttpResponsePagination<Opinion>

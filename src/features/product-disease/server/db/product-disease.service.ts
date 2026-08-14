@@ -1,5 +1,5 @@
 import { http } from "@/lib/ky";
-import { CreateProductDiseaseBody, ResponseProductDiseaseService } from "@/features/product-disease/domain/product-disease.domain";
+import { CreateProductDiseaseBody, ResponseProductDiseasePaginated, ResponseProductDiseaseService, SearchParamsProductDisease } from "@/features/product-disease/domain/product-disease.domain";
 
 export function createProductDiseaseService(body: CreateProductDiseaseBody) {
     return http.post("v1/1.0.0/product-disease", { json: body }).json()
@@ -7,6 +7,10 @@ export function createProductDiseaseService(body: CreateProductDiseaseBody) {
 
 export function getProductDiseasesService(): Promise<ResponseProductDiseaseService> {
     return http.get("v1/1.0.0/product-disease/all").json()
+}
+
+export function getProductDiseasesPaginatedService(searchParams: SearchParamsProductDisease): Promise<ResponseProductDiseasePaginated> {
+    return http.get("v1/1.0.0/product-disease/list", { searchParams }).json()
 }
 
 export function updateProductDiseaseService(id: number, body: Partial<CreateProductDiseaseBody>) {

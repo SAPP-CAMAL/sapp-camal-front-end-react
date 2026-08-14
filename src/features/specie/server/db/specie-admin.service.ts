@@ -1,8 +1,17 @@
 import { http } from "@/lib/ky";
-import { CreateSpecieBody, ResponseSpeciesAdmin } from "@/features/specie/domain";
+import {
+    CreateSpecieBody,
+    ResponseSpeciesAdmin,
+    ResponseSpeciesPaginated,
+    SearchParamsSpecie,
+} from "@/features/specie/domain";
 
 export function getSpeciesAdminService(): Promise<ResponseSpeciesAdmin> {
     return http.get("v1/1.0.0/specie/admin").json();
+}
+
+export function getSpeciesPaginatedService(searchParams: SearchParamsSpecie): Promise<ResponseSpeciesPaginated> {
+    return http.get("v1/1.0.0/specie/list", { searchParams }).json();
 }
 
 export function createSpecieService(body: CreateSpecieBody) {

@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type CorralAdmin = {
     id: number;
@@ -20,4 +20,11 @@ export type CreateCorralBody = {
     status?: boolean;
 }
 
-export type ResponseCorralsAdminAll = CommonHttpResponseSingle<CorralAdmin[]>
+export type SearchParamsCorral = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    idCorralType?: number;
+}
+
+export type ResponseCorralsAdminPaginated = CommonHttpResponsePagination<CorralAdmin>

@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type ReportCode = {
     id: number;
@@ -12,4 +12,12 @@ export type CreateReportCodeBody = {
     version?: string | null;
 }
 
+export type SearchParamsReportCodes = {
+    page?: number;
+    limit?: number;
+    code?: string;
+    status?: boolean;
+}
+
 export type ResponseReportCodesService = CommonHttpResponse<ReportCode>
+export type ResponseReportCodesPaginated = CommonHttpResponsePagination<ReportCode>

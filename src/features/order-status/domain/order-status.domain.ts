@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type OrderStatus = {
     id: number;
@@ -15,4 +15,12 @@ export type CreateOrderStatusBody = {
     status?: boolean;
 };
 
+export type SearchParamsOrderStatus = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+};
+
 export type ResponseOrderStatusAll = CommonHttpResponseSingle<OrderStatus[]>;
+export type ResponseOrderStatusPaginated = CommonHttpResponsePagination<OrderStatus>;

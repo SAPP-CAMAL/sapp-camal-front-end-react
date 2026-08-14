@@ -133,19 +133,23 @@ export function NavMain({ menus }: { menus: AdministrationMenu[] }) {
   const [openMenus, setOpenMenus] = useState<Record<number, boolean>>({});
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Después de la hidratación, abrir los menús que tienen hijos o nietos activos
+  // Después de la hidratación, abrir el menú que tiene hijos o nietos activos.
+  // Se hace merge sobre el estado previo (no se reemplaza entero): reemplazar cerraba
+  // cualquier otro menú que el usuario hubiera abierto manualmente al navegar.
   useEffect(() => {
     setIsHydrated(true);
-    const newOpenMenus: Record<number, boolean> = {};
-    menus.forEach((menu) => {
-      const hasActiveChild = menu.children?.some((child) =>
-        containsActivePath(child, pathname)
-      );
-      if (hasActiveChild) {
-        newOpenMenus[menu.id] = true;
-      }
+    setOpenMenus((prev) => {
+      const next = { ...prev };
+      menus.forEach((menu) => {
+        const hasActiveChild = menu.children?.some((child) =>
+          containsActivePath(child, pathname)
+        );
+        if (hasActiveChild) {
+          next[menu.id] = true;
+        }
+      });
+      return next;
     });
-    setOpenMenus(newOpenMenus);
   }, [pathname, menus]);
 
   // Función para manejar el clic en los items del menú

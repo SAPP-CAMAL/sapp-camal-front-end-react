@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { BedIcon, Activity, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { parseAsString, useQueryStates } from "nuqs";
-import { getAllBedTypes } from "./server/db/bed-type.service";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { getBedTypesPaginated } from "./server/db/bed-type.service";
 import { NewBedType } from "./components/new-bed-type";
 import { UpdateBedType } from "./components/update-bed-type";
 import { DeleteBedType } from "./components/delete-bed-type";
@@ -32,6 +31,8 @@ import { BED_TYPE_LIST_TAG } from "./constants";
 export function BedTypeManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
     {
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
       description: parseAsString.withDefault(""),
       status: parseAsString.withDefault("*"),
     },
@@ -41,32 +42,20 @@ export function BedTypeManagement() {
   );
 
   const query = useQuery({
-    queryKey: [BED_TYPE_LIST_TAG],
-    queryFn: getAllBedTypes,
+    queryKey: [BED_TYPE_LIST_TAG, searchParams],
+    queryFn: () =>
+      getBedTypesPaginated({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        ...(!!searchParams.description && { description: searchParams.description }),
+        ...(searchParams.status !== "*" && { status: searchParams.status }),
+      }),
   });
 
   const debounceDescription = useDebouncedCallback(
-    (text: string) => setSearchParams({ description: text }),
+    (text: string) => setSearchParams({ description: text, page: 1 }),
     500
   );
-
-  const filteredData = useMemo(() => {
-    const items = query.data?.data ?? [];
-
-    return items.filter((item) => {
-      const matchesDescription = searchParams.description
-        ? item.description
-            .toLowerCase()
-            .includes(searchParams.description.toLowerCase())
-        : true;
-      const matchesStatus =
-        searchParams.status !== "*"
-          ? String(item.status) === searchParams.status
-          : true;
-
-      return matchesDescription && matchesStatus;
-    });
-  }, [query.data, searchParams.description, searchParams.status]);
 
   return (
     <div>
@@ -118,7 +107,7 @@ export function BedTypeManagement() {
                 Estado
               </label>
               <Select
-                onValueChange={(value) => setSearchParams({ status: value })}
+                onValueChange={(value) => setSearchParams({ status: value, page: 1 })}
                 defaultValue={searchParams.status}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -175,7 +164,16 @@ export function BedTypeManagement() {
             ),
           },
         ]}
-        data={filteredData}
+        data={query.data?.data.items ?? []}
+        meta={{
+          ...query.data?.data.meta,
+          onChangePage: (page) => setSearchParams({ page }),
+          onNextPage: () => setSearchParams({ page: searchParams.page + 1 }),
+          disabledNextPage: searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
+          onPreviousPage: () => setSearchParams({ page: searchParams.page - 1 }),
+          disabledPreviousPage: searchParams.page <= 1,
+          setSearchParams,
+        }}
         isLoading={query.isLoading}
       />
     </div>

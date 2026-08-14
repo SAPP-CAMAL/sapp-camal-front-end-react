@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type WeighingStage = {
     id: number;
@@ -14,4 +14,12 @@ export type CreateWeighingStageBody = {
     description?: string;
 }
 
+export type SearchParamsWeighingStage = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseWeighingStageService = CommonHttpResponse<WeighingStage>
+export type ResponseWeighingStagePaginated = CommonHttpResponsePagination<WeighingStage>

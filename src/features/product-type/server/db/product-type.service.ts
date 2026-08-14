@@ -1,5 +1,9 @@
 import { http } from "@/lib/ky";
-import { ProductType } from "@/features/product-type/domain";
+import {
+  ProductType,
+  ResponseProductTypePaginated,
+  SearchParamsProductType,
+} from "@/features/product-type/domain";
 import { CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type ResponseProductTypeAll = CommonHttpResponseSingle<ProductType[]>;
@@ -15,6 +19,12 @@ export type UpdateProductTypeBody = Partial<CreateProductTypeBody>;
 
 export function getAllProductTypesService(): Promise<ResponseProductTypeAll> {
   return http.get("v1/1.0.0/product-type/all").json();
+}
+
+export function getProductTypesPaginatedService(
+  searchParams: SearchParamsProductType,
+): Promise<ResponseProductTypePaginated> {
+  return http.get("v1/1.0.0/product-type/list", { searchParams }).json();
 }
 
 export function createProductTypeService(body: CreateProductTypeBody) {

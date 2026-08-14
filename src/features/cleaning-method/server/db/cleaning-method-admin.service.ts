@@ -2,10 +2,16 @@ import { http } from "@/lib/ky";
 import {
     CreateCleaningMethodBody,
     ResponseCleaningMethodsAdminAll,
+    ResponseCleaningMethodsPaginated,
+    SearchParamsCleaningMethod,
 } from "@/features/cleaning-method/domain/cleaning-method-admin.domain";
 
 export function getCleaningMethodsAdminService(): Promise<ResponseCleaningMethodsAdminAll> {
     return http.get("v1/1.0.0/cleaning-method/all").json();
+}
+
+export function getCleaningMethodsPaginatedService(searchParams: SearchParamsCleaningMethod): Promise<ResponseCleaningMethodsPaginated> {
+    return http.get("v1/1.0.0/cleaning-method/list", { searchParams }).json();
 }
 
 export function createCleaningMethodService(body: CreateCleaningMethodBody) {

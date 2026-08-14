@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type ProductDisease = {
     id: number;
@@ -26,4 +26,12 @@ export type CreateProductDiseaseBody = {
     idDiseaseGroup: number;
 }
 
+export type SearchParamsProductDisease = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseProductDiseaseService = CommonHttpResponse<ProductDisease>
+export type ResponseProductDiseasePaginated = CommonHttpResponsePagination<ProductDisease>

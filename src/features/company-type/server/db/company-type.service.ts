@@ -1,5 +1,10 @@
 import { http } from "@/lib/ky";
-import { CreateCompanyTypeBody, ResponseCompanyTypeService } from "@/features/company-type/domain/company-type.domain";
+import {
+    CreateCompanyTypeBody,
+    ResponseCompanyTypePaginated,
+    ResponseCompanyTypeService,
+    SearchParamsCompanyType,
+} from "@/features/company-type/domain/company-type.domain";
 
 export function createCompanyTypeService(body: CreateCompanyTypeBody) {
     return http.post("v1/1.0.0/company-type", { json: body }).json()
@@ -7,6 +12,10 @@ export function createCompanyTypeService(body: CreateCompanyTypeBody) {
 
 export function getCompanyTypesService(): Promise<ResponseCompanyTypeService> {
     return http.get("v1/1.0.0/company-type/all").json()
+}
+
+export function getCompanyTypesPaginatedService(searchParams: SearchParamsCompanyType): Promise<ResponseCompanyTypePaginated> {
+    return http.get("v1/1.0.0/company-type/list", { searchParams }).json()
 }
 
 export function getActiveCompanyTypesService(): Promise<ResponseCompanyTypeService> {

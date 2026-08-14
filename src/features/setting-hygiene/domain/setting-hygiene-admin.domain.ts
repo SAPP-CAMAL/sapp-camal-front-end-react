@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type SettingHygieneAdmin = {
     id: number;
@@ -16,7 +16,14 @@ export type CreateSettingHygieneBody = {
     status?: boolean;
 }
 
+export type SearchParamsSettingHygiene = {
+    page?: number;
+    limit?: number;
+    status?: boolean;
+}
+
 export type ResponseSettingHygieneAdminAll = CommonHttpResponseSingle<SettingHygieneAdmin[]>
+export type ResponseSettingHygieneAdminPaginated = CommonHttpResponsePagination<SettingHygieneAdmin>
 
 export type EquipmentOption = {
     id: number;

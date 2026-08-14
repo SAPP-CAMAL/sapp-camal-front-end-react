@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain"
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain"
 
 export type Slaughterhouse = {
     id: number
@@ -19,5 +19,13 @@ export type CreateSlaughterhouseBody = {
 
 export type UpdateSlaughterhouseBody = Partial<CreateSlaughterhouseBody>
 
+export type SearchParamsSlaughterhouse = {
+    page?: number
+    limit?: number
+    name?: string
+    status?: boolean
+}
+
 export type ResponseSlaughterhouseAll = CommonHttpResponseSingle<Slaughterhouse[]>
 export type ResponseSlaughterhouseSingle = CommonHttpResponseSingle<Slaughterhouse>
+export type ResponseSlaughterhousePaginated = CommonHttpResponsePagination<Slaughterhouse>

@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type CollectionValueAdmin = {
     id: number;
@@ -18,5 +18,12 @@ export type CreateCollectionValueBody = {
     status?: boolean;
 }
 
-export type ResponseCollectionValuesAll = CommonHttpResponseSingle<CollectionValueAdmin[]>
+export type SearchParamsCollectionValue = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    idSpecie?: number;
+}
+
+export type ResponseCollectionValuesPaginated = CommonHttpResponsePagination<CollectionValueAdmin>
 export type ResponseSpeciesAll = CommonHttpResponseSingle<{ id: number; name: string; status: boolean }[]>

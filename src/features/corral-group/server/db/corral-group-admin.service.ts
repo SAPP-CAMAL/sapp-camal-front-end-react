@@ -2,15 +2,22 @@ import { http } from "@/lib/ky";
 import {
     CreateCorralGroupBody,
     CreateCorralGroupDetailBody,
+    CreateCorralGroupDetailBulkBody,
     ResponseCorralGroupDetailsAll,
     ResponseCorralGroupsAll,
+    ResponseCorralGroupsPaginated,
     ResponseCorralsAll,
     ResponseFinishTypesAll,
     ResponseLinesAll,
+    SearchParamsCorralGroup,
 } from "@/features/corral-group/domain/corral-group-admin.domain";
 
 export function getCorralGroupsAdminService(): Promise<ResponseCorralGroupsAll> {
     return http.get("v1/1.0.0/corral-group/all").json();
+}
+
+export function getCorralGroupsPaginatedService(searchParams: SearchParamsCorralGroup): Promise<ResponseCorralGroupsPaginated> {
+    return http.get("v1/1.0.0/corral-group/list", { searchParams }).json();
 }
 
 export function createCorralGroupService(body: CreateCorralGroupBody) {
@@ -39,6 +46,14 @@ export function createCorralGroupDetailService(body: CreateCorralGroupDetailBody
 
 export function deleteCorralGroupDetailService(id: number) {
     return http.delete(`v1/1.0.0/corral-group-detail/${id}`).json();
+}
+
+export function createCorralGroupDetailsBulkService(body: CreateCorralGroupDetailBulkBody) {
+    return http.post("v1/1.0.0/corral-group-detail/bulk", { json: body }).json();
+}
+
+export function deleteCorralGroupDetailsBulkService(ids: number[]) {
+    return http.delete("v1/1.0.0/corral-group-detail/bulk", { json: { ids } }).json();
 }
 
 export function getCorralsAllService(): Promise<ResponseCorralsAll> {

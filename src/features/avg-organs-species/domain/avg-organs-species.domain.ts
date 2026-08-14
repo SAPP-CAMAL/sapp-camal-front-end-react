@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type AvgOrgansSpecies = {
     id: number;
@@ -20,4 +20,12 @@ export type CreateAvgOrgansSpeciesBody = {
     avgWeight?: number;
 }
 
+export type SearchParamsAvgOrgansSpecies = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseAvgOrgansSpeciesService = CommonHttpResponse<AvgOrgansSpecies>
+export type ResponseAvgOrgansSpeciesPaginated = CommonHttpResponsePagination<AvgOrgansSpecies>

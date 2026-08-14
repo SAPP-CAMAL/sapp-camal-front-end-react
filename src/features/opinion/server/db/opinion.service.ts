@@ -1,5 +1,10 @@
 import { http } from "@/lib/ky";
-import { CreateOpinionBody, ResponseOpinionService } from "@/features/opinion/domain/opinion.domain";
+import {
+    CreateOpinionBody,
+    ResponseOpinionPaginated,
+    ResponseOpinionService,
+    SearchParamsOpinion,
+} from "@/features/opinion/domain/opinion.domain";
 
 export function createOpinionService(body: CreateOpinionBody) {
     return http.post("v1/1.0.0/opinion", { json: body }).json()
@@ -7,6 +12,10 @@ export function createOpinionService(body: CreateOpinionBody) {
 
 export function getOpinionsService(): Promise<ResponseOpinionService> {
     return http.get("v1/1.0.0/opinion/all").json()
+}
+
+export function getOpinionsPaginatedService(searchParams: SearchParamsOpinion): Promise<ResponseOpinionPaginated> {
+    return http.get("v1/1.0.0/opinion/list", { searchParams }).json()
 }
 
 export function updateOpinionService(id: number, body: Partial<CreateOpinionBody>) {

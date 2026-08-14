@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type UnitMeasureAdmin = {
     id: number;
@@ -17,4 +17,12 @@ export type CreateUnitMeasureBody = {
     status?: boolean;
 }
 
+export type SearchParamsUnitMeasure = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseUnitMeasuresAdminAll = CommonHttpResponseSingle<UnitMeasureAdmin[]>
+export type ResponseUnitMeasuresPaginated = CommonHttpResponsePagination<UnitMeasureAdmin>

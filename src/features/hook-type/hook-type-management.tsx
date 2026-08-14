@@ -4,8 +4,8 @@ import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { LinkIcon, Weight, PawPrint, FileText, Activity, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { parseAsString, useQueryStates } from "nuqs";
-import { getHookTypesService } from "./server/db/hook-type.service";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { getHookTypesPaginatedService } from "./server/db/hook-type.service";
 import { NewHookType } from "./components/new-hook-type";
 import { UpdateHookType } from "./components/update-hook-type";
 import { DeleteHookType } from "./components/delete-hook-type";
@@ -34,6 +34,8 @@ import { HOOK_TYPE_TAG } from "./constants/hook-type.constants";
 export function HookTypeManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
     {
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
       name: parseAsString.withDefault(""),
       status: parseAsString.withDefault("*"),
       idSpecie: parseAsString.withDefault("*"),
@@ -44,8 +46,15 @@ export function HookTypeManagement() {
   );
 
   const query = useQuery({
-    queryKey: [HOOK_TYPE_TAG],
-    queryFn: getHookTypesService,
+    queryKey: [HOOK_TYPE_TAG, searchParams],
+    queryFn: () =>
+      getHookTypesPaginatedService({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        ...(!!searchParams.name && { name: searchParams.name }),
+        ...(searchParams.idSpecie !== "*" && { idSpecie: Number(searchParams.idSpecie) }),
+        ...(searchParams.status !== "*" && { status: searchParams.status }),
+      }),
   });
 
   const { data: speciesResponse } = useAllSpecies();
@@ -56,29 +65,9 @@ export function HookTypeManagement() {
   );
 
   const debounceName = useDebouncedCallback(
-    (text: string) => setSearchParams({ name: text }),
+    (text: string) => setSearchParams({ name: text, page: 1 }),
     500
   );
-
-  const filteredData = useMemo(() => {
-    const items = query.data?.data ?? [];
-
-    return items.filter((item) => {
-      const matchesName = searchParams.name
-        ? item.name.toLowerCase().includes(searchParams.name.toLowerCase())
-        : true;
-      const matchesStatus =
-        searchParams.status !== "*"
-          ? String(item.status) === searchParams.status
-          : true;
-      const matchesSpecie =
-        searchParams.idSpecie !== "*"
-          ? String(item.idSpecie) === searchParams.idSpecie
-          : true;
-
-      return matchesName && matchesStatus && matchesSpecie;
-    });
-  }, [query.data, searchParams.name, searchParams.status, searchParams.idSpecie]);
 
   return (
     <div>
@@ -129,7 +118,7 @@ export function HookTypeManagement() {
                 Especie
               </label>
               <Select
-                onValueChange={(value) => setSearchParams({ idSpecie: value })}
+                onValueChange={(value) => setSearchParams({ idSpecie: value, page: 1 })}
                 defaultValue={searchParams.idSpecie}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -151,7 +140,7 @@ export function HookTypeManagement() {
                 Estado
               </label>
               <Select
-                onValueChange={(value) => setSearchParams({ status: value })}
+                onValueChange={(value) => setSearchParams({ status: value, page: 1 })}
                 defaultValue={searchParams.status}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -246,7 +235,16 @@ export function HookTypeManagement() {
             ),
           },
         ]}
-        data={filteredData}
+        data={query.data?.data.items ?? []}
+        meta={{
+          ...query.data?.data.meta,
+          onChangePage: (page) => setSearchParams({ page }),
+          onNextPage: () => setSearchParams({ page: searchParams.page + 1 }),
+          disabledNextPage: searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
+          onPreviousPage: () => setSearchParams({ page: searchParams.page - 1 }),
+          disabledPreviousPage: searchParams.page <= 1,
+          setSearchParams,
+        }}
         isLoading={query.isLoading}
       />
     </div>

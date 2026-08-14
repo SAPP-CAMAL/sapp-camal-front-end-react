@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 import { CompanyType } from "@/features/company-type/domain/company-type.domain";
 
 export type VisitorCompany = {
@@ -22,4 +22,12 @@ export type CreateVisitorCompanyBody = {
     address?: string;
 }
 
+export type SearchParamsVisitorCompany = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseVisitorCompanyService = CommonHttpResponse<VisitorCompany>
+export type ResponseVisitorCompanyPaginated = CommonHttpResponsePagination<VisitorCompany>

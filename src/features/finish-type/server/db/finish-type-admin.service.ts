@@ -1,12 +1,13 @@
 import { http } from "@/lib/ky";
 import {
     CreateFinishTypeBody,
-    ResponseFinishTypesAdminAll,
+    ResponseFinishTypesPaginated,
     ResponseSpeciesAll,
+    SearchParamsFinishType,
 } from "@/features/finish-type/domain";
 
-export function getFinishTypesAdminService(): Promise<ResponseFinishTypesAdminAll> {
-    return http.get("v1/1.0.0/finish-type/all").json();
+export function getFinishTypesAdminService(searchParams: SearchParamsFinishType): Promise<ResponseFinishTypesPaginated> {
+    return http.get("v1/1.0.0/finish-type/list", { searchParams }).json();
 }
 
 export function createFinishTypeService(body: CreateFinishTypeBody) {

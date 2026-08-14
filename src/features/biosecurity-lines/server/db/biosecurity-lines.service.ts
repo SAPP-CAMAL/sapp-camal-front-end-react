@@ -2,12 +2,18 @@ import { http } from "@/lib/ky";
 import {
     CreateBiosecurityLineBody,
     CreateSettingEquipmentLineBody,
+    ResponseBiosecurityLinesPaginated,
     ResponseBiosecurityLinesService,
     ResponseSettingEquipmentLinesService,
+    SearchParamsBiosecurityLines,
 } from "@/features/biosecurity-lines/domain/biosecurity-lines.domain";
 
 export function getBiosecurityLinesService(): Promise<ResponseBiosecurityLinesService> {
     return http.get("v1/1.0.0/biosecurity-lines/all").json()
+}
+
+export function getBiosecurityLinesPaginatedService(searchParams: SearchParamsBiosecurityLines): Promise<ResponseBiosecurityLinesPaginated> {
+    return http.get("v1/1.0.0/biosecurity-lines/list", { searchParams }).json()
 }
 
 export function createBiosecurityLineService(body: CreateBiosecurityLineBody) {

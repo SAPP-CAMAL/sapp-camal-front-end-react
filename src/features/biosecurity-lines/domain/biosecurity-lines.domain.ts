@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 import { Equipment } from "@/features/equipment/domain/equipment.domain";
 
 export type BiosecurityLine = {
@@ -26,5 +26,14 @@ export type CreateSettingEquipmentLineBody = {
     idEquipment: number;
 }
 
+export type SearchParamsBiosecurityLines = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    idLine?: number;
+    status?: boolean;
+}
+
 export type ResponseBiosecurityLinesService = CommonHttpResponse<BiosecurityLine>
+export type ResponseBiosecurityLinesPaginated = CommonHttpResponsePagination<BiosecurityLine>
 export type ResponseSettingEquipmentLinesService = CommonHttpResponse<SettingEquipmentLine>

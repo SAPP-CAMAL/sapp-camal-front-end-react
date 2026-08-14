@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type ClinicalSign = {
     id: number;
@@ -12,7 +12,15 @@ export type CreateClinicalSignBody = {
     groupSign: number;
 }
 
+export type SearchParamsClinicalSign = {
+    page?: number;
+    limit?: number;
+    description?: string;
+    status?: boolean;
+}
+
 export type ResponseClinicalSignsService = CommonHttpResponse<ClinicalSign>
+export type ResponseClinicalSignsPaginated = CommonHttpResponsePagination<ClinicalSign>
 
 export const CLINICAL_SIGNS_GROUP_OPTIONS = [
     { value: 1, label: "Síndrome Nervioso" },

@@ -1,8 +1,14 @@
 import { http } from "@/lib/ky";
 import type { EnvironmentVariable } from "@/features/dashboard/domain/environment-variables.types";
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination } from "@/features/people/domain";
 
-export type ResponseEnvironmentVariablesAll = CommonHttpResponseSingle<EnvironmentVariable[]>;
+export type SearchParamsEnvironmentVariable = {
+  page?: number;
+  limit?: number;
+  name?: string;
+};
+
+export type ResponseEnvironmentVariablesPaginated = CommonHttpResponsePagination<EnvironmentVariable>;
 
 export type CreateEnvironmentVariableBody = {
   name: string;
@@ -13,8 +19,10 @@ export type CreateEnvironmentVariableBody = {
 
 export type UpdateEnvironmentVariableBody = Partial<CreateEnvironmentVariableBody>;
 
-export function getAllEnvironmentVariablesService(): Promise<ResponseEnvironmentVariablesAll> {
-  return http.get("v1/1.0.0/environment-variables/all").json();
+export function getEnvironmentVariablesService(
+  searchParams: SearchParamsEnvironmentVariable
+): Promise<ResponseEnvironmentVariablesPaginated> {
+  return http.get("v1/1.0.0/environment-variables", { searchParams }).json();
 }
 
 export function createEnvironmentVariableService(body: CreateEnvironmentVariableBody) {

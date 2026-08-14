@@ -3,8 +3,10 @@ import {
     CreateDetailDistributionBody,
     CreateDistributionProductBody,
     ResponseDetailDistributionsService,
+    ResponseDistributionProductsPaginated,
     ResponseDistributionProductsService,
     ResponseProductsService,
+    SearchParamsDistributionProduct,
 } from "@/features/distribution-product/domain/distribution-product.domain";
 
 export function createDistributionProductService(body: CreateDistributionProductBody) {
@@ -13,6 +15,10 @@ export function createDistributionProductService(body: CreateDistributionProduct
 
 export function getDistributionProductsService(): Promise<ResponseDistributionProductsService> {
     return http.get("v1/1.0.0/distribution-product/all").json()
+}
+
+export function getDistributionProductsPaginatedService(searchParams: SearchParamsDistributionProduct): Promise<ResponseDistributionProductsPaginated> {
+    return http.get("v1/1.0.0/distribution-product/list", { searchParams }).json()
 }
 
 export function updateDistributionProductService(id: number, body: Partial<CreateDistributionProductBody>) {

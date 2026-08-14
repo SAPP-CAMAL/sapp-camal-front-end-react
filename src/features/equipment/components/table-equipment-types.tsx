@@ -18,16 +18,27 @@ import {
 import { Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { MetaPagination } from "@/features/people/domain";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  meta?: MetaPagination & {
+    onChangePage?: (page: number) => void;
+    onNextPage?: () => void;
+    disabledNextPage: boolean;
+    onPreviousPage?: () => void;
+    disabledPreviousPage: boolean;
+    setSearchParams: (params: Record<string, any>) => void;
+  };
   isLoading?: boolean;
 }
 
 export function TableEquipmentTypes<TData, TValue>({
   columns,
   data,
+  meta,
   isLoading,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
@@ -146,6 +157,16 @@ export function TableEquipmentTypes<TData, TValue>({
           </div>
         )}
       </div>
+
+      <PaginationFooter
+        meta={meta}
+        isLoading={isLoading}
+        hasData={!!data?.length}
+        onPreviousPage={() => meta?.onPreviousPage?.()}
+        onNextPage={() => meta?.onNextPage?.()}
+        disabledPreviousPage={!!meta?.disabledPreviousPage}
+        disabledNextPage={!!meta?.disabledNextPage}
+      />
     </div>
   );
 }

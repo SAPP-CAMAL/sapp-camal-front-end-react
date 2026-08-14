@@ -1,12 +1,13 @@
 import { http } from "@/lib/ky";
 import {
     CreateCollectionValueBody,
-    ResponseCollectionValuesAll,
+    ResponseCollectionValuesPaginated,
     ResponseSpeciesAll,
+    SearchParamsCollectionValue,
 } from "@/features/collection-value/domain/collection-value.domain";
 
-export function getCollectionValuesAdminService(): Promise<ResponseCollectionValuesAll> {
-    return http.get("v1/1.0.0/collection-values/all").json();
+export function getCollectionValuesAdminService(searchParams: SearchParamsCollectionValue): Promise<ResponseCollectionValuesPaginated> {
+    return http.get("v1/1.0.0/collection-values/list", { searchParams }).json();
 }
 
 export function createCollectionValueService(body: CreateCollectionValueBody) {

@@ -1,8 +1,14 @@
 import { http } from "@/lib/ky";
-import { CreateCorralBody, ResponseCorralsAdminAll } from "@/features/corral/domain";
+import {
+    CreateCorralBody,
+    ResponseCorralsAdminPaginated,
+    SearchParamsCorral,
+} from "@/features/corral/domain";
 
-export function getCorralsAdminService(): Promise<ResponseCorralsAdminAll> {
-    return http.get("v1/1.0.0/corral/all").json();
+export function getCorralsAdminPaginatedService(
+    searchParams: SearchParamsCorral
+): Promise<ResponseCorralsAdminPaginated> {
+    return http.get("v1/1.0.0/corral/list", { searchParams }).json();
 }
 
 export function createCorralAdminService(body: CreateCorralBody) {

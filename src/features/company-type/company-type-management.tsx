@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { BuildingIcon, FileText, Activity, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { parseAsString, useQueryStates } from "nuqs";
-import { getCompanyTypesService } from "./server/db/company-type.service";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { getCompanyTypesPaginatedService } from "./server/db/company-type.service";
 import { NewCompanyType } from "./components/new-company-type";
 import { UpdateCompanyType } from "./components/update-company-type";
 import { DeleteCompanyType } from "./components/delete-company-type";
@@ -33,6 +32,8 @@ import { COMPANY_TYPE_TAG } from "./constants/company-type.constants";
 export function CompanyTypeManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
     {
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
       name: parseAsString.withDefault(""),
       status: parseAsString.withDefault("*"),
     },
@@ -42,30 +43,22 @@ export function CompanyTypeManagement() {
   );
 
   const query = useQuery({
-    queryKey: [COMPANY_TYPE_TAG],
-    queryFn: getCompanyTypesService,
+    queryKey: [COMPANY_TYPE_TAG, searchParams],
+    queryFn: () =>
+      getCompanyTypesPaginatedService({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        ...(!!searchParams.name && { name: searchParams.name }),
+        ...(searchParams.status !== "*" && {
+          status: searchParams.status === "true",
+        }),
+      }),
   });
 
   const debounceName = useDebouncedCallback(
-    (text: string) => setSearchParams({ name: text }),
+    (text: string) => setSearchParams({ name: text, page: 1 }),
     500
   );
-
-  const filteredData = useMemo(() => {
-    const items = query.data?.data ?? [];
-
-    return items.filter((item) => {
-      const matchesName = searchParams.name
-        ? item.name.toLowerCase().includes(searchParams.name.toLowerCase())
-        : true;
-      const matchesStatus =
-        searchParams.status !== "*"
-          ? String(item.status) === searchParams.status
-          : true;
-
-      return matchesName && matchesStatus;
-    });
-  }, [query.data, searchParams.name, searchParams.status]);
 
   return (
     <div>
@@ -116,7 +109,7 @@ export function CompanyTypeManagement() {
                 Estado
               </label>
               <Select
-                onValueChange={(value) => setSearchParams({ status: value })}
+                onValueChange={(value) => setSearchParams({ status: value, page: 1 })}
                 defaultValue={searchParams.status}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -189,7 +182,16 @@ export function CompanyTypeManagement() {
             ),
           },
         ]}
-        data={filteredData}
+        data={query.data?.data.items ?? []}
+        meta={{
+          ...query.data?.data.meta,
+          onChangePage: (page) => setSearchParams({ page }),
+          onNextPage: () => setSearchParams({ page: searchParams.page + 1 }),
+          disabledNextPage: searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
+          onPreviousPage: () => setSearchParams({ page: searchParams.page - 1 }),
+          disabledPreviousPage: searchParams.page <= 1,
+          setSearchParams,
+        }}
         isLoading={query.isLoading}
       />
     </div>

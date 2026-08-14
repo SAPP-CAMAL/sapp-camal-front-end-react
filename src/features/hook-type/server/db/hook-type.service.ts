@@ -1,12 +1,12 @@
 import { http } from "@/lib/ky";
-import { CreateHookTypeBody, ResponseHookTypeService } from "@/features/hook-type/domain/hook-type.domain";
+import { CreateHookTypeBody, ResponseHookTypePaginated, SearchParamsHookType } from "@/features/hook-type/domain/hook-type.domain";
 
 export function createHookTypeService(body: CreateHookTypeBody) {
     return http.post("v1/1.0.0/hook-type", { json: body }).json()
 }
 
-export function getHookTypesService(): Promise<ResponseHookTypeService> {
-    return http.get("v1/1.0.0/hook-type/all").json()
+export function getHookTypesPaginatedService(searchParams: SearchParamsHookType): Promise<ResponseHookTypePaginated> {
+    return http.get("v1/1.0.0/hook-type", { searchParams }).json()
 }
 
 export function updateHookTypeService(id: number, body: Partial<CreateHookTypeBody>) {

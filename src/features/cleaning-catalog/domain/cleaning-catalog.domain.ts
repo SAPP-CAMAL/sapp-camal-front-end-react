@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export const CLEANING_CATALOG_TYPES = [
     "ESTRUCTURA",
@@ -23,4 +23,13 @@ export type CreateCleaningCatalogBody = {
     type?: string | null;
 }
 
+export type SearchParamsCleaningCatalog = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    type?: string;
+    status?: boolean;
+}
+
 export type ResponseCleaningCatalogService = CommonHttpResponse<CleaningCatalog>
+export type ResponseCleaningCatalogPaginated = CommonHttpResponsePagination<CleaningCatalog>

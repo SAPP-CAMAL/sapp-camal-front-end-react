@@ -2,10 +2,16 @@ import { http } from "@/lib/ky";
 import {
     CreateObservationBody,
     ResponseObservationsAdminAll,
+    ResponseObservationsPaginated,
+    SearchParamsObservation,
 } from "@/features/observation/domain/observation-admin.domain";
 
 export function getObservationsAdminService(): Promise<ResponseObservationsAdminAll> {
     return http.get("v1/1.0.0/observations/admin").json();
+}
+
+export function getObservationsPaginatedService(searchParams: SearchParamsObservation): Promise<ResponseObservationsPaginated> {
+    return http.get("v1/1.0.0/observations/list", { searchParams }).json();
 }
 
 export function createObservationService(body: CreateObservationBody) {

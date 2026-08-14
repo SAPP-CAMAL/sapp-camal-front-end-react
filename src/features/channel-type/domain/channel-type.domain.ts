@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type ChannelType = {
     id: number;
@@ -16,4 +16,12 @@ export type CreateChannelTypeBody = {
     hooksQuantity: number;
 }
 
+export type SearchParamsChannelType = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseChannelTypeService = CommonHttpResponse<ChannelType>
+export type ResponseChannelTypePaginated = CommonHttpResponsePagination<ChannelType>

@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type FinishTypeAdmin = {
     id: number;
@@ -16,5 +16,12 @@ export type CreateFinishTypeBody = {
     status?: boolean;
 }
 
-export type ResponseFinishTypesAdminAll = CommonHttpResponseSingle<FinishTypeAdmin[]>
+export type SearchParamsFinishType = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    idSpecie?: number;
+}
+
+export type ResponseFinishTypesPaginated = CommonHttpResponsePagination<FinishTypeAdmin>
 export type ResponseSpeciesAll = CommonHttpResponseSingle<{ id: number; name: string; status: boolean }[]>

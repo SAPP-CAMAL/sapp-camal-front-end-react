@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination } from "@/features/people/domain";
 
 export interface Line {
   id:          number;
@@ -16,4 +16,11 @@ export type CreateLineBody = {
   status?: boolean;
 };
 
-export type ResponseLinesAdmin = CommonHttpResponseSingle<Line[]>;
+export type SearchParamsLine = {
+  page?: number;
+  limit?: number;
+  name?: string;
+  status?: string;
+};
+
+export type ResponseLinesAdmin = CommonHttpResponsePagination<Line>;

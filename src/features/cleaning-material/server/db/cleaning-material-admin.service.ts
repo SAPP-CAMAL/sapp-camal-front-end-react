@@ -2,10 +2,16 @@ import { http } from "@/lib/ky";
 import {
     CreateCleaningMaterialBody,
     ResponseCleaningMaterialsAdminAll,
+    ResponseCleaningMaterialsPaginated,
+    SearchParamsCleaningMaterial,
 } from "@/features/cleaning-material/domain/cleaning-material-admin.domain";
 
 export function getCleaningMaterialsAdminService(): Promise<ResponseCleaningMaterialsAdminAll> {
     return http.get("v1/1.0.0/cleaning-material/all").json();
+}
+
+export function getCleaningMaterialsPaginatedService(searchParams: SearchParamsCleaningMaterial): Promise<ResponseCleaningMaterialsPaginated> {
+    return http.get("v1/1.0.0/cleaning-material/list", { searchParams }).json();
 }
 
 export function createCleaningMaterialService(body: CreateCleaningMaterialBody) {

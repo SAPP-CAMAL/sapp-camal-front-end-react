@@ -1,4 +1,4 @@
-import { CommonHttpResponse } from "@/features/people/domain";
+import { CommonHttpResponse, CommonHttpResponsePagination } from "@/features/people/domain";
 
 export type CleaningAreaCatalog = {
     id: number;
@@ -14,4 +14,12 @@ export type CreateCleaningAreaCatalogBody = {
     orderIndex?: number | null;
 }
 
+export type SearchParamsCleaningAreaCatalog = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseCleaningAreaCatalogService = CommonHttpResponse<CleaningAreaCatalog>
+export type ResponseCleaningAreaCatalogPaginated = CommonHttpResponsePagination<CleaningAreaCatalog>

@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { FileTextIcon, Activity, Settings, Tag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { parseAsString, useQueryStates } from "nuqs";
-import { getReportCodesService } from "./server/db/report-codes.service";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { getReportCodesPaginatedService } from "./server/db/report-codes.service";
 import { NewReportCode } from "./components/new-report-code";
 import { UpdateReportCode } from "./components/update-report-code";
 import { DeleteReportCode } from "./components/delete-report-code";
@@ -32,6 +31,8 @@ import { REPORT_CODES_TAG } from "./constants/report-codes.constants";
 export function ReportCodesManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
     {
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
       code: parseAsString.withDefault(""),
       status: parseAsString.withDefault("*"),
     },
@@ -41,30 +42,22 @@ export function ReportCodesManagement() {
   );
 
   const query = useQuery({
-    queryKey: [REPORT_CODES_TAG],
-    queryFn: getReportCodesService,
+    queryKey: [REPORT_CODES_TAG, searchParams],
+    queryFn: () =>
+      getReportCodesPaginatedService({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        ...(searchParams.code && { code: searchParams.code }),
+        ...(searchParams.status !== "*" && {
+          status: searchParams.status === "true",
+        }),
+      }),
   });
 
   const debounceCode = useDebouncedCallback(
-    (text: string) => setSearchParams({ code: text }),
+    (text: string) => setSearchParams({ code: text, page: 1 }),
     500
   );
-
-  const filteredData = useMemo(() => {
-    const items = query.data?.data ?? [];
-
-    return items.filter((item) => {
-      const matchesCode = searchParams.code
-        ? item.code?.toLowerCase().includes(searchParams.code.toLowerCase())
-        : true;
-      const matchesStatus =
-        searchParams.status !== "*"
-          ? String(item.status) === searchParams.status
-          : true;
-
-      return matchesCode && matchesStatus;
-    });
-  }, [query.data, searchParams.code, searchParams.status]);
 
   return (
     <div>
@@ -117,8 +110,10 @@ export function ReportCodesManagement() {
                 Estado
               </label>
               <Select
-                onValueChange={(value) => setSearchParams({ status: value })}
-                defaultValue={searchParams.status}
+                onValueChange={(value) =>
+                  setSearchParams({ status: value, page: 1 })
+                }
+                value={searchParams.status}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="Seleccione un estado" />
@@ -192,7 +187,18 @@ export function ReportCodesManagement() {
             ),
           },
         ]}
-        data={filteredData}
+        data={query.data?.data.items ?? []}
+        meta={{
+          ...query.data?.data.meta,
+          onChangePage: (page) => setSearchParams({ page }),
+          onNextPage: () => setSearchParams({ page: searchParams.page + 1 }),
+          disabledNextPage:
+            searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
+          onPreviousPage: () =>
+            setSearchParams({ page: searchParams.page - 1 }),
+          disabledPreviousPage: searchParams.page <= 1,
+          setSearchParams,
+        }}
         isLoading={query.isLoading}
       />
     </div>

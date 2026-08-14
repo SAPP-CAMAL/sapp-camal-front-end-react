@@ -3,22 +3,17 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { HouseIcon, TriangleAlertIcon, XIcon } from "lucide-react";
+import { HouseIcon, TriangleAlertIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import {
   getCorralGroupDetailsAdminService,
   getCorralsAllService,
   getCorralGroupsAdminService,
-  createCorralGroupDetailService,
-  deleteCorralGroupDetailService,
+  createCorralGroupDetailsBulkService,
+  deleteCorralGroupDetailsBulkService,
 } from "./server/db/corral-group-admin.service";
 
 /**
@@ -36,8 +31,10 @@ export function CorralGroupDetailsManagement({
   lineId: number;
 }) {
   const queryClient = useQueryClient();
-  const [selectedCorralId, setSelectedCorralId] = useState<string>("");
-  const [pendingId, setPendingId] = useState<number | null>(null);
+  const [selectedCorralIds, setSelectedCorralIds] = useState<string[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [selectedForRemoval, setSelectedForRemoval] = useState<Set<number>>(new Set());
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const detailsQuery = useQuery({
     queryKey: ["corral-group-details-admin"],
@@ -82,66 +79,94 @@ export function CorralGroupDetailsManagement({
   });
 
   const handleAdd = async () => {
-    if (!selectedCorralId) return;
+    if (!selectedCorralIds.length) return;
+    setIsAdding(true);
     try {
-      await createCorralGroupDetailService({
-        corralId: Number(selectedCorralId),
+      await createCorralGroupDetailsBulkService({
         groupId: fixedGroupId,
+        corralIds: selectedCorralIds.map(Number),
       });
-      setSelectedCorralId("");
+      setSelectedCorralIds([]);
       await queryClient.invalidateQueries({ queryKey: ["corral-group-details-admin"] });
-      toast.success("Corral agregado al grupo");
-    } catch (error: any) {
-      const { data } = await error.response.json();
-      toast.error(data);
-    }
-  };
-
-  const handleRemove = async (detailId: number) => {
-    setPendingId(detailId);
-    try {
-      await deleteCorralGroupDetailService(detailId);
-      await queryClient.invalidateQueries({ queryKey: ["corral-group-details-admin"] });
-      toast.success("Corral removido del grupo");
+      toast.success(
+        selectedCorralIds.length === 1
+          ? "Corral agregado al grupo"
+          : `${selectedCorralIds.length} corrales agregados al grupo`
+      );
     } catch (error: any) {
       const { data } = await error.response.json();
       toast.error(data);
     } finally {
-      setPendingId(null);
+      setIsAdding(false);
+    }
+  };
+
+  const toggleSelectedForRemoval = (detailId: number, checked: boolean) => {
+    setSelectedForRemoval((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(detailId);
+      else next.delete(detailId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllForRemoval = (checked: boolean) => {
+    setSelectedForRemoval(checked ? new Set(groupDetails.map((d) => d.id)) : new Set());
+  };
+
+  const handleRemoveSelected = async () => {
+    if (!selectedForRemoval.size) return;
+    setIsRemoving(true);
+    try {
+      const ids = Array.from(selectedForRemoval);
+      await deleteCorralGroupDetailsBulkService(ids);
+      setSelectedForRemoval(new Set());
+      await queryClient.invalidateQueries({ queryKey: ["corral-group-details-admin"] });
+      toast.success(
+        ids.length === 1 ? "Corral removido del grupo" : `${ids.length} corrales removidos del grupo`
+      );
+    } catch (error: any) {
+      const { data } = await error.response.json();
+      toast.error(data);
+    } finally {
+      setIsRemoving(false);
     }
   };
 
   const isLoadingOptions = corralsQuery.isLoading || detailsQuery.isLoading || groupsQuery.isLoading;
   const noAvailableCorrals = !isLoadingOptions && availableCorrals.length === 0;
+  const allSelectedForRemoval = groupDetails.length > 0 && selectedForRemoval.size === groupDetails.length;
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row gap-2 mb-1">
-        <Select
-          value={selectedCorralId}
-          onValueChange={setSelectedCorralId}
+      <div className="flex items-start gap-2 mb-1">
+        <MultiSelect
+          options={availableCorrals.map((corral) => ({ value: String(corral.id), label: corral.name }))}
+          defaultValue={selectedCorralIds}
+          onValueChange={setSelectedCorralIds}
+          placeholder={
+            noAvailableCorrals ? "No hay corrales disponibles" : "Seleccione corrales para agregar"
+          }
           disabled={noAvailableCorrals}
-        >
-          <SelectTrigger className="w-full sm:w-64">
-            <SelectValue
-              placeholder={
-                noAvailableCorrals
-                  ? "No hay corrales disponibles"
-                  : "Seleccione un corral para agregar"
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {availableCorrals.map((corral) => (
-              <SelectItem key={corral.id} value={String(corral.id)}>
-                {corral.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button onClick={handleAdd} disabled={!selectedCorralId}>
-          Agregar corral
-        </Button>
+          searchPlaceholder="Buscar corrales..."
+          className="flex-1 min-w-0"
+          modalPopover
+        />
+        <ConfirmationDialog
+          title={
+            selectedCorralIds.length === 1
+              ? "¿Agregar este corral al grupo?"
+              : `¿Agregar ${selectedCorralIds.length} corrales al grupo?`
+          }
+          onConfirm={handleAdd}
+          triggerBtn={
+            <Button className="shrink-0" disabled={!selectedCorralIds.length || isAdding}>
+              Agregar {selectedCorralIds.length > 1 ? `(${selectedCorralIds.length})` : ""}
+            </Button>
+          }
+          cancelBtn={<Button variant="outline">Cancelar</Button>}
+          confirmBtn={<Button>Agregar</Button>}
+        />
       </div>
       {noAvailableCorrals && (
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 text-amber-800 px-3 py-2 mb-3 text-sm">
@@ -154,8 +179,36 @@ export function CorralGroupDetailsManagement({
       )}
 
       <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="py-3 px-4 border-b">
+        <div className="py-3 px-4 border-b flex items-center justify-between gap-2 flex-wrap">
           <span className="font-semibold text-sm">Corrales asignados ({groupDetails.length})</span>
+          {groupDetails.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                <Checkbox
+                  checked={allSelectedForRemoval}
+                  onCheckedChange={(checked) => toggleSelectAllForRemoval(checked === true)}
+                />
+                Seleccionar todos
+              </label>
+              <ConfirmationDialog
+                title={`¿Quitar ${selectedForRemoval.size} corral(es) del grupo?`}
+                description="Esta acción se puede revertir volviendo a asignar el/los corral(es) al grupo."
+                onConfirm={handleRemoveSelected}
+                triggerBtn={
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={!selectedForRemoval.size || isRemoving}
+                  >
+                    <Trash2Icon className="h-4 w-4" />
+                    Quitar seleccionados ({selectedForRemoval.size})
+                  </Button>
+                }
+                cancelBtn={<Button variant="outline">Cancelar</Button>}
+                confirmBtn={<Button variant="destructive">Quitar</Button>}
+              />
+            </div>
+          )}
         </div>
         {detailsQuery.isLoading ? (
           <div className="p-8 text-center text-gray-500 animate-pulse">Cargando...</div>
@@ -165,21 +218,17 @@ export function CorralGroupDetailsManagement({
             <p>Este grupo aún no tiene corrales asignados</p>
           </div>
         ) : (
-          <div className="p-4 flex flex-wrap gap-2">
+          <ul className="divide-y">
             {groupDetails.map((detail) => (
-              <Badge key={detail.id} variant="outline" className="gap-1 pr-1 text-sm">
-                {detail.corral?.name ?? `Corral #${detail.corralId}`}
-                <button
-                  type="button"
-                  className="ml-1 rounded-full hover:bg-gray-200 p-0.5 disabled:opacity-50"
-                  disabled={pendingId === detail.id}
-                  onClick={() => handleRemove(detail.id)}
-                >
-                  <XIcon className="h-3 w-3" />
-                </button>
-              </Badge>
+              <li key={detail.id} className="flex items-center gap-2 px-4 py-2">
+                <Checkbox
+                  checked={selectedForRemoval.has(detail.id)}
+                  onCheckedChange={(checked) => toggleSelectedForRemoval(detail.id, checked === true)}
+                />
+                <span className="text-sm">{detail.corral?.name ?? `Corral #${detail.corralId}`}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </div>
     </div>

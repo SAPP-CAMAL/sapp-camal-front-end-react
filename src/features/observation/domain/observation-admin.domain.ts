@@ -1,4 +1,4 @@
-import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { CommonHttpResponsePagination, CommonHttpResponseSingle } from "@/features/people/domain";
 
 export type ObservationAdmin = {
     id: number;
@@ -11,4 +11,12 @@ export type CreateObservationBody = {
     status?: boolean;
 }
 
+export type SearchParamsObservation = {
+    page?: number;
+    limit?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type ResponseObservationsAdminAll = CommonHttpResponseSingle<ObservationAdmin[]>
+export type ResponseObservationsPaginated = CommonHttpResponsePagination<ObservationAdmin>

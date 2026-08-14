@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Building2Icon, Activity, Settings, ListOrdered } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { parseAsString, useQueryStates } from "nuqs";
-import { getCleaningAreaCatalogService } from "./server/db/cleaning-area-catalog.service";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { getCleaningAreaCatalogPaginatedService } from "./server/db/cleaning-area-catalog.service";
 import { NewCleaningAreaCatalog } from "./components/new-cleaning-area-catalog";
 import { UpdateCleaningAreaCatalog } from "./components/update-cleaning-area-catalog";
 import { DeleteCleaningAreaCatalog } from "./components/delete-cleaning-area-catalog";
@@ -32,6 +31,8 @@ import { CLEANING_AREA_CATALOG_TAG } from "./constants/cleaning-area-catalog.con
 export function CleaningAreaCatalogManagement() {
   const [searchParams, setSearchParams] = useQueryStates(
     {
+      page: parseAsInteger.withDefault(1),
+      limit: parseAsInteger.withDefault(10),
       name: parseAsString.withDefault(""),
       status: parseAsString.withDefault("*"),
     },
@@ -41,32 +42,22 @@ export function CleaningAreaCatalogManagement() {
   );
 
   const query = useQuery({
-    queryKey: [CLEANING_AREA_CATALOG_TAG],
-    queryFn: getCleaningAreaCatalogService,
+    queryKey: [CLEANING_AREA_CATALOG_TAG, searchParams],
+    queryFn: () =>
+      getCleaningAreaCatalogPaginatedService({
+        page: searchParams.page,
+        limit: searchParams.limit,
+        ...(searchParams.name && { name: searchParams.name }),
+        ...(searchParams.status !== "*" && {
+          status: searchParams.status === "true",
+        }),
+      }),
   });
 
   const debounceName = useDebouncedCallback(
-    (text: string) => setSearchParams({ name: text }),
+    (text: string) => setSearchParams({ name: text, page: 1 }),
     500
   );
-
-  const filteredData = useMemo(() => {
-    const items = query.data?.data ?? [];
-
-    return items
-      .filter((item) => {
-        const matchesName = searchParams.name
-          ? item.name.toLowerCase().includes(searchParams.name.toLowerCase())
-          : true;
-        const matchesStatus =
-          searchParams.status !== "*"
-            ? String(item.status) === searchParams.status
-            : true;
-
-        return matchesName && matchesStatus;
-      })
-      .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
-  }, [query.data, searchParams.name, searchParams.status]);
 
   return (
     <div>
@@ -118,7 +109,9 @@ export function CleaningAreaCatalogManagement() {
                 Estado
               </label>
               <Select
-                onValueChange={(value) => setSearchParams({ status: value })}
+                onValueChange={(value) =>
+                  setSearchParams({ status: value, page: 1 })
+                }
                 defaultValue={searchParams.status}
               >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -194,7 +187,17 @@ export function CleaningAreaCatalogManagement() {
             ),
           },
         ]}
-        data={filteredData}
+        data={query.data?.data.items ?? []}
+        meta={{
+          ...query.data?.data.meta,
+          onChangePage: (page) => setSearchParams({ page }),
+          onNextPage: () => setSearchParams({ page: searchParams.page + 1 }),
+          disabledNextPage:
+            searchParams.page >= (query.data?.data.meta.totalPages ?? 0),
+          onPreviousPage: () => setSearchParams({ page: searchParams.page - 1 }),
+          disabledPreviousPage: searchParams.page <= 1,
+          setSearchParams,
+        }}
         isLoading={query.isLoading}
       />
     </div>

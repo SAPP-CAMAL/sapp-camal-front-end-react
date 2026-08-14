@@ -15,11 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { MetaPagination } from "../people/domain";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -46,11 +46,6 @@ export function TableCatalogueValues<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-
-  let start = ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + 1;
-  if (isLoading || !data?.length) start = 0;
-  const end =
-    ((meta?.currentPage ?? 0) - 1) * (meta?.itemsPerPage ?? 0) + (meta?.itemCount ?? 0);
 
   return (
     <div className="bg-white border rounded-lg overflow-hidden">
@@ -140,41 +135,15 @@ export function TableCatalogueValues<TData, TValue>({
         )}
       </div>
 
-      <div className="p-4 bg-gray-50/50 border-t">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-500 order-2 sm:order-1">
-            Mostrando <span className="font-medium text-gray-900">{start}</span> a{" "}
-            <span className="font-medium text-gray-900">{end}</span> de <span className="font-medium text-gray-900">{meta?.totalItems}</span> registros
-          </p>
-          <div className="flex items-center gap-2 order-1 sm:order-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 px-3"
-              disabled={meta?.disabledPreviousPage}
-              onClick={() => meta?.onPreviousPage?.()}
-            >
-              <ChevronLeft className="h-4 w-4 sm:mr-1" />
-              <span className="hidden sm:inline">Anterior</span>
-            </Button>
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-medium px-2 py-1 bg-white border rounded">
-                {meta?.currentPage} / {meta?.totalPages}
-              </span>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 px-3"
-              disabled={meta?.disabledNextPage}
-              onClick={() => meta?.onNextPage?.()}
-            >
-              <span className="hidden sm:inline">Siguiente</span>
-              <ChevronRight className="h-4 w-4 sm:ml-1" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      <PaginationFooter
+        meta={meta}
+        isLoading={isLoading}
+        hasData={!!data?.length}
+        onPreviousPage={() => meta?.onPreviousPage?.()}
+        onNextPage={() => meta?.onNextPage?.()}
+        disabledPreviousPage={!!meta?.disabledPreviousPage}
+        disabledNextPage={!!meta?.disabledNextPage}
+      />
     </div>
   );
 }

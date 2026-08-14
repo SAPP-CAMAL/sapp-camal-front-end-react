@@ -40,5 +40,13 @@ export type SearchParamsCatalogueValue = {
     status?: string;
 }
 
+export type SearchParamsCatalogueType = {
+    page?: number;
+    limit?: number;
+    description?: string;
+    status?: boolean;
+}
+
 export type ResponseCatalogueTypesAll = CommonHttpResponseSingle<CatalogueType[]>
+export type ResponseCatalogueTypesPaginated = CommonHttpResponsePagination<CatalogueType>
 export type ResponseCatalogueValues = CommonHttpResponsePagination<CatalogueValue>
