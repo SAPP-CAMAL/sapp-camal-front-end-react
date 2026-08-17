@@ -22,11 +22,13 @@ import { COMPANY_TYPE_TAG } from "../constants/company-type.constants";
 export type NewCompanyTypeForm = {
   name: string;
   description: string;
+  status: string;
 };
 
 const defaultValues: NewCompanyTypeForm = {
   name: "",
   description: "",
+  status: "true",
 };
 
 export function NewCompanyType() {

@@ -20,3 +20,7 @@ export function updateProductService(id: number, body: Partial<CreateProductBody
 export function deleteProductService(id: number) {
     return http.delete(`v1/1.0.0/product/${id}`).json()
 }
+
+export function deleteProductPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/product/${id}/permanent`).json()
+}

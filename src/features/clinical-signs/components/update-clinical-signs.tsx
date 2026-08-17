@@ -42,6 +42,7 @@ export function UpdateClinicalSigns({
       form.reset({
         description: clinicalSign.description,
         groupSign: clinicalSign.groupSign,
+        status: String(clinicalSign.status),
       });
     }
   }, [open, form, clinicalSign]);
@@ -54,6 +55,9 @@ export function UpdateClinicalSigns({
         }),
         ...(form.formState.dirtyFields.groupSign && {
           groupSign: data.groupSign,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -102,7 +106,7 @@ export function UpdateClinicalSigns({
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <ClinicalSignsFormFields />
+            <ClinicalSignsFormFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

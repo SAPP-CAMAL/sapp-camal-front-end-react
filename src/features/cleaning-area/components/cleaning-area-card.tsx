@@ -12,6 +12,7 @@ import { CleaningAreaGrouped } from "../domain/cleaning-area.domain";
 import { NewCleaningAreaStructure } from "./new-cleaning-area-structure";
 import { DeleteCleaningAreaStructure } from "./delete-cleaning-area-structure";
 import { DeleteCleaningArea } from "./delete-cleaning-area";
+import { UpdateCleaningArea } from "./update-cleaning-area";
 import { CLEANING_CATALOG_TYPES } from "@/features/cleaning-catalog/domain/cleaning-catalog.domain";
 
 const normalizedType = (type?: string | null) => (type ?? "").toUpperCase().trim();
@@ -19,9 +20,11 @@ const normalizedType = (type?: string | null) => (type ?? "").toUpperCase().trim
 export function CleaningAreaCard({
   area,
   idLine,
+  existingAreas,
 }: {
   area: CleaningAreaGrouped;
   idLine: number;
+  existingAreas: CleaningAreaGrouped[];
 }) {
   const groupedStructures = [...CLEANING_CATALOG_TYPES, "OTROS" as const]
     .map((type) => ({
@@ -49,7 +52,14 @@ export function CleaningAreaCard({
               <CardDescription>{area.areaCatalogDescription}</CardDescription>
             )}
           </div>
-          <DeleteCleaningArea idArea={area.idArea} idLine={idLine} />
+          <div className="flex gap-x-2 shrink-0">
+            <UpdateCleaningArea
+              area={area}
+              idLine={idLine}
+              existingAreas={existingAreas}
+            />
+            <DeleteCleaningArea idArea={area.idArea} idLine={idLine} />
+          </div>
         </div>
       </CardHeader>
       <CardContent>

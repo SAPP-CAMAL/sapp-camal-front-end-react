@@ -30,7 +30,7 @@ import { getEquipmentTypesService } from "../server/db/equipment.service";
 import { EQUIPMENT_TYPES_TAG } from "../constants/equipment.constants";
 import { NewEquipmentForm } from "./new-equipment";
 
-export function EquipmentFormFields() {
+export function EquipmentFormFields({ showStatus = false }: { showStatus?: boolean }) {
   const form = useFormContext<NewEquipmentForm>();
 
   const typesQuery = useQuery({
@@ -101,6 +101,35 @@ export function EquipmentFormFields() {
               </FormItem>
             )}
           />
+          {showStatus && (
+            <FormField
+              control={form.control}
+              name="status"
+              rules={{
+                required: {
+                  value: true,
+                  message: "El estado es requerido",
+                },
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un estado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

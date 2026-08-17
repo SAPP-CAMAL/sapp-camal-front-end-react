@@ -21,10 +21,12 @@ import { PART_TYPE_TAG } from "../constants/part-type.constants";
 
 export type NewPartTypeForm = {
   description: string;
+  status: string;
 };
 
 const defaultValues: NewPartTypeForm = {
   description: "",
+  status: "true",
 };
 
 export function NewPartType() {

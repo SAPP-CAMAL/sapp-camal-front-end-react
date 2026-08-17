@@ -8,3 +8,7 @@ export function getVeterinariansService(): Promise<ResponseVeterinarianService> 
 export function updateVeterinarianService(id: number, body: UpdateVeterinarianBody) {
     return http.patch(`v1/1.0.0/veterinarian/${id}`, { json: body }).json()
 }
+
+export function deleteVeterinarianPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/veterinarian/${id}/permanent`).json()
+}

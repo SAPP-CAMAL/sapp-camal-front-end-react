@@ -24,6 +24,7 @@ export type NewHookTypeForm = {
   weight: number;
   description: string;
   idSpecie: number;
+  status: string;
 };
 
 const defaultValues: NewHookTypeForm = {
@@ -31,6 +32,7 @@ const defaultValues: NewHookTypeForm = {
   weight: 0,
   description: "",
   idSpecie: 0,
+  status: "true",
 };
 
 export function NewHookType() {

@@ -124,6 +124,7 @@ export function CleaningAreaManagement() {
               key={area.idArea}
               area={area}
               idLine={searchParams.idLine as number}
+              existingAreas={areas}
             />
           ))}
         </div>

@@ -6,6 +6,7 @@ import {
     ResponseBiosecurityLinesService,
     ResponseSettingEquipmentLinesService,
     SearchParamsBiosecurityLines,
+    UpdateBiosecurityLineBody,
 } from "@/features/biosecurity-lines/domain/biosecurity-lines.domain";
 
 export function getBiosecurityLinesService(): Promise<ResponseBiosecurityLinesService> {
@@ -20,7 +21,7 @@ export function createBiosecurityLineService(body: CreateBiosecurityLineBody) {
     return http.post("v1/1.0.0/biosecurity-lines", { json: body }).json()
 }
 
-export function updateBiosecurityLineService(id: number, body: Partial<CreateBiosecurityLineBody>) {
+export function updateBiosecurityLineService(id: number, body: UpdateBiosecurityLineBody) {
     return http.patch(`v1/1.0.0/biosecurity-lines/${id}`, { json: body }).json()
 }
 

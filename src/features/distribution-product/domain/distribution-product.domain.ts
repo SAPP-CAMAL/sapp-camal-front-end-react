@@ -54,6 +54,7 @@ export type CreateDistributionProductBody = {
     withLoad: boolean;
     detailLoad?: string | null;
     commentary?: string | null;
+    status?: boolean;
 }
 
 export type CreateDetailDistributionBody = {

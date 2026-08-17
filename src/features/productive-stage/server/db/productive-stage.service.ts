@@ -39,3 +39,7 @@ export const updateProductiveStageService = (id: number, body: Partial<CreatePro
 export const deleteProductiveStageService = (id: number) => {
 	return http.delete(`v1/1.0.0/productive-stage/${id}`).json();
 };
+
+export const deleteProductiveStagePermanentlyService = (id: number) => {
+	return http.delete(`v1/1.0.0/productive-stage/${id}/permanent`).json();
+};

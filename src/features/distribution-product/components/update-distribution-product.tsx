@@ -48,6 +48,7 @@ export function UpdateDistributionProduct({
         withLoad: distributionProduct.withLoad,
         detailLoad: distributionProduct.detailLoad ?? "",
         commentary: distributionProduct.commentary ?? "",
+        status: String(distributionProduct.status),
       });
     }
   }, [open, form, distributionProduct]);
@@ -65,6 +66,7 @@ export function UpdateDistributionProduct({
           detailLoad: data.withLoad ? data.detailLoad || null : null,
         }),
         ...(form.formState.dirtyFields.commentary && { commentary: data.commentary || null }),
+        ...(form.formState.dirtyFields.status && { status: data.status === "true" }),
       });
 
       form.reset(form.formState.defaultValues);
@@ -104,7 +106,7 @@ export function UpdateDistributionProduct({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
-            <DistributionProductFormFields />
+            <DistributionProductFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

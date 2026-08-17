@@ -43,6 +43,7 @@ export function UpdateProductDisease({
         idProduct: productDisease.idProduct,
         idDisease: productDisease.idDisease,
         idDiseaseGroup: productDisease.idDiseaseGroup,
+        status: String(productDisease.status),
       });
     }
   }, [open, form, productDisease]);
@@ -58,6 +59,9 @@ export function UpdateProductDisease({
         }),
         ...(form.formState.dirtyFields.idDiseaseGroup && {
           idDiseaseGroup: data.idDiseaseGroup,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -106,7 +110,7 @@ export function UpdateProductDisease({
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <ProductDiseaseFormFields />
+            <ProductDiseaseFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

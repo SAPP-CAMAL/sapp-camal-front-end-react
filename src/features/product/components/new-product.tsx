@@ -24,6 +24,7 @@ export type NewProductForm = {
   code: string;
   productType: boolean;
   parentId?: number;
+  status: string;
 };
 
 const defaultValues: NewProductForm = {
@@ -31,6 +32,7 @@ const defaultValues: NewProductForm = {
   code: "",
   productType: undefined as unknown as boolean,
   parentId: undefined,
+  status: "true",
 };
 
 export function NewProduct() {

@@ -23,12 +23,14 @@ export type NewCleaningAreaCatalogForm = {
   name: string;
   description: string;
   orderIndex: number;
+  status: string;
 };
 
 const defaultValues: NewCleaningAreaCatalogForm = {
   name: "",
   description: "",
   orderIndex: undefined as unknown as number,
+  status: "true",
 };
 
 export function NewCleaningAreaCatalog() {

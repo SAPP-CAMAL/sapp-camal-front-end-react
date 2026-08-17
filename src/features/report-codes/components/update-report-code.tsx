@@ -38,6 +38,7 @@ export function UpdateReportCode({ reportCode }: { reportCode: ReportCode }) {
       form.reset({
         code: reportCode.code,
         version: reportCode.version ?? "",
+        status: String(reportCode.status),
       });
     }
   }, [open, form, reportCode]);
@@ -50,6 +51,9 @@ export function UpdateReportCode({ reportCode }: { reportCode: ReportCode }) {
         }),
         ...(form.formState.dirtyFields.version && {
           version: data.version || null,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -98,7 +102,7 @@ export function UpdateReportCode({ reportCode }: { reportCode: ReportCode }) {
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <ReportCodesFormFields />
+            <ReportCodesFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

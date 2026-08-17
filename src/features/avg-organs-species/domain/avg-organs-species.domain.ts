@@ -18,6 +18,7 @@ export type CreateAvgOrgansSpeciesBody = {
     idSpecie: number;
     idProduct: number;
     avgWeight?: number;
+    status?: boolean;
 }
 
 export type SearchParamsAvgOrgansSpecies = {

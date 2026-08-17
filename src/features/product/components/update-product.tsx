@@ -40,6 +40,7 @@ export function UpdateProduct({ product }: { product: Product }) {
         code: product.code ?? "",
         productType: product.productType,
         parentId: product.parentId ?? undefined,
+        status: String(product.status),
       });
     }
   }, [open, form, product]);
@@ -58,6 +59,9 @@ export function UpdateProduct({ product }: { product: Product }) {
         }),
         ...(form.formState.dirtyFields.parentId && {
           parentId: data.parentId,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -106,7 +110,7 @@ export function UpdateProduct({ product }: { product: Product }) {
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <ProductFormFields excludeId={product.id} />
+            <ProductFormFields excludeId={product.id} showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

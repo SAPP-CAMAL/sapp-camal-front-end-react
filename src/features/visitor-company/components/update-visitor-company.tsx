@@ -42,6 +42,7 @@ export function UpdateVisitorCompany({ visitorCompany }: { visitorCompany: Visit
         phone: visitorCompany.phone ?? "",
         email: visitorCompany.email ?? "",
         address: visitorCompany.address ?? "",
+        status: String(visitorCompany.status),
       });
     }
   }, [open, form, visitorCompany]);
@@ -57,6 +58,9 @@ export function UpdateVisitorCompany({ visitorCompany }: { visitorCompany: Visit
         ...(form.formState.dirtyFields.phone && { phone: data.phone }),
         ...(form.formState.dirtyFields.email && { email: data.email }),
         ...(form.formState.dirtyFields.address && { address: data.address }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
+        }),
       });
 
       form.reset(form.formState.defaultValues);
@@ -104,7 +108,7 @@ export function UpdateVisitorCompany({ visitorCompany }: { visitorCompany: Visit
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <VisitorCompanyFormFields />
+            <VisitorCompanyFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

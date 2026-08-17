@@ -23,12 +23,14 @@ export type NewCleaningCatalogForm = {
   name: string;
   description: string;
   type: string;
+  status: string;
 };
 
 const defaultValues: NewCleaningCatalogForm = {
   name: "",
   description: "",
   type: "",
+  status: "true",
 };
 
 export function NewCleaningCatalog() {

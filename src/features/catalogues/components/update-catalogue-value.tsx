@@ -46,6 +46,7 @@ export function UpdateCatalogueValue({
         code: value.code,
         name: value.name,
         description: value.description,
+        status: String(value.status),
       });
     }
   }, [open, form, value]);
@@ -58,6 +59,7 @@ export function UpdateCatalogueValue({
         ...(form.formState.dirtyFields.code && { code: data.code }),
         ...(form.formState.dirtyFields.name && { name: data.name }),
         ...(form.formState.dirtyFields.description && { description: data.description }),
+        ...(form.formState.dirtyFields.status && { status: data.status === "true" }),
       });
 
       form.reset(form.formState.defaultValues);
@@ -94,7 +96,11 @@ export function UpdateCatalogueValue({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
-            <NewCatalogueValueFields excludeCatalogueId={value.id} fixedCatalogueTypeId={fixedCatalogueTypeId} />
+            <NewCatalogueValueFields
+              excludeCatalogueId={value.id}
+              fixedCatalogueTypeId={fixedCatalogueTypeId}
+              showStatus
+            />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

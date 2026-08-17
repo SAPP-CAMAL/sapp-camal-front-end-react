@@ -14,6 +14,7 @@ export type CreateChannelTypeBody = {
     name: string;
     description?: string;
     hooksQuantity: number;
+    status?: boolean;
 }
 
 export type SearchParamsChannelType = {

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteDiseaseGroupService } from "../server/db/disease-group.service";
+import { deleteDiseaseGroupPermanentlyService } from "../server/db/disease-group.service";
 import { DiseaseGroup } from "../domain/disease-group.domain";
 import { DISEASE_GROUP_TAG } from "../constants/disease-group.constants";
 
@@ -19,7 +19,7 @@ export function DeleteDiseaseGroup({
 
   const handleDelete = async () => {
     try {
-      await deleteDiseaseGroupService(diseaseGroup.id);
+      await deleteDiseaseGroupPermanentlyService(diseaseGroup.id);
 
       await queryClient.invalidateQueries({
         queryKey: [DISEASE_GROUP_TAG],

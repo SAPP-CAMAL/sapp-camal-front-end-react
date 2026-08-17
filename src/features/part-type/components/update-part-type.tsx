@@ -37,6 +37,7 @@ export function UpdatePartType({ partType }: { partType: PartType }) {
     if (open) {
       form.reset({
         description: partType.description,
+        status: String(partType.status),
       });
     }
   }, [open, form, partType]);
@@ -46,6 +47,9 @@ export function UpdatePartType({ partType }: { partType: PartType }) {
       await updatePartTypeService(partType.id, {
         ...(form.formState.dirtyFields.description && {
           description: data.description,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -94,7 +98,7 @@ export function UpdatePartType({ partType }: { partType: PartType }) {
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <PartTypeFormFields />
+            <PartTypeFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

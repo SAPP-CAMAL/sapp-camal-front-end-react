@@ -22,11 +22,13 @@ import { REPORT_CODES_TAG } from "../constants/report-codes.constants";
 export type NewReportCodeForm = {
   code: string;
   version: string;
+  status: string;
 };
 
 const defaultValues: NewReportCodeForm = {
   code: "",
   version: "",
+  status: "true",
 };
 
 export function NewReportCode() {

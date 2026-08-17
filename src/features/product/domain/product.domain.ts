@@ -16,6 +16,7 @@ export type CreateProductBody = {
     productArray?: string[];
     productType: boolean;
     code?: string;
+    status?: boolean;
 }
 
 export type SearchParamsProduct = {

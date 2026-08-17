@@ -31,7 +31,11 @@ import { getProductsService } from "@/features/product/server/db/product.service
 import { PRODUCT_TAG } from "@/features/product/constants/product.constants";
 import { NewAvgOrgansSpeciesForm } from "./new-avg-organs-species";
 
-export function AvgOrgansSpeciesFormFields() {
+export function AvgOrgansSpeciesFormFields({
+  showStatus = false,
+}: {
+  showStatus?: boolean;
+}) {
   const form = useFormContext<NewAvgOrgansSpeciesForm>();
   const { data: speciesResponse } = useAllSpecies();
   const { data: productsResponse } = useQuery({
@@ -146,6 +150,35 @@ export function AvgOrgansSpeciesFormFields() {
               </FormItem>
             )}
           />
+          {showStatus && (
+            <FormField
+              control={form.control}
+              name="status"
+              rules={{
+                required: {
+                  value: true,
+                  message: "El estado es requerido",
+                },
+              }}
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un estado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

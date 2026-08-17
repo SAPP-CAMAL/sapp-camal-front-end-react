@@ -29,7 +29,7 @@ import {
 import { NewCleaningCatalogForm } from "./new-cleaning-catalog";
 import { CLEANING_CATALOG_TYPES } from "../domain/cleaning-catalog.domain";
 
-export function CleaningCatalogFormFields() {
+export function CleaningCatalogFormFields({ showStatus = false }: { showStatus?: boolean }) {
   const form = useFormContext<NewCleaningCatalogForm>();
 
   return (
@@ -114,6 +114,35 @@ export function CleaningCatalogFormFields() {
               </FormItem>
             )}
           />
+          {showStatus && (
+            <FormField
+              control={form.control}
+              name="status"
+              rules={{
+                required: {
+                  value: true,
+                  message: "El estado es requerido",
+                },
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un estado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

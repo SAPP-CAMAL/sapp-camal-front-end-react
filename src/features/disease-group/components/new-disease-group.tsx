@@ -23,12 +23,14 @@ export type NewDiseaseGroupForm = {
   name: string;
   groupNumber: number;
   code: string;
+  status: string;
 };
 
 const defaultValues: NewDiseaseGroupForm = {
   name: "",
   groupNumber: undefined as unknown as number,
   code: "",
+  status: "true",
 };
 
 export function NewDiseaseGroup() {

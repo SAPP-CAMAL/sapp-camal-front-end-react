@@ -38,6 +38,7 @@ export function UpdateCompanyType({ companyType }: { companyType: CompanyType })
       form.reset({
         name: companyType.name,
         description: companyType.description ?? "",
+        status: String(companyType.status),
       });
     }
   }, [open, form, companyType]);
@@ -50,6 +51,9 @@ export function UpdateCompanyType({ companyType }: { companyType: CompanyType })
         }),
         ...(form.formState.dirtyFields.description && {
           description: data.description,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -98,7 +102,7 @@ export function UpdateCompanyType({ companyType }: { companyType: CompanyType })
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <CompanyTypeFormFields />
+            <CompanyTypeFormFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

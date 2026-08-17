@@ -33,7 +33,11 @@ import { getDiseaseGroupsService } from "@/features/disease-group/server/db/dise
 import { DISEASE_GROUP_TAG } from "@/features/disease-group/constants/disease-group.constants";
 import { NewProductDiseaseForm } from "./new-product-disease";
 
-export function ProductDiseaseFormFields() {
+export function ProductDiseaseFormFields({
+  showStatus = false,
+}: {
+  showStatus?: boolean;
+}) {
   const form = useFormContext<NewProductDiseaseForm>();
 
   const { data: productsResponse } = useQuery({
@@ -168,6 +172,35 @@ export function ProductDiseaseFormFields() {
               </FormItem>
             )}
           />
+          {showStatus && (
+            <FormField
+              control={form.control}
+              name="status"
+              rules={{
+                required: {
+                  value: true,
+                  message: "El estado es requerido",
+                },
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un estado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

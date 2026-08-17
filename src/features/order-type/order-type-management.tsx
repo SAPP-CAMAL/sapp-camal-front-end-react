@@ -10,6 +10,7 @@ import {
 } from "./server/db/order-type.service";
 import { getAllRolesService } from "@/features/roles/server/db/roles.service";
 import { NewOrderType } from "./components/new-order-type";
+import { UpdateOrderType } from "./components/update-order-type";
 import { DeleteOrderType } from "./components/delete-order-type";
 import { TableOrderTypes } from "./components/table-order-types";
 import { ORDER_TYPES_TAG } from "./constants/order-type.constants";
@@ -182,6 +183,10 @@ export function OrderTypeManagement() {
             ),
             cell: ({ row }) => (
               <div className="flex justify-center gap-x-2">
+                <UpdateOrderType
+                  orderType={row.original}
+                  existingOrderTypes={existingOrderTypes}
+                />
                 <DeleteOrderType orderType={row.original} />
               </div>
             ),

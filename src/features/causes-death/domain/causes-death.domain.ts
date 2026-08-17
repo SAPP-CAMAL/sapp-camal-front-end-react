@@ -8,6 +8,7 @@ export type CauseDeath = {
 
 export type CreateCauseDeathBody = {
     name: string;
+    status?: boolean;
 }
 
 export type SearchParamsCauseDeath = {

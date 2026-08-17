@@ -21,10 +21,12 @@ import { CAUSES_DEATH_TAG } from "../constants/causes-death.constants";
 
 export type NewCauseDeathForm = {
   name: string;
+  status: string;
 };
 
 const defaultValues: NewCauseDeathForm = {
   name: "",
+  status: "true",
 };
 
 export function NewCauseDeath() {

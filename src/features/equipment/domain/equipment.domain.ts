@@ -16,11 +16,13 @@ export type Equipment = {
 
 export type CreateEquipmentTypeBody = {
     description: string;
+    status?: boolean;
 }
 
 export type CreateEquipmentBody = {
     idEquipmentType: number;
     description: string;
+    status?: boolean;
 }
 
 export type SearchParamsEquipmentType = {

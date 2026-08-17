@@ -40,6 +40,7 @@ export function UpdateChannelType({ channelType }: { channelType: ChannelType })
         name: channelType.name,
         description: channelType.description ?? "",
         hooksQuantity: channelType.hooksQuantity,
+        status: String(channelType.status),
       });
     }
   }, [open, form, channelType]);
@@ -58,6 +59,9 @@ export function UpdateChannelType({ channelType }: { channelType: ChannelType })
         }),
         ...(form.formState.dirtyFields.hooksQuantity && {
           hooksQuantity: data.hooksQuantity,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -106,7 +110,7 @@ export function UpdateChannelType({ channelType }: { channelType: ChannelType })
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <ChannelTypeFormFields />
+            <ChannelTypeFormFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

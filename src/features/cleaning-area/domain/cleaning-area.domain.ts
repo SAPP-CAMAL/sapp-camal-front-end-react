@@ -31,3 +31,10 @@ export type CreateCleaningAreaStructureBody = {
     idCatalog: number;
     orderIndex?: number | null;
 }
+
+export type UpdateCleaningAreaBody = {
+    idLine?: number;
+    idAreaCatalog?: number;
+    orderIndex?: number | null;
+    status?: boolean;
+}

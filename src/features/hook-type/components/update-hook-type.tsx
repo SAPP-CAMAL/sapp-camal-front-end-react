@@ -40,6 +40,7 @@ export function UpdateHookType({ hookType }: { hookType: HookType }) {
         weight: hookType.weight,
         description: hookType.description ?? "",
         idSpecie: hookType.idSpecie,
+        status: String(hookType.status),
       });
     }
   }, [open, form, hookType]);
@@ -58,6 +59,9 @@ export function UpdateHookType({ hookType }: { hookType: HookType }) {
         }),
         ...(form.formState.dirtyFields.idSpecie && {
           idSpecie: data.idSpecie,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -106,7 +110,7 @@ export function UpdateHookType({ hookType }: { hookType: HookType }) {
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <HookTypeFormFields />
+            <HookTypeFormFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

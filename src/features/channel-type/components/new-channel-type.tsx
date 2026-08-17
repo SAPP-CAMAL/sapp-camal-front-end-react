@@ -24,6 +24,7 @@ export type NewChannelTypeForm = {
   name: string;
   description: string;
   hooksQuantity: number;
+  status: string;
 };
 
 const defaultValues: NewChannelTypeForm = {
@@ -31,6 +32,7 @@ const defaultValues: NewChannelTypeForm = {
   name: "",
   description: "",
   hooksQuantity: 1,
+  status: "true",
 };
 
 export function NewChannelType() {

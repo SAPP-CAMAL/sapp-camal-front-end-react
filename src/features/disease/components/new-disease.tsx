@@ -23,12 +23,14 @@ export type NewDiseaseForm = {
   names: string;
   code: string;
   description: string;
+  status: string;
 };
 
 const defaultValues: NewDiseaseForm = {
   names: "",
   code: "",
   description: "",
+  status: "true",
 };
 
 export function NewDisease() {

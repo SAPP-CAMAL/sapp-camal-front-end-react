@@ -26,6 +26,7 @@ export type NewVisitorCompanyForm = {
   phone: string;
   email: string;
   address: string;
+  status: string;
 };
 
 const defaultValues: NewVisitorCompanyForm = {
@@ -35,6 +36,7 @@ const defaultValues: NewVisitorCompanyForm = {
   phone: "",
   email: "",
   address: "",
+  status: "true",
 };
 
 export function NewVisitorCompany() {

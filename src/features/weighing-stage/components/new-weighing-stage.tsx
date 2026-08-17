@@ -23,12 +23,14 @@ export type NewWeighingStageForm = {
   code: string;
   name: string;
   description: string;
+  status: string;
 };
 
 const defaultValues: NewWeighingStageForm = {
   code: "",
   name: "",
   description: "",
+  status: "true",
 };
 
 export function NewWeighingStage() {

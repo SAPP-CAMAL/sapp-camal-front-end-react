@@ -37,6 +37,7 @@ export function UpdateBedType({ bedType }: { bedType: BedType }) {
     if (open) {
       form.reset({
         description: bedType.description,
+        status: String(bedType.status),
       });
     }
   }, [open, form, bedType]);
@@ -46,6 +47,9 @@ export function UpdateBedType({ bedType }: { bedType: BedType }) {
       await updateBedType(bedType.id, {
         ...(form.formState.dirtyFields.description && {
           description: data.description,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -86,7 +90,7 @@ export function UpdateBedType({ bedType }: { bedType: BedType }) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
-            <BedTypeFormFields />
+            <BedTypeFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

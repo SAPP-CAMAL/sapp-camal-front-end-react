@@ -43,6 +43,7 @@ export function UpdateAvgOrgansSpecies({
         idSpecie: avgOrgansSpecies.specie?.id,
         idProduct: avgOrgansSpecies.product?.id,
         avgWeight: avgOrgansSpecies.avgWeight ?? undefined,
+        status: String(avgOrgansSpecies.status),
       });
     }
   }, [open, form, avgOrgansSpecies]);
@@ -58,6 +59,9 @@ export function UpdateAvgOrgansSpecies({
         }),
         ...(form.formState.dirtyFields.avgWeight && {
           avgWeight: data.avgWeight,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -106,7 +110,7 @@ export function UpdateAvgOrgansSpecies({
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <AvgOrgansSpeciesFormFields />
+            <AvgOrgansSpeciesFormFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

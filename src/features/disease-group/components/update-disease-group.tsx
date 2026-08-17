@@ -43,6 +43,7 @@ export function UpdateDiseaseGroup({
         name: diseaseGroup.name,
         groupNumber: diseaseGroup.groupNumber,
         code: diseaseGroup.code,
+        status: String(diseaseGroup.status),
       });
     }
   }, [open, form, diseaseGroup]);
@@ -58,6 +59,9 @@ export function UpdateDiseaseGroup({
         }),
         ...(form.formState.dirtyFields.code && {
           code: data.code,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -106,7 +110,7 @@ export function UpdateDiseaseGroup({
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <DiseaseGroupFormFields />
+            <DiseaseGroupFormFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

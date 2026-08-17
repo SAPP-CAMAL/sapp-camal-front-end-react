@@ -8,6 +8,7 @@ import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { getModulesService } from "./server/db/modules.service";
 import { NewModule } from "./components/new-module";
 import { UpdateModule } from "./components/update-module";
+import { DeleteModule } from "./components/delete-module";
 import { ManageModuleMenus } from "./components/manage-module-menus";
 import { toCapitalize } from "@/lib/toCapitalize";
 import {
@@ -179,6 +180,7 @@ export function ModulesManagement() {
               <div className="flex justify-center gap-x-2">
                 <UpdateModule module={row.original} />
                 <ManageModuleMenus module={row.original} />
+                <DeleteModule module={row.original} />
               </div>
             ),
           },

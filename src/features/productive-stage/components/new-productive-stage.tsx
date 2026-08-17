@@ -24,6 +24,7 @@ export type NewProductiveStageForm = {
   code: string;
   idSpecies: number;
   idAnimalSex: number;
+  status: string;
 };
 
 const defaultValues: NewProductiveStageForm = {
@@ -31,6 +32,7 @@ const defaultValues: NewProductiveStageForm = {
   code: "",
   idSpecies: undefined as unknown as number,
   idAnimalSex: undefined as unknown as number,
+  status: "true",
 };
 
 export function NewProductiveStage() {

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteProductiveStageService } from "../server/db/productive-stage.service";
+import { deleteProductiveStagePermanentlyService } from "../server/db/productive-stage.service";
 import { ProductiveStage } from "../domain";
 import { PRODUCTIVE_LIST_TAG } from "../constants";
 
@@ -19,7 +19,7 @@ export function DeleteProductiveStage({
 
   const handleDelete = async () => {
     try {
-      await deleteProductiveStageService(productiveStage.id);
+      await deleteProductiveStagePermanentlyService(productiveStage.id);
 
       await queryClient.invalidateQueries({
         queryKey: [PRODUCTIVE_LIST_TAG],

@@ -14,6 +14,7 @@ export type CreateHookTypeBody = {
     weight: number;
     description?: string;
     idSpecie: number;
+    status?: boolean;
 }
 
 export type SearchParamsHookType = {

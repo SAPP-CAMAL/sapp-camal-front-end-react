@@ -21,6 +21,7 @@ export type CreateCleaningCatalogBody = {
     name: string;
     description?: string | null;
     type?: string | null;
+    status?: boolean;
 }
 
 export type SearchParamsCleaningCatalog = {

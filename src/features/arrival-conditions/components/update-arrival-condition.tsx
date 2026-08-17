@@ -41,6 +41,7 @@ export function UpdateArrivalCondition({
     if (open) {
       form.reset({
         description: arrivalCondition.description,
+        status: String(arrivalCondition.status),
       });
     }
   }, [open, form, arrivalCondition]);
@@ -50,6 +51,9 @@ export function UpdateArrivalCondition({
       await updateArrivalCondition(arrivalCondition.id, {
         ...(form.formState.dirtyFields.description && {
           description: data.description,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -90,7 +94,7 @@ export function UpdateArrivalCondition({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-8 grid grid-cols-1 gap-2">
-            <ArrivalConditionsFormFields />
+            <ArrivalConditionsFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

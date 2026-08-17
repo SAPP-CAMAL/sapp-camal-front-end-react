@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteAvgOrgansSpeciesService } from "../server/db/avg-organs-species.service";
+import { deleteAvgOrgansSpeciesPermanentlyService } from "../server/db/avg-organs-species.service";
 import { AvgOrgansSpecies } from "../domain/avg-organs-species.domain";
 import { AVG_ORGANS_SPECIES_TAG } from "../constants/avg-organs-species.constants";
 
@@ -19,7 +19,7 @@ export function DeleteAvgOrgansSpecies({
 
   const handleDelete = async () => {
     try {
-      await deleteAvgOrgansSpeciesService(avgOrgansSpecies.id);
+      await deleteAvgOrgansSpeciesPermanentlyService(avgOrgansSpecies.id);
 
       await queryClient.invalidateQueries({
         queryKey: [AVG_ORGANS_SPECIES_TAG],

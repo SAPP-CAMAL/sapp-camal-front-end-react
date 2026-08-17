@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteClinicalSignService } from "../server/db/clinical-signs.service";
+import { deleteClinicalSignPermanentlyService } from "../server/db/clinical-signs.service";
 import { ClinicalSign } from "../domain/clinical-signs.domain";
 import { CLINICAL_SIGNS_TAG } from "../constants/clinical-signs.constants";
 
@@ -19,7 +19,7 @@ export function DeleteClinicalSigns({
 
   const handleDelete = async () => {
     try {
-      await deleteClinicalSignService(clinicalSign.id);
+      await deleteClinicalSignPermanentlyService(clinicalSign.id);
 
       await queryClient.invalidateQueries({
         queryKey: [CLINICAL_SIGNS_TAG],

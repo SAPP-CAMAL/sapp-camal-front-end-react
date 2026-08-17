@@ -28,6 +28,7 @@ export type NewDistributionProductForm = {
   withLoad: boolean;
   detailLoad: string;
   commentary: string;
+  status: string;
 };
 
 const defaultValues: NewDistributionProductForm = {
@@ -39,6 +40,7 @@ const defaultValues: NewDistributionProductForm = {
   withLoad: false,
   detailLoad: "",
   commentary: "",
+  status: "true",
 };
 
 export function NewDistributionProduct() {

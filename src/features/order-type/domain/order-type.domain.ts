@@ -10,6 +10,11 @@ export type CreateOrderTypeBody = {
     idRol: number;
 }
 
+export type UpdateOrderTypeBody = {
+    idRol?: number;
+    status?: boolean;
+}
+
 export type SearchParamsOrderType = {
     page?: number;
     limit?: number;

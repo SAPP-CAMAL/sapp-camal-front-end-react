@@ -25,3 +25,7 @@ export function updateDiseaseService(id: number, body: Partial<CreateDiseaseBody
 export function deleteDiseaseService(id: number) {
     return http.delete(`v1/1.0.0/disease/${id}`).json()
 }
+
+export function deleteDiseasePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/disease/${id}/permanent`).json()
+}

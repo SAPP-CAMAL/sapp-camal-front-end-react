@@ -25,3 +25,7 @@ export function updateAvgOrgansSpeciesService(id: number, body: Partial<CreateAv
 export function deleteAvgOrgansSpeciesService(id: number) {
     return http.delete(`v1/1.0.0/avg-organs-species/${id}`).json()
 }
+
+export function deleteAvgOrgansSpeciesPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/avg-organs-species/${id}/permanent`).json()
+}

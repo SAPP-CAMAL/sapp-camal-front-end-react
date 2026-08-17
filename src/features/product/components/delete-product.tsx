@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { deleteProductService } from "../server/db/product.service";
+import { deleteProductPermanentlyService } from "../server/db/product.service";
 import { Product } from "../domain/product.domain";
 import { PRODUCT_TAG } from "../constants/product.constants";
 
@@ -15,7 +15,7 @@ export function DeleteProduct({ product }: { product: Product }) {
 
   const handleDelete = async () => {
     try {
-      await deleteProductService(product.id);
+      await deleteProductPermanentlyService(product.id);
 
       await queryClient.invalidateQueries({
         queryKey: [PRODUCT_TAG],

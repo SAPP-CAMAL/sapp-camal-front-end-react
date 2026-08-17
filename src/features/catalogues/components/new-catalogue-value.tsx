@@ -24,6 +24,7 @@ export type NewCatalogueValueForm = {
   code: string;
   name: string;
   description: string;
+  status?: string;
 };
 
 const baseDefaultValues: NewCatalogueValueForm = {

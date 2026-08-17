@@ -22,11 +22,13 @@ import { EQUIPMENTS_TAG } from "../constants/equipment.constants";
 export type NewEquipmentForm = {
   idEquipmentType: string;
   description: string;
+  status: string;
 };
 
 const defaultValues: NewEquipmentForm = {
   idEquipmentType: "",
   description: "",
+  status: "true",
 };
 
 export function NewEquipment() {

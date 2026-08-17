@@ -43,6 +43,7 @@ export function UpdateCleaningAreaCatalog({
         name: areaCatalog.name,
         description: areaCatalog.description ?? "",
         orderIndex: areaCatalog.orderIndex ?? (undefined as unknown as number),
+        status: String(areaCatalog.status),
       });
     }
   }, [open, form, areaCatalog]);
@@ -58,6 +59,9 @@ export function UpdateCleaningAreaCatalog({
         }),
         ...(form.formState.dirtyFields.orderIndex && {
           orderIndex: Number.isNaN(data.orderIndex) ? null : data.orderIndex,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -106,7 +110,7 @@ export function UpdateCleaningAreaCatalog({
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <CleaningAreaCatalogFormFields />
+            <CleaningAreaCatalogFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

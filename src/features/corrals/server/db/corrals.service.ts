@@ -375,12 +375,12 @@ export async function getBrandDetailsByLineServiceFallback(
   }
 }
 
-export async function closeCorralByStatusIdService(statusRecordId: number, close: boolean): Promise<{ code: number; message: string; data: any } | null> {
+export async function closeCorralByStatusIdService(statusRecordId: number, close: boolean): Promise<{ code: number; message: string; data: StatusCorralByAdmission } | null> {
   try {
-    const response = await http.patch(`v1/1.0.0/status-corrals/closeCorral/${statusRecordId}`, {
-      json: { closeCorral: close },
+    const endpoint = close ? "closeCorral" : "freeCorral";
+    const response = await http.patch(`v1/1.0.0/status-corrals/${endpoint}/${statusRecordId}`, {
       next: { tags: ["corrals", "status-close"] }
-    }).json<{ code: number; message: string; data: any }>();
+    }).json<{ code: number; message: string; data: StatusCorralByAdmission }>();
     return response;
   } catch (error) {
     console.error('Error closing corral status:', error);

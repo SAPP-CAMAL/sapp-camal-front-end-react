@@ -29,7 +29,7 @@ import {
 import { useAllSpecies } from "@/features/specie/hooks";
 import { NewHookTypeForm } from "./new-hook-type";
 
-export function HookTypeFormFields() {
+export function HookTypeFormFields({ showStatus = false }: { showStatus?: boolean }) {
   const form = useFormContext<NewHookTypeForm>();
   const { data: speciesResponse } = useAllSpecies();
   const species = speciesResponse?.data ?? [];
@@ -142,6 +142,35 @@ export function HookTypeFormFields() {
               </FormItem>
             )}
           />
+          {showStatus && (
+            <FormField
+              control={form.control}
+              name="status"
+              rules={{
+                required: {
+                  value: true,
+                  message: "El estado es requerido",
+                },
+              }}
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un estado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

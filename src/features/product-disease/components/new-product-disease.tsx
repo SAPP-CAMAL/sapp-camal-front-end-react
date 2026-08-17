@@ -23,12 +23,14 @@ export type NewProductDiseaseForm = {
   idProduct: number;
   idDisease: number;
   idDiseaseGroup: number;
+  status: string;
 };
 
 const defaultValues: NewProductDiseaseForm = {
   idProduct: undefined as unknown as number,
   idDisease: undefined as unknown as number,
   idDiseaseGroup: undefined as unknown as number,
+  status: "true",
 };
 
 export function NewProductDisease() {

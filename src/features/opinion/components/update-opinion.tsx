@@ -38,6 +38,7 @@ export function UpdateOpinion({ opinion }: { opinion: Opinion }) {
       form.reset({
         name: opinion.name,
         code: opinion.code,
+        status: String(opinion.status),
       });
     }
   }, [open, form, opinion]);
@@ -50,6 +51,9 @@ export function UpdateOpinion({ opinion }: { opinion: Opinion }) {
         }),
         ...(form.formState.dirtyFields.code && {
           code: data.code,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -98,7 +102,7 @@ export function UpdateOpinion({ opinion }: { opinion: Opinion }) {
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <OpinionFormFields />
+            <OpinionFormFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

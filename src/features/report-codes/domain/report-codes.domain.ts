@@ -10,6 +10,7 @@ export type ReportCode = {
 export type CreateReportCodeBody = {
     code: string;
     version?: string | null;
+    status?: boolean;
 }
 
 export type SearchParamsReportCodes = {

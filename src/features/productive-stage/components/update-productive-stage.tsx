@@ -44,6 +44,7 @@ export function UpdateProductiveStage({
         code: productiveStage.code,
         idSpecies: productiveStage.idSpecies,
         idAnimalSex: productiveStage.idAnimalSex,
+        status: String(productiveStage.status),
       });
     }
   }, [open, form, productiveStage]);
@@ -62,6 +63,9 @@ export function UpdateProductiveStage({
         }),
         ...(form.formState.dirtyFields.idAnimalSex && {
           idAnimalSex: data.idAnimalSex,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -110,7 +114,7 @@ export function UpdateProductiveStage({
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <ProductiveStageFormFields />
+            <ProductiveStageFormFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

@@ -12,6 +12,7 @@ export type CreateCleaningAreaCatalogBody = {
     name: string;
     description?: string | null;
     orderIndex?: number | null;
+    status?: boolean;
 }
 
 export type SearchParamsCleaningAreaCatalog = {

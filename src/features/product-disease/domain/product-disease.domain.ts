@@ -24,6 +24,7 @@ export type CreateProductDiseaseBody = {
     idProduct: number;
     idDisease: number;
     idDiseaseGroup: number;
+    status?: boolean;
 }
 
 export type SearchParamsProductDisease = {

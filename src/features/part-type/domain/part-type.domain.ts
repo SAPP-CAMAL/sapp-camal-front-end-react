@@ -8,6 +8,7 @@ export type PartType = {
 
 export type CreatePartTypeBody = {
     description: string;
+    status?: boolean;
 }
 
 export type SearchParamsPartType = {

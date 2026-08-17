@@ -20,3 +20,7 @@ export function updateProductDiseaseService(id: number, body: Partial<CreateProd
 export function deleteProductDiseaseService(id: number) {
     return http.delete(`v1/1.0.0/product-disease/${id}`).json()
 }
+
+export function deleteProductDiseasePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/product-disease/${id}/permanent`).json()
+}

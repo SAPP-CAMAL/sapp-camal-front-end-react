@@ -10,6 +10,7 @@ export type Opinion = {
 export type CreateOpinionBody = {
     name: string;
     code: string;
+    status?: boolean;
 }
 
 export type SearchParamsOpinion = {

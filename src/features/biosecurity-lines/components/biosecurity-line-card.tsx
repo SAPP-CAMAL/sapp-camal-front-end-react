@@ -16,6 +16,7 @@ import { SETTING_EQUIPMENT_LINES_TAG } from "../constants/biosecurity-lines.cons
 import { NewSettingEquipmentLine } from "./new-setting-equipment-line";
 import { DeleteSettingEquipmentLine } from "./delete-setting-equipment-line";
 import { DeleteBiosecurityLine } from "./delete-biosecurity-line";
+import { UpdateBiosecurityLine } from "./update-biosecurity-line";
 
 const NO_TYPE_GROUP = "SIN TIPO";
 
@@ -57,7 +58,10 @@ export function BiosecurityLineCard({
               </Badge>
             </CardDescription>
           </div>
-          <DeleteBiosecurityLine id={biosecurityLine.id} />
+          <div className="flex gap-x-2 shrink-0">
+            <UpdateBiosecurityLine biosecurityLine={biosecurityLine} />
+            <DeleteBiosecurityLine id={biosecurityLine.id} />
+          </div>
         </div>
       </CardHeader>
       <CardContent>

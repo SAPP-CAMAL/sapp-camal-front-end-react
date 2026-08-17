@@ -39,6 +39,7 @@ export function UpdateDisease({ disease }: { disease: Disease }) {
         names: disease.names,
         code: disease.code,
         description: disease.description ?? "",
+        status: String(disease.status),
       });
     }
   }, [open, form, disease]);
@@ -54,6 +55,9 @@ export function UpdateDisease({ disease }: { disease: Disease }) {
         }),
         ...(form.formState.dirtyFields.description && {
           description: data.description,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -102,7 +106,7 @@ export function UpdateDisease({ disease }: { disease: Disease }) {
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <DiseaseFormFields />
+            <DiseaseFormFields showStatus />
             <div className="flex justify-end col-span-2 gap-x-2">
               <Button
                 type="button"

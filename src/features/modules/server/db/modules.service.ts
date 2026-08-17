@@ -16,3 +16,7 @@ export function updateModuleService(moduleId: number, body: Partial<CreateModule
 export function deleteModuleService(moduleId: number) {
     return http.delete(`v1/1.0.0/administration/module/${moduleId}`).json()
 }
+
+export function deleteModulePermanentlyService(moduleId: number) {
+    return http.delete(`v1/1.0.0/administration/module/${moduleId}/permanent`).json()
+}

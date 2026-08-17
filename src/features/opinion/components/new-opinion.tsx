@@ -22,11 +22,13 @@ import { OPINION_TAG } from "../constants/opinion.constants";
 export type NewOpinionForm = {
   name: string;
   code: string;
+  status: string;
 };
 
 const defaultValues: NewOpinionForm = {
   name: "",
   code: "",
+  status: "true",
 };
 
 export function NewOpinion() {

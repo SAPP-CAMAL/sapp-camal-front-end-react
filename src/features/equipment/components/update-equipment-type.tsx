@@ -41,6 +41,7 @@ export function UpdateEquipmentType({
     if (open) {
       form.reset({
         description: equipmentType.description,
+        status: String(equipmentType.status),
       });
     }
   }, [open, form, equipmentType]);
@@ -50,6 +51,9 @@ export function UpdateEquipmentType({
       await updateEquipmentTypeService(equipmentType.id, {
         ...(form.formState.dirtyFields.description && {
           description: data.description,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -98,7 +102,7 @@ export function UpdateEquipmentType({
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <EquipmentTypeFormFields />
+            <EquipmentTypeFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

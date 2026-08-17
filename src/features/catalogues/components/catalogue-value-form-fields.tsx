@@ -32,9 +32,11 @@ import { NewCatalogueValueForm } from "./new-catalogue-value";
 export function NewCatalogueValueFields({
   excludeCatalogueId,
   fixedCatalogueTypeId,
+  showStatus = false,
 }: {
   excludeCatalogueId?: number;
   fixedCatalogueTypeId?: number;
+  showStatus?: boolean;
 }) {
   const form = useFormContext<NewCatalogueValueForm>();
   const watchedTypeId = useWatch({ control: form.control, name: "catalogueTypeId" });
@@ -175,6 +177,31 @@ export function NewCatalogueValueFields({
               </FormItem>
             )}
           />
+
+          {showStatus && (
+            <FormField
+              control={form.control}
+              name="status"
+              rules={{ required: { value: true, message: "El estado es requerido" } }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un estado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

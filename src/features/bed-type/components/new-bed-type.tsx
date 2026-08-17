@@ -21,10 +21,12 @@ import { BED_TYPE_LIST_TAG } from "../constants";
 
 export type NewBedTypeForm = {
   description: string;
+  status: string;
 };
 
 const defaultValues: NewBedTypeForm = {
   description: "",
+  status: "true",
 };
 
 export function NewBedType() {

@@ -12,6 +12,7 @@ export type CreateDiseaseGroupBody = {
     name: string;
     groupNumber: number;
     code: string;
+    status?: boolean;
 }
 
 export type SearchParamsDiseaseGroup = {

@@ -18,6 +18,7 @@ import { getMenusAdminService } from "./server/db/menus.service";
 import { getModulesService } from "@/features/modules/server/db/modules.service";
 import { NewMenu } from "./components/new-menu";
 import { UpdateMenu } from "./components/update-menu";
+import { DeleteMenu } from "./components/delete-menu";
 import {
   Card,
   CardContent,
@@ -343,8 +344,9 @@ export function MenusManagement({ fixedModuleId }: { fixedModuleId?: number } = 
               </div>
             ),
             cell: ({ row }) => (
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-x-2">
                 <UpdateMenu menu={row.original} fixedModuleId={fixedModuleId} />
+                <DeleteMenu menu={row.original} />
               </div>
             ),
           },

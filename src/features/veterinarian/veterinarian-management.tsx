@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { parseAsString, useQueryStates } from "nuqs";
 import { getVeterinariansService } from "./server/db/veterinarian.service";
 import { UpdateVeterinarian } from "./components/update-veterinarian";
+import { DeleteVeterinarian } from "./components/delete-veterinarian";
 import { TableVeterinarian } from "./components/table-veterinarian";
 import { toCapitalize } from "@/lib/toCapitalize";
 import {
@@ -188,6 +189,7 @@ export function VeterinarianManagement() {
             cell: ({ row }) => (
               <div className="flex justify-center gap-x-2">
                 <UpdateVeterinarian veterinarian={row.original} />
+                <DeleteVeterinarian veterinarian={row.original} />
               </div>
             ),
           },

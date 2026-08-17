@@ -22,11 +22,13 @@ import { CLINICAL_SIGNS_TAG } from "../constants/clinical-signs.constants";
 export type NewClinicalSignForm = {
   description: string;
   groupSign: number;
+  status: string;
 };
 
 const defaultValues: NewClinicalSignForm = {
   description: "",
   groupSign: undefined as unknown as number,
+  status: "true",
 };
 
 export function NewClinicalSigns() {

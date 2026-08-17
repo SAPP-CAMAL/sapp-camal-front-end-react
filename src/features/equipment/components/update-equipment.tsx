@@ -38,6 +38,7 @@ export function UpdateEquipment({ equipment }: { equipment: Equipment }) {
       form.reset({
         idEquipmentType: String(equipment.idEquipmentType),
         description: equipment.description,
+        status: String(equipment.status),
       });
     }
   }, [open, form, equipment]);
@@ -50,6 +51,9 @@ export function UpdateEquipment({ equipment }: { equipment: Equipment }) {
         }),
         ...(form.formState.dirtyFields.description && {
           description: data.description,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -98,7 +102,7 @@ export function UpdateEquipment({ equipment }: { equipment: Equipment }) {
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <EquipmentFormFields />
+            <EquipmentFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

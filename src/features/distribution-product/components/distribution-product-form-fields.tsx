@@ -32,7 +32,7 @@ import { ShippingCombobox } from "./shipping-combobox";
 import { IntroducerCombobox } from "./introducer-combobox";
 import { NewDistributionProductForm } from "./new-distribution-product";
 
-export function DistributionProductFormFields() {
+export function DistributionProductFormFields({ showStatus = false }: { showStatus?: boolean }) {
   const form = useFormContext<NewDistributionProductForm>();
   const originsQuery = useAllOrigins();
 
@@ -193,6 +193,36 @@ export function DistributionProductFormFields() {
               </FormItem>
             )}
           />
+
+          {showStatus && (
+            <FormField
+              control={form.control}
+              name="status"
+              rules={{
+                required: {
+                  value: true,
+                  message: "El estado es requerido",
+                },
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado <RequiredMark /></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un estado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

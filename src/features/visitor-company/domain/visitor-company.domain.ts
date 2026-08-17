@@ -20,6 +20,7 @@ export type CreateVisitorCompanyBody = {
     phone?: string;
     email?: string;
     address?: string;
+    status?: boolean;
 }
 
 export type SearchParamsVisitorCompany = {

@@ -21,10 +21,12 @@ import { ARRIVAL_CONDITIONS_LIST_TAG } from "../constants";
 
 export type NewArrivalConditionForm = {
   description: string;
+  status: string;
 };
 
 const defaultValues: NewArrivalConditionForm = {
   description: "",
+  status: "true",
 };
 
 export function NewArrivalCondition() {

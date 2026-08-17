@@ -23,12 +23,14 @@ export type NewAvgOrgansSpeciesForm = {
   idSpecie: number;
   idProduct: number;
   avgWeight?: number;
+  status: string;
 };
 
 const defaultValues: NewAvgOrgansSpeciesForm = {
   idSpecie: undefined as unknown as number,
   idProduct: undefined as unknown as number,
   avgWeight: undefined,
+  status: "true",
 };
 
 export function NewAvgOrgansSpecies() {

@@ -21,6 +21,12 @@ export type CreateBiosecurityLineBody = {
     name: string;
 }
 
+export type UpdateBiosecurityLineBody = {
+    idLine?: number;
+    name?: string;
+    status?: boolean;
+}
+
 export type CreateSettingEquipmentLineBody = {
     idBiosecurityLine: number;
     idEquipment: number;

@@ -16,3 +16,7 @@ export function updateMenuService(menuId: number, body: Partial<CreateMenuBody>)
 export function deleteMenuService(menuId: number) {
     return http.delete(`v1/1.0.0/administration/menu/${menuId}`).json()
 }
+
+export function deleteMenuPermanentlyService(menuId: number) {
+    return http.delete(`v1/1.0.0/administration/menu/${menuId}/permanent`).json()
+}

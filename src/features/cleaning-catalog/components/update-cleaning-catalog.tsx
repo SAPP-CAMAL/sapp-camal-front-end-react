@@ -43,6 +43,7 @@ export function UpdateCleaningCatalog({
         name: cleaningCatalog.name,
         description: cleaningCatalog.description ?? "",
         type: cleaningCatalog.type ?? "",
+        status: String(cleaningCatalog.status),
       });
     }
   }, [open, form, cleaningCatalog]);
@@ -58,6 +59,9 @@ export function UpdateCleaningCatalog({
         }),
         ...(form.formState.dirtyFields.type && {
           type: data.type || null,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -106,7 +110,7 @@ export function UpdateCleaningCatalog({
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <CleaningCatalogFormFields />
+            <CleaningCatalogFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"

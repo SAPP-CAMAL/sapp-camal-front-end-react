@@ -10,6 +10,7 @@ export type CompanyType = {
 export type CreateCompanyTypeBody = {
     name: string;
     description?: string;
+    status?: boolean;
 }
 
 export type SearchParamsCompanyType = {

@@ -37,6 +37,7 @@ export function UpdateCauseDeath({ causeDeath }: { causeDeath: CauseDeath }) {
     if (open) {
       form.reset({
         name: causeDeath.name,
+        status: String(causeDeath.status),
       });
     }
   }, [open, form, causeDeath]);
@@ -46,6 +47,9 @@ export function UpdateCauseDeath({ causeDeath }: { causeDeath: CauseDeath }) {
       await updateCauseDeathService(causeDeath.id, {
         ...(form.formState.dirtyFields.name && {
           name: data.name,
+        }),
+        ...(form.formState.dirtyFields.status && {
+          status: data.status === "true",
         }),
       });
 
@@ -94,7 +98,7 @@ export function UpdateCauseDeath({ causeDeath }: { causeDeath: CauseDeath }) {
             onSubmit={onSubmit}
             className="space-y-8 grid grid-cols-1 gap-2"
           >
-            <CausesDeathFormFields />
+            <CausesDeathFormFields showStatus />
             <div className="flex justify-end gap-x-2">
               <Button
                 type="button"
