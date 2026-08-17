@@ -162,10 +162,26 @@ export function AnimalWeighingManagement() {
   const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null);
   const [isDefaultAddressSelected, setIsDefaultAddressSelected] =
     useState(false);
+  const [isEncubaUser, setIsEncubaUser] = useState(false);
+  const [manualWeightInputs, setManualWeightInputs] = useState<
+    Record<string, string>
+  >({});
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      const userData = stored ? JSON.parse(stored) : null;
+      setIsEncubaUser(
+        userData?.user?.userName?.toLowerCase() === "encuba",
+      );
+    } catch {
+      setIsEncubaUser(false);
+    }
+  }, []);
 
   const queryClient = useQueryClient();
 
-  // Verificar si la fecha seleccionada es hoy o dentro de los ultimos 3 dias
+  // Verificar si la fecha seleccionada es hoy o dentro de los ultimos 4 dias
   const isWithinLastThreeDays = useMemo(() => {
     const selected = parseLocalDateString(slaughterDate);
     const startOfSelected = new Date(
@@ -183,7 +199,7 @@ export function AnimalWeighingManagement() {
     const diffMs = startOfToday.getTime() - startOfSelected.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    return diffDays >= 0 && diffDays <= 2;
+    return diffDays >= 0 && diffDays <= 4;
   }, [slaughterDate]);
 
   // Hook de balanza serial
@@ -1444,6 +1460,21 @@ export function AnimalWeighingManagement() {
     hookTypesData,
   ]);
 
+  // Carga manual de peso (solo usuario "encuba"): al tipear, queda listo para guardar sin pasos extra
+  const handleManualWeightChange = (row: AnimalWeighingRow, rawValue: string) => {
+    setManualWeightInputs((prev) => ({ ...prev, [row.id]: rawValue }));
+    const parsed = parseFloat(rawValue.replace(",", "."));
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      if (selectedRowId === row.id) setCapturedWeight(null);
+      return;
+    }
+    setSelectedRowId(row.id);
+    setCapturedWeight(parsed);
+    setRows((prev) =>
+      prev.map((r) => (r.id === row.id ? { ...r, peso: parsed } : r)),
+    );
+  };
+
   // Calcular pesos a mostrar (en la unidad configurada)
   const rowsWithDisplayWeight = useMemo(() => {
     const unitCode = unitMeasureData?.data?.code || "KG";
@@ -2307,13 +2338,28 @@ export function AnimalWeighingManagement() {
                                   <Weight className="h-2.5 w-2.5" />
                                   <span>Peso</span>
                                 </div>
-                                <div
-                                  className={`text-xs font-semibold ${row.displayWeight < 0 ? "text-red-600" : "text-green-600"}`}
-                                >
-                                  {row.displayWeight !== 0
-                                    ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || "kg"}`
-                                    : "-"}
-                                </div>
+                                {isEncubaUser &&
+                                isWithinLastThreeDays &&
+                                !row.savedWeight ? (
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="Peso"
+                                    value={manualWeightInputs[row.id] ?? ""}
+                                    onChange={(e) =>
+                                      handleManualWeightChange(row, e.target.value)
+                                    }
+                                    className="w-20 h-6 text-xs px-1.5"
+                                  />
+                                ) : (
+                                  <div
+                                    className={`text-xs font-semibold ${row.displayWeight < 0 ? "text-red-600" : "text-green-600"}`}
+                                  >
+                                    {row.displayWeight !== 0
+                                      ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || "kg"}`
+                                      : "-"}
+                                  </div>
+                                )}
                                 {/* Observaciones debajo del peso en móvil - siempre visibles */}
                                 <div
                                   className={`mt-1 text-xs italic font-medium ${row.commentary ? "text-amber-600" : "text-muted-foreground/60"}`}
@@ -2348,6 +2394,11 @@ export function AnimalWeighingManagement() {
                                     }
                                   }}
                                   disabled={!isConnected || !isWithinLastThreeDays}
+                                  title={
+                                    !isWithinLastThreeDays
+                                      ? "Solo se puede registrar peso para hoy o hasta 4 días atrás"
+                                      : undefined
+                                  }
                                 >
                                   {selectedRowId === row.id
                                     ? "CAPTURADO"
@@ -2761,13 +2812,28 @@ export function AnimalWeighingManagement() {
                                   </TableCell>
                                 )}
                                 <TableCell className="text-center py-0.5 px-1">
-                                  <span
-                                    className={`font-semibold text-xs ${row.displayWeight < 0 ? "text-red-600" : "text-green-600"}`}
-                                  >
-                                    {row.displayWeight !== 0
-                                      ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || "kg"}`
-                                      : "-"}
-                                  </span>
+                                  {isEncubaUser &&
+                                  isWithinLastThreeDays &&
+                                  !row.savedWeight ? (
+                                    <Input
+                                      type="text"
+                                      inputMode="decimal"
+                                      placeholder="Peso"
+                                      value={manualWeightInputs[row.id] ?? ""}
+                                      onChange={(e) =>
+                                        handleManualWeightChange(row, e.target.value)
+                                      }
+                                      className="w-20 h-6 text-xs px-1.5 mx-auto"
+                                    />
+                                  ) : (
+                                    <span
+                                      className={`font-semibold text-xs ${row.displayWeight < 0 ? "text-red-600" : "text-green-600"}`}
+                                    >
+                                      {row.displayWeight !== 0
+                                        ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || "kg"}`
+                                        : "-"}
+                                    </span>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-center py-0.5 px-1">
                                   <TooltipProvider>
@@ -2813,6 +2879,11 @@ export function AnimalWeighingManagement() {
                                         }
                                       }}
                                       disabled={!isConnected || !isWithinLastThreeDays}
+                                      title={
+                                        !isWithinLastThreeDays
+                                          ? "Solo se puede registrar peso para hoy o hasta 4 días atrás"
+                                          : undefined
+                                      }
                                     >
                                       {selectedRowId === row.id
                                         ? "CAPTURADO"
