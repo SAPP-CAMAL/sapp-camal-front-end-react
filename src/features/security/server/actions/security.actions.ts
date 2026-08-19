@@ -1,8 +1,26 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { ssrPostJson } from "@/lib/ky-ssr";
-import { ResponseLoginService, ResponseLogoutService, ResponseRefreshTokenService } from "../../domain";
+import { ssrGetJson, ssrPostJson } from "@/lib/ky-ssr";
+import { CommonHttpResponseSingle } from "@/features/people/domain";
+import { ResponseLoginService, ResponseLogoutService, ResponseRefreshTokenService, UserSetRoleResponse } from "../../domain";
+
+const AUTH_COOKIE_NAMES = ["accessToken", "refreshToken", "user"] as const;
+
+// Versiones previas del cambio de rol usaban window.cookieStore.set desde el navegador sin fijar
+// "path", lo que en algunos navegadores crea una cookie duplicada atada a la ruta actual (ej.
+// "/dashboard") en vez de "/". Esa cookie duplicada puede seguir enviándose junto a la correcta y
+// "ganarle" por ser más específica, dejando al usuario con el token de un rol viejo aunque vuelva a
+// loguearse. Se limpia explícitamente en las rutas conocidas antes de fijar las cookies nuevas.
+async function clearStaleAuthCookies() {
+    const cookieStore = await cookies();
+    const stalePaths = ["/", "/dashboard"];
+    for (const name of AUTH_COOKIE_NAMES) {
+        for (const path of stalePaths) {
+            cookieStore.delete({ name, path });
+        }
+    }
+}
 
 export async function loginAction(body: { identifier: string; password: string }) {
     const response = await ssrPostJson<ResponseLoginService>("v1/1.0.0/security/login", {
@@ -14,11 +32,13 @@ export async function loginAction(body: { identifier: string; password: string }
 
     // Guardar las cookies en el servidor para que el middleware pueda acceder a ellas
     if (response?.data?.accessToken) {
+        await clearStaleAuthCookies();
+
         const cookieStore = await cookies();
-        
+
         // Configurar las cookies con opciones adecuadas
         const isProduction = process.env.NODE_ENV === 'production';
-        
+
         cookieStore.set("accessToken", response.data.accessToken, {
             httpOnly: false, // Permitir acceso desde el cliente también
             secure: isProduction,
@@ -57,17 +77,54 @@ export async function logoutAction() {
         console.warn("Server logout failed, but clearing local cookies anyway");
     }
 
-    // Borrar las cookies locales
-    const cookieStore = await cookies();
-    cookieStore.delete("accessToken");
-    cookieStore.delete("refreshToken");
-    cookieStore.delete("user");
+    // Borrar las cookies locales (en todas las rutas conocidas, ver clearStaleAuthCookies)
+    await clearStaleAuthCookies();
 
     return {
         code: 200,
         message: "Logout successful",
         data: null
     };
+}
+
+export async function setUserRoleAction(roleId: number) {
+    const response = await ssrGetJson<CommonHttpResponseSingle<UserSetRoleResponse>>(
+        `v1/1.0.0/users/set-role/${roleId}`,
+    );
+
+    // Guardar las cookies en el servidor para que el middleware y el SSR de menús las vean de inmediato.
+    if (response?.data?.accessToken) {
+        await clearStaleAuthCookies();
+
+        const cookieStore = await cookies();
+        const isProduction = process.env.NODE_ENV === 'production';
+
+        cookieStore.set("accessToken", response.data.accessToken, {
+            httpOnly: false,
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24 * 7,
+        });
+
+        cookieStore.set("refreshToken", response.data.refreshToken, {
+            httpOnly: false,
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24 * 30,
+        });
+
+        cookieStore.set("user", JSON.stringify(response.data), {
+            httpOnly: false,
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24 * 7,
+        });
+    }
+
+    return response;
 }
 
 export async function refreshTokenAction(refreshToken: string) {

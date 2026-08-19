@@ -272,6 +272,7 @@ export function ListTransportManagement() {
                   {item.quantity || 0}
                 </div>
               </div>
+
               <div>
                 <div className="text-xs text-muted-foreground">Provincia</div>
                 <div className="text-sm font-medium">
@@ -356,7 +357,7 @@ export function ListTransportManagement() {
 
     const half = Math.floor(maxVisible / 2);
     let startPage = Math.max(1, currentPage - half);
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    const endPage = Math.min(totalPages, startPage + maxVisible - 1);
 
     if (endPage - startPage + 1 < maxVisible) {
       startPage = Math.max(1, endPage - maxVisible + 1);
@@ -640,6 +641,7 @@ export function ListTransportManagement() {
                         Cantidad
                       </span>
                     </TableHead>
+
                     <TableHead className="w-28 whitespace-normal text-center">
                       <span className="text-xs font-semibold">Provincia</span>
                     </TableHead>
@@ -704,6 +706,7 @@ export function ListTransportManagement() {
                         <TableCell className="text-center whitespace-normal font-semibold text-emerald-600">
                           {item.quantity || 0}
                         </TableCell>
+
                         <TableCell className="text-center whitespace-normal">
                           <Badge
                             variant="secondary"

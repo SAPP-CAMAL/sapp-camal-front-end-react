@@ -28,14 +28,14 @@ export function useSlaughterhouseInfo() {
 
   // Valores por defecto en caso de que no haya datos o esté cargando
   const defaultInfo: SlaughterhouseInfo = {
-    camalName: "CAMAL MUNICIPAL...",
+    camalName: "EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO DEL CANTÓN ",
     companyName: "EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO",
     location: {
       province: "...",
       canton: "...",
       parish: "...",
     },
-    gadUrl: "www.gadmriobamba.gob.ec",
+    gadUrl: "...",
   };
 
   const info = query.data ?? defaultInfo;

@@ -924,8 +924,8 @@ export function UpdateBrands({
             <AlertDialogHeader>
               <AlertDialogTitle>¿Confirmar transferencia de marca?</AlertDialogTitle>
               <AlertDialogDescription>
-                Estás a punto de transferir la marca <span className="font-bold text-gray-900">"{selectedBrandToReassign?.name}"</span> 
-                al introductor <span className="font-bold text-gray-900">"{targetIntroToAssign?.fullName}"</span>. 
+                Estás a punto de transferir la marca <span className="font-bold text-gray-900">&quot;{selectedBrandToReassign?.name}&quot;</span>
+                al introductor <span className="font-bold text-gray-900">&quot;{targetIntroToAssign?.fullName}&quot;</span>.
                 Esta acción moverá la propiedad de la marca y ya no aparecerá bajo el introductor actual.
               </AlertDialogDescription>
             </AlertDialogHeader>

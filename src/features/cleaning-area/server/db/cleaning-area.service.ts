@@ -1,0 +1,42 @@
+import { http } from "@/lib/ky";
+import {
+    CreateCleaningAreaBody,
+    CreateCleaningAreaStructureBody,
+    ResponseCleaningAreasByLineService,
+    UpdateCleaningAreaBody,
+} from "@/features/cleaning-area/domain/cleaning-area.domain";
+
+export function getCleaningAreasByLineService(idLine: number): Promise<ResponseCleaningAreasByLineService> {
+    const searchParams = new URLSearchParams();
+    searchParams.append("idLine", idLine.toString());
+
+    return http.get("v1/1.0.0/cleaning-area-structure/by-line", { searchParams }).json()
+}
+
+export function createCleaningAreaService(body: CreateCleaningAreaBody) {
+    return http.post("v1/1.0.0/cleaning-area", { json: body }).json()
+}
+
+export function updateCleaningAreaService(id: number, body: UpdateCleaningAreaBody) {
+    return http.patch(`v1/1.0.0/cleaning-area/${id}`, { json: body }).json()
+}
+
+export function deleteCleaningAreaService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-area/${id}`).json()
+}
+
+export function deleteCleaningAreaPermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-area/${id}/permanent`).json()
+}
+
+export function createCleaningAreaStructureService(body: CreateCleaningAreaStructureBody) {
+    return http.post("v1/1.0.0/cleaning-area-structure", { json: body }).json()
+}
+
+export function deleteCleaningAreaStructureService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-area-structure/${id}`).json()
+}
+
+export function deleteCleaningAreaStructurePermanentlyService(id: number) {
+    return http.delete(`v1/1.0.0/cleaning-area-structure/${id}/permanent`).json()
+}

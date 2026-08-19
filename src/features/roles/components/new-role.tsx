@@ -68,7 +68,7 @@ export function NewRol() {
           Crear rol
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[60vw]">
+      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
         <DialogHeader>
           <DialogTitle>Nuevo Rol</DialogTitle>
           <DialogDescription>

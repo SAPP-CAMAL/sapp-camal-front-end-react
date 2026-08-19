@@ -13,7 +13,8 @@ export function DynamicMetadata() {
   useEffect(() => {
     // Actualizar el título del documento
     if (location.canton) {
-      document.title = `SAPP - CAMAL MUNICIPAL DE ${location.canton}`;
+      document.title = `SAPP - EMPRESA PÚBLICA MUNICIPAL DE FAENAMIENTO
+DEL CANTÓN  DE ${location.canton}`;
     }
   }, [location.canton]);
 

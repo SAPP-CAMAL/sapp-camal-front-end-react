@@ -161,7 +161,7 @@ const VisitorMobileCard = ({ item }: { item: VisitorLogFilterResponse }) => {
               Observaciones
             </div>
             <p className="text-gray-700 text-xs italic leading-relaxed">
-              "{item.observation}"
+              &quot;{item.observation}&quot;
             </p>
           </div>
         )}

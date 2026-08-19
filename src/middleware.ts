@@ -25,6 +25,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
+  // 5. Reenviar el pathname actual como header: los Server Components (ej. dashboard/layout.tsx)
+  // no reciben el pathname como prop, y lo necesitan para validar acceso por menú/permiso.
+  if (pathname.startsWith("/dashboard")) {
+    const headers = new Headers(req.headers);
+    headers.set("x-pathname", pathname);
+    return NextResponse.next({ request: { headers } });
+  }
+
   return NextResponse.next();
 }
 

@@ -179,7 +179,7 @@ export function SerialScaleReader({
             <p className="font-semibold">Instrucciones:</p>
             <ol className="list-decimal list-inside space-y-1">
               <li>Conecta la balanza Bernalo X1 al puerto USB</li>
-              <li>Haz clic en "Conectar Balanza"</li>
+              <li>Haz clic en &quot;Conectar Balanza&quot;</li>
               <li>Selecciona el puerto serial en el diálogo</li>
               <li>Los pesos se leerán automáticamente</li>
             </ol>

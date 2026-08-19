@@ -24,11 +24,13 @@ import { useQuery } from "@tanstack/react-query";
 import { getCarriersByFilterService } from "@/features/carriers/server/carriers.service";
 import { Carrier } from "@/features/carriers/domain";
 import { defaultShippingFilter } from "@/features/carriers/constants/default-shipping-filter";
+import { useLines } from "@/features/postmortem/hooks/use-lines";
 
 interface Step3CarrierSelectionProps {
   onSelect: (carrier: Carrier) => void;
   onBack: () => void;
   filterByStatus?: boolean; // Opcional: filtrar solo transportistas activos
+  selectedSpecieId?: number | null; // Opcional: ID de la especie seleccionada para ordenamiento especial
 }
 
 const isNumbers = (str: string) => /^\d+$/.test(str);
@@ -37,10 +39,20 @@ export function Step3CarrierSelection({
   onSelect,
   onBack,
   filterByStatus = false, // Por defecto no filtra por status
+  selectedSpecieId = null, // ID de especie opcional
 }: Step3CarrierSelectionProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Obtener las líneas para determinar si es especie porcino
+  const { data: linesData } = useLines();
+  
+  // Determinar si la especie seleccionada es porcino
+  const isPorcinoSpecie = linesData?.find((line) => 
+    line.idSpecie === selectedSpecieId && 
+    line.description?.toLowerCase().includes("porcino")
+  ) !== undefined;
 
   // Resetear página cuando cambia el término de búsqueda
   const handleSearchChange = (value: string) => {
@@ -83,12 +95,24 @@ export function Step3CarrierSelection({
     return isCorrectType;
   });
 
+  // Ordenar transportistas: Si es especie porcino, poner a MIÑO primero
+  const sortedCarriers = isPorcinoSpecie 
+    ? [...filteredCarriers].sort((a, b) => {
+        const aMino = a.person?.lastName?.toUpperCase().includes("MIÑO");
+        const bMino = b.person?.lastName?.toUpperCase().includes("MIÑO");
+        
+        if (aMino && !bMino) return -1; // a (MIÑO) va primero
+        if (!aMino && bMino) return 1;  // b (MIÑO) va primero
+        return 0; // mantener orden original
+      })
+    : filteredCarriers;
+
   // Paginación en el frontend
-  const totalItems = filteredCarriers.length;
+  const totalItems = sortedCarriers.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const carriers = filteredCarriers.slice(startIndex, endIndex);
+  const carriers = sortedCarriers.slice(startIndex, endIndex);
 
   const handleSelectCarrier = (carrier: Carrier) => {
     onSelect(carrier);
