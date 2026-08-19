@@ -231,7 +231,7 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <RoleSwitcher />
+        <RoleSwitcher activeRole={props.user?.activeRole} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain menus={props.menus} />

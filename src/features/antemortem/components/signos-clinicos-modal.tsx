@@ -1107,7 +1107,7 @@ export function SignosClinicosModal({
                         {isDisabled && (
                           <div className="text-xs text-gray-500 mt-1 flex items-center">
                             <Lock className="w-3 h-3 mr-1" />
-                            No disponible cuando 'MATANZA NORMAL' está seleccionada
+                            No disponible cuando &apos;MATANZA NORMAL&apos; está seleccionada
                           </div>
                         )}
                       </div>

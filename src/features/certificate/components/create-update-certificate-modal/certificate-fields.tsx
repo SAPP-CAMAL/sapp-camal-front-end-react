@@ -472,7 +472,7 @@ export const CertificateFields = () => {
 											<div className='p-4 text-center text-gray-500'>Buscando personas...</div>
 										) : peopleData.data?.data?.items?.length === 0 ? (
 											<div className='p-4 text-center text-gray-500 border rounded-lg border-dashed'>
-												No se encontraron resultados para "{activeSearchField === 'name' ? searchName : searchIdentification}"
+												No se encontraron resultados para &quot;{activeSearchField === 'name' ? searchName : searchIdentification}&quot;
 											</div>
 										) : (
 											peopleData.data?.data?.items?.map(person => (

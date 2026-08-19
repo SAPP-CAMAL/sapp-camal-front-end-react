@@ -19,15 +19,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  CalendarIcon,
   Download,
-  Settings,
   ChevronDown,
   BookText,
   FileSpreadsheet,
   FileText,
   FileBarChart,
-  Calendar,
   CalendarRange,
   Calendar1,
 } from "lucide-react";
@@ -814,6 +811,9 @@ export function PostmortemManagement() {
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
+ 
+                <DropdownMenuSeparator />
+
                 <DropdownMenuItem
                   onClick={() => {
                     if (!selectedSpecieId) {
@@ -823,24 +823,21 @@ export function PostmortemManagement() {
                     // Extraer año y mes de la fecha seleccionada (YYYY-MM)
                     const yearMonth = slaughterDate.substring(0, 7);
                     toast.promise(
-                      downloadMonthlyConfiscationReport({
-                        date: yearMonth,
-                        idSpecies: selectedSpecieId,
-                      }),
+                      downloadMonthlySummaryAgrocalidadReport(yearMonth),
                       {
-                        loading: "Generando reporte mensual...",
-                        success: "Reporte mensual descargado correctamente",
+                        loading: "Generando reporte mensual de agrocalidad...",
+                        success: "Reporte mensual de agrocalidad descargado correctamente",
                         error: (err) =>
                           err instanceof Error
                             ? err.message
-                            : "Error al descargar el reporte mensual",
+                            : "Error al descargar el reporte mensual de agrocalidad",
                       }
                     );
                   }}
                 >
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  Reporte Mensual de Decomisos
-                </DropdownMenuItem> 
+                  <CalendarRange className="h-4 w-4 mr-2" />
+                  Reporte Mensual de Agrocalidad
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
@@ -872,34 +869,11 @@ export function PostmortemManagement() {
                   <FileBarChart className="h-4 w-4 mr-2" />
                   Reporte Consolidado
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (!selectedSpecieId) {
-                      toast.error("Selecciona una línea de producción");
-                      return;
-                    }
-                    // Extraer año y mes de la fecha seleccionada (YYYY-MM)
-                    const yearMonth = slaughterDate.substring(0, 7);
-                    toast.promise(
-                      downloadMonthlySummaryAgrocalidadReport(yearMonth),
-                      {
-                        loading: "Generando reporte mensual de agrocalidad...",
-                        success: "Reporte mensual de agrocalidad descargado correctamente",
-                        error: (err) =>
-                          err instanceof Error
-                            ? err.message
-                            : "Error al descargar el reporte mensual de agrocalidad",
-                      }
-                    );
-                  }}
-                >
-                  <CalendarRange className="h-4 w-4 mr-2" />
-                  Reporte Mensual de Agrocalidad
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleOpenMonthlyPathologiesModal}>
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   Patologías por Mes
                 </DropdownMenuItem>
+
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

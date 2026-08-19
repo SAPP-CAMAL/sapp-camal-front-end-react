@@ -1,0 +1,118 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { PlusIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { CleaningAreaCatalogFormFields } from "./cleaning-area-catalog-form-fields";
+import { createCleaningAreaCatalogService } from "../server/db/cleaning-area-catalog.service";
+import { useEffect, useState } from "react";
+import { CLEANING_AREA_CATALOG_TAG } from "../constants/cleaning-area-catalog.constants";
+
+export type NewCleaningAreaCatalogForm = {
+  name: string;
+  description: string;
+  orderIndex: number;
+  status: string;
+};
+
+const defaultValues: NewCleaningAreaCatalogForm = {
+  name: "",
+  description: "",
+  orderIndex: undefined as unknown as number,
+  status: "true",
+};
+
+export function NewCleaningAreaCatalog() {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+
+  const form = useForm<NewCleaningAreaCatalogForm>({ defaultValues });
+
+  useEffect(() => {
+    if (open) {
+      form.reset(defaultValues);
+    }
+  }, [open, form]);
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    try {
+      await createCleaningAreaCatalogService({
+        name: data.name,
+        description: data.description || null,
+        orderIndex:
+          data.orderIndex === undefined || Number.isNaN(data.orderIndex)
+            ? null
+            : data.orderIndex,
+      });
+
+      form.reset(defaultValues);
+
+      await queryClient.invalidateQueries({
+        queryKey: [CLEANING_AREA_CATALOG_TAG],
+      });
+
+      toast.success("Área de limpieza creada exitosamente");
+      setOpen(false);
+    } catch (error: any) {
+      const { data } = await error.response.json();
+      toast.error(data);
+    }
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusIcon />
+          Crear área de limpieza
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[60vw]">
+        <DialogHeader>
+          <DialogTitle>Nueva Área de Limpieza</DialogTitle>
+          <DialogDescription>
+            Define una nueva área física de limpieza reutilizable entre
+            líneas de producción.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={onSubmit}
+            className="space-y-8 grid grid-cols-1 gap-2"
+          >
+            <CleaningAreaCatalogFormFields />
+            <div className="flex justify-end gap-x-2">
+              <Button
+                type="button"
+                variant={"outline"}
+                disabled={form.formState.isSubmitting}
+                onClick={() => setOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  form.formState.isSubmitting || form.formState.isLoading
+                }
+              >
+                {form.formState.isSubmitting ? "Guardando..." : "Guardar"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

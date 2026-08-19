@@ -1,6 +1,6 @@
 import { CreateDetailRegisterVehicle } from './create-detail-register-vehicle';
 
-export interface UpdateDetailRegisterVehicle extends CreateDetailRegisterVehicle {}
+export type UpdateDetailRegisterVehicle = CreateDetailRegisterVehicle;
 
 export interface UpdateDetailRegisterVehicleResponse extends UpdateDetailRegisterVehicle {
 	id: number;

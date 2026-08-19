@@ -163,7 +163,7 @@ export function UpdatePerson({ person }: { person: any }) {
           <EditIcon />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-auto min-w-[80vw]">
+      <DialogContent className="max-h-screen overflow-y-auto w-[95vw] sm:max-w-[80vw]">
         <DialogHeader>
           <DialogTitle>Editar Persona</DialogTitle>
           <DialogDescription>

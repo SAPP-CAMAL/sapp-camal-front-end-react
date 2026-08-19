@@ -402,7 +402,7 @@ export function HygieneControlManagement() {
                   </div>
                 </div>
               </div>
-            </div>
+          </div>
 
             <div className="flex justify-start lg:justify-end gap-2 lg:pl-2">
               {lockerRoomData.length > 0 && (

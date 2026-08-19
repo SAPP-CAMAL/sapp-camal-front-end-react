@@ -1,5 +1,4 @@
 import { http } from "@/lib/ky";
-import ky from 'ky';
 import {
   ResponseLine,
   LineaType,
@@ -14,34 +13,7 @@ import {
   ResponseBrandDetails
 } from "@/features/corrals/domain";
 
-// Obtener la URL base de la API desde las variables de entorno
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://sapp-ruminahui.com";
-
-// Create a silent HTTP client for brand details that won't log errors
-const silentHttp = ky.create({
-  prefixUrl: API_BASE_URL,
-  credentials: "include",
-  retry: 0,
-  hooks: {
-    beforeRequest: [
-      async request => {
-        const token = await window.cookieStore.get("accessToken")
-        if (token) {
-          request.headers.set("Authorization", `Bearer ${token.value}`)
-        }
-      }
-    ],
-    afterResponse: [
-      (request, options, response) => {
-        if (response.status === 401) {
-          window.location.href = "/auth/login"
-        }
-        // Don't do anything else - suppress error logging
-        return response
-      }
-    ]
-  }
-});
+// La URL base se maneja dinámicamente través del cliente http de @/lib/ky
 
 export function getLineService(id: number): Promise<ResponseLine> {
   return http.get("v1/1.0.0/line", {
@@ -402,12 +374,12 @@ export async function getBrandDetailsByLineServiceFallback(
   }
 }
 
-export async function closeCorralByStatusIdService(statusRecordId: number, close: boolean): Promise<{ code: number; message: string; data: any } | null> {
+export async function closeCorralByStatusIdService(statusRecordId: number, close: boolean): Promise<{ code: number; message: string; data: StatusCorralByAdmission } | null> {
   try {
-    const response = await http.patch(`v1/1.0.0/status-corrals/closeCorral/${statusRecordId}`, {
-      json: { closeCorral: close },
+    const endpoint = close ? "closeCorral" : "freeCorral";
+    const response = await http.patch(`v1/1.0.0/status-corrals/${endpoint}/${statusRecordId}`, {
       next: { tags: ["corrals", "status-close"] }
-    }).json<{ code: number; message: string; data: any }>();
+    }).json<{ code: number; message: string; data: StatusCorralByAdmission }>();
     return response;
   } catch (error) {
     console.error('Error closing corral status:', error);

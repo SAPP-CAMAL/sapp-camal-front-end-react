@@ -1,5 +1,5 @@
 import { http } from '@/lib/ky';
-import { BedType } from '../../domain';
+import { BedType, ResponseBedTypePaginated, SearchParamsBedType } from '../../domain';
 import { BED_TYPE_LIST_TAG } from '../../constants';
 import { CommonHttpResponse } from '@/features/people/domain';
 
@@ -9,4 +9,24 @@ export const getAllBedTypes = () => {
 			next: { tags: [BED_TYPE_LIST_TAG] },
 		})
 		.json<CommonHttpResponse<BedType>>();
+};
+
+export const getBedTypesPaginated = (searchParams: SearchParamsBedType): Promise<ResponseBedTypePaginated> => {
+	return http.get('v1/1.0.0/bed-type/list', { searchParams }).json();
+};
+
+export const createBedType = (body: { description: string }) => {
+	return http.post('v1/1.0.0/bed-type', { json: body }).json();
+};
+
+export const updateBedType = (id: number, body: Partial<{ description: string; status: boolean }>) => {
+	return http.patch(`v1/1.0.0/bed-type/${id}`, { json: body }).json();
+};
+
+export const deleteBedType = (id: number) => {
+	return http.delete(`v1/1.0.0/bed-type/${id}`).json();
+};
+
+export const deleteBedTypePermanently = (id: number) => {
+	return http.delete(`v1/1.0.0/bed-type/${id}/permanent`).json();
 };

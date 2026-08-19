@@ -3120,6 +3120,7 @@ export function AnimalWeighingManagement() {
                   setModalStep(1);
                 }}
                 filterByStatus={true}
+                selectedSpecieId={selectedSpecieId}
               />
             )}
 

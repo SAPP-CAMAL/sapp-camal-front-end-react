@@ -19,10 +19,11 @@ import { es } from "date-fns/locale";
 import SignosClinicosModal from "./signos-clinicos-modal";
 import { ObservacionesModal } from "./observaciones-modal";
 import { AntemortemMobileCard } from "./antemortem-mobile-card";
+import { AntemortemAgrocalidadModal } from "./antemortem-agrocalidad-modal";
 import { getActiveLinesDataService, getAntemortemDataService, updateArgollasService } from "../server/db/antemortem.service";
 import { LineItem, mapLineItemToLineaType } from "../domain/line.types";
 import { DatePicker } from "@/components/ui/date-picker";
-import { downloadStatusCorralsReport, downloadAntemortemAgrocalidadReport } from "../utils/download-antemortem-report";
+import { downloadStatusCorralsReport } from "../utils/download-antemortem-report";
 import { isTodayOrTomorrow } from "@/lib/date-utils";
 
 function getLineLabel(line: LineItem): string {
@@ -112,6 +113,9 @@ export function AntemortemManagement() {
   const [editingArgollasCorral, setEditingArgollasCorral] = useState<string | null>(null);
   const [tempArgollasValue, setTempArgollasValue] = useState<number>(0);
   const [savingArgollasCorral, setSavingArgollasCorral] = useState<string | null>(null);
+
+  // Estado para el modal de reporte agrocalidad
+  const [agrocalidadModalOpen, setAgrocalidadModalOpen] = useState(false);
 
   // Estados para resumen flotante y draggable
   const [showFloatingTotals, setShowFloatingTotals] = useState(true);
@@ -510,54 +514,18 @@ export function AntemortemManagement() {
                     </DropdownMenuSub> */}
 
                     {/* Antemortem - Agrocalidad*/}
-                     <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2" />
-                        <span>Antemortem Agrocalidad</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent className="w-48">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (selectedLineId === null) {
-                              toast.error('Seleccione una línea para generar el reporte');
-                              return;
-                            }
-                            const admissionDate = format(fecha, "yyyy-MM-dd");
-                            toast.promise(
-                              downloadAntemortemAgrocalidadReport(admissionDate, selectedLineId, 'EXCEL'),
-                              {
-                                loading: 'Generando Excel...',
-                                success: 'Excel descargado correctamente',
-                                error: 'Error al descargar el Excel',
-                              }
-                            );
-                          }}
-                        >
-                          <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
-                          Descargar Excel
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (selectedLineId === null) {
-                              toast.error('Seleccione una línea para generar el reporte');
-                              return;
-                            }
-                            const admissionDate = format(fecha, "yyyy-MM-dd");
-                            toast.promise(
-                              downloadAntemortemAgrocalidadReport(admissionDate, selectedLineId, 'PDF'),
-                              {
-                                loading: 'Generando PDF...',
-                                success: 'PDF descargado correctamente',
-                                error: 'Error al descargar el PDF',
-                              }
-                            );
-                          }}
-                        >
-                          <FileText className="h-4 w-4 mr-2 text-red-600" />
-                          Descargar PDF
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (selectedLineId === null) {
+                          toast.error('Seleccione una línea para generar el reporte');
+                          return;
+                        }
+                        setAgrocalidadModalOpen(true);
+                      }}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      <span>Antemortem Agrocalidad</span>
+                    </DropdownMenuItem>
 
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -924,7 +892,12 @@ export function AntemortemManagement() {
         }}
       />
 
-
+      {/* Modal de reporte agrocalidad con rango de fechas */}
+      <AntemortemAgrocalidadModal
+        isOpen={agrocalidadModalOpen}
+        onOpenChange={setAgrocalidadModalOpen}
+        selectedLineId={selectedLineId}
+      />
     </div>
   );
 }

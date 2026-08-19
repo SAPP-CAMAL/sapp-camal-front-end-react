@@ -18,6 +18,8 @@ const PopoverContent = React.forwardRef<
             ref={ref}
             align={align}
             sideOffset={sideOffset}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
             className={cn(
                 "z-[100] w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none",
                 // animaciones como shadcn
