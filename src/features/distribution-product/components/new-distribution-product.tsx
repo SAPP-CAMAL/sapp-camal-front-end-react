@@ -14,6 +14,7 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { getApiErrorMessage } from "@/lib/error-handler";
 import { DistributionProductFormFields } from "./distribution-product-form-fields";
 import { createDistributionProductService } from "../server/db/distribution-product.service";
 import { useEffect, useState } from "react";
@@ -76,9 +77,8 @@ export function NewDistributionProduct() {
 
       toast.success("Despacho creado exitosamente");
       setOpen(false);
-    } catch (error: any) {
-      const { data } = await error.response.json();
-      toast.error(data);
+    } catch (error: unknown) {
+      toast.error(await getApiErrorMessage(error) ?? "Error al crear el despacho");
     }
   });
 

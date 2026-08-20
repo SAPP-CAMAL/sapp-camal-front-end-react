@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { getApiErrorMessage } from "@/lib/error-handler";
 import { deleteDetailDistributionPermanentlyService } from "../server/db/distribution-product.service";
 import { DETAIL_DISTRIBUTIONS_TAG } from "../constants/distribution-product.constants";
 
@@ -27,9 +28,8 @@ export function DeleteDetailDistribution({
       });
 
       toast.success("Producto removido del despacho exitosamente");
-    } catch (error: any) {
-      const { data } = await error.response.json();
-      toast.error(data);
+    } catch (error: unknown) {
+      toast.error(await getApiErrorMessage(error) ?? "Error al remover el producto del despacho");
     }
   };
 
