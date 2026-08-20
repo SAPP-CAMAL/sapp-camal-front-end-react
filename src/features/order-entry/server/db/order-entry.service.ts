@@ -95,8 +95,8 @@ export const updateOrderDetails = async (orderId: number, data: UpdateOrderDetai
 		.json<CommonHttpResponse<SaveOrderResponse>>();
 };
 
-export const removeOrderDetail = async (idAnimalProduct: number) => {
-	return http
-		.delete(`v1/1.0.0/orders/remove-order-detail/${idAnimalProduct}`)
-		.json<CommonHttpResponse<any>>();
+export const removeOrderDetail = async (idAnimalProduct: number): Promise<void> => {
+	// El backend responde 204 No Content sin body: llamar .json() acá lanza
+	// "Unexpected end of JSON input" aunque el borrado haya sido exitoso.
+	await http.delete(`v1/1.0.0/orders/remove-order-detail/${idAnimalProduct}`);
 };
