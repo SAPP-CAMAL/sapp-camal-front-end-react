@@ -1,5 +1,6 @@
 import { http } from "@/lib/ky";
-import type { OrdersResponse, OrdersFilters } from "../../domain/animal-distribution.types";
+import type { CommonHttpResponseSingle } from "@/features/people/domain";
+import type { Order, OrdersResponse, OrdersFilters } from "../../domain/animal-distribution.types";
 
 /**
  * Servicio para obtener los pedidos paginados
@@ -33,13 +34,16 @@ export async function getPaginatedOrders(filters: OrdersFilters = {}): Promise<O
  * @param orderStatusCode Código del estado (APR o REC)
  * @returns Promise con la respuesta
  */
-export async function updateOrderStatus(orderId: number, orderStatusCode: "APR" | "REC"): Promise<any> {
+export async function updateOrderStatus(
+    orderId: number,
+    orderStatusCode: "APR" | "REC"
+): Promise<CommonHttpResponseSingle<Order>> {
     try {
         const response = await http.patch(`v1/1.0.0/orders/${orderId}`, {
             json: {
                 orderStatusCode,
             },
-        }).json<any>();
+        }).json<CommonHttpResponseSingle<Order>>();
 
         return response;
     } catch (error) {
