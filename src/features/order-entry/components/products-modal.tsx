@@ -37,6 +37,7 @@ import type {
   AnimalStockItem,
 } from "../domain/order-entry.types";
 import { useStockBySpecie } from "../hooks/use-stock-by-specie";
+import { OrderStatusCodes } from "../constants/order-status-codes";
 
 interface ProductsModalProps {
   isOpen: boolean;
@@ -47,7 +48,7 @@ interface ProductsModalProps {
   onProductTypeChange: (type: "producto" | "subproducto") => void;
   readOnly?: boolean;
   animalIds: number[]; // IDs de animales que pertenecen a esta orden
-  orderStatus?: string; // Estado de la orden (PENDIENTE, APROBADO, RECHAZADO)
+  orderStatus?: string; // Código de estado del pedido (PEN, APR, REC)
 }
 
 export function ProductsModal({
@@ -59,7 +60,7 @@ export function ProductsModal({
   onProductTypeChange,
   readOnly = true,
   animalIds,
-  orderStatus = 'PENDIENTE',
+  orderStatus = OrderStatusCodes.PENDIENTE,
 }: ProductsModalProps) {
   const [currentAnimalId, setCurrentAnimalId] = useState<number | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set());
@@ -162,10 +163,13 @@ export function ProductsModal({
   useEffect(() => {
     if (!currentAnimalId) return;
 
-    // Verificar si ya tenemos selecciones en caché para este animal
+    // Verificar si ya tenemos selecciones en caché para este animal.
+    // Distinguir "sin entrada en caché" (undefined) de "el usuario deseleccionó
+    // todo" (Set vacío) — filtrar por size > 0 volvía a cargar desde la orden
+    // existente e impedía dejar un animal sin productos seleccionados.
     const cachedSelections = productSelectionsCache.get(currentAnimalId);
 
-    if (cachedSelections && cachedSelections.size > 0) {
+    if (cachedSelections !== undefined) {
       setSelectedProducts(new Set(cachedSelections));
       return;
     }
@@ -309,13 +313,15 @@ export function ProductsModal({
         duration: 3000,
       });
       
-      // Actualizar el estado original con el nuevo estado
-      setOriginalProductsState(new Map(productSelectionsCache));
+      // Actualizar el estado original con el nuevo estado ya persistido.
+      // Un solo set: encadenar dos llamadas aquí construía la segunda a partir
+      // del estado previo a la primera (las actualizaciones de React son
+      // asíncronas), así que la segunda pisaba lo que acababa de setear la primera.
+      const newOriginalState = new Map(productSelectionsCache);
       if (currentAnimalId) {
-        const newOriginal = new Map(originalProductsState);
-        newOriginal.set(currentAnimalId, new Set(selectedProducts));
-        setOriginalProductsState(newOriginal);
+        newOriginalState.set(currentAnimalId, new Set(selectedProducts));
       }
+      setOriginalProductsState(newOriginalState);
       
       setHasChanges(false);
       
@@ -531,14 +537,14 @@ export function ProductsModal({
         <div className="border-t px-2 sm:px-3 md:px-6 py-2 md:py-3 bg-muted/20 shrink-0">
           <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
             <div className="text-center sm:text-left order-2 sm:order-1">
-              {hasChanges && orderStatus === 'PENDIENTE' && (
+              {hasChanges && orderStatus === OrderStatusCodes.PENDIENTE && (
                 <span className="text-[10px] sm:text-xs md:text-sm text-amber-600 font-medium">
                   ⚠️ Cambios sin guardar
                 </span>
               )}
             </div>
             <div className="flex gap-2 order-1 sm:order-2">
-              {orderStatus === 'PENDIENTE' && hasChanges && (
+              {orderStatus === OrderStatusCodes.PENDIENTE && hasChanges && (
                 <Button 
                   onClick={handleUpdateOrder}
                   disabled={updateOrderMutation.isPending}

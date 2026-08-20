@@ -74,7 +74,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import type { AnimalDistribution, PaginationMeta, Order } from "../domain/animal-distribution.types";
+import { useDebounce } from "use-debounce";
+import type { AnimalDistribution, PaginationMeta, Order, OrdersFilters } from "../domain/animal-distribution.types";
 import { mapOrderToDistribution } from "../domain/animal-distribution.types";
 import { getActiveLinesDataService } from "@/features/antemortem/server/db/antemortem.service";
 import type { LineItem } from "@/features/antemortem/domain/line.types";
@@ -83,6 +84,7 @@ import { ProductsModal } from "@/features/order-entry/components/products-modal"
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 import { downloadAnimalDistributionReport } from "../utils/download-animal-distribution-report";
 import { WeighingStageCodes } from "../constants/weighing-stage-codes";
+import { OrderStatusCodes } from "@/features/order-entry/constants/order-status-codes";
 
 export function AnimalDistributionManagement() {
   const { camalName, location, getFullCompanyName } = useSlaughterhouseInfo(); // camalName = nombre completo del camal para certificados
@@ -91,6 +93,7 @@ export function AnimalDistributionManagement() {
   const [endDate, setEndDate] = useState<Date | undefined>(today);
   const [selectedSpecie, setSelectedSpecie] = useState<string>("Bovino");
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 400);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedDistribution, setSelectedDistribution] =
@@ -393,7 +396,7 @@ export function AnimalDistributionManagement() {
       const selectedLine = availableLines.find(line => line.description === selectedSpecie);
       const idSpecie = selectedLine?.idSpecie;
 
-      const filters: any = {
+      const filters: OrdersFilters = {
         page: currentPage,
         limit: itemsPerPage,
       };
@@ -401,6 +404,12 @@ export function AnimalDistributionManagement() {
       // Agregar idSpecie si existe
       if (idSpecie) {
         filters.idSpecie = idSpecie;
+      }
+
+      // La búsqueda va al servidor: filtrar solo la página ya cargada dejaba
+      // fuera los pedidos de las demás páginas y descuadraba el paginador.
+      if (debouncedSearchTerm.trim()) {
+        filters.searchTerm = debouncedSearchTerm.trim();
       }
 
       // Solo agregar filtros de fecha si está activo y las fechas existen
@@ -445,28 +454,10 @@ export function AnimalDistributionManagement() {
     if (availableLines.length > 0) {
       loadDistributions();
     }
-  }, [currentPage, itemsPerPage, isDateFilterActive, startDate, endDate, selectedSpecie, availableLines]);
+  }, [currentPage, itemsPerPage, isDateFilterActive, startDate, endDate, selectedSpecie, availableLines, debouncedSearchTerm]);
 
-  // Filtrado local: buscar en todas las columnas
-  const filteredDistributions = distributions.filter((dist) => {
-    if (!searchTerm) return true;
-
-    const searchLower = searchTerm.toLowerCase();
-
-    // Buscar en todas las columnas
-    return (
-      dist.nroDistribucion.toString().toLowerCase().includes(searchLower) ||
-      dist.fechaDistribucion.toLowerCase().includes(searchLower) ||
-      dist.nombreDestinatario.toLowerCase().includes(searchLower) ||
-      dist.lugarDestino.toLowerCase().includes(searchLower) ||
-      dist.placaMedioTransporte.toLowerCase().includes(searchLower) ||
-      dist.idsIngresos.toString().toLowerCase().includes(searchLower) ||
-      dist.estado.toLowerCase().includes(searchLower)
-    );
-  });
-
-  // La paginación la maneja la API, solo mostramos los datos
-  const paginatedDistributions = filteredDistributions;
+  // La búsqueda y la paginación las resuelve la API, solo mostramos los datos
+  const paginatedDistributions = distributions;
   const totalPages = meta?.totalPages || 1;
 
   // Resetear a página 1 cuando cambie el filtro de búsqueda o el tamaño de página
@@ -737,7 +728,7 @@ export function AnimalDistributionManagement() {
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="text-sm text-gray-600">
-                {filteredDistributions.length} registros
+                {meta?.totalItems ?? paginatedDistributions.length} registros
                 {isDateFilterActive && (
                   <span className="text-teal-600 font-medium"> (filtrados por fecha)</span>
                 )}
@@ -749,9 +740,9 @@ export function AnimalDistributionManagement() {
                   <span className="text-sm font-medium text-teal-700">
                     {startDate && format(startDate, "dd/MM/yyyy")} - {endDate && format(endDate, "dd/MM/yyyy")}
                   </span>
-                  {filteredDistributions.length > 0 && (
+                  {(meta?.totalItems ?? 0) > 0 && (
                     <span className="ml-1 px-2 py-0.5 bg-teal-600 text-white text-xs font-semibold rounded-full">
-                      {filteredDistributions.length}
+                      {meta?.totalItems}
                     </span>
                   )}
                 </div>
@@ -823,7 +814,7 @@ export function AnimalDistributionManagement() {
                   Reintentar
                 </Button>
               </div>
-            ) : filteredDistributions.length === 0 ? (
+            ) : paginatedDistributions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
                 <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
                   <Package className="h-8 w-8 text-gray-300" />
@@ -916,38 +907,41 @@ export function AnimalDistributionManagement() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2 pt-2">
-                          <Button 
-                            variant="outline" 
-                            className="flex-1 h-10 border-teal-600 text-teal-700 font-bold text-[9px] sm:text-[10px] hover:bg-teal-50 px-1.5 sm:px-2 whitespace-nowrap"
-                            onClick={() => {
-                              setSelectedDistribution(dist);
-                              const order = orders.find(o => o.id === dist.id);
-                              setSelectedOrder(order || null);
-                              setIsModalOpen(true);
-                            }}
-                          >
-                            <Eye className="w-3.5 h-3.5 mr-1" />
-                            <span className="uppercase tracking-tight">Certificado</span>
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="flex-1 h-10 border-blue-600 text-blue-700 font-bold text-[9px] sm:text-[10px] hover:bg-blue-50 px-1.5 sm:px-2 whitespace-nowrap"
-                            onClick={() => {
-                              const order = orders.find(o => o.id === dist.id);
-                              setSelectedOrderForProducts(order || null);
-                              setIsProductsModalOpen(true);
-                            }}
-                          >
-                            <ShoppingBag className="w-3.5 h-3.5 mr-1" />
-                            <span className="uppercase tracking-tight">Productos</span>
-                          </Button>
-                          
+                        <div className="flex flex-col gap-2 pt-2">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              className="flex-1 h-10 border-teal-600 text-teal-700 font-bold text-[11px] sm:text-xs hover:bg-teal-50 px-2 sm:px-3 whitespace-nowrap"
+                              onClick={() => {
+                                setSelectedDistribution(dist);
+                                const order = orders.find(o => o.id === dist.id);
+                                setSelectedOrder(order || null);
+                                setIsModalOpen(true);
+                              }}
+                            >
+                              <Eye className="w-3.5 h-3.5 mr-1" />
+                              <span className="uppercase tracking-tight">Certificado</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="flex-1 h-10 border-blue-600 text-blue-700 font-bold text-[11px] sm:text-xs hover:bg-blue-50 px-2 sm:px-3 whitespace-nowrap"
+                              onClick={() => {
+                                const order = orders.find(o => o.id === dist.id);
+                                setSelectedOrderForProducts(order || null);
+                                setIsProductsModalOpen(true);
+                              }}
+                            >
+                              <ShoppingBag className="w-3.5 h-3.5 mr-1" />
+                              <span className="uppercase tracking-tight">Productos</span>
+                            </Button>
+                          </div>
+
                           {dist.estado === "PENDIENTE" && (
                             <DropdownMenu modal={false}>
                               <DropdownMenuTrigger asChild>
-                                <Button className="h-11 w-12 bg-teal-600 hover:bg-teal-700 text-white p-0 shadow-lg shadow-teal-100">
-                                  <MoreVertical className="h-5 w-5" />
+                                <Button className="w-full h-10 bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] sm:text-xs shadow-lg shadow-teal-100">
+                                  <MoreVertical className="h-4 w-4 mr-1.5" />
+                                  <span className="uppercase tracking-tight">Gestionar Orden</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-52 p-2">
@@ -1581,8 +1575,8 @@ export function AnimalDistributionManagement() {
           specieId={availableLines.find(line => line.description === selectedSpecie)?.idSpecie || 0}
           productType={productType}
           onProductTypeChange={setProductType}
-          readOnly={selectedOrderForProducts.orderStatus.name !== 'PENDIENTE'}
-          orderStatus={selectedOrderForProducts.orderStatus.name}
+          readOnly={selectedOrderForProducts.orderStatus.code !== OrderStatusCodes.PENDIENTE}
+          orderStatus={selectedOrderForProducts.orderStatus.code}
           animalIds={
             // Extraer IDs únicos de animales de los orderDetails
             Array.from(
