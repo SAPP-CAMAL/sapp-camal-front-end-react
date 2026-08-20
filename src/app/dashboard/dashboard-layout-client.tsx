@@ -11,6 +11,8 @@ import { LoginResponse } from "@/features/security/domain";
 import { AdministrationMenu } from "@/features/modules/domain/module.domain";
 import { useInactivityMonitor } from "@/hooks/use-inactivity-monitor";
 import { InactivityModal } from "@/components/inactivity-modal";
+import { performClientLogout } from "@/lib/auth-logout";
+import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 
 interface DashboardLayoutClientProps {
@@ -25,23 +27,26 @@ export function DashboardLayoutClient({
   children,
 }: DashboardLayoutClientProps) {
   const [isInactive, setIsInactive] = useState(false);
+  const router = useRouter();
 
   const handleInactivity = useCallback(() => {
     setIsInactive(true);
   }, []);
 
   // Monitorear inactividad (120 minutos para producción)
-  useInactivityMonitor({ 
+  useInactivityMonitor({
     timeoutMinutes: 120,
     onInactivity: handleInactivity
   });
-  const handleReload = useCallback(() => {
-    window.location.reload();
-  }, []);
+
+  const handleLogout = useCallback(async () => {
+    await performClientLogout();
+    router.push("/auth/login");
+  }, [router]);
 
   return (
     <SidebarProvider>
-      <InactivityModal isOpen={isInactive} onReload={handleReload} />
+      <InactivityModal isOpen={isInactive} onLogout={handleLogout} />
       <AppSidebar menus={menus} user={user} />
       <SidebarInset>
         <div className="min-h-screen flex flex-col">
