@@ -13,11 +13,12 @@ import {
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { NewUserFields } from "./user-form-fields";
 import { getUserByIdService } from "@/features/security/server/db/security.queries";
 import { useEffect, useState } from "react";
 import { updateUserAction, usersForUpdate } from "../server/db/actions.users";
+import { getUserRolesService } from "@/features/roles/server/db/roles.service";
 import {
   Tooltip,
   TooltipContent,
@@ -28,6 +29,11 @@ export function UpdateUserForm({ userId }: { userId: number }) {
   const queryClient = useQueryClient();
 
   const [isOpen, setIsOpen] = useState(false);
+
+  const availableRolesQuery = useQuery({
+    queryKey: ["available-user-roles"],
+    queryFn: () => getUserRolesService(),
+  });
 
   const form = useForm<{
     personId: string;
@@ -46,7 +52,15 @@ export function UpdateUserForm({ userId }: { userId: number }) {
   });
 
   useEffect(() => {
-    if (isOpen && userId) {
+    if (isOpen && userId && availableRolesQuery.data) {
+      // Esta pantalla solo gestiona roles habilitados para iniciar sesion (isLogin).
+      // El usuario puede tener asignados otros roles (ej. TRANSPORTISTA, DESTINATARIOS)
+      // asignados por otra via (introductores, envios, etc.) - se excluyen aca a
+      // proposito para que nunca se marquen como "removidos" ni se envien al backend.
+      const loginRoleIds = new Set(
+        availableRolesQuery.data.data.map((role) => role.id.toString()),
+      );
+
       usersForUpdate(userId).then((resp) => {
         const defaultValues = {
           personId: "",
@@ -54,14 +68,14 @@ export function UpdateUserForm({ userId }: { userId: number }) {
           userName: resp.data.userName || "",
           roles: resp.data.userRoles
             .map((userRole) => userRole.roleId.toString())
-            .filter((id): id is string => Boolean(id)), // 👈 Devuelve ["1", "2", "3"]
+            .filter((id): id is string => Boolean(id) && loginRoleIds.has(id)), // 👈 Devuelve ["1", "2", "3"]
           code: resp.data?.veterinarian?.code || "",
         };
 
         form.reset(defaultValues);
       });
     }
-  }, [isOpen, userId, form]);
+  }, [isOpen, userId, form, availableRolesQuery.data]);
 
   const onSubmit = async (data: {
     personId: string;

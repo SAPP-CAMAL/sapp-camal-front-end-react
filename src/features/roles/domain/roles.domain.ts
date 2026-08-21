@@ -5,6 +5,10 @@ export type CreateRoleBody = {
     description: string
 }
 
+export type UpdateRoleBody = Partial<CreateRoleBody> & {
+    status?: boolean
+}
+
 export type SearchParamsRole = Partial<CreateRoleBody> & {
     page?: number
     limit?: number
@@ -19,7 +23,8 @@ export type Role = {
     description: string | null,
     isLogin: boolean,
     isStaff: boolean,
-    status: boolean
+    status: boolean,
+    createdAt?: string
 }
 
 

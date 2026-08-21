@@ -261,6 +261,7 @@ export function NewUserFields({ isUpdate = false }: { isUpdate?: boolean }) {
 								defaultValue={field.value || []}
 								onValueChange={field.onChange}
 								placeholder='Seleccionar Roles...'
+								searchPlaceholder='Buscar roles...'
 								maxCount={2}
 								singleLine={false}
 								modalPopover={true}
