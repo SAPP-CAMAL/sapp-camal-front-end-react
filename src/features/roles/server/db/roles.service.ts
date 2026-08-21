@@ -1,5 +1,5 @@
 import { http } from "@/lib/ky";
-import { CreateRoleBody, ResponseRolesService, ResponseRolesServiceAll, SearchParamsRole } from "@/features/roles/domain/roles.domain";
+import { CreateRoleBody, ResponseRolesService, ResponseRolesServiceAll, SearchParamsRole, UpdateRoleBody } from "@/features/roles/domain/roles.domain";
 
 export function createRoleService(body: CreateRoleBody) {
     return http.post("v1/1.0.0/roles", { json: body }).json()
@@ -9,7 +9,7 @@ export function getRolesService(searchParams: SearchParamsRole): Promise<Respons
     return http.get("v1/1.0.0/roles", { searchParams }).json()
 }
 
-export function updateRoleService(roleId: number, body: Partial<CreateRoleBody>) {
+export function updateRoleService(roleId: number, body: UpdateRoleBody) {
     return http.patch(`v1/1.0.0/roles/${roleId}`, { json: body }).json()
 }
 

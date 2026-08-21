@@ -14,6 +14,8 @@ import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { getRolesService } from "./server/db/roles.service";
 import { NewRol } from "./components/new-role";
 import { UpdateRol } from "./components/update-rol";
+import { DeactivateRole } from "./components/deactivate-role";
+import { ActivateRole } from "./components/activate-role";
 import { toCapitalize } from "@/lib/toCapitalize";
 import {
   Card,
@@ -199,8 +201,13 @@ export function RolesManagement() {
             ),
             cell: ({ row }) => {
               return (
-                <div className="flex justify-center">
+                <div className="flex justify-center gap-x-2">
                   <UpdateRol role={row.original} />
+                  {row.original.status ? (
+                    <DeactivateRole role={row.original} />
+                  ) : (
+                    <ActivateRole role={row.original} />
+                  )}
                 </div>
               );
             },
