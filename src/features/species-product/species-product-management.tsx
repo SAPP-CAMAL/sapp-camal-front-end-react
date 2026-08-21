@@ -48,6 +48,7 @@ export function SpeciesProductManagement() {
       limit: parseAsInteger.withDefault(10),
       productName: parseAsString.withDefault(""),
       status: parseAsString.withDefault("*"),
+      idSpecies: parseAsString.withDefault("*"),
     },
     {
       history: "push",
@@ -63,6 +64,9 @@ export function SpeciesProductManagement() {
         ...(!!searchParams.productName && { productName: searchParams.productName }),
         ...(searchParams.status !== "*" && {
           status: searchParams.status === "true",
+        }),
+        ...(searchParams.idSpecies !== "*" && {
+          idSpecies: Number(searchParams.idSpecies),
         }),
       }),
   });
@@ -153,6 +157,28 @@ export function SpeciesProductManagement() {
                   onChange={(e) => debounceProductName(e.target.value)}
                 />
               </div>
+            </div>
+
+            <div className="flex flex-col w-full">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Especie
+              </label>
+              <Select
+                onValueChange={(value) => setSearchParams({ idSpecies: value, page: 1 })}
+                defaultValue={searchParams.idSpecies}
+              >
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Seleccione una especie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="*">Todas</SelectItem>
+                  {(speciesQuery.data?.data ?? []).map((specie) => (
+                    <SelectItem key={specie.id} value={specie.id.toString()}>
+                      {specie.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex flex-col w-full">
