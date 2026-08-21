@@ -134,6 +134,12 @@ interface MultiSelectProps
   placeholder?: string;
 
   /**
+   * Placeholder text for the internal search input inside the popover.
+   * Optional, defaults to "Buscar...".
+   */
+  searchPlaceholder?: string;
+
+  /**
    * Animation duration in seconds for the visual effects (e.g., bouncing badges).
    * Optional, defaults to 0 (no animation).
    */
@@ -312,6 +318,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       variant,
       defaultValue = [],
       placeholder = "Select options",
+      searchPlaceholder = "Buscar...",
       animation = 0,
       animationConfig,
       maxCount = 3,
@@ -1050,7 +1057,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               {searchable && (
                 <div className="flex-shrink-0 border-b bg-muted/30 px-3 py-2.5">
                   <CommandInput
-                    placeholder="Buscar roles..."
+                    placeholder={searchPlaceholder}
                     onKeyDown={handleInputKeyDown}
                     value={searchValue}
                     onValueChange={setSearchValue}
