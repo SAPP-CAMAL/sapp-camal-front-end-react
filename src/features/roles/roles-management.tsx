@@ -181,7 +181,13 @@ export function RolesManagement() {
                 Fecha de Creación
               </div>
             ),
-            cell: ({}) => <span>{new Date().toLocaleDateString()}</span>,
+            cell: ({ row }) => (
+              <span>
+                {row.original.createdAt
+                  ? new Date(row.original.createdAt).toLocaleDateString()
+                  : "-"}
+              </span>
+            ),
           },
           {
             id: "actions",
