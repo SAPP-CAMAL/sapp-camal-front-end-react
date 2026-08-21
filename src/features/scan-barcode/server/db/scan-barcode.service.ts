@@ -1,43 +1,21 @@
-import { http } from '@/lib/ky';
-import { ScanBarcodeResponse, CheckBarcodeResponse } from '../../domain/scan-barcode.interface';
+import { http } from "@/lib/ky";
+import { CreateOrUpdateHttpResponse } from "@/features/people/domain";
+import { CreateFairTicketBody, FairTicket } from "../../domain";
 
-export async function checkBarcodeService(code: string): Promise<CheckBarcodeResponse> {
-  try {
-    const response = await http
-      .post('v1/1.0.0/scan-barcode/check', { json: { code } })
-      .json<CheckBarcodeResponse>();
-    return response;
-  } catch (error: any) {
-    console.error('Error en checkBarcodeService:', error);
-    throw error;
-  }
+export function saveFairTicketService(
+  body: CreateFairTicketBody
+): Promise<CreateOrUpdateHttpResponse<FairTicket>> {
+  return http
+    .post("v1/1.0.0/fair-ticket", { json: body })
+    .json<CreateOrUpdateHttpResponse<FairTicket>>();
 }
 
-export async function saveBarcodeService(code: string): Promise<ScanBarcodeResponse> {
-  try {
-    const response = await http
-      .post('v1/1.0.0/scan-barcode/save', { json: { code } })
-      .json<ScanBarcodeResponse>();
-    return response;
-  } catch (error: any) {
-    console.error('Error en saveBarcodeService:', error);
-    throw error;
-  }
-}
-
-export async function saveFairTicketService(data: {
-  code: string;
-  productiveStageId: number;
-}): Promise<any> {
-  return http.post('v1/1.0.0/fair-ticket', { json: data }).json<any>();
-}
-
-export async function reclaimFairTicketByIdService(id: number): Promise<any> {
-  return http.patch(`v1/1.0.0/fair-ticket/reclaim-by-id/${id}`).json<any>();
-}
-
-export async function reclaimFairTicketByCodeService(code: string): Promise<any> {
-  return http.patch(`v1/1.0.0/fair-ticket/reclaim/${encodeURIComponent(code)}`).json<any>();
+export function reclaimFairTicketByCodeService(
+  code: string
+): Promise<CreateOrUpdateHttpResponse<FairTicket>> {
+  return http
+    .patch(`v1/1.0.0/fair-ticket/reclaim/${encodeURIComponent(code)}`)
+    .json<CreateOrUpdateHttpResponse<FairTicket>>();
 }
 
 export async function printFairTicketPdfService(code: string): Promise<void> {
@@ -45,6 +23,6 @@ export async function printFairTicketPdfService(code: string): Promise<void> {
     .get(`v1/1.0.0/fair-ticket/print/${encodeURIComponent(code)}`)
     .blob();
   const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  window.open(url, "_blank");
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
