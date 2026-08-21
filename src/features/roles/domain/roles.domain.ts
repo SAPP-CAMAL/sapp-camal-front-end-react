@@ -19,7 +19,8 @@ export type Role = {
     description: string | null,
     isLogin: boolean,
     isStaff: boolean,
-    status: boolean
+    status: boolean,
+    createdAt?: string
 }
 
 
