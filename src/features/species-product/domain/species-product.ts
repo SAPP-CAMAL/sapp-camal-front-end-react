@@ -21,6 +21,7 @@ export type SearchParamsSpeciesProduct = {
   limit?: number;
   productName?: string;
   status?: boolean;
+  idSpecies?: number;
 };
 
 export type ResponseSpeciesProductPaginated = CommonHttpResponsePagination<SpeciesProduct>;
