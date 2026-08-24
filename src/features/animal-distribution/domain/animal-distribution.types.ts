@@ -127,8 +127,10 @@ export interface Order {
   shipping: OrderShipping;
   orderDetails: OrderDetail[];
   addressee: OrderAddressee;
-  certificate: any | null;
-  approvedBy: any | null;
+  // No se consume su estructura en el frontend todavía; se deja como
+  // registro opaco en vez de tipar con any.
+  certificate: Record<string, unknown> | null;
+  approvedBy: Record<string, unknown> | null;
 }
 
 export interface PaginationMeta {
@@ -170,6 +172,18 @@ export interface AnimalDistribution {
   estado: "PENDIENTE" | "APROBADO" | "RECHAZADO" | "ENTREGADO";
 }
 
+const KNOWN_ORDER_STATUSES: readonly AnimalDistribution["estado"][] = [
+  "PENDIENTE",
+  "APROBADO",
+  "RECHAZADO",
+  "ENTREGADO",
+];
+
+function toKnownOrderStatus(name: string | undefined): AnimalDistribution["estado"] {
+  const match = KNOWN_ORDER_STATUSES.find((status) => status === name);
+  return match ?? "PENDIENTE";
+}
+
 // Función para mapear Order a AnimalDistribution
 export function mapOrderToDistribution(order: Order): AnimalDistribution {
   const addresseeName = order.addressee?.personRole?.person?.fullName || "Sin nombre";
@@ -186,6 +200,6 @@ export function mapOrderToDistribution(order: Order): AnimalDistribution {
     lugarDestino: destination,
     placaMedioTransporte: `${vehiclePlate}/${driverName}`,
     idsIngresos: ingresosCount.toString(),
-    estado: order.orderStatus?.name as any || "PENDIENTE",
+    estado: toKnownOrderStatus(order.orderStatus?.name),
   };
 }

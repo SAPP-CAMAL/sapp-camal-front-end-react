@@ -22,6 +22,7 @@ import { FinishType } from '@/features/finish-type/domain';
 import { useFinishTypeBySpecies } from '@/features/finish-type/hooks';
 import { BrandByFilterMapped } from '@/features/brand/domain/get-brand-by-filter';
 import { useEffect } from 'react';
+import { SPECIES_CODE } from '@/features/specie/constants';
 
 export type AnimalAdmissionForm = {
 	/** setting cert brand id */
@@ -216,7 +217,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 		const total = quantityMale + quantityFemale;
 
 		const subTotal = resetTotalAnimals + total;
-		const isBovineSpecie = selectedSpecie?.id === 4;
+		const isBovineSpecie = selectedSpecie?.name?.toLowerCase().startsWith(SPECIES_CODE.BOVINO.toLowerCase()) ?? false;
 		const normalizedRings =
 			data.numberRings === undefined || data.numberRings === null ? 0 : +data.numberRings;
 
@@ -227,7 +228,7 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 		if (subTotal > +(selectedCertificate?.quantity || 0)) return;
 		if (isBovineSpecie && (Number.isNaN(normalizedRings) || normalizedRings < 0))
 			return toast.error('Debe ingresar un número de argollas válido para bovino');
-		if (isBovineSpecie && normalizedRings! > total)
+		if (isBovineSpecie && normalizedRings > total)
 			return toast.error(`El número de argollas no puede ser mayor al total de animales (${total})`);
 
 		let detailsCertificateBrand = data.selectedProductiveStages.map(stage => ({
@@ -327,14 +328,14 @@ export const useCreateUpdateAnimalAdmission = ({ animalAdmissionData, onSave }: 
 		brands?.length === 0;
 
 	const totalFormAnimals = +form.watch('females') + +form.watch('males');
-	const isBovineSpecie = selectedSpecie?.id === 4;
-		const normalizedSelectedRings = selectedNumberRings ?? 0;
-		const isInvalidRingsForBovine =
-			isBovineSpecie &&
-			(form.formState.touchedFields.numberRings || form.formState.isSubmitted) &&
-			(Number.isNaN(+normalizedSelectedRings) ||
-				+normalizedSelectedRings < 0 ||
-				+normalizedSelectedRings > totalFormAnimals);
+	const isBovineSpecie = selectedSpecie?.name?.toLowerCase().startsWith(SPECIES_CODE.BOVINO.toLowerCase()) ?? false;
+	const normalizedSelectedRings = selectedNumberRings ?? 0;
+	const isInvalidRingsForBovine =
+		isBovineSpecie &&
+		(form.formState.touchedFields.numberRings || form.formState.isSubmitted) &&
+		(Number.isNaN(+normalizedSelectedRings) ||
+			+normalizedSelectedRings < 0 ||
+			+normalizedSelectedRings > totalFormAnimals);
 
 	useEffect(() => {
 		if (!isBovineSpecie) {

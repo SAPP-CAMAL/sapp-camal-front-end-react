@@ -25,7 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { logoutAction } from "@/features/security/server/actions/security.actions";
+import { performClientLogout } from "@/lib/auth-logout";
 import { useRouter } from "next/navigation";
 import { LoginResponse } from "@/features/security/domain";
 import { fixUtf8 } from "@/lib/utils";
@@ -104,33 +104,8 @@ export function NavUser({ user }: { user: LoginResponse }) {
             <DropdownMenuSeparator /> */}
             <DropdownMenuItem
               onClick={async () => {
-                try {
-                  // Llamar al logout en el servidor (borra cookies del servidor)
-                  await logoutAction();
-                  
-                  // Limpiar también en el cliente
-                  if (typeof window !== "undefined") {
-                    // Borrar localStorage
-                    window.localStorage.removeItem("accessToken");
-                    window.localStorage.removeItem("refreshToken");
-                    window.localStorage.removeItem("user");
-                    window.localStorage.removeItem("activeRoleId");
-                    window.localStorage.removeItem("activeRoleName");
-                    window.dispatchEvent(new CustomEvent("active-role-changed", { detail: { id: null, name: null } }));
-                    
-                    // Borrar cookies del navegador
-                    document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-                    document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-                    document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-                  }
-                  
-                  // Redirigir al login
-                  navigate.push("/auth/login");
-                } catch (error) {
-                  console.error("Logout error:", error);
-                  // Redirigir al login incluso si falla
-                  navigate.push("/auth/login");
-                }
+                await performClientLogout();
+                navigate.push("/auth/login");
               }}
             >
               <LogOut />

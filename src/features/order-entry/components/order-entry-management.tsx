@@ -91,7 +91,6 @@ export function OrderEntryManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<OrderEntry | null>(null);
   const [products, setProducts] = useState<ProductSubproduct[]>([]);
-  const [fechaFaenamiento, setFechaFaenamiento] = useState<Date>(new Date());
   const [selectedEspecieId, setSelectedEspecieId] = useState<number | null>(null);
   const [selectedIntroductor, setSelectedIntroductor] = useState<string>("");
   const [brandAddressee, setBrandAddressee] = useState<string | undefined>(undefined);
@@ -104,16 +103,12 @@ export function OrderEntryManagement() {
   const [selectedProducts, setSelectedProducts] = useState<Set<number>>(
     new Set()
   );
-  const [selectedSubproducts, setSelectedSubproducts] = useState<Set<number>>(
-    new Set()
-  );
   const [currentAnimalId, setCurrentAnimalId] = useState<number | null>(null);
   const [step, setStep] = useState(1);
   const [selectedAddressee, setSelectedAddressee] = useState<Addressees | null>(
     null
   );
   const [selectedCarrier, setSelectedCarrier] = useState<Carrier | null>(null);
-  const [savedOrderId, setSavedOrderId] = useState<number | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     productId: number | null;
@@ -138,8 +133,8 @@ export function OrderEntryManagement() {
 
   const searchParams = useSearchParams();
   const urlOrderId = searchParams.get("id");
-  // Usar el ID de la URL si existe, o el ID guardado después de crear la orden
-  const orderId = urlOrderId ? Number(urlOrderId) : savedOrderId;
+  // Solo hay orderId cuando se está editando un pedido ya persistido (?id= en la URL)
+  const orderId = urlOrderId ? Number(urlOrderId) : null;
 
   // Hooks de API
   const saveOrderMutation = useSaveOrder();
@@ -304,11 +299,7 @@ export function OrderEntryManagement() {
     });
   };
 
-  const handleConfirmRemoveProduct = () => {
-    const { productId, idAnimalProduct } = deleteConfirmation;
-
-    if (!productId || !idAnimalProduct) return;
-
+  const removeProductFromLocalState = (productId: number) => {
     // Encontrar el producto que se va a eliminar para obtener su nroIngreso (animalId)
     const productToRemove = products.find((p) => p.id === productId);
 
@@ -336,44 +327,34 @@ export function OrderEntryManagement() {
     }
 
     // Remover el producto de la lista
-    setProducts(products.filter((p) => p.id !== productId));
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
+  };
 
-    // Cerrar el modal
+  const handleConfirmRemoveProduct = () => {
+    const { productId, idAnimalProduct } = deleteConfirmation;
+
+    if (!productId || !idAnimalProduct) return;
+
+    // Cerrar el modal de confirmación de inmediato
     setDeleteConfirmation({
       isOpen: false,
       productId: null,
       idAnimalProduct: null,
       productName: "",
     });
-  };
 
-  const handleSave = () => {
-    if (!selectedAddressee || !selectedCarrier || products.length === 0) {
-      toast.error("Faltan datos requeridos para guardar la orden");
+    if (orderId) {
+      // Este producto ya está persistido en un pedido existente: hay que
+      // avisar al backend para que libere el stock (available=true), si no
+      // el producto queda vendido para siempre aunque desaparezca de la vista.
+      removeOrderDetailMutation.mutate(idAnimalProduct, {
+        onSuccess: () => removeProductFromLocalState(productId),
+      });
       return;
     }
 
-    const orderData = {
-      idAddressee: selectedAddressee.id,
-      idShipping: selectedCarrier.id,
-      status: true,
-      orderDetails: products.map((product) => ({
-        idAnimalProduct: product.id,
-      })),
-    };
-
-    saveOrderMutation.mutate(orderData, {
-      onSuccess: () => {
-        // Limpiar formulario después de guardar y cerrar modal
-        setProducts([]);
-        setSelectedOrder(null);
-        setStep(1);
-        setSelectedAddressee(null);
-        setSelectedCarrier(null);
-        setCheckedOrders(new Set());
-        setIsProductModalOpen(false);
-      },
-    });
+    // Pedido nuevo aún no guardado: solo es selección local en memoria.
+    removeProductFromLocalState(productId);
   };
 
   const handleCheckOrder = (orderId: number, checked: boolean) => {
@@ -573,7 +554,6 @@ export function OrderEntryManagement() {
 
     // Limpiar selección actual
     setSelectedProducts(new Set());
-    setSelectedSubproducts(new Set());
 
     // Pasar al siguiente animal si hay más
     const animalsArray = Array.from(checkedOrders);
@@ -701,15 +681,7 @@ export function OrderEntryManagement() {
 
     // Guardar en BD
     saveOrderMutation.mutate(orderData, {
-      onSuccess: (response) => {
-        // Guardar el orderId de la respuesta
-        if (response && typeof response === 'object' && 'data' in response) {
-          const data = response.data as any;
-          if (data?.id) {
-            setSavedOrderId(data.id);
-          }
-        }
-
+      onSuccess: () => {
         toast.success("Pedido completado exitosamente");
 
         // Limpiar todo y volver al paso 1
@@ -721,7 +693,6 @@ export function OrderEntryManagement() {
         setCheckedOrders(new Set());
         setIsProductModalOpen(false);
         setCurrentAnimalId(null);
-        setSavedOrderId(null);
         setProductSelectionsCache(new Map());
         setSelectedProducts(new Set());
         // setSelectedEspecieId(null);
@@ -796,12 +767,6 @@ export function OrderEntryManagement() {
                     {species.find((s) => s.id === selectedEspecieId)?.name || selectedOrder.especie}
                   </span>
                 </div>
-                {/* <div>
-                  <span className="text-gray-600">Fecha de faenamiento: </span>
-                  <span className="font-medium">
-                    {format(fechaFaenamiento, "dd/MM/yyyy", { locale: es })}
-                  </span>
-                </div> */}
               </div>
             </div>
           </CardContent>
@@ -1043,20 +1008,6 @@ export function OrderEntryManagement() {
         <Card>
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-              {/* Fecha de Faenamiento */}
-              {/* <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Fecha de faenamiento:
-                </label>
-                <DatePicker
-                  inputClassName="bg-secondary"
-                  selected={fechaFaenamiento}
-                  onChange={(newDate) =>
-                    newDate && setFechaFaenamiento(newDate)
-                  }
-                />
-              </div> */}
-
               {/* Introductor */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
