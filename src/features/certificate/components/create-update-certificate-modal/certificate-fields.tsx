@@ -2,7 +2,6 @@ import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAllOrigins } from '@/features/origin/hooks';
-import { useProvinces } from '@/features/provinces/hooks/use-provinces';
 import { DatePicker } from '@/components/ui/date-picker';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,12 +27,6 @@ export const CertificateFields = () => {
 
 	const query = useAllOrigins();
 	const origins = query.data.data;
-
-	const provincesQuery = useProvinces();
-	const provinces = provincesQuery.data?.data ?? [];
-
-	// Province search state
-	const [provinceSearch, setProvinceSearch] = useState('');
 
 	// Operator search state
 	const [activeSearchField, setActiveSearchField] = useState<'name' | 'identification' | null>(null);
@@ -235,60 +228,6 @@ export const CertificateFields = () => {
 						<FormMessage />
 					</FormItem>
 				)}
-			/>
-
-			{/* provinceId - Provincia */}
-			<FormField
-				control={form.control}
-				name='provinceId'
-				rules={{ required: { value: true, message: 'La provincia es requerida' } }}
-				render={({ field }) => {
-					const filtered = provinces.filter((p: { id: number; name: string }) =>
-						p.name.toLowerCase().includes(provinceSearch.toLowerCase())
-					);
-					return (
-						<FormItem>
-							<FormLabel>Provincia</FormLabel>
-							<Select
-								name='provinceId'
-								value={field.value}
-								onValueChange={value => field.onChange(value)}
-								disabled={provincesQuery.isLoading}
-								onOpenChange={open => { if (!open) setProvinceSearch(''); }}
-							>
-								<FormControl>
-									<SelectTrigger className='w-full bg-secondary'>
-										<SelectValue placeholder={provincesQuery.isLoading ? 'Cargando provincias...' : 'Seleccione una provincia'} />
-									</SelectTrigger>
-								</FormControl>
-								<SelectContent>
-									<div className='px-2 pb-2 pt-1'>
-										<div className='relative'>
-										<Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none' />
-										<Input
-											className='h-8 pl-9 text-sm'
-												placeholder='Buscar provincia...'
-												value={provinceSearch}
-												onChange={e => setProvinceSearch(e.target.value)}
-												onKeyDown={e => e.stopPropagation()}
-											/>
-										</div>
-									</div>
-									{filtered.length === 0 ? (
-										<div className='py-3 text-center text-sm text-muted-foreground'>Sin resultados</div>
-									) : (
-										filtered.map((province: { id: number; name: string }) => (
-											<SelectItem key={province.id} value={String(province.id)}>
-												{province.name.toUpperCase()}
-											</SelectItem>
-										))
-									)}
-								</SelectContent>
-							</Select>
-							<FormMessage />
-						</FormItem>
-					);
-				}}
 			/>
 
 			{/* placeOrigin */}

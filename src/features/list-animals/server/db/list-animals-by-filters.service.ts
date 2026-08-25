@@ -44,16 +44,3 @@ export async function getReportListAnimalsByFiltersService(filters: ListAnimalsF
 
 	return { blob, filename, contentType };
 }
-
-export async function getAnimalStatisticsByProvinceReportService(year: number, speciesId: number) {
-	const response = await http.get('v1/1.0.0/setting-cert-brand/animal-statistics-by-province/report', {
-		searchParams: { year, speciesId },
-	});
-
-	const blob = await response.blob();
-	const contentDisposition = response.headers.get('content-disposition') || '';
-	const filenameMatch = contentDisposition.match(/filename[^;=\n]*=(['"]?)([^'"\n]*)\1/);
-	const filename = filenameMatch?.[2] || `Reporte-procedencia-${year}-especie-${speciesId}.xlsx`;
-
-	return { blob, filename };
-}

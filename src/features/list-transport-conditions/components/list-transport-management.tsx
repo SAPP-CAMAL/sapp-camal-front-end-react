@@ -263,7 +263,7 @@ export function ListTransportManagement() {
             </div>
           )}
 
-          {/* Cantidad, Provincia y Origen */}
+          {/* Cantidad y Origen */}
           <div className="bg-muted/50 rounded-lg p-3">
             <div className="grid grid-cols-2 gap-2 text-center">
               <div>
