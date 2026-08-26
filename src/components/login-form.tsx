@@ -15,6 +15,40 @@ import { loginAction } from "@/features/security/server/actions/security.actions
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
 import { useEffect } from "react";
 
+function getLoginErrorMessage(statusCode: number | undefined, fallbackMessage: string) {
+  if (statusCode === 400 || statusCode === 401) {
+    return {
+      errorMessage: "Credenciales incorrectas",
+      errorDescription: "El usuario o la contraseña ingresados no son válidos. Verifique sus datos e intente nuevamente.",
+    };
+  }
+  if (statusCode === 403) {
+    return {
+      errorMessage: "Acceso denegado",
+      errorDescription: "Su cuenta no tiene permisos para acceder. Contacte al administrador.",
+    };
+  }
+  if (statusCode === 404) {
+    return {
+      errorMessage: "Usuario no encontrado",
+      errorDescription: "No existe una cuenta con ese usuario o correo electrónico.",
+    };
+  }
+  if (statusCode === 429) {
+    return {
+      errorMessage: "Demasiados intentos",
+      errorDescription: "Ha excedido el límite de intentos. Espere unos minutos antes de intentar nuevamente.",
+    };
+  }
+  if (statusCode !== undefined && statusCode >= 500) {
+    return {
+      errorMessage: "Error del servidor",
+      errorDescription: "El servidor no está disponible en este momento. Intente más tarde.",
+    };
+  }
+  return { errorMessage: fallbackMessage, errorDescription: "" };
+}
+
 export function LoginForm({
   className,
   ...props
@@ -54,6 +88,18 @@ export function LoginForm({
         identifier,
         password: passwordRaw,
       });
+
+      if (!resp.data?.accessToken) {
+        const { errorMessage, errorDescription } = getLoginErrorMessage(
+          resp.code,
+          resp.message || "Hubo un error al iniciar sesión. Por favor, intente nuevamente."
+        );
+        toast.error(errorMessage, {
+          description: errorDescription || undefined,
+          duration: 5000,
+        });
+        return;
+      }
 
       // Manejar la persistencia del identificador si "Recuérdame" está marcado
       if (data.remember) {
@@ -126,40 +172,22 @@ export function LoginForm({
         router.push("/dashboard");
       }, 500);
 
-    } catch (error: any) {
+    } catch (error) {
+      // loginAction ya no lanza excepciones para errores HTTP (400/401/etc) —
+      // esas se manejan arriba con el resultado devuelto. Este catch solo
+      // atrapa fallos inesperados del lado cliente (ej. no se pudo invocar
+      // la Server Action por un corte de conexión con el propio servidor Next.js).
       console.error("Login error:", error);
 
-      let errorMessage = "Hubo un error al iniciar sesión. Por favor, intente nuevamente.";
-      let errorDescription = "";
+      const message = error instanceof Error ? error.message : undefined;
+      const isNetworkError = message?.toLowerCase().includes("fetch") || message?.toLowerCase().includes("network");
 
-      try {
-        const statusCode = error?.response?.status;
-        
-        if (statusCode === 400 || statusCode === 401) {
-          errorMessage = "Credenciales incorrectas";
-          errorDescription = "El usuario o la contraseña ingresados no son válidos. Verifique sus datos e intente nuevamente.";
-        } else if (statusCode === 403) {
-          errorMessage = "Acceso denegado";
-          errorDescription = "Su cuenta no tiene permisos para acceder. Contacte al administrador.";
-        } else if (statusCode === 404) {
-          errorMessage = "Usuario no encontrado";
-          errorDescription = "No existe una cuenta con ese usuario o correo electrónico.";
-        } else if (statusCode === 429) {
-          errorMessage = "Demasiados intentos";
-          errorDescription = "Ha excedido el límite de intentos. Espere unos minutos antes de intentar nuevamente.";
-        } else if (statusCode >= 500) {
-          errorMessage = "Error del servidor";
-          errorDescription = "El servidor no está disponible en este momento. Intente más tarde.";
-        } else if (error?.response) {
-          const errorData = await error.response.json();
-          errorMessage = errorData?.data || errorMessage;
-        } else if (error?.message?.includes("fetch") || error?.message?.includes("network")) {
-          errorMessage = "Error de conexión";
-          errorDescription = "No se pudo conectar con el servidor. Verifique su conexión a internet.";
-        }
-      } catch (parseError) {
-        console.error("Error parsing error response:", parseError);
-      }
+      const { errorMessage, errorDescription } = isNetworkError
+        ? {
+            errorMessage: "Error de conexión",
+            errorDescription: "No se pudo conectar con el servidor. Verifique su conexión a internet.",
+          }
+        : getLoginErrorMessage(undefined, "Hubo un error al iniciar sesión. Por favor, intente nuevamente.");
 
       toast.error(errorMessage, {
         description: errorDescription || undefined,

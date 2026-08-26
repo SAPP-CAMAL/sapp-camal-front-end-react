@@ -222,8 +222,8 @@ export function AnimalWeighingManagement() {
   const { data: channelSectionsData, isLoading: isLoadingChannelSections } =
     useChannelSectionsByType(selectedChannelTypeId);
 
-  const { data: mediaCanalSections } = useChannelSectionsByType(1); // Media Canal
-  const { data: canalSections } = useChannelSectionsByType(2); // Canal
+  const { data: canalSections } = useChannelSectionsByType(1); // Canal Entera
+  const { data: mediaCanalSections } = useChannelSectionsByType(2); // Media Canal
   const { data: cuartaSections } = useChannelSectionsByType(3); // Cuarta
 
   const { data: unitMeasureData } = useUnitMeasure();
@@ -907,8 +907,16 @@ export function AnimalWeighingManagement() {
       });
     }
 
-    // Calcular si cada animal está completo
+    // Calcular si cada animal está completo. La clave no puede ser solo
+    // animal.code: ese código de posición (ej. "001") se reutiliza entre
+    // lotes/marcas distintos, y dos animales sin relación entre sí podían
+    // compartir la misma clave en el mapa, pisándose la completitud del uno
+    // con la del otro (el último procesado ganaba para ambos).
     const animalCompletionMap = new Map<string, boolean>();
+    const getAnimalCompletionKey = (animal: {
+      code: string;
+      idDetailsCertificateBrands: number;
+    }) => `${animal.code}_${animal.idDetailsCertificateBrands}`;
 
     // Para EN PIE o sin secciones: completo si tiene peso
     if (
@@ -932,7 +940,7 @@ export function AnimalWeighingManagement() {
             );
           }
         }
-        animalCompletionMap.set(animal.code, hasWeight);
+        animalCompletionMap.set(getAnimalCompletionKey(animal), hasWeight);
       });
     } else {
       // Para canales con secciones: completo si tiene TODAS las secciones de CUALQUIER tipo de canal
@@ -991,13 +999,14 @@ export function AnimalWeighingManagement() {
           }
         }
 
-        animalCompletionMap.set(animal.code, isComplete);
+        animalCompletionMap.set(getAnimalCompletionKey(animal), isComplete);
       });
     }
 
     // Marcar cada fila con isComplete
     newRows.forEach((row) => {
-      row.isComplete = animalCompletionMap.get(row.code) || false;
+      row.isComplete =
+        animalCompletionMap.get(getAnimalCompletionKey(row)) || false;
     });
 
     // Ordenar: primero los incompletos, luego los completos
@@ -1516,19 +1525,24 @@ export function AnimalWeighingManagement() {
     });
   }, [rowsWithDisplayWeight, searchTerm]);
 
-  // Agrupar filas por animal
+  // Agrupar filas por animal individual (código + lote de certificado). Usar
+  // solo el código no alcanza: distintos animales de lotes/días distintos
+  // pueden compartir el mismo código de posición (ej. "001") y terminaban
+  // mezclados en el mismo grupo, rompiendo el orden de completitud entre
+  // ellos (un animal ya pesado en canal podía quedar arriba de uno pendiente).
   const groupedByAnimal = useMemo(() => {
     const groups: { [key: string]: typeof filteredRows } = {};
     filteredRows.forEach((row) => {
-      if (!groups[row.code]) {
-        groups[row.code] = [];
+      const groupKey = `${row.code}_${row.idDetailsCertificateBrands}`;
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
       }
-      groups[row.code].push(row);
+      groups[groupKey].push(row);
     });
     return groups;
   }, [filteredRows]);
 
-  // Obtener lista de códigos de animales únicos y ordenarlos por prioridad
+  // Obtener lista de animales únicos y ordenarlos por prioridad
   const animalCodes = useMemo(() => {
     const codes = Object.keys(groupedByAnimal);
 
@@ -1549,7 +1563,13 @@ export function AnimalWeighingManagement() {
       if (aHasAddresseeAndNoPeso && !bHasAddresseeAndNoPeso) return -1;
       if (!aHasAddresseeAndNoPeso && bHasAddresseeAndNoPeso) return 1;
 
-      // Prioridad 2: Si ambos tienen o no tienen destinatario, mantener orden original
+      // Prioridad 2: Animales ya completos (todas sus secciones pesadas) van al final
+      const aComplete = rowsA.every((r) => r.isComplete);
+      const bComplete = rowsB.every((r) => r.isComplete);
+      if (aComplete && !bComplete) return 1;
+      if (!aComplete && bComplete) return -1;
+
+      // Prioridad 3: Si ambos empatan en lo anterior, mantener orden original
       return 0;
     });
   }, [groupedByAnimal]);
