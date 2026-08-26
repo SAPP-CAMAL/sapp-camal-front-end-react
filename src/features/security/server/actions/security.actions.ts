@@ -1,5 +1,6 @@
 "use server";
 
+import { HTTPError } from "ky";
 import { cookies } from "next/headers";
 import { ssrGetJson, ssrPostJson } from "@/lib/ky-ssr";
 import { CommonHttpResponseSingle } from "@/features/people/domain";
@@ -22,50 +23,75 @@ async function clearStaleAuthCookies() {
     }
 }
 
-export async function loginAction(body: { identifier: string; password: string }) {
-    const response = await ssrPostJson<ResponseLoginService>("v1/1.0.0/security/login", {
-        json: {
-            identifier: body.identifier?.trim(),
-            password: body.password?.trim(),
-        },
-    });
+export type LoginActionResult = ResponseLoginService | { code: number; message: string; data: null };
 
-    // Guardar las cookies en el servidor para que el middleware pueda acceder a ellas
-    if (response?.data?.accessToken) {
-        await clearStaleAuthCookies();
-
-        const cookieStore = await cookies();
-
-        // Configurar las cookies con opciones adecuadas
-        const isProduction = process.env.NODE_ENV === 'production';
-
-        cookieStore.set("accessToken", response.data.accessToken, {
-            httpOnly: false, // Permitir acceso desde el cliente también
-            secure: isProduction,
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24 * 7, // 7 días
+export async function loginAction(body: { identifier: string; password: string }): Promise<LoginActionResult> {
+    try {
+        const response = await ssrPostJson<ResponseLoginService>("v1/1.0.0/security/login", {
+            json: {
+                identifier: body.identifier?.trim(),
+                password: body.password?.trim(),
+            },
         });
-        
-        cookieStore.set("refreshToken", response.data.refreshToken, {
-            httpOnly: false,
-            secure: isProduction,
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24 * 30, // 30 días
-        });
-        
-        const userJson = JSON.stringify(response.data);
-        cookieStore.set("user", userJson, {
-            httpOnly: false,
-            secure: isProduction,
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24 * 7, // 7 días
-        });
+
+        // Guardar las cookies en el servidor para que el middleware pueda acceder a ellas
+        if (response?.data?.accessToken) {
+            await clearStaleAuthCookies();
+
+            const cookieStore = await cookies();
+
+            // Configurar las cookies con opciones adecuadas
+            const isProduction = process.env.NODE_ENV === 'production';
+
+            cookieStore.set("accessToken", response.data.accessToken, {
+                httpOnly: false, // Permitir acceso desde el cliente también
+                secure: isProduction,
+                sameSite: "lax",
+                path: "/",
+                maxAge: 60 * 60 * 24 * 7, // 7 días
+            });
+
+            cookieStore.set("refreshToken", response.data.refreshToken, {
+                httpOnly: false,
+                secure: isProduction,
+                sameSite: "lax",
+                path: "/",
+                maxAge: 60 * 60 * 24 * 30, // 30 días
+            });
+
+            const userJson = JSON.stringify(response.data);
+            cookieStore.set("user", userJson, {
+                httpOnly: false,
+                secure: isProduction,
+                sameSite: "lax",
+                path: "/",
+                maxAge: 60 * 60 * 24 * 7, // 7 días
+            });
+        }
+
+        return response;
+    } catch (error) {
+        // Nunca dejar que un error de credenciales (400/401/etc) se propague como
+        // excepción no controlada: Next.js lo convierte en un 500 opaco sin mensaje
+        // en el cliente. Se captura acá, donde sí tenemos el body real del backend,
+        // y se devuelve como un objeto normal para que el formulario lo muestre.
+        if (error instanceof HTTPError) {
+            let message = "Credenciales incorrectas";
+            try {
+                const errorBody = await error.response.json();
+                message = errorBody?.message ?? errorBody?.data ?? message;
+            } catch {
+                // El body no era JSON válido; se mantiene el mensaje por defecto.
+            }
+            return { code: error.response.status, message, data: null };
+        }
+
+        return {
+            code: 500,
+            message: "No se pudo conectar con el servidor. Intente nuevamente.",
+            data: null,
+        };
     }
-
-    return response;
 }
 
 export async function logoutAction() {
