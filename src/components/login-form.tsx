@@ -14,13 +14,16 @@ import { toast } from "sonner";
 import { loginAction } from "@/features/security/server/actions/security.actions";
 import { revalidatePathAction } from "@/features/security/server/actions/revalidate.action";
 import { useSlaughterhouseInfo } from "@/features/slaughterhouse-info";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function getLoginErrorMessage(statusCode: number | undefined, fallbackMessage: string) {
   if (statusCode === 400 || statusCode === 401) {
+    // El backend ya distingue credenciales inválidas de usuario/persona
+    // inactivos con mensajes propios (ver AuthService.login) — mostrar ese
+    // mensaje real en vez de pisarlo con uno genérico.
     return {
-      errorMessage: "Credenciales incorrectas",
-      errorDescription: "El usuario o la contraseña ingresados no son válidos. Verifique sus datos e intente nuevamente.",
+      errorMessage: fallbackMessage || "Credenciales incorrectas",
+      errorDescription: "",
     };
   }
   if (statusCode === 403) {
@@ -56,6 +59,10 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const router = useRouter();
   const { location } = useSlaughterhouseInfo(); // Usar location.canton
+  // Se mantiene aparte de form.formState.isSubmitting porque ese flag se
+  // apaga en cuanto onSubmit resuelve; queremos seguir bloqueando el botón
+  // durante la espera previa a la redirección al dashboard.
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const form = useForm({
     defaultValues: {
       showPassword: false,
@@ -174,11 +181,13 @@ export function LoginForm({
       // menús vive en el layout compartido (src/app/dashboard/layout.tsx), no en la página.
       await revalidatePathAction("/dashboard", "layout");
 
-      // Redirigir al dashboard después de guardar cookies
-      setTimeout(() => {
-        router.push("/dashboard");
-        router.refresh();
-      }, 500);
+      // Mantener el formulario bloqueado (spinner "Redirigiendo...") durante
+      // la breve espera antes de navegar, en vez de reactivarlo y permitir
+      // un segundo intento de login mientras la redirección está en curso.
+      setIsRedirecting(true);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      router.push("/dashboard");
+      router.refresh();
 
     } catch (error) {
       // loginAction ya no lanza excepciones para errores HTTP (400/401/etc) —
@@ -285,20 +294,20 @@ export function LoginForm({
             <div className="space-y-2">
               <Tabs defaultValue="identification">
                 <TabsList className="grid w-full grid-cols-2 mb-3 h-9">
-                  <TabsTrigger value="identification" disabled={form.formState.isSubmitting} className="text-xs">
+                  <TabsTrigger value="identification" disabled={form.formState.isSubmitting || isRedirecting} className="text-xs">
                     Identificación
                   </TabsTrigger>
-                  <TabsTrigger value="email" disabled={form.formState.isSubmitting} className="text-xs">
+                  <TabsTrigger value="email" disabled={form.formState.isSubmitting || isRedirecting} className="text-xs">
                     Correo
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="identification" className="space-y-1.5 mt-0">
                   <Label htmlFor="identification-ls" className="text-xs font-medium text-slate-700">Usuario</Label>
-                  <Input id="identification-ls" type="text" disabled={form.formState.isSubmitting} placeholder="Nombre de usuario" maxLength={100} autoComplete="username" required className="h-10 text-sm" {...form.register("identifier_ls")} />
+                  <Input id="identification-ls" type="text" disabled={form.formState.isSubmitting || isRedirecting} placeholder="Nombre de usuario" maxLength={100} autoComplete="username" required className="h-10 text-sm" {...form.register("identifier_ls")} />
                 </TabsContent>
                 <TabsContent value="email" className="space-y-1.5 mt-0">
                   <Label htmlFor="email-input-ls" className="text-xs font-medium text-slate-700">Correo Electrónico</Label>
-                  <Input id="email-input-ls" type="email" disabled={form.formState.isSubmitting} placeholder="usuario@ejemplo.com" maxLength={100} autoComplete="email" required className="h-10 text-sm" {...form.register("identifier_ls")} />
+                  <Input id="email-input-ls" type="email" disabled={form.formState.isSubmitting || isRedirecting} placeholder="usuario@ejemplo.com" maxLength={100} autoComplete="email" required className="h-10 text-sm" {...form.register("identifier_ls")} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -306,7 +315,7 @@ export function LoginForm({
             <div className="space-y-1.5">
               <Label htmlFor="password-ls" className="text-xs font-medium text-slate-700">Contraseña</Label>
               <div className="flex items-center">
-                <Input id="password-ls" {...form.register("password_ls")} type={showPassword ? "text" : "password"} disabled={form.formState.isSubmitting} autoComplete="current-password" placeholder="••••••••" className="h-10 text-sm w-full" required />
+                <Input id="password-ls" {...form.register("password_ls")} type={showPassword ? "text" : "password"} disabled={form.formState.isSubmitting || isRedirecting} autoComplete="current-password" placeholder="••••••••" className="h-10 text-sm w-full" required />
                 <button type="button" className="h-10 w-10 flex items-center justify-center hover:bg-transparent transition-colors focus:outline-none" onClick={() => form.setValue("showPassword", !showPassword)}>
                   {showPassword ? <EyeOffIcon className="h-4 w-4 text-slate-500" /> : <EyeIcon className="h-4 w-4 text-slate-500" />}
                 </button>
@@ -321,8 +330,13 @@ export function LoginForm({
               <Link href="/auth/forgot-password" className="text-[10px] text-primary hover:underline">¿Olvidaste tu contraseña?</Link>
             </div>
 
-            <Button type="submit" className="w-full h-11 text-sm text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-60 mt-5" disabled={form.formState.isSubmitting || !form.formState.isDirty}>
-              {form.formState.isSubmitting ? (
+            <Button type="submit" className="w-full h-11 text-sm text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-60 mt-5" disabled={form.formState.isSubmitting || isRedirecting || !form.formState.isDirty}>
+              {isRedirecting ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Redirigiendo...
+                </span>
+              ) : form.formState.isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                   Iniciando...
@@ -380,10 +394,10 @@ export function LoginForm({
               <div>
                 <Tabs defaultValue="identification">
                   <TabsList className="grid w-full grid-cols-2 mb-4 h-11">
-                    <TabsTrigger value="identification" disabled={form.formState.isSubmitting} className="text-sm font-medium">
+                    <TabsTrigger value="identification" disabled={form.formState.isSubmitting || isRedirecting} className="text-sm font-medium">
                       Identificación
                     </TabsTrigger>
-                    <TabsTrigger value="email" disabled={form.formState.isSubmitting} className="text-sm font-medium">
+                    <TabsTrigger value="email" disabled={form.formState.isSubmitting || isRedirecting} className="text-sm font-medium">
                       Correo
                     </TabsTrigger>
                   </TabsList>
@@ -394,7 +408,7 @@ export function LoginForm({
                     <Input
                       id="identification-pt"
                       type="text"
-                      disabled={form.formState.isSubmitting}
+                      disabled={form.formState.isSubmitting || isRedirecting}
                       placeholder="Nombre de usuario"
                       maxLength={100}
                       autoComplete="username"
@@ -410,7 +424,7 @@ export function LoginForm({
                     <Input
                       id="email-input-pt"
                       type="email"
-                      disabled={form.formState.isSubmitting}
+                      disabled={form.formState.isSubmitting || isRedirecting}
                       placeholder="usuario@ejemplo.com"
                       maxLength={100}
                       autoComplete="email"
@@ -432,7 +446,7 @@ export function LoginForm({
                     id="password-pt"
                     {...form.register("password_pt")}
                     type={showPassword ? "text" : "password"}
-                    disabled={form.formState.isSubmitting}
+                    disabled={form.formState.isSubmitting || isRedirecting}
                     autoComplete="current-password"
                     placeholder="••••••••"
                     className="h-14 text-base flex-1 border-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 rounded-none"
@@ -476,9 +490,14 @@ export function LoginForm({
                 <Button
                   type="submit"
                   className="w-full h-14 text-base text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-200 disabled:opacity-60 rounded-2xl tracking-widest"
-                  disabled={form.formState.isSubmitting || !form.formState.isDirty}
+                  disabled={form.formState.isSubmitting || isRedirecting || !form.formState.isDirty}
                 >
-                  {form.formState.isSubmitting ? (
+                  {isRedirecting ? (
+                    <span className="flex items-center gap-3">
+                      <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      Redirigiendo...
+                    </span>
+                  ) : form.formState.isSubmitting ? (
                     <span className="flex items-center gap-3">
                       <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                       Iniciando sesión...
