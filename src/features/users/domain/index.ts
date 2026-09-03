@@ -7,15 +7,17 @@ export interface GetUserByFilterQuery {
     email?: string;
     userName?: string;
     identification?: string;
+    status?: boolean;
 }
 
 type PersonUserFilter = Pick<Person, 'id' | 'identificationTypeId' | 'identification' | 'fullName' | 'code'>;
 
 
-interface UserFilter {
+export interface UserFilter {
     id: number;
     userName: string;
     email: string;
+    status: boolean;
     person: PersonUserFilter;
 }
 
@@ -29,6 +31,6 @@ export interface CreateUserInput {
     roles: number[];
 }
 
-export type UpdateUserInput = Pick<CreateUserInput, 'email' | 'userName'> & { roles: { id: number, status: boolean }[] };
+export type UpdateUserInput = Pick<CreateUserInput, 'email' | 'userName'> & { status?: boolean; roles: { id: number, status: boolean }[] };
 
 export type ResponseGetUserByFilter = CommonHttpResponsePagination<UserFilter>;

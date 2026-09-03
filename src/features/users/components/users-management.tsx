@@ -12,6 +12,9 @@ import { Loader2 } from "lucide-react";
 import { getUsersByFilter } from "../server/db/queries.users";
 import { toCapitalize } from "../../../lib/toCapitalize";
 import { UpdateUserForm } from "./update-user.form";
+import { ActivateUser } from "./activate-user";
+import { DeactivateUser } from "./deactivate-user";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -22,6 +25,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { SearchIcon, PlusIcon, UserIcon, CreditCardIcon, FilterIcon, MailIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useDebouncedCallback } from "use-debounce";
 import { useSearchParams as useNextSearchParams } from "next/navigation";
 
@@ -36,6 +46,7 @@ export function UsersManagement() {
       email: parseAsString.withDefault(""),
       userName: parseAsString.withDefault(""),
       identification: parseAsString.withDefault(""),
+      status: parseAsString.withDefault("*"),
     },
     {
       history: "push",
@@ -44,7 +55,11 @@ export function UsersManagement() {
 
   const query = useQuery({
     queryKey: ["users", searchParams],
-    queryFn: () => getUsersByFilter(searchParams),
+    queryFn: () =>
+      getUsersByFilter({
+        ...searchParams,
+        status: searchParams.status === "*" ? undefined : searchParams.status === "true",
+      }),
   });
 
   const debounceFullName = useDebouncedCallback(
@@ -150,11 +165,11 @@ export function UsersManagement() {
             Filtros de Búsqueda
           </CardTitle>
           <CardDescription>
-            Filtre los usuarios por nombre, correo electrónico, nombre de usuario o identificación
+            Filtre los usuarios por nombre, correo electrónico, nombre de usuario, identificación o estado
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
             <div className="flex flex-col w-full">
               <label className="mb-1 text-sm font-medium text-gray-700">
                 Buscar por nombre
@@ -218,6 +233,27 @@ export function UsersManagement() {
                 />
               </div>
             </div>
+
+            <div className="flex flex-col w-full">
+              <label className="mb-1 text-sm font-medium text-gray-700">
+                Estado
+              </label>
+              <Select
+                onValueChange={(value) =>
+                  setSearchParams({ status: value, page: 1 })
+                }
+                defaultValue={searchParams.status}
+              >
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Seleccione un estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="*">Todos</SelectItem>
+                  <SelectItem value="true">Activos</SelectItem>
+                  <SelectItem value="false">Inactivos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -254,11 +290,23 @@ export function UsersManagement() {
             },
           },
           {
+            accessorKey: "status",
+            header: "Estado",
+            cell: ({ row }) => (
+              <Badge>{row.original.status ? "Activo" : "Inactivo"}</Badge>
+            ),
+          },
+          {
             header: "Acciones",
             cell: ({ row }) => {
               return (
-                <div>
+                <div className="flex gap-x-2">
                   <UpdateUserForm userId={row.original.id} />
+                  {row.original.status ? (
+                    <DeactivateUser user={row.original} />
+                  ) : (
+                    <ActivateUser user={row.original} />
+                  )}
                 </div>
               );
             },
