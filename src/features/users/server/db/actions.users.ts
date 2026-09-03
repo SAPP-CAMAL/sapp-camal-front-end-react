@@ -16,6 +16,14 @@ export function updateUserAction(userId: number, body: Partial<UpdateUserInput>)
     ).json()
 }
 
+export function activateUserAction(userId: number) {
+    return updateUserAction(userId, { status: true });
+}
+
+export function deactivateUserAction(userId: number) {
+    return updateUserAction(userId, { status: false });
+}
+
 
 export function usersForUpdate(id: number): Promise<CommonHttpResponseSingle<GetUsersForUpdate>> {
     return http.get("v1/1.0.0/users/for-update", {
