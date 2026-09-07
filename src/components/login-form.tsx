@@ -97,7 +97,14 @@ export function LoginForm({
         password: passwordRaw,
       });
 
-      if (!resp.data?.accessToken) {
+      if (resp.data && "mustChangePassword" in resp.data && resp.data.mustChangePassword) {
+        toast.message(resp.data.message || "Debe actualizar su contraseña antes de continuar.");
+        setIsRedirecting(true);
+        router.push(`/auth/change-password?token=${encodeURIComponent(resp.data.changePasswordToken)}`);
+        return;
+      }
+
+      if (!resp.data || !("accessToken" in resp.data) || !resp.data.accessToken) {
         const { errorMessage, errorDescription } = getLoginErrorMessage(
           resp.code,
           resp.message || "Hubo un error al iniciar sesión. Por favor, intente nuevamente."
@@ -180,6 +187,16 @@ export function LoginForm({
       // con los menús del login/rol anterior. type "layout" es necesario porque el fetch de
       // menús vive en el layout compartido (src/app/dashboard/layout.tsx), no en la página.
       await revalidatePathAction("/dashboard", "layout");
+
+      if (typeof resp.data.passwordExpiresInDays === "number") {
+        const days = resp.data.passwordExpiresInDays;
+        toast.warning(
+          days <= 0
+            ? "Su contraseña vence hoy. Le recomendamos cambiarla lo antes posible."
+            : `Su contraseña vence en ${days} día${days === 1 ? "" : "s"}. Le recomendamos cambiarla pronto.`,
+          { duration: 8000 }
+        );
+      }
 
       // Mantener el formulario bloqueado (spinner "Redirigiendo...") durante
       // la breve espera antes de navegar, en vez de reactivarlo y permitir
