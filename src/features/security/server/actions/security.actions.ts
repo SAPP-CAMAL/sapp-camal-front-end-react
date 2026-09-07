@@ -17,13 +17,15 @@ export async function loginAction(body: { identifier: string; password: string }
         });
 
         // Guardar las cookies en el servidor para que el middleware pueda acceder a ellas
-        if (response?.data?.accessToken) {
+        // (el cambio de contraseña obligatorio no trae accessToken, así que no hay sesión que guardar)
+        if (response?.data && "accessToken" in response.data && response.data.accessToken) {
+            const loginData = response.data;
             const cookieStore = await cookies();
 
             // Configurar las cookies con opciones adecuadas
             const isProduction = process.env.NODE_ENV === 'production';
 
-            cookieStore.set("accessToken", response.data.accessToken, {
+            cookieStore.set("accessToken", loginData.accessToken, {
                 httpOnly: false, // Permitir acceso desde el cliente también
                 secure: isProduction,
                 sameSite: "lax",
@@ -31,7 +33,7 @@ export async function loginAction(body: { identifier: string; password: string }
                 maxAge: 60 * 60 * 24 * 7, // 7 días
             });
 
-            cookieStore.set("refreshToken", response.data.refreshToken, {
+            cookieStore.set("refreshToken", loginData.refreshToken, {
                 httpOnly: false,
                 secure: isProduction,
                 sameSite: "lax",
@@ -39,7 +41,7 @@ export async function loginAction(body: { identifier: string; password: string }
                 maxAge: 60 * 60 * 24 * 30, // 30 días
             });
 
-            const userJson = JSON.stringify(response.data);
+            const userJson = JSON.stringify(loginData);
             cookieStore.set("user", userJson, {
                 httpOnly: false,
                 secure: isProduction,
