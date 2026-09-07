@@ -16,9 +16,23 @@ export type LoginResponse = {
     sessionUuid: string;
     user: User;
     activeRole: ActiveRole;
+    /** Días restantes antes de que la contraseña venza (solo si faltan pocos días). */
+    passwordExpiresInDays?: number;
 }
 
-export type ResponseLoginService = CommonHttpResponseSingle<LoginResponse>
+/**
+ * Respuesta de login cuando el usuario debe cambiar su contraseña
+ * obligatoriamente (primer login o contraseña vencida) antes de continuar.
+ */
+export type MandatoryPasswordChangeRequired = {
+    mustChangePassword: true;
+    changePasswordToken: string;
+    message: string;
+}
+
+export type LoginResult = LoginResponse | MandatoryPasswordChangeRequired;
+
+export type ResponseLoginService = CommonHttpResponseSingle<LoginResult>
 
 export type ResponseLogoutService = CommonHttpResponse<{ message: string }>
 

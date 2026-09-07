@@ -64,6 +64,12 @@ export function resetPasswordService(body: ResetPasswordRequest) {
     })
 }
 
+export function completeMandatoryPasswordChangeService(body: { token: string; newPassword: string; passwordConfirmation: string }) {
+    return http.post("v1/1.0.0/users/complete-mandatory-password-change", {
+        json: body
+    })
+}
+
 export function getUserByIdService(userId: number): Promise<CommonHttpResponseSingle<GetUserByIdService>> {
     return http.get("v1/1.0.0/users/by-id", {
         searchParams: {
