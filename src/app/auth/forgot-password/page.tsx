@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { forgotPasswordService } from "@/features/security/server/db/security.queries";
+import { getApiErrorMessage } from "@/lib/error-handler";
 import Link from "next/link";
 
 const formSchema = z.object({
@@ -48,13 +49,14 @@ export default function ForgetPasswordPage() {
       setSentEmail(values.email);
       setEmailSent(true);
       toast.success("Correo enviado exitosamente");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(
         "Error enviando el enlace de restablecimiento de contraseña",
         error
       );
       toast.error(
-        "Error enviando el enlace. Por favor, inténtelo de nuevo."
+        (await getApiErrorMessage(error)) ??
+          "Error enviando el enlace. Por favor, inténtelo de nuevo."
       );
     }
   }
@@ -63,8 +65,10 @@ export default function ForgetPasswordPage() {
     try {
       await forgotPasswordService(sentEmail);
       toast.success("Correo reenviado exitosamente");
-    } catch (error) {
-      toast.error("Error al reenviar el correo");
+    } catch (error: unknown) {
+      toast.error(
+        (await getApiErrorMessage(error)) ?? "Error al reenviar el correo"
+      );
     }
   };
 
