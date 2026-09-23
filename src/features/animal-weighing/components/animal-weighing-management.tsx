@@ -162,6 +162,20 @@ export function AnimalWeighingManagement() {
   const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null);
   const [isDefaultAddressSelected, setIsDefaultAddressSelected] =
     useState(false);
+  const [isEncubaUser, setIsEncubaUser] = useState(false);
+  const [manualWeightInputs, setManualWeightInputs] = useState<
+    Record<string, string>
+  >({});
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      const userData = stored ? JSON.parse(stored) : null;
+      setIsEncubaUser(userData?.user?.userName?.toLowerCase() === "encuba");
+    } catch {
+      setIsEncubaUser(false);
+    }
+  }, []);
 
   const queryClient = useQueryClient();
 
@@ -1122,7 +1136,23 @@ export function AnimalWeighingManagement() {
     setAddresseeSelectionRowId(rowId);
   };
 
+  const getNetWeightFromScale = (scaleValue: number) => {
+    if (weighingStageId !== 1 && selectedHook) {
+      const hookData = hookTypesData?.data.find((h) => h.id === selectedHook);
+      if (hookData) {
+        return Math.round((scaleValue - parseFloat(hookData.weight)) * 100) / 100;
+      }
+    }
+    return Math.round(scaleValue * 100) / 100;
+  };
+
   const handleSaveWeight = async (row: AnimalWeighingRow) => {
+    const isManualEntry = !!manualWeightInputs[row.id];
+    const weightToSave =
+      currentWeight && selectedRowId === row.id && !isManualEntry
+        ? getNetWeightFromScale(currentWeight.value)
+        : row.peso;
+
     // Pre-abrir la ventana para evitar el bloqueo del navegador
     const ticketWindow = window.open("", "_blank");
     if (ticketWindow) {
@@ -1192,7 +1222,7 @@ export function AnimalWeighingManagement() {
       `);
     }
 
-    if (row.peso <= 0) {
+    if (weightToSave <= 0) {
       toast.error("El peso debe ser mayor a 0");
       if (ticketWindow) ticketWindow.close();
       return;
@@ -1230,9 +1260,7 @@ export function AnimalWeighingManagement() {
     const unitSymbol = unitMeasureData?.data?.symbol || "kg";
     const isLbUnit = unitCode === "LB";
 
-    // row.peso ya tiene el gancho restado desde la captura de la balanza
-    // Por lo tanto, row.peso es el peso NETO (sin gancho)
-    const netWeightDisplay = row.peso;
+    const netWeightDisplay = weightToSave;
 
     // Calcular el peso bruto sumando el gancho al peso neto
     let grossWeightDisplay = netWeightDisplay;
@@ -1400,7 +1428,12 @@ export function AnimalWeighingManagement() {
 
   // Capturar peso estable de la balanza
   useEffect(() => {
-    if (currentWeight && selectedRowId) {
+    if (
+      currentWeight &&
+      currentWeight.value > 0 &&
+      selectedRowId &&
+      !manualWeightInputs[selectedRowId]
+    ) {
       const unitCode = unitMeasureData?.data?.code || "KG";
       const unitSymbol = unitMeasureData?.data?.symbol || "kg";
 
@@ -1425,6 +1458,7 @@ export function AnimalWeighingManagement() {
         return;
       }
 
+      const isFirstCapture = lastCapturedWeightRef.current === null;
       lastCapturedWeightRef.current = roundedWeight;
       setCapturedWeight(roundedWeight);
 
@@ -1437,12 +1471,13 @@ export function AnimalWeighingManagement() {
 
       const message =
         weighingStageId !== 1 && selectedHook
-          ? `Peso neto capturado: ${roundedWeight.toFixed(2)} ${unitSymbol} (con gancho restado)`
-          : `Peso capturado: ${roundedWeight.toFixed(2)} ${unitSymbol}`;
+          ? `Peso neto capturado: ${roundedWeight.toFixed(1)} ${unitSymbol} (con gancho restado)`
+          : `Peso capturado: ${roundedWeight.toFixed(1)} ${unitSymbol}`;
 
-      toast.success(message);
+      if (isFirstCapture) toast.success(message);
     }
   }, [
+    manualWeightInputs,
     currentWeight?.value,
     currentWeight?.unit,
     currentWeight?.stable,
@@ -1452,6 +1487,20 @@ export function AnimalWeighingManagement() {
     selectedHook,
     hookTypesData,
   ]);
+
+  const handleManualWeightChange = (row: AnimalWeighingRow, rawValue: string) => {
+    setManualWeightInputs((prev) => ({ ...prev, [row.id]: rawValue }));
+    const parsed = parseFloat(rawValue.replace(",", "."));
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      if (selectedRowId === row.id) setCapturedWeight(null);
+      return;
+    }
+    setSelectedRowId(row.id);
+    setCapturedWeight(parsed);
+    setRows((prev) =>
+      prev.map((r) => (r.id === row.id ? { ...r, peso: parsed } : r)),
+    );
+  };
 
   // Calcular pesos a mostrar (en la unidad configurada)
   const rowsWithDisplayWeight = useMemo(() => {
@@ -1648,7 +1697,7 @@ export function AnimalWeighingManagement() {
                       <span
                         className={`text-3xl sm:text-4xl md:text-5xl font-bold ${currentWeight.value < 0 ? "text-red-900" : "text-blue-900"}`}
                       >
-                        {currentWeight.value.toFixed(2)}
+                        {currentWeight.value.toFixed(1)}
                       </span>
                       <span
                         className={`text-2xl sm:text-3xl font-semibold ${currentWeight.value < 0 ? "text-red-700" : "text-blue-700"}`}
@@ -2327,13 +2376,28 @@ export function AnimalWeighingManagement() {
                                   <Weight className="h-2.5 w-2.5" />
                                   <span>Peso</span>
                                 </div>
-                                <div
-                                  className={`text-xs font-semibold ${row.displayWeight < 0 ? "text-red-600" : "text-green-600"}`}
-                                >
-                                  {row.displayWeight !== 0
-                                    ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || "kg"}`
-                                    : "-"}
-                                </div>
+                                {isEncubaUser &&
+                                isWithinLastThreeDays &&
+                                !row.savedWeight ? (
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="Peso"
+                                    value={manualWeightInputs[row.id] ?? ""}
+                                    onChange={(e) =>
+                                      handleManualWeightChange(row, e.target.value)
+                                    }
+                                    className="w-20 h-6 text-xs px-1.5"
+                                  />
+                                ) : (
+                                  <div
+                                    className={`text-xs font-semibold ${row.displayWeight < 0 ? "text-red-600" : "text-green-600"}`}
+                                  >
+                                    {row.displayWeight !== 0
+                                      ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || "kg"}`
+                                      : "-"}
+                                  </div>
+                                )}
                                 {/* Observaciones debajo del peso en móvil - siempre visibles */}
                                 <div
                                   className={`mt-1 text-xs italic font-medium ${row.commentary ? "text-amber-600" : "text-muted-foreground/60"}`}
@@ -2361,9 +2425,11 @@ export function AnimalWeighingManagement() {
                                     if (selectedRowId === row.id) {
                                       setSelectedRowId(null);
                                       setCapturedWeight(null);
+ lastCapturedWeightRef.current = null;
                                     } else {
                                       setSelectedRowId(row.id);
                                       setCapturedWeight(null);
+ lastCapturedWeightRef.current = null;
                                       resetWeight();
                                     }
                                   }}
@@ -2781,13 +2847,28 @@ export function AnimalWeighingManagement() {
                                   </TableCell>
                                 )}
                                 <TableCell className="text-center py-0.5 px-1">
-                                  <span
-                                    className={`font-semibold text-xs ${row.displayWeight < 0 ? "text-red-600" : "text-green-600"}`}
-                                  >
-                                    {row.displayWeight !== 0
-                                      ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || "kg"}`
-                                      : "-"}
-                                  </span>
+                                  {isEncubaUser &&
+                                  isWithinLastThreeDays &&
+                                  !row.savedWeight ? (
+                                    <Input
+                                      type="text"
+                                      inputMode="decimal"
+                                      placeholder="Peso"
+                                      value={manualWeightInputs[row.id] ?? ""}
+                                      onChange={(e) =>
+                                        handleManualWeightChange(row, e.target.value)
+                                      }
+                                      className="w-20 h-6 text-xs px-1.5 mx-auto"
+                                    />
+                                  ) : (
+                                    <span
+                                      className={`font-semibold text-xs ${row.displayWeight < 0 ? "text-red-600" : "text-green-600"}`}
+                                    >
+                                      {row.displayWeight !== 0
+                                        ? `${row.displayWeight.toFixed(2)} ${unitMeasureData?.data?.symbol || "kg"}`
+                                        : "-"}
+                                    </span>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-center py-0.5 px-1">
                                   <TooltipProvider>
@@ -2826,9 +2907,11 @@ export function AnimalWeighingManagement() {
                                         if (selectedRowId === row.id) {
                                           setSelectedRowId(null);
                                           setCapturedWeight(null);
+ lastCapturedWeightRef.current = null;
                                         } else {
                                           setSelectedRowId(row.id);
                                           setCapturedWeight(null);
+ lastCapturedWeightRef.current = null;
                                           resetWeight();
                                         }
                                       }}

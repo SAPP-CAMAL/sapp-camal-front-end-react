@@ -52,7 +52,7 @@ interface WeightReading {
 }
 
 const DEFAULT_CONFIG: SerialScaleConfig = {
-  baudRate: 4800, // CAMBIADO A 4800 PARA PRUEBA - Común para muchas balanzas
+  baudRate: 9600, // Bernalo X1
   dataBits: 8,
   stopBits: 1,
   parity: 'none',
@@ -73,6 +73,7 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
   const weightBufferRef = useRef<number[]>([]);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const intervalTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPublishedRef = useRef<number | null>(null);
 
   // Memoizar config para evitar recreaciones
   const finalConfig = useRef({ ...DEFAULT_CONFIG, ...config }).current;
@@ -111,56 +112,6 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
         timestamp: new Date(),
         stable: true,
       };
-    }
-    return null;
-  }, []);
-
-  // Parsear protocolo binario propietario de 4 bytes [byte1, byte2, byte3, 255]
-  const parseBinaryProtocol = useCallback((bytes: number[]): WeightReading | null => {
-    // Buscar secuencias de 4 bytes que terminen en 255
-    for (let i = 0; i <= bytes.length - 4; i++) {
-      if (bytes[i + 3] === 255 || bytes[i + 3] === 127) {
-        const byte1 = bytes[i];
-        const byte2 = bytes[i + 1];
-        const byte3 = bytes[i + 2];
-        
-        // Intentar múltiples interpretaciones
-        
-        // Intento 1: Usar byte2 y byte3 como valor directo
-        // byte2 = 82, byte3 = 41 → 82 - 80 = 2, 41 - 40 = 1 → 2.1? (cerca de 2.5)
-        
-        // Intento 2: Restar offset ASCII
-        const val1 = (byte2 - 48); // 82 - 48 = 34
-        const val2 = (byte3 - 48); // 41 - 48 = -7
-        
-        // Intento 3: Usar como BCD o valores codificados
-        // byte1 podría ser categoría/unidad
-        // byte2 y byte3 podrían ser parte entera y decimal
-        
-        // Intento 4: Interpretación específica observada
-        // Si byte1=78, byte2=82, byte3=41 → Peso conocido es 2.5
-        // Buscar la relación matemática
-        
-        // 82 / 10 = 8.2, 41 / 10 = 4.1 (no coincide)
-        // (82 + 41) / 10 = 12.3 (no coincide)
-        // (82 - 41) / 10 = 4.1 (no coincide)
-        // byte3 / 10 = 4.1 (no coincide)
-        // (byte3 - 16) / 10 = 2.5 ✓✓✓
-        
-        const weight = (byte3 - 16) / 10;
-        
-        console.log(`🔬 Bytes [${byte1}, ${byte2}, ${byte3}, ${bytes[i+3]}] → Interpretación: ${weight}`);
-        
-        if (weight > 0 && weight < 1000) { // Rango razonable
-          return {
-            value: weight,
-            unit: 'kg',
-            raw: `[${byte1},${byte2},${byte3}]`,
-            timestamp: new Date(),
-            stable: true,
-          };
-        }
-      }
     }
     return null;
   }, []);
@@ -346,6 +297,13 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
     }
   }, []);
 
+  const publishLiveWeight = useCallback((value: number, unit: string, raw: string) => {
+    const rounded = Math.round(value * 100) / 100;
+    if (lastPublishedRef.current === rounded) return;
+    lastPublishedRef.current = rounded;
+    setCurrentWeight({ value: rounded, unit, raw, timestamp: new Date(), stable: true });
+  }, []);
+
   // Iniciar lectura continua
   const startReading = useCallback(async () => {
     console.log('📚 startReading llamado');
@@ -447,144 +405,24 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
             continue;
           }
           
-          console.log('📥 Datos recibidos, length:', value.length, 'bytes:', Array.from(value));
-
-          // Decodificar y agregar al buffer
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
 
-          // Log para debugging - IMPORTANTE: Revisar estos logs en consola
-          console.log('📡 Raw chunk received:', chunk, 'Buffer:', buffer);
-          
-          // ANÁLISIS DE BYTES RAW - Para protocolos binarios
-          // Analizar los bytes directamente sin decodificar
-          console.log('🔢 Analizando bytes raw...');
-          
-          // Intentar parser binario propietario primero
-          const binaryResult = parseBinaryProtocol(Array.from(value));
-          if (binaryResult) {
-            console.log('⚖️ Peso detectado de protocolo binario:', binaryResult.value);
-            
-            const roundedWeight = Math.round(binaryResult.value * 100) / 100;
-            weightBufferRef.current.push(roundedWeight);
-            console.log('📊 Buffer actual:', weightBufferRef.current);
-
-            if (!intervalTimerRef.current) {
-              console.log('⏱️ Iniciando timer de 3 segundos');
-              intervalTimerRef.current = setTimeout(() => {
-                console.log('⏰ Timer completado, procesando buffer...');
-                if (weightBufferRef.current.length === 0) {
-                  console.log('❌ Buffer vacío');
-                  intervalTimerRef.current = null;
-                  return;
-                }
-                
-                const findMostFrequent = (arr: number[]): number => {
-                  const frequency: { [key: number]: number } = {};
-                  arr.forEach(num => frequency[num] = (frequency[num] || 0) + 1);
-                  let maxFreq = 0;
-                  let mostFrequentValue = arr[0];
-                  for (const [value, freq] of Object.entries(frequency)) {
-                    if (freq > maxFreq) {
-                      maxFreq = freq;
-                      mostFrequentValue = parseFloat(value);
-                    }
-                  }
-                  return mostFrequentValue;
-                };
-                
-                const mostFrequentWeight = findMostFrequent(weightBufferRef.current);
-                const finalWeight = {
-                  value: mostFrequentWeight,
-                  unit: 'kg',
-                  raw: binaryResult.raw,
-                  timestamp: new Date(),
-                  stable: true,
-                };
-                
-                setCurrentWeight(finalWeight);
-                console.log('✅ Peso establecido:', finalWeight);
-                weightBufferRef.current = [];
-                intervalTimerRef.current = null;
-              }, 3000);
-            }
-            
-            continue; // Saltar al siguiente ciclo, ya procesamos este paquete
+          const bernaloFrame = /=(-?)(\d+)\.(\d+)(?=[^\d])/g;
+          let frame: RegExpExecArray | null;
+          let consumed = 0;
+          let lastValue: number | null = null;
+          let lastFrameText = '';
+          while ((frame = bernaloFrame.exec(buffer)) !== null) {
+            const parsed = parseFloat(frame[2] + frame[3]) / 10;
+            lastValue = frame[1] === '-' ? -parsed : parsed;
+            consumed = bernaloFrame.lastIndex;
+            lastFrameText = frame[0];
           }
-          
-          // Intentar extraer peso de bytes raw (muchas balanzas usan ASCII con bits extra)
-          // Limpiar bits altos (quitar bit 8) para obtener ASCII
-          const cleanedBytes = Array.from(value).map(b => b & 0x7F);
-          const asciiString = String.fromCharCode(...cleanedBytes);
-          console.log('🔤 ASCII limpio (7-bit):', asciiString, 'bytes:', cleanedBytes);
-          
-          // También intentar como Latin-1
-          const latin1String = String.fromCharCode(...value);
-          console.log('🔤 Latin-1:', latin1String);
-          
-          // Buscar patrones numéricos en ASCII limpio
-          const numberMatch = asciiString.match(/(\d+\.?\d*)/);
-          if (numberMatch) {
-            console.log('🎯 Número encontrado en ASCII limpio:', numberMatch[1]);
-            const weightValue = parseFloat(numberMatch[1]);
-            
-            if (!isNaN(weightValue) && weightValue > 0) {
-              console.log('⚖️ Peso detectado de bytes raw:', weightValue);
-              
-              const weight: WeightReading = {
-                value: weightValue,
-                unit: 'kg',
-                raw: asciiString,
-                timestamp: new Date(),
-                stable: true,
-              };
-              
-              const roundedWeight = Math.round(weightValue * 100) / 100;
-              weightBufferRef.current.push(roundedWeight);
-              console.log('📊 Buffer actual:', weightBufferRef.current);
-
-              if (!intervalTimerRef.current) {
-                console.log('⏱️ Iniciando timer de 3 segundos');
-                intervalTimerRef.current = setTimeout(() => {
-                  console.log('⏰ Timer completado, procesando buffer...');
-                  if (weightBufferRef.current.length === 0) {
-                    console.log('❌ Buffer vacío');
-                    intervalTimerRef.current = null;
-                    return;
-                  }
-                  
-                  const findMostFrequent = (arr: number[]): number => {
-                    const frequency: { [key: number]: number } = {};
-                    arr.forEach(num => frequency[num] = (frequency[num] || 0) + 1);
-                    let maxFreq = 0;
-                    let mostFrequentValue = arr[0];
-                    for (const [value, freq] of Object.entries(frequency)) {
-                      if (freq > maxFreq) {
-                        maxFreq = freq;
-                        mostFrequentValue = parseFloat(value);
-                      }
-                    }
-                    return mostFrequentValue;
-                  };
-                  
-                  const mostFrequentWeight = findMostFrequent(weightBufferRef.current);
-                  const finalWeight = {
-                    value: mostFrequentWeight,
-                    unit: 'kg',
-                    raw: asciiString,
-                    timestamp: new Date(),
-                    stable: true,
-                  };
-                  
-                  setCurrentWeight(finalWeight);
-                  console.log('✅ Peso establecido:', finalWeight);
-                  weightBufferRef.current = [];
-                  intervalTimerRef.current = null;
-                }, 3000);
-              }
-              
-              continue; // Saltar al siguiente ciclo, ya procesamos este paquete
-            }
+          if (lastValue !== null) {
+            buffer = buffer.slice(consumed);
+            publishLiveWeight(lastValue, 'raw', lastFrameText);
+            continue;
           }
 
           // Procesar líneas completas (terminadas en \r\n, \n, o \r)
@@ -603,82 +441,7 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
             if (weight) {
               console.log('⚖️ Peso detectado:', weight);
 
-              // Ignorar lecturas de cero - no son válidas para el pesaje
-              if (weight.value === 0) {
-                console.log('⏭️ Saltando peso cero');
-                continue; // Saltar al siguiente match
-              }
-
-              // Agregar peso al buffer (redondear a 2 decimales para agrupar valores similares)
-              const roundedWeight = Math.round(weight.value * 100) / 100;
-              weightBufferRef.current.push(roundedWeight);
-              console.log('📊 Buffer actual:', weightBufferRef.current);
-
-              // Iniciar intervalo de 5 segundos si no existe
-              if (!intervalTimerRef.current) {
-                const currentUnit = weight.unit; // Guardar unit en el scope
-                console.log('⏱️ Iniciando timer de 3 segundos');
-
-                intervalTimerRef.current = setTimeout(() => {
-                  console.log('⏰ Timer completado, procesando buffer...');
-
-                  if (weightBufferRef.current.length === 0) {
-                    console.log('❌ Buffer vacío');
-                    intervalTimerRef.current = null;
-                    return;
-                  }
-
-                  console.log('📦 Buffer final:', weightBufferRef.current);
-
-                  // Función para encontrar el valor que más se repite
-                  const findMostFrequent = (arr: number[]): number => {
-                    const frequency: { [key: number]: number } = {};
-
-                    // Contar frecuencias
-                    arr.forEach(num => {
-                      frequency[num] = (frequency[num] || 0) + 1;
-                    });
-
-                    console.log('📈 Frecuencias:', frequency);
-
-                    // Encontrar el más frecuente
-                    let maxFreq = 0;
-                    let mostFrequentValue = arr[0];
-
-                    for (const [value, freq] of Object.entries(frequency)) {
-                      if (freq > maxFreq) {
-                        maxFreq = freq;
-                        mostFrequentValue = parseFloat(value);
-                      }
-                    }
-
-                    console.log('🎯 Peso más frecuente:', mostFrequentValue, 'veces:', maxFreq);
-
-                    return mostFrequentValue;
-                  };
-
-                  const mostFrequentWeight = findMostFrequent(weightBufferRef.current);
-
-                  // Establecer el peso más frecuente
-                  const finalWeight = {
-                    value: mostFrequentWeight,
-                    unit: currentUnit,
-                    raw: `=${mostFrequentWeight * 1000}`,
-                    timestamp: new Date(),
-                    stable: true,
-                  };
-
-                  setCurrentWeight(finalWeight);
-                  console.log('✅ Peso establecido:', finalWeight);
-
-                  // Limpiar buffer y timer
-                  weightBufferRef.current = [];
-                  intervalTimerRef.current = null;
-                }, 3000); // 3 segundos
-
-              } else {
-                console.log('⏱️ Timer ya existe, agregando al buffer');
-              }
+              publishLiveWeight(weight.value, weight.unit, weight.raw);
             } else {
               console.log('❌ No se pudo parsear línea:', line);
             }
@@ -705,7 +468,7 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
       isReadingRef.current = false;
       setIsReading(false);
     }
-  }, [parseWeight]);
+  }, [parseWeight, publishLiveWeight]);
 
   // Detener lectura
   const stopReading = useCallback(() => {
@@ -715,6 +478,7 @@ export function useSerialScale(config: SerialScaleConfig = {}) {
 
   // Resetear el peso actual (útil cuando se selecciona un nuevo animal)
   const resetWeight = useCallback(() => {
+    lastPublishedRef.current = null;
     setCurrentWeight(null);
     weightBufferRef.current = [];
 
