@@ -197,7 +197,7 @@ export function AnimalWeighingManagement() {
     const diffMs = startOfToday.getTime() - startOfSelected.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    return diffDays >= 0 && diffDays <= 2;
+    return diffDays >= -1 && diffDays <= 2;
   }, [slaughterDate]);
 
   // Hook de balanza serial
@@ -210,6 +210,14 @@ export function AnimalWeighingManagement() {
     disconnect: disconnectScale,
     resetWeight,
   } = useSerialScale();
+
+  useEffect(() => {
+    if (!isConnected) return;
+    setManualWeightInputs({});
+    setSelectedRowId(null);
+    setCapturedWeight(null);
+    lastCapturedWeightRef.current = null;
+  }, [isConnected]);
 
   const { data: lines, isLoading: isLoadingLines } = useLines();
   const { data: weighingStagesData, isLoading: isLoadingWeighingStages } =
@@ -1336,6 +1344,25 @@ export function AnimalWeighingManagement() {
           detailsAnimalWeighing: [detailsAnimalWeighing],
         };
 
+        // Faenamiento adelantado: si la fecha de faenamiento es futura, el pesaje se registra en esa fecha
+        const slaughterDay = parseLocalDateString(slaughterDate);
+        const nowDate = new Date();
+        const startOfToday = new Date(
+          nowDate.getFullYear(),
+          nowDate.getMonth(),
+          nowDate.getDate(),
+        );
+        if (slaughterDay.getTime() > startOfToday.getTime()) {
+          saveData.weighingDate = new Date(
+            slaughterDay.getFullYear(),
+            slaughterDay.getMonth(),
+            slaughterDay.getDate(),
+            nowDate.getHours(),
+            nowDate.getMinutes(),
+            nowDate.getSeconds(),
+          ).toISOString();
+        }
+
         // Agregar idAddressee si existe y NO es EN PIE
         if (weighingStageId !== 1 && row.addressee?.id) {
           saveData.idAddressee = row.addressee.id;
@@ -1785,7 +1812,7 @@ export function AnimalWeighingManagement() {
             />
             {!isWithinLastThreeDays && (
               <span className="text-xs text-red-600">
-                Solo se permite pesar en los ultimos 3 dias.
+                Solo se permite pesar desde 3 dias atras hasta mañana.
               </span>
             )}
           </div>
@@ -2377,6 +2404,7 @@ export function AnimalWeighingManagement() {
                                   <span>Peso</span>
                                 </div>
                                 {isEncubaUser &&
+                                !isConnected &&
                                 isWithinLastThreeDays &&
                                 !row.savedWeight ? (
                                   <Input
@@ -2848,6 +2876,7 @@ export function AnimalWeighingManagement() {
                                 )}
                                 <TableCell className="text-center py-0.5 px-1">
                                   {isEncubaUser &&
+                                  !isConnected &&
                                   isWithinLastThreeDays &&
                                   !row.savedWeight ? (
                                     <Input
