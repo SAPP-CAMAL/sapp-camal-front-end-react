@@ -489,26 +489,33 @@ export function LoginForm({
                 </Link>
               </div>
 
-              {/* Botón ingresar — grande y táctil */}
-              <Button
-                type="submit"
-                className="lg:static fixed lg:bottom-auto bottom-4 left-1/2 transform -translate-x-1/2 lg:translate-x-0 z-40 w-[calc(100%-32px)] max-w-lg h-14 text-base text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-200 disabled:opacity-60 rounded-2xl lg:mt-2 mt-0 tracking-widest"
-                disabled={form.formState.isSubmitting || isRedirecting || !form.formState.isDirty}
-              >
-                {isRedirecting ? (
-                  <span className="flex items-center gap-3">
-                    <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    Redirigiendo...
-                  </span>
-                ) : form.formState.isSubmitting ? (
-                  <span className="flex items-center gap-3">
-                    <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    Iniciando sesión...
-                  </span>
-                ) : (
-                  "INGRESAR"
-                )}
-              </Button>
+              {/* Botón ingresar — grande y táctil.
+                  Va en flujo normal: no puede usar `fixed` porque la tarjeta contenedora
+                  tiene `backdrop-blur-sm`, y un ancestro con backdrop-filter se vuelve el
+                  contenedor de referencia de los descendientes `fixed` (igual que
+                  `filter`/`transform`), anclando el botón al pie de la tarjeta —
+                  encima de "¿Olvidaste tu contraseña?" — en vez de a la pantalla. */}
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  className="w-full h-14 text-base text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-200 disabled:opacity-60 rounded-2xl tracking-widest"
+                  disabled={form.formState.isSubmitting || isRedirecting || !form.formState.isDirty}
+                >
+                  {isRedirecting ? (
+                    <span className="flex items-center gap-3">
+                      <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      Redirigiendo...
+                    </span>
+                  ) : form.formState.isSubmitting ? (
+                    <span className="flex items-center gap-3">
+                      <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      Iniciando sesión...
+                    </span>
+                  ) : (
+                    "INGRESAR"
+                  )}
+                </Button>
+              </div>
             </form>
           </div>
 
